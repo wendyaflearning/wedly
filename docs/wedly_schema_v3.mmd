@@ -1,0 +1,173 @@
+erDiagram
+
+    %% ─── Core user relations ───────────────────────────────────────────
+    COUPLE ||--|| USER    : "belongs to"
+    VENDOR ||--|| USER    : "managed by"
+    COUPLE ||--|| WEDDING : "plans"
+
+    %% ─── Taxonomies (ManyToMany) ────────────────────────────────────────
+    VENDOR          }o--o{ SERVICE    : "offers"
+    VENDOR          }o--o{ STYLE      : "masters"
+    VENDOR          }o--o{ CULTURE    : "specialist"
+    VENDOR          }o--o{ CONFESSION : "knows_rites"
+
+    WEDDING         }o--o{ STYLE      : "aesthetic"
+    WEDDING         }o--o{ CULTURE    : "cultural_mix"
+    WEDDING         }o--o{ CONFESSION : "ceremony_types"
+
+    PORTFOLIO_IMAGE }o--o{ STYLE      : "visual_tags"
+
+    %% ─── OneToMany ──────────────────────────────────────────────────────
+    VENDOR  ||--o{ PORTFOLIO_IMAGE  : "showcases"
+    VENDOR  ||--o{ BOOKING_BLOCKER  : "has_indispos"
+    VENDOR  ||--o{ OFFER            : "proposes"
+    COUPLE  ||--o{ SUBSCRIPTION     : "purchases"
+    SUBSCRIPTION }o--|| PLAN        : "references"
+
+    %% ═══════════════════════════════════════════════════════════════════
+    %% ENTITÉS
+    %% ═══════════════════════════════════════════════════════════════════
+
+    USER {
+        uuid   id         PK
+        string email
+        json   roles
+        string password
+        string first_name
+        string last_name
+        string invite_token "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    COUPLE {
+        uuid id         PK
+        uuid user_id    FK
+        uuid wedding_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    VENDOR {
+        uuid    id              PK
+        uuid    user_id         FK
+        string  brand_name
+        text    description
+        string  siret
+        string  address
+        string  zipcode
+        string  city
+        string  zone            "idf | nord | sud | etc"
+        integer price_min_cents
+        integer price_max_cents
+        boolean is_validated
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    WEDDING {
+        uuid    id           PK
+        date    date
+        integer budget_cents
+        string  location
+        string  zone
+        integer guest_count
+        string  ambiance     "boheme | chic | champetre | etc"
+        string  ceremony_type "civil | laique | religieux | mixte"
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ─── Taxonomies / Référentiels ──────────────────────────────────────
+
+    STYLE {
+        uuid   id              PK
+        string name
+        string slug
+        text   description     "nullable"
+        string cover_image_url "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    CULTURE {
+        uuid   id   PK
+        string name
+        string slug
+        string type "continent | country"
+        datetime created_at
+        datetime updated_at
+    }
+
+    CONFESSION {
+        uuid   id   PK
+        string name
+        string slug
+        datetime created_at
+        datetime updated_at
+    }
+
+    SERVICE {
+        uuid    id         PK
+        string  name       "photographe | dj | traiteur | etc"
+        string  slug
+        integer sort_order
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ─── Vendor side ────────────────────────────────────────────────────
+
+    OFFER {
+        uuid    id          PK
+        uuid    vendor_id   FK
+        string  name
+        text    description "nullable"
+        integer price_cents
+        datetime created_at
+        datetime updated_at
+    }
+
+    PORTFOLIO_IMAGE {
+        uuid    id        PK
+        uuid    vendor_id FK
+        string  url
+        integer sort_seq
+        datetime created_at
+        datetime updated_at
+    }
+
+    BOOKING_BLOCKER {
+        uuid   id         PK
+        uuid   vendor_id  FK
+        date   start_date
+        date   end_date
+        string reason     "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ─── Couple side ────────────────────────────────────────────────────
+
+    PLAN {
+        uuid    id             PK
+        string  name           "decouverte | medium | premium"
+        integer price_cents
+        integer category_count "-1 = illimité"
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    SUBSCRIPTION {
+        uuid     id                PK
+        uuid     couple_id         FK
+        uuid     plan_id           FK
+        string   stripe_id         "nullable"
+        string   status            "active | cancelled"
+        integer  amount_paid_cents
+        datetime expires_at
+        datetime created_at
+        datetime updated_at
+    }
