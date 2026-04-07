@@ -1,0 +1,53 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'apps/api/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install dependencies
+        working-directory: apps/api
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Run tests
+        working-directory: apps/api
+        run: php bin/phpunit
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/api
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/wedly-api:latest
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root
+            docker compose pull symfony
+            docker compose up -d symfony

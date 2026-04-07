@@ -1,0 +1,9 @@
+vendor/
+var/cache/
+var/log/
+.git/
+.env.local
+.env.dev
+config/jwt/*.pem
+compose.yaml
+compose.override.yaml
