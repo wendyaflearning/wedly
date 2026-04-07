@@ -21,9 +21,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: apps/api
-        env:
-          APP_ENV: prod
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --no-dev --optimize-autoloader --no-scripts
 
       - name: Run tests
         working-directory: apps/api
