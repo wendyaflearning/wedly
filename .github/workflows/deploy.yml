@@ -41,7 +41,9 @@ jobs:
       - name: Deploy on VPS
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519_hostinger
+          chmod 600 ~/.ssh/id_ed25519_hostinger
+          cat ~/.ssh/id_ed25519_hostinger | head -1
+          cat ~/.ssh/id_ed25519_hostinger | tail -1
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /root && docker compose pull symfony && docker compose up -d symfony"
+          ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo ok"
