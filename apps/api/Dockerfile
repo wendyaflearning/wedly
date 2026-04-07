@@ -29,10 +29,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
     libzip-dev \
     libcurl4-openssl-dev \
+    libonig-dev \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# PHP extensions
+# PHP extensions (tokenizer is built-in, no need to install)
 RUN docker-php-ext-install \
     pdo \
     pdo_pgsql \
@@ -41,8 +42,7 @@ RUN docker-php-ext-install \
     xml \
     curl \
     intl \
-    zip \
-    tokenizer
+    zip
 
 # Composer binary (useful for bin/console and one-off commands in the container)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
