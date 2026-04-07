@@ -46,7 +46,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           debug: true
-          script: |
-            cd /root
-            docker compose pull symfony
-            docker compose up -d symfony
+          script: echo "connection ok"
