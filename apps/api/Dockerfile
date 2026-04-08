@@ -56,9 +56,8 @@ WORKDIR /var/www/html
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
-# Symfony cache warm-up and permissions
-RUN php bin/console cache:warmup --env=prod --no-debug \
-    && chown -R www-data:www-data var/
+# Permissions
+RUN chown -R www-data:www-data var/
 
 # nginx configuration
 RUN rm -f /etc/nginx/sites-enabled/default
@@ -67,6 +66,9 @@ COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 # supervisor configuration
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/entrypoint.sh"]
