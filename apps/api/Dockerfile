@@ -71,4 +71,5 @@ RUN chmod +x /entrypoint.sh
 
 EXPOSE 80
 
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
+
