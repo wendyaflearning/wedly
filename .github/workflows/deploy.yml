@@ -45,5 +45,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519_hostinger
           chmod 600 ~/.ssh/id_ed25519_hostinger
+          echo "--- Key header ---"
+          head -1 ~/.ssh/id_ed25519_hostinger
+          echo "--- Key size ---"
+          wc -c ~/.ssh/id_ed25519_hostinger
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo ok"
+          ssh -v -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo ok"
