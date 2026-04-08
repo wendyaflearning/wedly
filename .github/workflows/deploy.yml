@@ -37,6 +37,8 @@ jobs:
           context: apps/api
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/wedly-api:latest
+          build-args: |
+            APP_SECRET=${{ secrets.APP_SECRET }}
 
       - name: Deploy on VPS
         env:

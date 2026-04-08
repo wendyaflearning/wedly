@@ -55,6 +55,8 @@ WORKDIR /var/www/html
 # Environment
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
+ARG APP_SECRET
+ENV APP_SECRET=${APP_SECRET}
 
 # Permissions
 RUN mkdir -p var && chown -R www-data:www-data var/
