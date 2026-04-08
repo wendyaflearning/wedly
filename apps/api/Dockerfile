@@ -57,7 +57,7 @@ ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
 # Permissions
-RUN chown -R www-data:www-data var/
+RUN mkdir -p var && chown -R www-data:www-data var/
 
 # nginx configuration
 RUN rm -f /etc/nginx/sites-enabled/default
