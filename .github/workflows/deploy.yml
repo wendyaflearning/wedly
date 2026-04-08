@@ -46,4 +46,4 @@ jobs:
           echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519_hostinger
           chmod 600 ~/.ssh/id_ed25519_hostinger
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo ok"
+          ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /root && docker compose pull symfony && docker compose up -d symfony"
