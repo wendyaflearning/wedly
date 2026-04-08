@@ -9,7 +9,7 @@ rm -rf var/cache/prod
 chown -R www-data:www-data var/
 chmod -R 775 var/
 
-php bin/console cache:warmup --env=prod --no-debug -vvv 2>&1 || true
+su -s /bin/sh www-data -c "php bin/console cache:warmup --env=prod --no-debug"
 
 echo "Starting supervisord..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
