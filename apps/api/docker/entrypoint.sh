@@ -7,7 +7,7 @@ echo "DATABASE_URL is: $(if [ -z "$DATABASE_URL" ]; then echo 'VIDE ⚠️'; els
 
 rm -rf var/cache/prod
 
-php bin/console cache:warmup --env=prod --no-debug
+php bin/console cache:warmup --env=prod --no-debug -vvv 2>&1 || true
 
 echo "Starting supervisord..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
