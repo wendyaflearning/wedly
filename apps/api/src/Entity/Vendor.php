@@ -6,7 +6,11 @@ namespace App\Entity;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Trait\TimestampableTrait;
-use App\Enum\Zone;
+use App\Entity\Region;
+use App\Entity\VendorAnimationDetails;
+use App\Entity\VendorCateringDetails;
+use App\Entity\VendorVenueDetails;
+use App\Enum\PriceType;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -47,8 +51,8 @@ class Vendor
     #[ORM\Column(name: 'city', length: 100)]
     private string $city;
 
-    #[ORM\Column(name: 'zone', type: 'string', enumType: Zone::class)]
-    private Zone $zone;
+    #[ORM\Column(name: 'price_type', type: 'string', enumType: PriceType::class)]
+    private PriceType $priceType;
 
     #[ORM\Column(name: 'price_min_cents', type: 'integer')]
     private int $priceMinCents;
@@ -94,12 +98,30 @@ class Vendor
     )]
     private Collection $confessions;
 
+    #[ORM\ManyToMany(targetEntity: Region::class, inversedBy: 'vendors')]
+    #[ORM\JoinTable(
+        name: 'vendor_zones',
+        joinColumns: [new ORM\JoinColumn(name: 'vendor_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'region_id', referencedColumnName: 'id')],
+    )]
+    private Collection $regions;
+
+    #[ORM\OneToOne(targetEntity: VendorVenueDetails::class, mappedBy: 'vendor', cascade: ['persist', 'remove'])]
+    private ?VendorVenueDetails $venueDetails = null;
+
+    #[ORM\OneToOne(targetEntity: VendorCateringDetails::class, mappedBy: 'vendor', cascade: ['persist', 'remove'])]
+    private ?VendorCateringDetails $cateringDetails = null;
+
+    #[ORM\OneToOne(targetEntity: VendorAnimationDetails::class, mappedBy: 'vendor', cascade: ['persist', 'remove'])]
+    private ?VendorAnimationDetails $animationDetails = null;
+
     public function __construct()
     {
-        $this->services   = new ArrayCollection();
-        $this->styles     = new ArrayCollection();
-        $this->cultures   = new ArrayCollection();
+        $this->services    = new ArrayCollection();
+        $this->styles      = new ArrayCollection();
+        $this->cultures    = new ArrayCollection();
         $this->confessions = new ArrayCollection();
+        $this->regions     = new ArrayCollection();
     }
 
     public function getId(): UuidV7
@@ -191,14 +213,14 @@ class Vendor
         return $this;
     }
 
-    public function getZone(): Zone
+    public function getPriceType(): PriceType
     {
-        return $this->zone;
+        return $this->priceType;
     }
 
-    public function setZone(Zone $zone): static
+    public function setPriceType(PriceType $priceType): static
     {
-        $this->zone = $zone;
+        $this->priceType = $priceType;
 
         return $this;
     }
@@ -331,6 +353,63 @@ class Vendor
     public function removeConfession(Confession $confession): static
     {
         $this->confessions->removeElement($confession);
+
+        return $this;
+    }
+
+    public function getRegions(): Collection
+    {
+        return $this->regions;
+    }
+
+    public function addRegion(Region $region): static
+    {
+        if (!$this->regions->contains($region)) {
+            $this->regions->add($region);
+        }
+
+        return $this;
+    }
+
+    public function removeRegion(Region $region): static
+    {
+        $this->regions->removeElement($region);
+
+        return $this;
+    }
+
+    public function getVenueDetails(): ?VendorVenueDetails
+    {
+        return $this->venueDetails;
+    }
+
+    public function setVenueDetails(?VendorVenueDetails $venueDetails): static
+    {
+        $this->venueDetails = $venueDetails;
+
+        return $this;
+    }
+
+    public function getCateringDetails(): ?VendorCateringDetails
+    {
+        return $this->cateringDetails;
+    }
+
+    public function setCateringDetails(?VendorCateringDetails $cateringDetails): static
+    {
+        $this->cateringDetails = $cateringDetails;
+
+        return $this;
+    }
+
+    public function getAnimationDetails(): ?VendorAnimationDetails
+    {
+        return $this->animationDetails;
+    }
+
+    public function setAnimationDetails(?VendorAnimationDetails $animationDetails): static
+    {
+        $this->animationDetails = $animationDetails;
 
         return $this;
     }
