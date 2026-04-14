@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Trait\TimestampableTrait;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Doctrine\UuidV7Generator;
 use Symfony\Component\Uid\UuidV7;
@@ -30,6 +32,18 @@ class Service
 
     #[ORM\Column(name: 'sort_order', type: 'integer')]
     private int $sortOrder;
+
+    #[ORM\ManyToOne(targetEntity: Service::class, inversedBy: 'children')]
+    #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', nullable: true)]
+    private ?Service $parent = null;
+
+    #[ORM\OneToMany(targetEntity: Service::class, mappedBy: 'parent')]
+    private Collection $children;
+
+    public function __construct()
+    {
+        $this->children = new ArrayCollection();
+    }
 
     public function getId(): UuidV7
     {
@@ -68,6 +82,42 @@ class Service
     public function setSortOrder(int $sortOrder): static
     {
         $this->sortOrder = $sortOrder;
+
+        return $this;
+    }
+
+    public function getParent(): ?Service
+    {
+        return $this->parent;
+    }
+
+    public function setParent(?Service $parent): static
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    public function getChildren(): Collection
+    {
+        return $this->children;
+    }
+
+    public function addChild(Service $child): static
+    {
+        if (!$this->children->contains($child)) {
+            $this->children->add($child);
+            $child->setParent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChild(Service $child): static
+    {
+        if ($this->children->removeElement($child) && $child->getParent() === $this) {
+            $child->setParent(null);
+        }
 
         return $this;
     }
