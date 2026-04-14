@@ -40,9 +40,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'last_name', length: 100)]
     private string $lastName;
 
-    #[ORM\Column(name: 'invite_token', length: 64, nullable: true)]
-    private ?string $inviteToken = null;
-
     public function getId(): UuidV7
     {
         return $this->id;
@@ -118,15 +115,4 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getInviteToken(): ?string
-    {
-        return $this->inviteToken;
-    }
-
-    public function setInviteToken(?string $inviteToken): static
-    {
-        $this->inviteToken = $inviteToken;
-
-        return $this;
-    }
 }
