@@ -7,3 +7,9 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+vendor_controllers:
+    resource:
+        path: ../src/Vendor/Controller/
+        namespace: App\Vendor\Controller
+    type: attribute

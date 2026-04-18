@@ -36,20 +36,20 @@ class Vendor
     #[ORM\Column(name: 'brand_name', length: 255)]
     private string $brandName;
 
-    #[ORM\Column(name: 'description', type: 'text')]
-    private string $description;
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
+    private ?string $description = null;
 
-    #[ORM\Column(name: 'siret', length: 14)]
-    private string $siret;
+    #[ORM\Column(name: 'siret', length: 14, nullable: true)]
+    private ?string $siret = null;
 
-    #[ORM\Column(name: 'address', length: 255)]
-    private string $address;
+    #[ORM\Column(name: 'address', length: 255, nullable: true)]
+    private ?string $address = null;
 
-    #[ORM\Column(name: 'zipcode', length: 10)]
-    private string $zipcode;
+    #[ORM\Column(name: 'zipcode', length: 10, nullable: true)]
+    private ?string $zipcode = null;
 
-    #[ORM\Column(name: 'city', length: 100)]
-    private string $city;
+    #[ORM\Column(name: 'city', length: 100, nullable: true)]
+    private ?string $city = null;
 
     #[ORM\Column(name: 'price_type', type: 'string', enumType: PriceType::class)]
     private PriceType $priceType;
@@ -153,60 +153,60 @@ class Vendor
         return $this;
     }
 
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
         return $this;
     }
 
-    public function getSiret(): string
+    public function getSiret(): ?string
     {
         return $this->siret;
     }
 
-    public function setSiret(string $siret): static
+    public function setSiret(?string $siret): static
     {
         $this->siret = $siret;
 
         return $this;
     }
 
-    public function getAddress(): string
+    public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    public function setAddress(string $address): static
+    public function setAddress(?string $address): static
     {
         $this->address = $address;
 
         return $this;
     }
 
-    public function getZipcode(): string
+    public function getZipcode(): ?string
     {
         return $this->zipcode;
     }
 
-    public function setZipcode(string $zipcode): static
+    public function setZipcode(?string $zipcode): static
     {
         $this->zipcode = $zipcode;
 
         return $this;
     }
 
-    public function getCity(): string
+    public function getCity(): ?string
     {
         return $this->city;
     }
 
-    public function setCity(string $city): static
+    public function setCity(?string $city): static
     {
         $this->city = $city;
 
