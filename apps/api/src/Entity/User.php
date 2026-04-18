@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Trait\TimestampableTrait;
+use App\Enum\UserStatus;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -37,8 +38,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'first_name', length: 100)]
     private string $firstName;
 
-    #[ORM\Column(name: 'last_name', length: 100)]
-    private string $lastName;
+    #[ORM\Column(name: 'last_name', length: 100, nullable: true)]
+    private ?string $lastName = null;
+
+    #[ORM\Column(
+        name: 'status',
+        type: 'string',
+        length: 20,
+        nullable: false,
+        enumType: UserStatus::class,
+        options: ['default' => 'pending'],
+    )]
+    private UserStatus $status = UserStatus::Pending;
 
     public function getId(): UuidV7
     {
@@ -103,14 +114,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getLastName(): string
+    public function getLastName(): ?string
     {
         return $this->lastName;
     }
 
-    public function setLastName(string $lastName): static
+    public function setLastName(?string $lastName): static
     {
         $this->lastName = $lastName;
+
+        return $this;
+    }
+
+    public function getStatus(): UserStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(UserStatus $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }
