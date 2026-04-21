@@ -53,6 +53,9 @@ class Vendor
     #[ORM\Column(name: 'city', length: 100, nullable: true)]
     private ?string $city = null;
 
+    #[ORM\Column(name: 'phone', length: 20, nullable: true)]
+    private ?string $phone = null;
+
     #[ORM\Column(name: 'price_type', type: 'string', enumType: PriceType::class)]
     private PriceType $priceType;
 
@@ -105,6 +108,9 @@ class Vendor
     )]
     private Collection $regions;
 
+    #[ORM\OneToMany(targetEntity: PortfolioImage::class, mappedBy: 'vendor', cascade: ['persist', 'remove'])]
+    private Collection $portfolioImages;
+
     #[ORM\OneToOne(targetEntity: VendorVenueDetails::class, mappedBy: 'vendor', cascade: ['persist', 'remove'])]
     private ?VendorVenueDetails $venueDetails = null;
 
@@ -116,11 +122,12 @@ class Vendor
 
     public function __construct()
     {
-        $this->services    = new ArrayCollection();
-        $this->styles      = new ArrayCollection();
-        $this->cultures    = new ArrayCollection();
-        $this->confessions = new ArrayCollection();
-        $this->regions     = new ArrayCollection();
+        $this->services        = new ArrayCollection();
+        $this->styles          = new ArrayCollection();
+        $this->cultures        = new ArrayCollection();
+        $this->confessions     = new ArrayCollection();
+        $this->regions         = new ArrayCollection();
+        $this->portfolioImages = new ArrayCollection();
     }
 
     public function getId(): UuidV7
@@ -208,6 +215,18 @@ class Vendor
     public function setCity(?string $city): static
     {
         $this->city = $city;
+
+        return $this;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(?string $phone): static
+    {
+        $this->phone = $phone;
 
         return $this;
     }
@@ -363,6 +382,11 @@ class Vendor
         $this->regions->removeElement($region);
 
         return $this;
+    }
+
+    public function getPortfolioImages(): Collection
+    {
+        return $this->portfolioImages;
     }
 
     public function getVenueDetails(): ?VendorVenueDetails
