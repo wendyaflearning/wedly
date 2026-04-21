@@ -12,6 +12,7 @@ use App\Entity\Trait\TimestampableTrait;
 use App\Entity\User\User;
 use App\Entity\Wedding\WeddingStyle;
 use App\Enum\Vendor\PriceType;
+use App\Enum\Vendor\VendorStatus;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -61,11 +62,8 @@ class Vendor
     #[ORM\Column(name: 'price_max_cents', type: 'integer')]
     private int $priceMaxCents;
 
-    #[ORM\Column(name: 'is_validated', type: 'boolean')]
-    private bool $isValidated = false;
-
-    #[ORM\Column(name: 'is_active', type: 'boolean')]
-    private bool $isActive = true;
+    #[ORM\Column(name: 'status', type: 'string', enumType: VendorStatus::class)]
+    private VendorStatus $status = VendorStatus::Pending;
 
     #[ORM\ManyToMany(targetEntity: Service::class)]
     #[ORM\JoinTable(
@@ -250,26 +248,14 @@ class Vendor
         return $this;
     }
 
-    public function isValidated(): bool
+    public function getStatus(): VendorStatus
     {
-        return $this->isValidated;
+        return $this->status;
     }
 
-    public function setIsValidated(bool $isValidated): static
+    public function setStatus(VendorStatus $status): static
     {
-        $this->isValidated = $isValidated;
-
-        return $this;
-    }
-
-    public function isActive(): bool
-    {
-        return $this->isActive;
-    }
-
-    public function setIsActive(bool $isActive): static
-    {
-        $this->isActive = $isActive;
+        $this->status = $status;
 
         return $this;
     }
