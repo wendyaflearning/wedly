@@ -8,6 +8,7 @@ use App\Doctrine\UuidV7Generator;
 use App\Entity\Trait\TimestampableTrait;
 use App\Entity\User\User;
 use App\Entity\Wedding\Wedding;
+use App\Enum\Couple\CoupleStatus;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
@@ -31,6 +32,9 @@ class Couple
     #[ORM\OneToOne(targetEntity: Wedding::class)]
     #[ORM\JoinColumn(name: 'wedding_id', referencedColumnName: 'id', nullable: false)]
     private Wedding $wedding;
+
+    #[ORM\Column(name: 'status', type: 'string', enumType: CoupleStatus::class)]
+    private CoupleStatus $status = CoupleStatus::Pending;
 
     public function getId(): UuidV7
     {
@@ -57,6 +61,18 @@ class Couple
     public function setWedding(Wedding $wedding): static
     {
         $this->wedding = $wedding;
+
+        return $this;
+    }
+
+    public function getStatus(): CoupleStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(CoupleStatus $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }

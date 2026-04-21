@@ -12,6 +12,7 @@ use App\Entity\Vendor\Vendor;
 use App\Enum\User\InviteTokenPersona;
 use App\Enum\User\InviteTokenStatus;
 use App\Enum\User\Role;
+use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\UserRepository;
 use App\DTO\Vendor\CreateVendorInput;
 use App\DTO\Vendor\VendorCreatedResponse;
@@ -57,8 +58,7 @@ final class VendorService
                    ->setPriceType($dto->price_type)
                    ->setPriceMinCents($dto->price_min)
                    ->setPriceMaxCents($dto->price_max)
-                   ->setIsValidated(false)
-                   ->setIsActive(false);
+                   ->setStatus(VendorStatus::Pending);
 
             $vendor->addService($service);
 
