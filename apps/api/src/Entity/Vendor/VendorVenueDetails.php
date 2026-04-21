@@ -57,6 +57,9 @@ class VendorVenueDetails
     #[ORM\Column(name: 'venue_type', type: 'string', enumType: VenueType::class)]
     private VenueType $venueType;
 
+    #[ORM\Column(name: 'nearest_city', length: 100, nullable: true)]
+    private ?string $nearestCity = null;
+
     public function getId(): UuidV7
     {
         return $this->id;
@@ -190,6 +193,18 @@ class VendorVenueDetails
     public function setVenueType(VenueType $venueType): static
     {
         $this->venueType = $venueType;
+
+        return $this;
+    }
+
+    public function getNearestCity(): ?string
+    {
+        return $this->nearestCity;
+    }
+
+    public function setNearestCity(?string $nearestCity): static
+    {
+        $this->nearestCity = $nearestCity;
 
         return $this;
     }
