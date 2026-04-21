@@ -35,6 +35,9 @@ class PortfolioImage
     #[ORM\Column(name: 'sort_seq', type: 'integer')]
     private int $sortSeq;
 
+    #[ORM\Column(name: 'is_cover', type: 'boolean')]
+    private bool $isCover = false;
+
     #[ORM\ManyToMany(targetEntity: WeddingStyle::class)]
     #[ORM\JoinTable(
         name: 'portfolio_image_style',
@@ -85,6 +88,18 @@ class PortfolioImage
     public function setSortSeq(int $sortSeq): static
     {
         $this->sortSeq = $sortSeq;
+
+        return $this;
+    }
+
+    public function isCover(): bool
+    {
+        return $this->isCover;
+    }
+
+    public function setIsCover(bool $isCover): static
+    {
+        $this->isCover = $isCover;
 
         return $this;
     }
