@@ -25,7 +25,7 @@ class PortfolioImage
     #[ORM\CustomIdGenerator(class: UuidV7Generator::class)]
     private UuidV7 $id;
 
-    #[ORM\ManyToOne(targetEntity: Vendor::class)]
+    #[ORM\ManyToOne(targetEntity: Vendor::class, inversedBy: 'portfolioImages')]
     #[ORM\JoinColumn(name: 'vendor_id', referencedColumnName: 'id', nullable: false)]
     private Vendor $vendor;
 
