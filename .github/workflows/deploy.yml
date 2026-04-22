@@ -2,7 +2,7 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [develop, feature/ci-migrations]
+    branches: [develop, feature/feature/ci-migrations]
     paths:
       - 'apps/api/**'
       - '.github/workflows/**'
