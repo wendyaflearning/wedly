@@ -2,7 +2,7 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, feature/feature/ci-migrations]
     paths:
       - 'apps/api/**'
       - '.github/workflows/**'
@@ -48,4 +48,9 @@ jobs:
           echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519_hostinger
           chmod 600 ~/.ssh/id_ed25519_hostinger
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /root && docker compose pull symfony && docker compose up -d symfony"
+          ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+            cd /root && \
+            docker compose pull symfony && \
+            docker compose run --rm symfony php bin/console doctrine:migrations:migrate --no-interaction && \
+            docker compose run --rm symfony php bin/console cache:clear --env=prod && \
+            docker compose up -d symfony"

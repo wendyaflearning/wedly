@@ -14,5 +14,9 @@ echo "Nettoyage du cache..."
 # Symfony le reconstruira avec les bons droits au premier hit
 rm -rf /var/www/html/var/cache/*
 
-echo "Starting supervisord..."
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+if [ $# -gt 0 ]; then
+  exec "$@"
+else
+  echo "Starting supervisord..."
+  exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+fi
