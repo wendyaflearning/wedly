@@ -25,8 +25,12 @@ security:
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-        onboarding:
-            pattern: ^/api/v1/onboarding/
+        invite_tokens:
+            pattern: ^/api/v1/invite-tokens/
+            security: false
+
+        vendor_onboarding:
+            pattern: ^/api/v1/vendors/onboarding/
             security: false
 
         api:

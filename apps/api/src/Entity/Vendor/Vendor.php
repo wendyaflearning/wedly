@@ -11,6 +11,7 @@ use App\Entity\Region\Region;
 use App\Entity\Trait\TimestampableTrait;
 use App\Entity\User\User;
 use App\Entity\Wedding\WeddingStyle;
+use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -67,6 +68,9 @@ class Vendor
 
     #[ORM\Column(name: 'status', type: 'string', enumType: VendorStatus::class)]
     private VendorStatus $status = VendorStatus::Pending;
+
+    #[ORM\Column(name: 'onboarding_step', type: 'string', enumType: OnboardingStep::class, nullable: true)]
+    private ?OnboardingStep $onboardingStep = null;
 
     #[ORM\ManyToMany(targetEntity: Service::class)]
     #[ORM\JoinTable(
@@ -275,6 +279,18 @@ class Vendor
     public function setStatus(VendorStatus $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getOnboardingStep(): ?OnboardingStep
+    {
+        return $this->onboardingStep;
+    }
+
+    public function setOnboardingStep(?OnboardingStep $onboardingStep): static
+    {
+        $this->onboardingStep = $onboardingStep;
 
         return $this;
     }
