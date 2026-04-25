@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\VendorOnboarding;
 
+use App\DTO\Vendor\Step\ProfessionsDto;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,13 +15,9 @@ readonly class ProfessionsStepService
         private EntityManagerInterface $em,
     ) {}
 
-    public function handle(Vendor $vendor, array $data): void
+    public function handle(Vendor $vendor, ProfessionsDto $professionsDto): void
     {
-        $serviceIds = $data['service_ids'] ?? [];
-
-        if (empty($serviceIds)) {
-            throw new \DomainException('Au moins un service est requis', 422);
-        }
+        $serviceIds = $professionsDto->serviceIds;
 
         $services = [];
         foreach ($serviceIds as $serviceId) {

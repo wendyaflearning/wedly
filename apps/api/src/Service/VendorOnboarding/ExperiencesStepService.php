@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\VendorOnboarding;
 
+use App\DTO\Vendor\Step\ExperiencesDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Vendor;
@@ -15,11 +16,11 @@ readonly class ExperiencesStepService
         private EntityManagerInterface $em,
     ) {}
 
-    public function handle(Vendor $vendor, array $data): void
+    public function handle(Vendor $vendor, ExperiencesDto $experiencesDto): void
     {
-        if (array_key_exists('culture_ids', $data)) {
+        if ($experiencesDto->cultureIds !== null) {
             $cultures = [];
-            foreach ($data['culture_ids'] as $id) {
+            foreach ($experiencesDto->cultureIds as $id) {
                 $culture = $this->em->getRepository(Culture::class)->find($id);
                 if ($culture === null) {
                     throw new \DomainException(sprintf('Culture introuvable : %s', $id), 422);
@@ -32,9 +33,9 @@ readonly class ExperiencesStepService
             }
         }
 
-        if (array_key_exists('confession_ids', $data)) {
+        if ($experiencesDto->confessionIds !== null) {
             $confessions = [];
-            foreach ($data['confession_ids'] as $id) {
+            foreach ($experiencesDto->confessionIds as $id) {
                 $confession = $this->em->getRepository(Confession::class)->find($id);
                 if ($confession === null) {
                     throw new \DomainException(sprintf('Confession introuvable : %s', $id), 422);
