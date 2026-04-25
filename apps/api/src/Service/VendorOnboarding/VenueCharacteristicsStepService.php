@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service\VendorOnboarding;
 
+use App\DTO\Vendor\Step\VenueCharacteristicsDto;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorVenueDetails;
-use App\Enum\Vendor\VenueType;
 use Doctrine\ORM\EntityManagerInterface;
 
 readonly class VenueCharacteristicsStepService
@@ -15,72 +15,68 @@ readonly class VenueCharacteristicsStepService
         private EntityManagerInterface $em,
     ) {}
 
-    public function handle(Vendor $vendor, array $data): void
+    public function handle(Vendor $vendor, VenueCharacteristicsDto $venueDto): void
     {
         $slugs = array_map(fn ($s) => $s->getSlug(), $vendor->getServices()->toArray());
         if (!in_array('lieu-de-reception', $slugs, true)) {
             throw new \DomainException('Cette étape est réservée aux lieux de réception.', 422);
         }
 
-        $this->validate($data);
+        $this->validateCapacityRange($venueDto);
 
         $details = $vendor->getVenueDetails();
         $isNew   = $details === null;
 
         if ($isNew) {
-            if (!array_key_exists('venue_type', $data)) {
+            if ($venueDto->venueType === null) {
                 throw new \DomainException('Le champ venue_type est requis à la création.', 422);
             }
             $details = new VendorVenueDetails();
             $details->setVendor($vendor);
         }
 
-        if (array_key_exists('venue_type', $data)) {
-            $venueType = VenueType::tryFrom($data['venue_type']);
-            if ($venueType === null) {
-                throw new \DomainException(sprintf('Type de lieu invalide : %s', $data['venue_type']), 422);
-            }
-            $details->setVenueType($venueType);
+        if ($venueDto->venueType !== null) {
+            $details->setVenueType($venueDto->venueType);
         }
 
-        if (array_key_exists('capacity_min', $data)) {
-            $details->setCapacityMin($data['capacity_min']);
+        if ($venueDto->capacityMin !== null) {
+            $details->setCapacityMin($venueDto->capacityMin);
         }
 
-        if (array_key_exists('capacity_max', $data)) {
-            $details->setCapacityMax($data['capacity_max']);
+        if ($venueDto->capacityMax !== null) {
+            $details->setCapacityMax($venueDto->capacityMax);
         }
 
-        if (array_key_exists('has_catering', $data)) {
-            $details->setHasCatering($data['has_catering']);
+        if ($venueDto->hasCatering !== null) {
+            $details->setHasCatering($venueDto->hasCatering);
         }
 
-        if (array_key_exists('has_accommodation', $data)) {
-            $details->setHasAccommodation($data['has_accommodation']);
+        if ($venueDto->hasAccommodation !== null) {
+            $details->setHasAccommodation($venueDto->hasAccommodation);
         }
 
-        if (array_key_exists('has_outdoor_space', $data)) {
-            $details->setHasOutdoorSpace($data['has_outdoor_space']);
+        if ($venueDto->hasOutdoorSpace !== null) {
+            $details->setHasOutdoorSpace($venueDto->hasOutdoorSpace);
         }
 
-        if (array_key_exists('has_corkage_fee', $data)) {
-            $details->setHasCorkageFee($data['has_corkage_fee']);
+        if ($venueDto->hasCorkageFee !== null) {
+            $details->setHasCorkageFee($venueDto->hasCorkageFee);
         }
 
-        if (array_key_exists('has_toilets', $data)) {
-            $details->setHasToilets($data['has_toilets']);
+        if ($venueDto->hasToilets !== null) {
+            $details->setHasToilets($venueDto->hasToilets);
         }
 
-        if (array_key_exists('is_pmr_accessible', $data)) {
-            $details->setIsPmrAccessible($data['is_pmr_accessible']);
+        if ($venueDto->isPmrAccessible !== null) {
+            $details->setIsPmrAccessible($venueDto->isPmrAccessible);
         }
 
-        if (array_key_exists('distance_to_city_minutes', $data)) {
-            $details->setDistanceToCityMinutes($data['distance_to_city_minutes']);
+        if ($venueDto->distanceToCityMinutes !== null) {
+            $details->setDistanceToCityMinutes($venueDto->distanceToCityMinutes);
         }
 
-        if (array_key_exists('nearest_city', $data)) {
-            $details->setNearestCity($data['nearest_city']);
+        if ($venueDto->nearestCity !== null) {
+            $details->setNearestCity($venueDto->nearestCity);
         }
 
         if ($isNew) {
@@ -88,10 +84,10 @@ readonly class VenueCharacteristicsStepService
         }
     }
 
-    private function validate(array $data): void
+    private function validateCapacityRange(VenueCharacteristicsDto $venueDto): void
     {
-        $min = $data['capacity_min'] ?? null;
-        $max = $data['capacity_max'] ?? null;
+        $min = $venueDto->capacityMin;
+        $max = $venueDto->capacityMax;
 
         if ($min !== null && $max !== null && $min >= $max) {
             throw new \DomainException('capacity_min doit être inférieur à capacity_max.', 422);
