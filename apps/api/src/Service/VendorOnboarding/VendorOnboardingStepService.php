@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\VendorOnboarding;
 
 use App\DTO\DTOInterface;
+use App\DTO\Vendor\Step\CateringCharacteristicsDto;
 use App\DTO\Vendor\Step\ExperiencesDto;
 use App\DTO\Vendor\Step\ProfessionsDto;
 use App\DTO\Vendor\Step\VenueCharacteristicsDto;
@@ -21,8 +22,9 @@ readonly class VendorOnboardingStepService
         private EntityManagerInterface          $em,
         private ProfessionsStepService          $professionsStepService,
         private ExperiencesStepService          $experiencesStepService,
-        private VenueCharacteristicsStepService $venueCharacteristicsStepService,
-        private ValidatorInterface              $validator,
+        private VenueCharacteristicsStepService    $venueCharacteristicsStepService,
+        private CateringCharacteristicsStepService $cateringCharacteristicsStepService,
+        private ValidatorInterface                 $validator,
     ) {}
 
     public function handle(Vendor $vendor, VendorOnboardingStepRequest $dto): VendorOnboardingStepResponse
@@ -45,9 +47,12 @@ readonly class VendorOnboardingStepService
             ),
             OnboardingStep::VenueCharacteristics => $this->venueCharacteristicsStepService->handle(
                 $vendor,
-                VenueCharacteristicsDto::fromArray($data)
+                $this->validate(VenueCharacteristicsDto::fromArray($data))
             ),
-            OnboardingStep::CateringCharacteristics => null, // TODO — US-S3004
+            OnboardingStep::CateringCharacteristics => $this->cateringCharacteristicsStepService->handle(
+                $vendor,
+                $this->validate(CateringCharacteristicsDto::fromArray($data))
+            ),
             OnboardingStep::ZonesPricing            => null, // TODO
             OnboardingStep::Portfolio               => null, // TODO
             OnboardingStep::LegalInfo               => null, // TODO
@@ -72,23 +77,34 @@ readonly class VendorOnboardingStepService
         return $dto;
     }
 
+    /**
+     * Parcours stepper par type de prestataire :
+     *
+     * Lieu          : Professions → VenueCharacteristics → ZonesPricing → ...
+     * Traiteur      : Professions → Experiences → CateringCharacteristics → ZonesPricing → ...
+     * Indépendant   : Professions → Experiences → ZonesPricing → ...
+     */
     private function resolveNextStep(Vendor $vendor, OnboardingStep $step): ?OnboardingStep
     {
+        $slugs = array_map(
+            fn ($service) => $service->getSlug(),
+            $vendor->getServices()->toArray(),
+        );
+
         if ($step === OnboardingStep::Professions) {
-            $slugs = array_map(
-                fn ($service) => $service->getSlug(),
-                $vendor->getServices()->toArray(),
-            );
 
             if (in_array('lieu-de-reception', $slugs, true)) {
                 return OnboardingStep::VenueCharacteristics;
             }
 
+            return OnboardingStep::Experiences;
+        }
+
+        if ($step === OnboardingStep::Experiences) {
+
             if (in_array('traiteur', $slugs, true)) {
                 return OnboardingStep::CateringCharacteristics;
             }
-
-            return OnboardingStep::Experiences;
         }
 
         if ($step === OnboardingStep::VenueCharacteristics || $step === OnboardingStep::CateringCharacteristics) {

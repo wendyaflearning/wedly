@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Entity\Couple;
 
 use App\Doctrine\UuidV7Generator;
-use App\Entity\Trait\TimestampableTrait;
 use App\Entity\User\User;
 use App\Entity\Wedding\Wedding;
 use App\Enum\Couple\CoupleStatus;
+use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 

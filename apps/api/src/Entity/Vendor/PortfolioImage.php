@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
-use App\Entity\Trait\TimestampableTrait;
 use App\Entity\Wedding\WeddingStyle;
+use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;

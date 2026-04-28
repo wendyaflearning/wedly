@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Entity\User;
 
 use App\Doctrine\UuidV7Generator;
-use App\Entity\Trait\TimestampableTrait;
 use App\Enum\User\UserStatus;
 use App\Repository\User\UserRepository;
+use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
