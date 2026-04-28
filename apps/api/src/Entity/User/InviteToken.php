@@ -6,10 +6,10 @@ namespace App\Entity\User;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Couple\Couple;
-use App\Entity\Trait\TimestampableTrait;
 use App\Entity\Vendor\Vendor;
 use App\Enum\User\InviteTokenPersona;
 use App\Enum\User\InviteTokenStatus;
+use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 

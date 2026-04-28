@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Entity\BookingBlocker;
 
 use App\Doctrine\UuidV7Generator;
-use App\Entity\Trait\TimestampableTrait;
 use App\Entity\Vendor\Vendor;
+use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 

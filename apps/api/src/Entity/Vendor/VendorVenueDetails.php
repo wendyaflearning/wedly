@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
-use App\Entity\Trait\TimestampableTrait;
 use App\Enum\Vendor\VenueType;
+use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 

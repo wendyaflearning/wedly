@@ -7,8 +7,8 @@ namespace App\Entity\Subscription;
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Couple\Couple;
 use App\Entity\Plan\Plan;
-use App\Entity\Trait\TimestampableTrait;
 use App\Enum\Subscription\SubscriptionStatus;
+use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 

@@ -7,22 +7,20 @@ namespace App\Service\VendorOnboarding;
 use App\DTO\Vendor\Step\VenueCharacteristicsDto;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorVenueDetails;
+use App\Trait\Vendor\Onboarding\HasServiceSlugGuard;
 use Doctrine\ORM\EntityManagerInterface;
 
 readonly class VenueCharacteristicsStepService
 {
+    use HasServiceSlugGuard;
+
     public function __construct(
         private EntityManagerInterface $em,
     ) {}
 
     public function handle(Vendor $vendor, VenueCharacteristicsDto $venueDto): void
     {
-        $slugs = array_map(fn ($s) => $s->getSlug(), $vendor->getServices()->toArray());
-        if (!in_array('lieu-de-reception', $slugs, true)) {
-            throw new \DomainException('Cette étape est réservée aux lieux de réception.', 422);
-        }
-
-        $this->validateCapacityRange($venueDto);
+        $this->assertHasServiceSlug($vendor, 'lieu-de-reception', 'Cette étape est réservée aux lieux de réception.');
 
         $details = $vendor->getVenueDetails();
         $isNew   = $details === null;
@@ -81,16 +79,6 @@ readonly class VenueCharacteristicsStepService
 
         if ($isNew) {
             $this->em->persist($details);
-        }
-    }
-
-    private function validateCapacityRange(VenueCharacteristicsDto $venueDto): void
-    {
-        $min = $venueDto->capacityMin;
-        $max = $venueDto->capacityMax;
-
-        if ($min !== null && $max !== null && $min >= $max) {
-            throw new \DomainException('capacity_min doit être inférieur à capacity_max.', 422);
         }
     }
 }

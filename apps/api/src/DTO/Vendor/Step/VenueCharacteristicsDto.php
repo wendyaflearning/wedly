@@ -6,6 +6,8 @@ namespace App\DTO\Vendor\Step;
 
 use App\DTO\DTOInterface;
 use App\Enum\Vendor\VenueType;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 final readonly class VenueCharacteristicsDto implements DTOInterface
 {
@@ -41,5 +43,15 @@ final readonly class VenueCharacteristicsDto implements DTOInterface
             distanceToCityMinutes: array_key_exists('distance_to_city_minutes', $data)  ? $data['distance_to_city_minutes']  : null,
             nearestCity:           array_key_exists('nearest_city', $data)              ? $data['nearest_city']              : null,
         );
+    }
+
+    #[Assert\Callback]
+    public function validateCapacityRange(ExecutionContextInterface $context): void
+    {
+        if ($this->capacityMin !== null && $this->capacityMax !== null && $this->capacityMin >= $this->capacityMax) {
+            $context->buildViolation('capacity_min doit être inférieur à capacity_max.')
+                ->atPath('capacity_min')
+                ->addViolation();
+        }
     }
 }
