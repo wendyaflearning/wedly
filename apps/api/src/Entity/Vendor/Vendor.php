@@ -300,6 +300,12 @@ class Vendor
         return $this->services;
     }
 
+    /** @return string[] */
+    public function resolveVendorServices(): array
+    {
+        return array_map(fn($service) => $service->getSlug(), $this->services->toArray());
+    }
+
     public function addService(Service $service): static
     {
         if (!$this->services->contains($service)) {
@@ -382,6 +388,15 @@ class Vendor
     public function getRegions(): Collection
     {
         return $this->regions;
+    }
+
+    /** @param Region[] $regions */
+    public function syncZones(array $regions): void
+    {
+        $this->regions->clear();
+        foreach ($regions as $region) {
+            $this->regions->add($region);
+        }
     }
 
     public function addRegion(Region $region): static

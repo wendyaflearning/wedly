@@ -46,7 +46,6 @@ readonly class VendorOnboardingStepAction
 
                 return new JsonResponse(['errors' => $errors], 422);
             }
-
             $response = $this->stepService->handle($vendor, $dto);
 
             return new JsonResponse($response);

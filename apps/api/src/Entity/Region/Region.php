@@ -6,13 +6,14 @@ namespace App\Entity\Region;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Vendor\Vendor;
+use App\Repository\Region\RegionRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: RegionRepository::class)]
 #[ORM\Table(name: 'region')]
 #[ORM\HasLifecycleCallbacks]
 class Region
