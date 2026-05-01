@@ -10,8 +10,7 @@ trait HasServiceSlugGuard
 {
     private function assertHasServiceSlug(Vendor $vendor, string $slug, string $message): void
     {
-        $slugs = array_map(fn ($service) => $service->getSlug(), $vendor->getServices()->toArray());
-        if (!in_array($slug, $slugs, true)) {
+        if (!in_array($slug, $vendor->resolveVendorServices(), true)) {
             throw new \DomainException($message, 422);
         }
     }

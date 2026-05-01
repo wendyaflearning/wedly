@@ -6,9 +6,13 @@ namespace App\Service\VendorOnboarding;
 
 use App\DTO\DTOInterface;
 use App\DTO\Vendor\Step\CateringCharacteristicsDto;
+use App\Exception\ValidationException;
+use App\DTO\Vendor\Step\CateringPricingDto;
 use App\DTO\Vendor\Step\ExperiencesDto;
+use App\DTO\Vendor\Step\FreelancePricingDto;
 use App\DTO\Vendor\Step\ProfessionsDto;
 use App\DTO\Vendor\Step\VenueCharacteristicsDto;
+use App\DTO\Vendor\Step\VenuePricingDto;
 use App\DTO\Vendor\VendorOnboardingStepRequest;
 use App\DTO\Vendor\VendorOnboardingStepResponse;
 use App\Entity\Vendor\Vendor;
@@ -19,11 +23,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 readonly class VendorOnboardingStepService
 {
     public function __construct(
-        private EntityManagerInterface          $em,
-        private ProfessionsStepService          $professionsStepService,
-        private ExperiencesStepService          $experiencesStepService,
+        private EntityManagerInterface             $em,
+        private ProfessionsStepService             $professionsStepService,
+        private ExperiencesStepService             $experiencesStepService,
         private VenueCharacteristicsStepService    $venueCharacteristicsStepService,
         private CateringCharacteristicsStepService $cateringCharacteristicsStepService,
+        private ZonesPricingStepService            $zonesPricingStepService,
         private ValidatorInterface                 $validator,
     ) {}
 
@@ -53,7 +58,10 @@ readonly class VendorOnboardingStepService
                 $vendor,
                 $this->validate(CateringCharacteristicsDto::fromArray($data))
             ),
-            OnboardingStep::ZonesPricing            => null, // TODO
+            OnboardingStep::ZonesPricing => $this->zonesPricingStepService->handle(
+                $vendor,
+                $this->validate($this->resolveZonesPricingDto($vendor, $data))
+            ),
             OnboardingStep::Portfolio               => null, // TODO
             OnboardingStep::LegalInfo               => null, // TODO
             OnboardingStep::Credentials             => null, // TODO
@@ -68,11 +76,33 @@ readonly class VendorOnboardingStepService
         );
     }
 
+    private function resolveZonesPricingDto(Vendor $vendor, array $data): DTOInterface
+    {
+        $slugs = $vendor->resolveVendorServices();
+
+        if (in_array('lieu-de-reception', $slugs, true)) {
+            return VenuePricingDto::fromArray($data);
+        }
+
+        if (in_array('traiteur', $slugs, true)) {
+            return CateringPricingDto::fromArray($data);
+        }
+
+        return FreelancePricingDto::fromArray($data);
+    }
+
     private function validate(DTOInterface $dto): DTOInterface
     {
         $errors = $this->validator->validate($dto);
         if (count($errors) > 0) {
-            throw new \DomainException($errors->get(0)->getMessage(), 422);
+            $violations = [];
+            foreach ($errors as $error) {
+                $violations[] = [
+                    'field'   => $error->getPropertyPath(),
+                    'message' => $error->getMessage(),
+                ];
+            }
+            throw new ValidationException($violations);
         }
         return $dto;
     }
@@ -86,10 +116,7 @@ readonly class VendorOnboardingStepService
      */
     private function resolveNextStep(Vendor $vendor, OnboardingStep $step): ?OnboardingStep
     {
-        $slugs = array_map(
-            fn ($service) => $service->getSlug(),
-            $vendor->getServices()->toArray(),
-        );
+        $slugs = $vendor->resolveVendorServices();
 
         if ($step === OnboardingStep::Professions) {
 

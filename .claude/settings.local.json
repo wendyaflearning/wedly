@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(yt-dlp *)"
+      "Bash(yt-dlp *)",
+      "Bash(php -l src/Exception/ValidationException.php)",
+      "Bash(php -l src/EventListener/ExceptionListener.php)",
+      "Bash(php -l src/Service/VendorOnboarding/VendorOnboardingStepService.php)"
     ]
   }
 }
