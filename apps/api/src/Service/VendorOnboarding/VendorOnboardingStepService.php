@@ -17,6 +17,8 @@ use App\DTO\Vendor\VendorOnboardingStepRequest;
 use App\DTO\Vendor\VendorOnboardingStepResponse;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
+use App\Enum\Vendor\VendorType;
+use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -29,6 +31,7 @@ readonly class VendorOnboardingStepService
         private VenueCharacteristicsStepService    $venueCharacteristicsStepService,
         private CateringCharacteristicsStepService $cateringCharacteristicsStepService,
         private ZonesPricingStepService            $zonesPricingStepService,
+        private OnboardingStepResolver             $resolver,
         private ValidatorInterface                 $validator,
     ) {}
 
@@ -39,7 +42,8 @@ readonly class VendorOnboardingStepService
             throw new \DomainException(sprintf('Étape inconnue : %s', $dto->step), 422);
         }
 
-        $data = $dto->data ?? [];
+        $data     = $dto->data ?? [];
+        $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
 
         match ($step) {
             OnboardingStep::Professions => $this->professionsStepService->handle(
@@ -60,7 +64,7 @@ readonly class VendorOnboardingStepService
             ),
             OnboardingStep::ZonesPricing => $this->zonesPricingStepService->handle(
                 $vendor,
-                $this->validate($this->resolveZonesPricingDto($vendor, $data))
+                $this->validate($this->resolveZonesPricingDto($vendorType, $data))
             ),
             OnboardingStep::Portfolio               => null, // TODO
             OnboardingStep::LegalInfo               => null, // TODO
@@ -70,25 +74,22 @@ readonly class VendorOnboardingStepService
         $vendor->setOnboardingStep($step);
         $this->em->flush();
 
+        $steps = $this->resolver->getOnboardingSteps($vendorType);
+        $idx   = array_search($step, $steps, true);
+
         return new VendorOnboardingStepResponse(
-            next:      $this->resolveNextStep($vendor, $step),
-            completed: array_slice(OnboardingStep::cases(), 0, array_search($step, OnboardingStep::cases(), true) + 1),
+            next:      $this->resolver->resolveNextStep($vendorType, $step),
+            completed: array_slice($steps, 0, $idx + 1),
         );
     }
 
-    private function resolveZonesPricingDto(Vendor $vendor, array $data): DTOInterface
+    private function resolveZonesPricingDto(VendorType $vendorType, array $data): DTOInterface
     {
-        $slugs = $vendor->resolveVendorServices();
-
-        if (in_array('lieu-de-reception', $slugs, true)) {
-            return VenuePricingDto::fromArray($data);
-        }
-
-        if (in_array('traiteur', $slugs, true)) {
-            return CateringPricingDto::fromArray($data);
-        }
-
-        return FreelancePricingDto::fromArray($data);
+        return match ($vendorType) {
+            VendorType::Lieu      => VenuePricingDto::fromArray($data),
+            VendorType::Traiteur  => CateringPricingDto::fromArray($data),
+            VendorType::Freelance => FreelancePricingDto::fromArray($data),
+        };
     }
 
     private function validate(DTOInterface $dto): DTOInterface
@@ -107,40 +108,4 @@ readonly class VendorOnboardingStepService
         return $dto;
     }
 
-    /**
-     * Parcours stepper par type de prestataire :
-     *
-     * Lieu          : Professions → VenueCharacteristics → ZonesPricing → ...
-     * Traiteur      : Professions → Experiences → CateringCharacteristics → ZonesPricing → ...
-     * Indépendant   : Professions → Experiences → ZonesPricing → ...
-     */
-    private function resolveNextStep(Vendor $vendor, OnboardingStep $step): ?OnboardingStep
-    {
-        $slugs = $vendor->resolveVendorServices();
-
-        if ($step === OnboardingStep::Professions) {
-
-            if (in_array('lieu-de-reception', $slugs, true)) {
-                return OnboardingStep::VenueCharacteristics;
-            }
-
-            return OnboardingStep::Experiences;
-        }
-
-        if ($step === OnboardingStep::Experiences) {
-
-            if (in_array('traiteur', $slugs, true)) {
-                return OnboardingStep::CateringCharacteristics;
-            }
-        }
-
-        if ($step === OnboardingStep::VenueCharacteristics || $step === OnboardingStep::CateringCharacteristics) {
-            return OnboardingStep::ZonesPricing;
-        }
-
-        $steps = OnboardingStep::cases();
-        $idx   = array_search($step, $steps, true);
-
-        return $steps[$idx + 1] ?? null;
-    }
 }
