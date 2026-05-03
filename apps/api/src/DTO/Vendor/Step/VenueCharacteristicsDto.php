@@ -30,7 +30,7 @@ final readonly class VenueCharacteristicsDto implements DTOInterface
         return new self(
             venueType: array_key_exists('venue_type', $data)
                 ? (VenueType::tryFrom($data['venue_type'])
-                    ?? throw new \InvalidArgumentException(sprintf('Type de lieu invalide : %s', $data['venue_type'])))
+                    ?? throw new \DomainException(sprintf('Type de lieu invalide : %s', $data['venue_type']), 422))
                 : null,
             capacityMin:           array_key_exists('capacity_min', $data)              ? $data['capacity_min']              : null,
             capacityMax:           array_key_exists('capacity_max', $data)              ? $data['capacity_max']              : null,
@@ -51,6 +51,25 @@ final readonly class VenueCharacteristicsDto implements DTOInterface
         if ($this->capacityMin !== null && $this->capacityMax !== null && $this->capacityMin >= $this->capacityMax) {
             $context->buildViolation('capacity_min doit être inférieur à capacity_max.')
                 ->atPath('capacity_min')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
+    public function validateCityFields(ExecutionContextInterface $context): void
+    {
+        $hasCity     = $this->nearestCity !== null;
+        $hasDistance = $this->distanceToCityMinutes !== null;
+
+        if ($hasCity && !$hasDistance) {
+            $context->buildViolation('distance_to_city_minutes est requis si nearest_city est fourni.')
+                ->atPath('distance_to_city_minutes')
+                ->addViolation();
+        }
+
+        if ($hasDistance && !$hasCity) {
+            $context->buildViolation('nearest_city est requis si distance_to_city_minutes est fourni.')
+                ->atPath('nearest_city')
                 ->addViolation();
         }
     }

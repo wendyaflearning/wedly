@@ -8,4 +8,5 @@ enum CultureType: string
 {
     case Continent = 'continent';
     case Country   = 'country';
+    case Autre     = 'autre';
 }

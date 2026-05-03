@@ -8,6 +8,7 @@ use App\DTO\Vendor\Step\ExperiencesDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Vendor;
+use App\Enum\Vendor\VendorType;
 use Doctrine\ORM\EntityManagerInterface;
 
 readonly class ExperiencesStepService
@@ -18,6 +19,17 @@ readonly class ExperiencesStepService
 
     public function handle(Vendor $vendor, ExperiencesDto $experiencesDto): void
     {
+        $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
+
+        if ($vendorType !== VendorType::Lieu) {
+            if (empty($experiencesDto->cultureIds)) {
+                throw new \DomainException('Le champ culture_ids doit contenir au moins un élément.', 422);
+            }
+            if (empty($experiencesDto->confessionIds)) {
+                throw new \DomainException('Le champ confession_ids doit contenir au moins un élément.', 422);
+            }
+        }
+
         if ($experiencesDto->cultureIds !== null) {
             $cultures = [];
             foreach ($experiencesDto->cultureIds as $id) {
