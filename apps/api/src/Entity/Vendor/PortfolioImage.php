@@ -6,13 +6,14 @@ namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Wedding\WeddingStyle;
+use App\Repository\Vendor\PortfolioImageRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: PortfolioImageRepository::class)]
 #[ORM\Table(name: 'portfolio_image')]
 #[ORM\HasLifecycleCallbacks]
 class PortfolioImage
@@ -32,8 +33,11 @@ class PortfolioImage
     #[ORM\Column(name: 'url', length: 255)]
     private string $url;
 
-    #[ORM\Column(name: 'sort_seq', type: 'integer')]
-    private int $sortSeq;
+    #[ORM\Column(name: 'sort_order', type: 'integer')]
+    private int $sortOrder;
+
+    #[ORM\Column(name: 'cloudinary_public_id', length: 255, nullable: true)]
+    private ?string $cloudinaryPublicId = null;
 
     #[ORM\Column(name: 'is_cover', type: 'boolean')]
     private bool $isCover = false;
@@ -80,14 +84,26 @@ class PortfolioImage
         return $this;
     }
 
-    public function getSortSeq(): int
+    public function getSortOrder(): int
     {
-        return $this->sortSeq;
+        return $this->sortOrder;
     }
 
-    public function setSortSeq(int $sortSeq): static
+    public function setSortOrder(int $sortOrder): static
     {
-        $this->sortSeq = $sortSeq;
+        $this->sortOrder = $sortOrder;
+
+        return $this;
+    }
+
+    public function getCloudinaryPublicId(): ?string
+    {
+        return $this->cloudinaryPublicId;
+    }
+
+    public function setCloudinaryPublicId(?string $cloudinaryPublicId): static
+    {
+        $this->cloudinaryPublicId = $cloudinaryPublicId;
 
         return $this;
     }
