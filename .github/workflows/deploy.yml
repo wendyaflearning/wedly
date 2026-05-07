@@ -6,6 +6,8 @@ on:
     paths:
       - 'apps/api/**'
       - '.github/workflows/**'
+      - 'composer.json'
+      - 'composer.lock'
 
 jobs:
   deploy:
