@@ -57,7 +57,7 @@ final readonly class VendorInviteTokenData
                 fn(PortfolioImage $img) => [
                     'id'       => $img->getId()->toRfc4122(),
                     'url'      => $img->getUrl(),
-                    'sort_seq' => $img->getSortSeq(),
+                    'sort_order' => $img->getSortOrder(),
                     'is_cover' => $img->isCover(),
                 ],
                 $vendor->getPortfolioImages()->toArray()
