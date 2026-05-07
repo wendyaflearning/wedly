@@ -43,6 +43,7 @@ RUN docker-php-ext-install \
     curl \
     intl \
     zip
+COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 # Composer binary (useful for bin/console and one-off commands in the container)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
