@@ -39,17 +39,27 @@ jobs:
           context: apps/api
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/wedly-api:latest
-          build-args: |
-            APP_SECRET=${{ secrets.APP_SECRET }}
 
-      - name: Deploy on VPS
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Write .env.wedly on VPS
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519_hostinger
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_ed25519_hostinger
           chmod 600 ~/.ssh/id_ed25519_hostinger
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/.env.wedly << 'EOF'
+          APP_ENV=prod
+          APP_SECRET=${{ secrets.APP_SECRET }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          JWT_SECRET_KEY=/var/www/html/config/jwt/private.pem
+          JWT_PUBLIC_KEY=/var/www/html/config/jwt/public.pem
+          JWT_PASSPHRASE=
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          EOF"
+
+      - name: Deploy on VPS
+        run: |
           ssh -i ~/.ssh/id_ed25519_hostinger ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
             cd /root && \
             docker compose pull symfony && \
