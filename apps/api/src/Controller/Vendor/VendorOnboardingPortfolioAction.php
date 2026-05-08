@@ -6,7 +6,7 @@ namespace App\Controller\Vendor;
 
 use App\DTO\Vendor\Step\PortfolioStepRequest;
 use App\Service\InviteTokenService;
-use App\Service\VendorOnboarding\PortfolioStepService;
+use App\Service\Vendor\Onboarding\PortfolioStepService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service\VendorOnboarding;
+namespace App\Service\Vendor\Onboarding;
 
 use App\DTO\DTOInterface;
 use App\DTO\Vendor\Step\CateringPricingDto;

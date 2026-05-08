@@ -50,7 +50,7 @@ readonly class VendorOnboardingStepAction
             $response = $this->stepService->handle($vendor, $dto);
 
             if ($response === null) {
-                return new Response(null, Response::HTTP_NO_CONTENT);
+                return new JsonResponse(null, Response::HTTP_NO_CONTENT);
             }
 
             return new JsonResponse($response);
