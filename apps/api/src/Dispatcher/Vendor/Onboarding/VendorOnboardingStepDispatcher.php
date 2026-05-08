@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Service\VendorOnboarding;
+namespace App\Dispatcher\Vendor\Onboarding;
 
 use App\DTO\DTOInterface;
 use App\DTO\Vendor\Step\CateringCharacteristicsDto;
-use App\Exception\ValidationException;
 use App\DTO\Vendor\Step\CateringPricingDto;
 use App\DTO\Vendor\Step\ExperiencesDto;
 use App\DTO\Vendor\Step\FreelancePricingDto;
@@ -18,12 +17,20 @@ use App\DTO\Vendor\VendorOnboardingStepResponse;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
+use App\Exception\ValidationException;
 use App\Resolver\Vendor\OnboardingStepResolver;
+use App\Service\VendorOnboarding\CateringCharacteristicsStepService;
+use App\Service\VendorOnboarding\ExperiencesStepService;
+use App\Service\VendorOnboarding\ProfessionsStepService;
+use App\Service\VendorOnboarding\VenueCharacteristicsStepService;
+use App\Service\VendorOnboarding\ZonesPricingStepService;
+use App\Vendor\Onboarding\Request\LegalInfoStepRequest;
+use App\Vendor\Onboarding\Service\LegalInfoStepService;
 use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class VendorOnboardingStepService
+readonly class VendorOnboardingStepDispatcher
 {
     public function __construct(
         private EntityManagerInterface             $em,
@@ -32,6 +39,7 @@ readonly class VendorOnboardingStepService
         private VenueCharacteristicsStepService    $venueCharacteristicsStepService,
         private CateringCharacteristicsStepService $cateringCharacteristicsStepService,
         private ZonesPricingStepService            $zonesPricingStepService,
+        private LegalInfoStepService               $legalInfoStepService,
         private OnboardingStepResolver             $resolver,
         private ValidatorInterface                 $validator,
     ) {}
@@ -43,7 +51,7 @@ readonly class VendorOnboardingStepService
             throw new \DomainException(sprintf('Étape inconnue : %s', $dto->step), 422);
         }
 
-        $data     = $dto->data ?? [];
+        $data       = $dto->data ?? [];
         $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
 
         match ($step) {
@@ -71,8 +79,11 @@ readonly class VendorOnboardingStepService
                 'Cette étape utilise un endpoint dédié (/portfolio). Utilisez le bon endpoint.',
                 400
             ),
-            OnboardingStep::LegalInfo               => null, // TODO
-            OnboardingStep::Credentials             => null, // TODO
+            OnboardingStep::LegalInfo => $this->legalInfoStepService->handle(
+                $vendor,
+                $this->validate(LegalInfoStepRequest::fromArray($data))
+            ),
+            OnboardingStep::Credentials => null, // TODO
         };
 
         $vendor->setOnboardingStep($step);
@@ -109,7 +120,7 @@ readonly class VendorOnboardingStepService
             }
             throw new ValidationException($violations);
         }
+
         return $dto;
     }
-
 }

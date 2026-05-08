@@ -57,6 +57,21 @@ class Vendor
     #[ORM\Column(name: 'phone', length: 20, nullable: true)]
     private ?string $phone = null;
 
+    #[ORM\Column(name: 'legal_name', length: 255, nullable: true)]
+    private ?string $legalName = null;
+
+    #[ORM\Column(name: 'legal_form', length: 100, nullable: true)]
+    private ?string $legalForm = null;
+
+    #[ORM\Column(name: 'incorporated_at', type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $incorporatedAt = null;
+
+    #[ORM\Column(name: 'legal_status', length: 50, nullable: true)]
+    private ?string $legalStatus = null;
+
+    #[ORM\Column(name: 'siret_verified', type: 'boolean', options: ['default' => false])]
+    private bool $siretVerified = false;
+
     #[ORM\Column(name: 'price_type', type: 'string', enumType: PriceType::class)]
     private PriceType $priceType;
 
@@ -231,6 +246,66 @@ class Vendor
     public function setPhone(?string $phone): static
     {
         $this->phone = $phone;
+
+        return $this;
+    }
+
+    public function getLegalName(): ?string
+    {
+        return $this->legalName;
+    }
+
+    public function setLegalName(?string $legalName): static
+    {
+        $this->legalName = $legalName;
+
+        return $this;
+    }
+
+    public function getLegalForm(): ?string
+    {
+        return $this->legalForm;
+    }
+
+    public function setLegalForm(?string $legalForm): static
+    {
+        $this->legalForm = $legalForm;
+
+        return $this;
+    }
+
+    public function getIncorporatedAt(): ?\DateTimeImmutable
+    {
+        return $this->incorporatedAt;
+    }
+
+    public function setIncorporatedAt(?\DateTimeImmutable $incorporatedAt): static
+    {
+        $this->incorporatedAt = $incorporatedAt;
+
+        return $this;
+    }
+
+    public function getLegalStatus(): ?string
+    {
+        return $this->legalStatus;
+    }
+
+    public function setLegalStatus(?string $legalStatus): static
+    {
+        $this->legalStatus = $legalStatus;
+
+        return $this;
+    }
+
+    public function isSiretVerified(): bool
+    {
+        return $this->siretVerified;
+    }
+
+    public function setSiretVerified(bool $siretVerified): static
+    {
+        $this->siretVerified = $siretVerified;
 
         return $this;
     }
