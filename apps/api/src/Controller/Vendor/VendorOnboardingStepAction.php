@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor;
 
+use App\Dispatcher\Vendor\Onboarding\VendorOnboardingStepDispatcher;
 use App\DTO\Vendor\VendorOnboardingStepRequest;
 use App\Service\InviteTokenService;
-use App\Service\VendorOnboarding\VendorOnboardingStepService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -17,7 +17,7 @@ readonly class VendorOnboardingStepAction
     public function __construct(
         private InviteTokenService $inviteTokenService,
         private ValidatorInterface $validator,
-        private VendorOnboardingStepService $stepService,
+        private VendorOnboardingStepDispatcher $stepService,
     ) {}
 
     #[Route('/api/v1/vendors/onboarding/{token}', name: 'api_vendor_onboarding_step', methods: ['PATCH'])]

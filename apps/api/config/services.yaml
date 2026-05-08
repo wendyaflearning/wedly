@@ -26,3 +26,8 @@ services:
     Cloudinary\Cloudinary:
         factory: ['App\Factory\CloudinaryFactory', 'create']
         arguments: []
+
+    App\Integration\Pappers\PappersService:
+        arguments:
+            $client: '@pappers.client'
+            $apiToken: '%env(PAPPERS_API_TOKEN)%'
