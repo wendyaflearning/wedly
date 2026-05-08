@@ -32,7 +32,6 @@ readonly class PappersService
             }
 
             $data = $response->toArray();
-            dd($data);
 
             return [
                 'legal_name'      => $data['nom_entreprise'] ?? null,
