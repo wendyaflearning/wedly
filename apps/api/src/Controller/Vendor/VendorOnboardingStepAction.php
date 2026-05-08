@@ -9,6 +9,7 @@ use App\DTO\Vendor\VendorOnboardingStepRequest;
 use App\Service\InviteTokenService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -47,6 +48,10 @@ readonly class VendorOnboardingStepAction
                 return new JsonResponse(['errors' => $errors], 422);
             }
             $response = $this->stepService->handle($vendor, $dto);
+
+            if ($response === null) {
+                return new Response(null, Response::HTTP_NO_CONTENT);
+            }
 
             return new JsonResponse($response);
         } catch (\DomainException $e) {

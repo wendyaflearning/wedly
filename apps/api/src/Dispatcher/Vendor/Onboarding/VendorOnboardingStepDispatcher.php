@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Dispatcher\Vendor\Onboarding;
 
 use App\DTO\DTOInterface;
+use App\DTO\Vendor\Onboarding\CredentialsStepRequest;
 use App\DTO\Vendor\Step\CateringCharacteristicsDto;
 use App\DTO\Vendor\Step\CateringPricingDto;
 use App\DTO\Vendor\Step\ExperiencesDto;
@@ -19,6 +20,7 @@ use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Exception\ValidationException;
 use App\Resolver\Vendor\OnboardingStepResolver;
+use App\Service\Vendor\Onboarding\CredentialsStepService;
 use App\Service\VendorOnboarding\CateringCharacteristicsStepService;
 use App\Service\VendorOnboarding\ExperiencesStepService;
 use App\Service\VendorOnboarding\ProfessionsStepService;
@@ -40,11 +42,12 @@ readonly class VendorOnboardingStepDispatcher
         private CateringCharacteristicsStepService $cateringCharacteristicsStepService,
         private ZonesPricingStepService            $zonesPricingStepService,
         private LegalInfoStepService               $legalInfoStepService,
+        private CredentialsStepService             $credentialsStepService,
         private OnboardingStepResolver             $resolver,
         private ValidatorInterface                 $validator,
     ) {}
 
-    public function handle(Vendor $vendor, VendorOnboardingStepRequest $dto): VendorOnboardingStepResponse
+    public function handle(Vendor $vendor, VendorOnboardingStepRequest $dto): ?VendorOnboardingStepResponse
     {
         $step = OnboardingStep::tryFrom($dto->step);
         if ($step === null) {
@@ -83,11 +86,18 @@ readonly class VendorOnboardingStepDispatcher
                 $vendor,
                 $this->validate(LegalInfoStepRequest::fromArray($data))
             ),
-            OnboardingStep::Credentials => null, // TODO
+            OnboardingStep::Credentials => $this->credentialsStepService->handle(
+                $vendor,
+                $this->validate(CredentialsStepRequest::fromArray($data))
+            ),
         };
 
         $vendor->setOnboardingStep($step);
         $this->em->flush();
+
+        if ($step === OnboardingStep::Credentials) {
+            return null;
+        }
 
         $steps = $this->resolver->getOnboardingSteps($vendorType);
         $idx   = array_search($step, $steps, true);
