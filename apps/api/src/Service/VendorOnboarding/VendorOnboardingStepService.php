@@ -20,6 +20,7 @@ use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
+use DomainException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 readonly class VendorOnboardingStepService
@@ -66,7 +67,10 @@ readonly class VendorOnboardingStepService
                 $vendor,
                 $this->validate($this->resolveZonesPricingDto($vendorType, $data))
             ),
-            OnboardingStep::Portfolio               => null, // TODO
+            OnboardingStep::Portfolio => throw new DomainException(
+                'Cette étape utilise un endpoint dédié (/portfolio). Utilisez le bon endpoint.',
+                400
+            ),
             OnboardingStep::LegalInfo               => null, // TODO
             OnboardingStep::Credentials             => null, // TODO
         };
