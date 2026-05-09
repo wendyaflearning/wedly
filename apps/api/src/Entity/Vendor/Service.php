@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
+use App\Enum\Vendor\VendorType;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -32,6 +33,9 @@ class Service
 
     #[ORM\Column(name: 'sort_order', type: 'integer')]
     private int $sortOrder;
+
+    #[ORM\Column(name: 'category', type: 'string', enumType: VendorType::class, length: 20)]
+    private VendorType $category;
 
     #[ORM\ManyToOne(targetEntity: Service::class, inversedBy: 'children')]
     #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', nullable: true)]
@@ -82,6 +86,18 @@ class Service
     public function setSortOrder(int $sortOrder): static
     {
         $this->sortOrder = $sortOrder;
+
+        return $this;
+    }
+
+    public function getCategory(): VendorType
+    {
+        return $this->category;
+    }
+
+    public function setCategory(VendorType $category): static
+    {
+        $this->category = $category;
 
         return $this;
     }
