@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import type { OnboardingData } from './types'
+import type { OnboardingOverviewData } from './types'
 import OnboardingClient from './OnboardingClient'
 
 export default async function OnboardingPage({
@@ -13,6 +13,6 @@ export default async function OnboardingPage({
     { cache: 'no-store' },
   )
   if (!res.ok) redirect('/not-found')
-  const data: OnboardingData = await res.json()
+  const data: OnboardingOverviewData = await res.json()
   return <OnboardingClient data={data} token={token} />
 }

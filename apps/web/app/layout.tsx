@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Cormorant_Garamond, Josefin_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -15,6 +15,12 @@ const manrope = Manrope({
   weight: ["400", "500", "600"],
 });
 
+const josefin = Josefin_Sans({
+  variable: "--font-josefin-var",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
 export const metadata: Metadata = {
   title: "Wedly",
   description: "La plateforme d'organisation de mariage",
@@ -28,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${cormorant.variable} ${manrope.variable} bg-creme`}
+      className={`${cormorant.variable} ${manrope.variable} ${josefin.variable} bg-creme`}
     >
       <body className="font-manrope text-texte min-h-full">{children}</body>
     </html>

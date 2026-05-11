@@ -10,6 +10,7 @@
 
   --font-cormorant: var(--font-cormorant-var);
   --font-manrope: var(--font-manrope-var);
+  --font-josefin: var(--font-josefin-var);
 }
 
 @keyframes float {

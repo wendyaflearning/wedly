@@ -1,26 +1,26 @@
 'use client'
 import { useState } from 'react'
-import type { OnboardingData } from './types'
+import type { OnboardingOverviewData } from './types'
 import WelcomeScreen from './WelcomeScreen'
-import Dashboard from './Dashboard'
+import OnboardingOverview from './OnboardingOverview'
 
 export default function OnboardingClient({
   data,
   token,
 }: {
-  data: OnboardingData
+  data: OnboardingOverviewData
   token: string
 }) {
-  const [screen, setScreen] = useState<'welcome' | 'dashboard'>('welcome')
+  const [screen, setScreen] = useState<'welcome' | 'onboarding_overview'>('welcome')
 
   if (screen === 'welcome') {
     return (
       <WelcomeScreen
         firstname={data.firstname}
-        onContinue={() => setScreen('dashboard')}
+        onContinue={() => setScreen('onboarding_overview')}
       />
     )
   }
 
-  return <Dashboard data={data} token={token} />
+  return <OnboardingOverview data={data} token={token} />
 }
