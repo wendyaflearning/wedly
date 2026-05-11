@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor;
 
+use App\Enum\Vendor\OnboardingStep;
+use App\Enum\Vendor\VendorType;
+use App\Resolver\Vendor\OnboardingStepResolver;
 use App\Service\InviteTokenService;
-use App\Vendor\DTO\Response\OnboardingDataResponse;
+use App\Vendor\DTO\Response\OnboardingRecapResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -13,7 +16,8 @@ use Symfony\Component\Routing\Attribute\Route;
 readonly class GetOnboardingStepAction
 {
     public function __construct(
-        private InviteTokenService $inviteTokenService,
+        private InviteTokenService    $inviteTokenService,
+        private OnboardingStepResolver $onboardingStepResolver,
     ) {}
 
     public function __invoke(string $token): JsonResponse
@@ -26,7 +30,20 @@ readonly class GetOnboardingStepAction
                 return new JsonResponse(['error' => 'Aucun prestataire associé à ce token'], 404);
             }
 
-            return new JsonResponse(OnboardingDataResponse::fromVendor($vendor));
+            $slugs = $vendor->resolveVendorServices();
+            if (empty($slugs)) {
+                return new JsonResponse(['error' => 'Type de prestataire non déterminable'], 422);
+            }
+
+            $vendorType  = VendorType::resolveVendorType($slugs);
+            $currentStep = $vendor->getOnboardingStep() ?? OnboardingStep::Professions;
+
+            $steps = $this->onboardingStepResolver->resolveAllSteps($vendorType, $currentStep);
+
+            return new JsonResponse(new OnboardingRecapResponse(
+                firstname: $vendor->getUser()->getFirstName(),
+                steps:     $steps,
+            ));
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
         }
