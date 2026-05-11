@@ -8,7 +8,8 @@
       "Bash(php bin/console doctrine:schema:validate)",
       "Bash(php *)",
       "Bash(npx create-next-app@latest *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(npm run *)"
     ]
   }
 }

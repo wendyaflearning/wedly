@@ -26,28 +26,16 @@ export interface CateringDetails {
   is_provide_furniture: boolean | null
 }
 
-export interface OnboardingData {
+
+export interface OnboardingStep {
+  stepKey: string
+  label: string
+  order: number
+  status: 'pending' | 'current' | 'completed'
+  isPreFilled: boolean
+}
+
+export interface OnboardingOverviewData {
   firstname: string
-  onboarding_step: string | null
-  vendor_category: 'freelance' | 'lieu' | 'traiteur' | null
-  services: string[]
-  confessions: string[]
-  cultures: string[]
-  zones: string[]
-  price_min: number
-  price_max: number
-  price_type: string
-  portfolio: {
-    cover: string | null
-    images: string[]
-  }
-  legal_information: {
-    brand_name: string | null
-    phone: string | null
-    address: string | null
-    siret: string | null
-  }
-  email: string
-  venue_details: VenueDetails | null
-  catering_details: CateringDetails | null
+  steps: OnboardingStep[]
 }
