@@ -11,7 +11,7 @@ export default function WelcomeScreen({
     <div className="min-h-screen bg-creme grid place-items-center px-6">
       <div className="flex flex-col items-center gap-10 w-full max-w-lg">
         {/* Logo */}
-        <img src="/logo.png" alt="Wedly" className="h-28 w-auto block mx-auto" />
+        <img src="/logo.png" alt="Wedly logo" className="h-28 w-auto block mx-auto" />
 
         {/* Icône anneaux */}
         <div

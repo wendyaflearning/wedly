@@ -17,7 +17,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: "Wedly",
-  description: "La plateforme de planification de mariage",
+  description: "La plateforme d'organisation de mariage",
 };
 
 export default function RootLayout({
