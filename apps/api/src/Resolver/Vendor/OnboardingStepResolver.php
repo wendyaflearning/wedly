@@ -6,6 +6,7 @@ namespace App\Resolver\Vendor;
 
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
+use App\Vendor\DTO\Response\OnboardingStepResponse;
 
 readonly class OnboardingStepResolver
 {
@@ -47,5 +48,31 @@ readonly class OnboardingStepResolver
         $indexStep   = array_search($current, $steps, true);
 
         return $steps[$indexStep + 1] ?? null;
+    }
+
+    /** @return array<OnboardingStepResponse> */
+    public function resolveAllSteps(VendorType $vendorType, OnboardingStep $currentStep): array
+    {
+        $steps        = $this->getOnboardingSteps($vendorType);
+        $currentIndex = array_search($currentStep, $steps, true);
+
+        $result = [];
+        foreach ($steps as $index => $step) {
+            $status = match (true) {
+                $index < $currentIndex  => 'completed',
+                $index === $currentIndex => 'current',
+                default                 => 'pending',
+            };
+
+            $result[] = new OnboardingStepResponse(
+                stepKey:     $step->value,
+                label:       $step->label($vendorType),
+                order:       $index + 1,
+                status:      $status,
+                isPreFilled: $step === OnboardingStep::Professions,
+            );
+        }
+
+        return $result;
     }
 }
