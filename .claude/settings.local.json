@@ -6,7 +6,9 @@
       "Bash(php -l src/EventListener/ExceptionListener.php)",
       "Bash(php -l src/Service/VendorOnboarding/VendorOnboardingStepService.php)",
       "Bash(php bin/console doctrine:schema:validate)",
-      "Bash(php *)"
+      "Bash(php *)",
+      "Bash(npx create-next-app@latest *)",
+      "Bash(curl *)"
     ]
   }
 }

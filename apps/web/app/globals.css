@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-creme: #FFF6ED;
+  --color-bordeaux: #4E1A32;
+  --color-texte: #291A10;
+  --color-accent: #9D4F1E;
+  --color-highlight: #E35704;
+  --color-gris: #9E8E85;
+
+  --font-cormorant: var(--font-cormorant-var);
+  --font-manrope: var(--font-manrope-var);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
