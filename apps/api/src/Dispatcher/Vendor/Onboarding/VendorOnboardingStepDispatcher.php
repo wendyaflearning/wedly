@@ -99,13 +99,33 @@ readonly class VendorOnboardingStepDispatcher
             return null;
         }
 
-        $steps = $this->resolver->getOnboardingSteps($vendorType);
-        $idx   = array_search($step, $steps, true);
+        $steps     = $this->resolver->getOnboardingSteps($vendorType);
+        $idx       = array_search($step, $steps, true);
+        $completed = array_slice($steps, 0, $idx + 1);
+        $stepsData = $this->buildStepsData($vendor, $completed);
 
         return new VendorOnboardingStepResponse(
             next:      $this->resolver->resolveNextStep($vendorType, $step),
-            completed: array_slice($steps, 0, $idx + 1),
+            completed: $completed,
+            stepsData: $stepsData,
         );
+    }
+
+    private function buildStepsData(Vendor $vendor, array $completedSteps): array
+    {
+        $data = [];
+        foreach ($completedSteps as $completedStep) {
+            $data[$completedStep->value] = match ($completedStep) {
+                OnboardingStep::Professions => [
+                    'services' => $vendor->getServices()
+                        ->map(fn($service) => ['id' => $service->getId()->toString(), 'name' => $service->getName()])
+                        ->toArray(),
+                ],
+                default => [],
+            };
+        }
+
+        return $data;
     }
 
     private function resolveZonesPricingDto(VendorType $vendorType, array $data): DTOInterface
