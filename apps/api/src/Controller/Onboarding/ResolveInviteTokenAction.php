@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller\Onboarding;
 
-use App\DTO\Onboarding\CoupleInviteTokenData;
-use App\DTO\Onboarding\InviteTokenResponse;
-use App\DTO\Onboarding\VendorInviteTokenData;
+use App\DTO\Onboarding\CoupleInviteTokenDataDto;
+use App\DTO\Onboarding\InviteTokenResponseDto;
+use App\DTO\Onboarding\VendorInviteTokenDataDto;
 use App\Enum\User\InviteTokenPersona;
 use App\Service\InviteTokenService;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,15 +25,15 @@ readonly class ResolveInviteTokenAction
             $inviteToken = $this->inviteTokenService->resolve($token);
 
             $data = match ($inviteToken->getPersona()) {
-                InviteTokenPersona::Vendor => new VendorInviteTokenData(
+                InviteTokenPersona::Vendor => new VendorInviteTokenDataDto(
                     $inviteToken->getVendor() ?? throw new \DomainException('Aucun prestataire associé à ce token', 422)
                 ),
-                InviteTokenPersona::Couple => new CoupleInviteTokenData(
+                InviteTokenPersona::Couple => new CoupleInviteTokenDataDto(
                     $inviteToken->getCouple() ?? throw new \DomainException('Aucun couple associé à ce token', 422)
                 ),
             };
 
-            return new JsonResponse(new InviteTokenResponse($inviteToken->getPersona()->value, $data->data));
+            return new JsonResponse(new InviteTokenResponseDto($inviteToken->getPersona()->value, $data->data));
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
         }

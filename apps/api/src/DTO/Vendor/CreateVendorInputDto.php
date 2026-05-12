@@ -7,7 +7,7 @@ namespace App\DTO\Vendor;
 use App\Enum\Vendor\PriceType;
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class CreateVendorInput
+final readonly class CreateVendorInputDto
 {
     public function __construct(
         #[Assert\NotBlank]

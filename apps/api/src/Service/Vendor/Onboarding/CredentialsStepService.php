@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Vendor\Onboarding;
 
-use App\DTO\Vendor\Onboarding\CredentialsStepRequest;
+use App\DTO\Vendor\Onboarding\CredentialsStepRequestDto;
 use App\Entity\Vendor\Vendor;
 use App\Enum\User\UserStatus;
 use App\Enum\Vendor\VendorStatus;
@@ -18,7 +18,7 @@ readonly class CredentialsStepService
         private UserRepository $userRepository,
     ) {}
 
-    public function handle(Vendor $vendor, CredentialsStepRequest $dto): void
+    public function handle(Vendor $vendor, CredentialsStepRequestDto $dto): void
     {
         $user = $vendor->getUser();
 

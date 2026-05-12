@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor;
 
-use App\DTO\Vendor\Step\PortfolioStepRequest;
+use App\DTO\Vendor\Step\PortfolioStepRequestDto;
 use App\Service\InviteTokenService;
 use App\Service\Vendor\Onboarding\PortfolioStepService;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,7 +31,7 @@ readonly class VendorOnboardingPortfolioAction
                 throw new \DomainException('Aucun prestataire associé à ce token', 422);
             }
 
-            $dto        = PortfolioStepRequest::fromRequest($request);
+            $dto        = PortfolioStepRequestDto::fromRequest($request);
             $violations = $this->validator->validate($dto);
 
             if (count($violations) > 0) {

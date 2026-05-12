@@ -6,7 +6,7 @@ namespace App\DTO\Vendor;
 
 use App\Enum\Vendor\OnboardingStep;
 
-final readonly class VendorOnboardingStepResponse
+final readonly class VendorOnboardingStepResponseDto
 {
     public ?string $current_step;
     public array $completed_steps;

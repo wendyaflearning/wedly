@@ -14,8 +14,8 @@ use App\Enum\User\InviteTokenStatus;
 use App\Enum\User\Role;
 use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\UserRepository;
-use App\DTO\Vendor\CreateVendorInput;
-use App\DTO\Vendor\VendorCreatedResponse;
+use App\DTO\Vendor\CreateVendorInputDto;
+use App\DTO\Vendor\VendorCreatedResponseDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -28,7 +28,7 @@ final class VendorService
         private readonly UserPasswordHasherInterface $passwordHasher,
     ) {}
 
-    public function createVendor(CreateVendorInput $dto, UserInterface $adminUser): VendorCreatedResponse
+    public function createVendor(CreateVendorInputDto $dto, UserInterface $adminUser): VendorCreatedResponseDto
     {
         if ($this->userRepository->findOneBy(['email' => $dto->email]) !== null) {
             throw new \DomainException('Email already registered.', 409);
@@ -85,6 +85,6 @@ final class VendorService
             throw $e;
         }
 
-        return new VendorCreatedResponse($vendor, $user, $inviteToken, $service, $regions);
+        return new VendorCreatedResponseDto($vendor, $user, $inviteToken, $service, $regions);
     }
 }

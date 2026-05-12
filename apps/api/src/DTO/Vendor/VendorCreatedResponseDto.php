@@ -10,7 +10,7 @@ use App\Entity\User\User;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
 
-final readonly class VendorCreatedResponse
+final readonly class VendorCreatedResponseDto
 {
     public string $id;
     public string $userId;

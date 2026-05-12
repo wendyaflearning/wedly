@@ -9,7 +9,7 @@ use App\Entity\Couple\Couple;
 use App\Entity\Culture\Culture;
 use App\Entity\Wedding\WeddingStyle;
 
-final readonly class CoupleInviteTokenData
+final readonly class CoupleInviteTokenDataDto
 {
     public array $data;
 

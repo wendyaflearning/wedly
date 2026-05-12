@@ -6,7 +6,7 @@ namespace App\DTO\Vendor;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class VendorOnboardingStepRequest
+final readonly class VendorOnboardingStepRequestDto
 {
     public function __construct(
         #[Assert\NotBlank]

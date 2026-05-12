@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class PortfolioStepRequest implements DTOInterface
+final readonly class PortfolioStepRequestDto implements DTOInterface
 {
     public function __construct(
         #[Assert\NotNull]

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin\Vendor;
 
-use App\DTO\Vendor\CreateVendorInput;
+use App\DTO\Vendor\CreateVendorInputDto;
 use App\Service\Vendor\VendorService;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,7 +21,7 @@ class CreateVendorAction
 
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/api/v1/admin/vendors', name: 'api_admin_vendor_create', methods: ['POST'])]
-    public function __invoke(#[MapRequestPayload] CreateVendorInput $dto): JsonResponse
+    public function __invoke(#[MapRequestPayload] CreateVendorInputDto $dto): JsonResponse
     {
         if (null === $adminUser = $this->security->getUser()) {
             throw new \RuntimeException('Authenticated user could not be resolved.');

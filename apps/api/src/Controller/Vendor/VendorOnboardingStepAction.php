@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Vendor;
 
 use App\Dispatcher\Vendor\Onboarding\VendorOnboardingStepDispatcher;
-use App\DTO\Vendor\VendorOnboardingStepRequest;
+use App\DTO\Vendor\VendorOnboardingStepRequestDto;
 use App\Service\InviteTokenService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,7 +33,7 @@ readonly class VendorOnboardingStepAction
             }
 
             $body = json_decode($request->getContent(), true) ?? [];
-            $dto  = new VendorOnboardingStepRequest(
+            $dto  = new VendorOnboardingStepRequestDto(
                 step: $body['step'] ?? '',
                 data: array_key_exists('data', $body) ? $body['data'] : null,
             );

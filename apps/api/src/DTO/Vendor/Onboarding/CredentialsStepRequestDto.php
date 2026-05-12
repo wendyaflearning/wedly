@@ -7,7 +7,7 @@ namespace App\DTO\Vendor\Onboarding;
 use App\DTO\DTOInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class CredentialsStepRequest implements DTOInterface
+final readonly class CredentialsStepRequestDto implements DTOInterface
 {
     public function __construct(
         #[Assert\Email]

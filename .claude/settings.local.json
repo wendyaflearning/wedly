@@ -9,7 +9,8 @@
       "Bash(php *)",
       "Bash(npx create-next-app@latest *)",
       "Bash(curl *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(perl -pi -e ' *)"
     ]
   }
 }

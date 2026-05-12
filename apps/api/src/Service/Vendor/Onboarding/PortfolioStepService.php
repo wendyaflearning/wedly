@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Vendor\Onboarding;
 
-use App\DTO\Vendor\Step\PortfolioStepRequest;
+use App\DTO\Vendor\Step\PortfolioStepRequestDto;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
 use App\Repository\Vendor\PortfolioImageRepository;
@@ -21,7 +21,7 @@ readonly class PortfolioStepService
         private LoggerInterface $logger,
     ) {}
 
-    public function handle(Vendor $vendor, PortfolioStepRequest $dto): void
+    public function handle(Vendor $vendor, PortfolioStepRequestDto $dto): void
     {
         // Récupérer les anciennes images AVANT tout upload (on a besoin des public_ids pour le cleanup)
         $oldImages    = $this->portfolioImageRepository->findByVendor($vendor);

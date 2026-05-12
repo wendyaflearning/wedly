@@ -12,7 +12,7 @@ use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Wedding\WeddingStyle;
 
-final readonly class VendorInviteTokenData
+final readonly class VendorInviteTokenDataDto
 {
     public array $data;
 

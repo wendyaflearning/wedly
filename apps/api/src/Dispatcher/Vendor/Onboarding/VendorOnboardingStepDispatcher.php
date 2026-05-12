@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Dispatcher\Vendor\Onboarding;
 
 use App\DTO\DTOInterface;
-use App\DTO\Vendor\Onboarding\CredentialsStepRequest;
+use App\DTO\Vendor\Onboarding\CredentialsStepRequestDto;
 use App\DTO\Vendor\Step\CateringCharacteristicsDto;
 use App\DTO\Vendor\Step\CateringPricingDto;
 use App\DTO\Vendor\Step\ExperiencesDto;
@@ -13,8 +13,8 @@ use App\DTO\Vendor\Step\FreelancePricingDto;
 use App\DTO\Vendor\Step\ProfessionsDto;
 use App\DTO\Vendor\Step\VenueCharacteristicsDto;
 use App\DTO\Vendor\Step\VenuePricingDto;
-use App\DTO\Vendor\VendorOnboardingStepRequest;
-use App\DTO\Vendor\VendorOnboardingStepResponse;
+use App\DTO\Vendor\VendorOnboardingStepRequestDto;
+use App\DTO\Vendor\VendorOnboardingStepResponseDto;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
@@ -47,7 +47,7 @@ readonly class VendorOnboardingStepDispatcher
         private ValidatorInterface                 $validator,
     ) {}
 
-    public function handle(Vendor $vendor, VendorOnboardingStepRequest $dto): ?VendorOnboardingStepResponse
+    public function handle(Vendor $vendor, VendorOnboardingStepRequestDto $dto): ?VendorOnboardingStepResponseDto
     {
         $step = OnboardingStep::tryFrom($dto->step);
         if ($step === null) {
@@ -88,7 +88,7 @@ readonly class VendorOnboardingStepDispatcher
             ),
             OnboardingStep::Credentials => $this->credentialsStepService->handle(
                 $vendor,
-                $this->validate(CredentialsStepRequest::fromArray($data))
+                $this->validate(CredentialsStepRequestDto::fromArray($data))
             ),
         };
 
@@ -104,7 +104,7 @@ readonly class VendorOnboardingStepDispatcher
         $completed = array_slice($steps, 0, $idx + 1);
         $stepsData = $this->buildStepsData($vendor, $completed);
 
-        return new VendorOnboardingStepResponse(
+        return new VendorOnboardingStepResponseDto(
             next:      $this->resolver->resolveNextStep($vendorType, $step),
             completed: $completed,
             stepsData: $stepsData,
