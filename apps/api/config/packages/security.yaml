@@ -25,18 +25,6 @@ security:
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-        invite_tokens:
-            pattern: ^/api/v1/invite-tokens/
-            security: false
-
-        vendor_onboarding:
-            pattern: ^/api/v1/vendors/onboarding/
-            security: false
-
-        get_onboarding:
-            pattern: ^/api/v1/onboarding/
-            security: false
-
         api:
             pattern: ^/api
             stateless: true
@@ -44,9 +32,13 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/api/v1/login$,    roles: PUBLIC_ACCESS }
-        - { path: ^/api/v1/register$, roles: PUBLIC_ACCESS }
-        - { path: ^/api,              roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/v1/login$,               roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/register$,            roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/invite-tokens/,       roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/vendors/onboarding/,  roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/onboarding/,          roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/services$,            roles: PUBLIC_ACCESS }
+        - { path: ^/api,                         roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:

@@ -6,13 +6,14 @@ namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
 use App\Enum\Vendor\VendorType;
+use App\Repository\Vendor\ServiceRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: ServiceRepository::class)]
 #[ORM\Table(name: 'service')]
 #[ORM\HasLifecycleCallbacks]
 class Service
