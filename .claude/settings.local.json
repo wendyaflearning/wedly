@@ -10,7 +10,9 @@
       "Bash(npx create-next-app@latest *)",
       "Bash(curl *)",
       "Bash(npm run *)",
-      "Bash(perl -pi -e ' *)"
+      "Bash(perl -pi -e ' *)",
+      "Bash(npx tsc *)",
+      "Bash(xargs ls -la)"
     ]
   }
 }

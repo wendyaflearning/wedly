@@ -30,9 +30,9 @@ function ProgressBar({ steps }: { steps: OnboardingStep[] }) {
   )
 }
 
-function CompletedCard({ step }: { step: OnboardingStep }) {
+function CompletedCard({ step, onStepClick }: { step: OnboardingStep; onStepClick: (stepKey: string) => void }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 rounded-xl bg-creme border border-bordeaux/25 cursor-pointer transition-[background-color,border-color] duration-200 hover:bg-bordeaux/5 hover:border-bordeaux/50 group">
+    <div onClick={() => onStepClick(step.stepKey)} className="flex items-center justify-between px-5 py-4 rounded-xl bg-creme border border-bordeaux/25 cursor-pointer transition-[background-color,border-color] duration-200 hover:bg-bordeaux/5 hover:border-bordeaux/50 group">
       <div className="flex items-center gap-3">
         <div className="w-5 flex items-center justify-center shrink-0">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -64,9 +64,9 @@ function CompletedCard({ step }: { step: OnboardingStep }) {
   )
 }
 
-function CurrentCard({ step }: { step: OnboardingStep }) {
+function CurrentCard({ step, onStepClick }: { step: OnboardingStep; onStepClick: (stepKey: string) => void }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 rounded-xl bg-creme border border-bordeaux/25 cursor-pointer transition-[background-color,border-color] duration-200 hover:bg-bordeaux/5 hover:border-bordeaux/50">
+    <div onClick={() => onStepClick(step.stepKey)} className="flex items-center justify-between px-5 py-4 rounded-xl bg-creme border border-bordeaux/25 cursor-pointer transition-[background-color,border-color] duration-200 hover:bg-bordeaux/5 hover:border-bordeaux/50">
       <div className="flex items-center gap-3">
         <div className="w-5 flex items-center justify-center shrink-0">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -103,18 +103,20 @@ function PendingCard({ step }: { step: OnboardingStep }) {
   )
 }
 
-function StepCard({ step }: { step: OnboardingStep }) {
-  if (step.status === 'completed') return <CompletedCard step={step} />
-  if (step.status === 'current') return <CurrentCard step={step} />
+function StepCard({ step, onStepClick }: { step: OnboardingStep; onStepClick: (stepKey: string) => void }) {
+  if (step.status === 'completed') return <CompletedCard step={step} onStepClick={onStepClick} />
+  if (step.status === 'current') return <CurrentCard step={step} onStepClick={onStepClick} />
   return <PendingCard step={step} />
 }
 
 export default function OnboardingOverview({
   data,
   token,
+  onStepClick,
 }: {
   data: OnboardingOverviewData
   token: string
+  onStepClick: (stepKey: string) => void
 }) {
   const completedCount = data.steps.filter(s => s.status === 'completed').length
   const remainingCount = data.steps.filter(s => s.status !== 'completed').length
@@ -137,7 +139,7 @@ export default function OnboardingOverview({
 
         <div className="flex flex-col gap-3">
           {data.steps.map(step => (
-            <StepCard key={step.stepKey} step={step} />
+            <StepCard key={step.stepKey} step={step} onStepClick={onStepClick} />
           ))}
         </div>
 
