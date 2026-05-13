@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor;
 
+use App\Entity\Confession\Confession;
+use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Service;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
@@ -48,6 +50,14 @@ readonly class GetOnboardingStepAction
                             'id'   => $service->getId()->toString(),
                             'name' => $service->getName(),
                         ])
+                        ->toArray(),
+                ],
+                'experiences' => [
+                    'confession_ids' => $vendor->getConfessions()
+                        ->map(fn(Confession $confession) => ['id' => $confession->getId()->toString(), 'name' => $confession->getName()])
+                        ->toArray(),
+                    'culture_ids' => $vendor->getCultures()
+                        ->map(fn(Culture $culture) =>  ['id' => $culture->getId()->toString(), 'name' => $culture->getName()])
                         ->toArray(),
                 ],
             ];

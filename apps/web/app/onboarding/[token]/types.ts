@@ -32,6 +32,11 @@ export interface ServiceOption {
   name: string
 }
 
+export interface ExperienceOption {
+  id: string
+  name: string
+}
+
 export interface OnboardingStep {
   stepKey: string
   label: string
@@ -45,5 +50,9 @@ export interface OnboardingOverviewData {
   steps: OnboardingStep[]
   steps_data?: {
     professions?: { services: ServiceOption[] }
+    experiences?: {
+      confession_ids: ExperienceOption[]
+      culture_ids: ExperienceOption[]
+    }
   }
 }

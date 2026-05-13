@@ -6,11 +6,12 @@ namespace App\Entity\Culture;
 
 use App\Doctrine\UuidV7Generator;
 use App\Enum\Wedding\CultureType;
+use App\Repository\Culture\CultureRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: CultureRepository::class)]
 #[ORM\Table(name: 'culture')]
 #[ORM\HasLifecycleCallbacks]
 class Culture

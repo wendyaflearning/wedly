@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Entity\Confession;
 
 use App\Doctrine\UuidV7Generator;
+use App\Repository\Confession\ConfessionRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: ConfessionRepository::class)]
 #[ORM\Table(name: 'confession')]
 #[ORM\HasLifecycleCallbacks]
 class Confession

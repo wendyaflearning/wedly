@@ -22,3 +22,8 @@
   0% { transform: translateX(-100%); }
   100% { transform: translateX(200%); }
 }
+
+@keyframes pulse-cta {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.88; transform: scale(0.997); }
+}
