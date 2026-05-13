@@ -15,6 +15,8 @@ use App\DTO\Vendor\Step\VenueCharacteristicsDto;
 use App\DTO\Vendor\Step\VenuePricingDto;
 use App\DTO\Vendor\VendorOnboardingStepRequestDto;
 use App\DTO\Vendor\VendorOnboardingStepResponseDto;
+use App\Entity\Confession\Confession;
+use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
@@ -102,6 +104,7 @@ readonly class VendorOnboardingStepDispatcher
         $steps     = $this->resolver->getOnboardingSteps($vendorType);
         $idx       = array_search($step, $steps, true);
         $completed = array_slice($steps, 0, $idx + 1);
+
         $stepsData = $this->buildStepsData($vendor, $completed);
 
         return new VendorOnboardingStepResponseDto(
@@ -119,6 +122,14 @@ readonly class VendorOnboardingStepDispatcher
                 OnboardingStep::Professions => [
                     'services' => $vendor->getServices()
                         ->map(fn($service) => ['id' => $service->getId()->toString(), 'name' => $service->getName()])
+                        ->toArray(),
+                ],
+                OnboardingStep::Experiences => [
+                    'confession_ids' => $vendor->getConfessions()
+                        ->map(fn(Confession $confession) => ['id' => $confession->getId()->toString(), 'name' => $confession->getName()])
+                        ->toArray(),
+                    'culture_ids' => $vendor->getCultures()
+                        ->map(fn(Culture $culture) => ['id' => $culture->getId()->toString(), 'name' => $culture->getName()])
                         ->toArray(),
                 ],
                 default => [],

@@ -12,7 +12,9 @@
       "Bash(npm run *)",
       "Bash(perl -pi -e ' *)",
       "Bash(npx tsc *)",
-      "Bash(xargs ls -la)"
+      "Bash(xargs ls -la)",
+      "Bash(find *)",
+      "Bash(xargs cat)"
     ]
   }
 }
