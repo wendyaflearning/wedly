@@ -27,6 +27,11 @@ export interface CateringDetails {
 }
 
 
+export interface ServiceOption {
+  id: string
+  name: string
+}
+
 export interface OnboardingStep {
   stepKey: string
   label: string
@@ -38,4 +43,7 @@ export interface OnboardingStep {
 export interface OnboardingOverviewData {
   firstname: string
   steps: OnboardingStep[]
+  steps_data?: {
+    professions?: { services: ServiceOption[] }
+  }
 }

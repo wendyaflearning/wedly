@@ -56,3 +56,29 @@ Fonts :
 - Utiliser localStorage (pas supporté dans les artifacts)
 - Modifier globals.css sans vérifier la compatibilité Tailwind v4
 - Committer .env.local
+
+## Design & Intégration
+
+### Règle fondamentale
+Chaque nouvel écran doit être basé sur le HTML exporté depuis Claude Design.
+Ne jamais inventer le layout — toujours demander le HTML de référence avant d'implémenter.
+
+### Workflow d'intégration
+1. Récupérer le HTML exporté depuis Claude Design
+2. L'inclure dans le prompt comme source de vérité visuelle
+3. Adapter en JSX/Tailwind en respectant les conventions ci-dessous
+
+### Conventions de style
+- **Tailwind en priorité** — `className` pour tout ce qui est statique
+- **`style={{}}`** uniquement pour : valeurs dynamiques, `clamp()`, calculs JS
+- **Jamais de couleur hardcodée** — toujours les classes Tailwind du design system ou `var(--color-xxx)`
+- **Opacités** via les modificateurs Tailwind : `bordeaux/25`, `bordeaux/44`...
+
+### Route Handlers obligatoires
+Tout fetch depuis un Client Component passe par une Route Handler Next.js :
+`apps/web/app/api/[resource]/route.ts` → proxy vers Symfony
+Jamais d'appel direct au backend depuis le navigateur.
+
+### Scope MVP strict
+Ne jamais implémenter un élément de maquette acté comme dette V2.
+Si un élément est absent du ticket, il n'existe pas.

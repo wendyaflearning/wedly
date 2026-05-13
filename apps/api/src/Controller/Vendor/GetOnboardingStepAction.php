@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor;
 
+use App\Entity\Vendor\Service;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use App\Service\InviteTokenService;
-use App\Vendor\DTO\Response\OnboardingRecapResponse;
+use App\Vendor\DTO\Response\OnboardingOverviewResponseDto;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -40,9 +41,21 @@ readonly class GetOnboardingStepAction
 
             $steps = $this->onboardingStepResolver->resolveAllSteps($vendorType, $currentStep);
 
-            return new JsonResponse(new OnboardingRecapResponse(
-                firstname: $vendor->getUser()->getFirstName(),
-                steps:     $steps,
+            $stepsData = [
+                'professions' => [
+                    'services' => $vendor->getServices()
+                        ->map(fn(Service $service) => [
+                            'id'   => $service->getId()->toString(),
+                            'name' => $service->getName(),
+                        ])
+                        ->toArray(),
+                ],
+            ];
+
+            return new JsonResponse(new OnboardingOverviewResponseDto(
+                firstname:  $vendor->getUser()->getFirstName(),
+                steps:      $steps,
+                steps_data: $stepsData,
             ));
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
