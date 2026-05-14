@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Josefin_Sans, Manrope } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans, Josefin_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -13,6 +13,12 @@ const manrope = Manrope({
   variable: "--font-manrope-var",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans-var",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 const josefin = Josefin_Sans({
@@ -34,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${cormorant.variable} ${manrope.variable} ${josefin.variable} bg-creme`}
+      className={`${cormorant.variable} ${manrope.variable} ${josefin.variable} ${dmSans.variable} bg-creme`}
     >
       <body className="font-manrope text-texte min-h-full">{children}</body>
     </html>
