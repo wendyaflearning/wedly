@@ -7,74 +7,77 @@ namespace App\Service\Vendor\Onboarding;
 use App\DTO\Vendor\Step\VenueCharacteristicsDto;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorVenueDetails;
+use App\Enum\Vendor\OnboardingStep;
 use App\Trait\Vendor\Onboarding\HasServiceSlugGuard;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class VenueCharacteristicsStepService
+readonly class VenueCharacteristicsStepService extends AbstractOnboardingStepHandler
 {
     use HasServiceSlugGuard;
 
     public function __construct(
         private EntityManagerInterface $em,
-    ) {}
+        ValidatorInterface $validator,
+    ) {
+        parent::__construct($validator);
+    }
 
-    public function handle(Vendor $vendor, VenueCharacteristicsDto $venueDto): void
+    public function supports(): OnboardingStep
+    {
+        return OnboardingStep::VenueCharacteristics;
+    }
+
+    public function handle(Vendor $vendor, array $data): void
     {
         $this->assertHasServiceSlug($vendor, 'lieu-de-reception', 'Cette étape est réservée aux lieux de réception.');
+
+        /** @var VenueCharacteristicsDto $dto */
+        $dto = $this->validate(VenueCharacteristicsDto::fromArray($data));
 
         $details = $vendor->getVenueDetails();
         $isNew   = $details === null;
 
         if ($isNew) {
-            if ($venueDto->venueType === null) {
+            if ($dto->venueType === null) {
                 throw new \DomainException('Le champ venue_type est requis à la création.', 422);
             }
             $details = new VendorVenueDetails();
             $details->setVendor($vendor);
         }
 
-        if ($venueDto->venueType !== null) {
-            $details->setVenueType($venueDto->venueType);
+        if ($dto->venueType !== null) {
+            $details->setVenueType($dto->venueType);
         }
-
-        if ($venueDto->capacityMin !== null) {
-            $details->setCapacityMin($venueDto->capacityMin);
+        if ($dto->capacityMin !== null) {
+            $details->setCapacityMin($dto->capacityMin);
         }
-
-        if ($venueDto->capacityMax !== null) {
-            $details->setCapacityMax($venueDto->capacityMax);
+        if ($dto->capacityMax !== null) {
+            $details->setCapacityMax($dto->capacityMax);
         }
-
-        if ($venueDto->hasCatering !== null) {
-            $details->setHasCatering($venueDto->hasCatering);
+        if ($dto->hasCatering !== null) {
+            $details->setHasCatering($dto->hasCatering);
         }
-
-        if ($venueDto->hasAccommodation !== null) {
-            $details->setHasAccommodation($venueDto->hasAccommodation);
+        if ($dto->hasAccommodation !== null) {
+            $details->setHasAccommodation($dto->hasAccommodation);
         }
-
-        if ($venueDto->hasOutdoorSpace !== null) {
-            $details->setHasOutdoorSpace($venueDto->hasOutdoorSpace);
+        if ($dto->hasOutdoorSpace !== null) {
+            $details->setHasOutdoorSpace($dto->hasOutdoorSpace);
         }
-
-        if ($venueDto->hasCorkageFee !== null) {
-            $details->setHasCorkageFee($venueDto->hasCorkageFee);
+        if ($dto->hasCorkageFee !== null) {
+            $details->setHasCorkageFee($dto->hasCorkageFee);
         }
-
-        if ($venueDto->hasToilets !== null) {
-            $details->setHasToilets($venueDto->hasToilets);
+        if ($dto->hasToilets !== null) {
+            $details->setHasToilets($dto->hasToilets);
         }
-
-        if ($venueDto->isPmrAccessible !== null) {
-            $details->setIsPmrAccessible($venueDto->isPmrAccessible);
+        if ($dto->isPmrAccessible !== null) {
+            $details->setIsPmrAccessible($dto->isPmrAccessible);
         }
-
-        if ($venueDto->distanceToCityMinutes !== null) {
-            $details->setDistanceToCityMinutes($venueDto->distanceToCityMinutes);
+        if ($dto->distanceToCityMinutes !== null) {
+            $details->setDistanceToCityMinutes($dto->distanceToCityMinutes);
         }
-
-        if ($venueDto->nearestCity !== null) {
-            $details->setNearestCity($venueDto->nearestCity);
+        if ($dto->nearestCity !== null) {
+            $details->setNearestCity($dto->nearestCity);
         }
 
         if ($isNew) {

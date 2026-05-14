@@ -43,7 +43,7 @@ readonly class VendorOnboardingPortfolioAction
                 return new JsonResponse(['errors' => $errors], 422);
             }
 
-            $this->portfolioStepService->handle($vendor, $dto);
+            $this->portfolioStepService->upload($vendor, $dto);
 
             return new JsonResponse(['message' => 'Portfolio enregistré avec succès'], 200);
         } catch (\DomainException $e) {
