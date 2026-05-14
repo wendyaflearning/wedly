@@ -8,31 +8,43 @@ use App\DTO\Vendor\Step\ExperiencesDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Vendor;
+use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class ExperiencesStepService
+readonly class ExperiencesStepService extends AbstractOnboardingStepHandler
 {
     public function __construct(
         private EntityManagerInterface $em,
-    ) {}
+        ValidatorInterface $validator,
+    ) {
+        parent::__construct($validator);
+    }
 
-    public function handle(Vendor $vendor, ExperiencesDto $experiencesDto): void
+    public function supports(): OnboardingStep
     {
+        return OnboardingStep::Experiences;
+    }
+
+    public function handle(Vendor $vendor, array $data): void
+    {
+        $dto = ExperiencesDto::fromArray($data);
+
         $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
 
         if ($vendorType !== VendorType::Lieu) {
-            if (empty($experiencesDto->cultureIds)) {
+            if (empty($dto->cultureIds)) {
                 throw new \DomainException('Le champ culture_ids doit contenir au moins un élément.', 422);
             }
-            if (empty($experiencesDto->confessionIds)) {
+            if (empty($dto->confessionIds)) {
                 throw new \DomainException('Le champ confession_ids doit contenir au moins un élément.', 422);
             }
         }
 
-        if ($experiencesDto->cultureIds !== null) {
+        if ($dto->cultureIds !== null) {
             $cultures = [];
-            foreach ($experiencesDto->cultureIds as $id) {
+            foreach ($dto->cultureIds as $id) {
                 $culture = $this->em->getRepository(Culture::class)->find($id);
                 if ($culture === null) {
                     throw new \DomainException(sprintf('Culture introuvable : %s', $id), 422);
@@ -45,9 +57,9 @@ readonly class ExperiencesStepService
             }
         }
 
-        if ($experiencesDto->confessionIds !== null) {
+        if ($dto->confessionIds !== null) {
             $confessions = [];
-            foreach ($experiencesDto->confessionIds as $id) {
+            foreach ($dto->confessionIds as $id) {
                 $confession = $this->em->getRepository(Confession::class)->find($id);
                 if ($confession === null) {
                     throw new \DomainException(sprintf('Confession introuvable : %s', $id), 422);
@@ -59,5 +71,17 @@ readonly class ExperiencesStepService
                 $vendor->addConfession($confession);
             }
         }
+    }
+
+    public function getStepData(Vendor $vendor): array
+    {
+        return [
+            'confession_ids' => $vendor->getConfessions()
+                ->map(fn(Confession $confession) => ['id' => $confession->getId()->toString(), 'name' => $confession->getName()])
+                ->toArray(),
+            'culture_ids' => $vendor->getCultures()
+                ->map(fn(Culture $culture) => ['id' => $culture->getId()->toString(), 'name' => $culture->getName()])
+                ->toArray(),
+        ];
     }
 }

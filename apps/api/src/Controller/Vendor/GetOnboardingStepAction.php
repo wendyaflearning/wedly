@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor;
 
-use App\Entity\Confession\Confession;
-use App\Entity\Culture\Culture;
-use App\Entity\Vendor\Service;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use App\Service\InviteTokenService;
+use App\Service\Vendor\Onboarding\StepHandlerInterface;
 use App\Vendor\DTO\Response\OnboardingOverviewResponseDto;
+use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -19,8 +18,10 @@ use Symfony\Component\Routing\Attribute\Route;
 readonly class GetOnboardingStepAction
 {
     public function __construct(
-        private InviteTokenService    $inviteTokenService,
+        private InviteTokenService     $inviteTokenService,
         private OnboardingStepResolver $onboardingStepResolver,
+        #[TaggedIterator('onboarding.step_handler')]
+        private iterable $handlers,
     ) {}
 
     public function __invoke(string $token): JsonResponse
@@ -43,24 +44,13 @@ readonly class GetOnboardingStepAction
 
             $steps = $this->onboardingStepResolver->resolveAllSteps($vendorType, $currentStep);
 
-            $stepsData = [
-                'professions' => [
-                    'services' => $vendor->getServices()
-                        ->map(fn(Service $service) => [
-                            'id'   => $service->getId()->toString(),
-                            'name' => $service->getName(),
-                        ])
-                        ->toArray(),
-                ],
-                'experiences' => [
-                    'confession_ids' => $vendor->getConfessions()
-                        ->map(fn(Confession $confession) => ['id' => $confession->getId()->toString(), 'name' => $confession->getName()])
-                        ->toArray(),
-                    'culture_ids' => $vendor->getCultures()
-                        ->map(fn(Culture $culture) =>  ['id' => $culture->getId()->toString(), 'name' => $culture->getName()])
-                        ->toArray(),
-                ],
-            ];
+            $stepsData = [];
+            foreach ($this->handlers as $handler) {
+                $stepData = $handler->getStepData($vendor);
+                if (!empty($stepData)) {
+                    $stepsData[$handler->supports()->value] = $stepData;
+                }
+            }
 
             return new JsonResponse(new OnboardingOverviewResponseDto(
                 firstname:  $vendor->getUser()->getFirstName(),

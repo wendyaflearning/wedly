@@ -5,19 +5,33 @@ declare(strict_types=1);
 namespace App\Vendor\Onboarding\Service;
 
 use App\Entity\Vendor\Vendor;
+use App\Enum\Vendor\OnboardingStep;
 use App\Integration\Pappers\PappersService;
+use App\Service\Vendor\Onboarding\AbstractOnboardingStepHandler;
 use App\Vendor\Onboarding\Request\LegalInfoStepRequest;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class LegalInfoStepService
+readonly class LegalInfoStepService extends AbstractOnboardingStepHandler
 {
     public function __construct(
         private PappersService $pappersService,
         private LoggerInterface $logger,
-    ) {}
+        ValidatorInterface $validator,
+    ) {
+        parent::__construct($validator);
+    }
 
-    public function handle(Vendor $vendor, LegalInfoStepRequest $dto): void
+    public function supports(): OnboardingStep
     {
+        return OnboardingStep::LegalInfo;
+    }
+
+    public function handle(Vendor $vendor, array $data): void
+    {
+        /** @var LegalInfoStepRequest $dto */
+        $dto = $this->validate(LegalInfoStepRequest::fromArray($data));
+
         $vendor->setBrandName($dto->brandName);
         $vendor->setSiret($dto->siret);
         $vendor->setPhone($dto->phone);
