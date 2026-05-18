@@ -39,16 +39,28 @@ readonly class GetOnboardingStepAction
                 return new JsonResponse(['error' => 'Type de prestataire non déterminable'], 422);
             }
 
-            $vendorType  = VendorType::resolveVendorType($slugs);
-            $currentStep = $vendor->getOnboardingStep() ?? OnboardingStep::Professions;
+            $vendorType    = VendorType::resolveVendorType($slugs);
+            $lastCompleted = $vendor->getOnboardingStep();
+
+            if ($lastCompleted === null) {
+                $currentStep = OnboardingStep::Professions;
+            } else {
+                $currentStep = $this->onboardingStepResolver->resolveNextStep($vendorType, $lastCompleted)
+                    ?? $lastCompleted;
+            }
 
             $steps = $this->onboardingStepResolver->resolveAllSteps($vendorType, $currentStep);
 
             $stepsData = [];
-            foreach ($this->handlers as $handler) {
-                $stepData = $handler->getStepData($vendor);
-                if (!empty($stepData)) {
-                    $stepsData[$handler->supports()->value] = $stepData;
+            foreach ($this->onboardingStepResolver->getOnboardingSteps($vendorType) as $step) {
+                foreach ($this->handlers as $handler) {
+                    if ($handler->supports() === $step && $handler->supportsVendorType($vendorType)) {
+                        $stepData = $handler->getStepData($vendor);
+                        if (!empty($stepData)) {
+                            $stepsData[$step->value] = $stepData;
+                        }
+                        break;
+                    }
                 }
             }
 

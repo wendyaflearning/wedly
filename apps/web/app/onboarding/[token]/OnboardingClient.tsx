@@ -6,8 +6,9 @@ import WelcomeScreen from './WelcomeScreen'
 import OnboardingOverview from './OnboardingOverview'
 import ProfessionsStep from './steps/professions/ProfessionsStep'
 import ExperiencesStep from './steps/experiences/ExperiencesStep'
+import VenueCharacteristicsStep from './steps/venue_characteristics/VenueCharacteristicsStep'
 
-type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'experiences' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials'
+type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'experiences' | 'venue_characteristics' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials'
 
 export default function OnboardingClient({
   data,
@@ -47,6 +48,20 @@ export default function OnboardingClient({
       <ExperiencesStep
         token={token}
         initialExperiences={data.steps_data?.experiences ?? { confession_ids: [], culture_ids: [] }}
+        onBack={() => setScreen('onboarding_overview')}
+        onNext={(nextStep) => {
+          router.refresh()
+          setScreen(nextStep as Screen)
+        }}
+      />
+    )
+  }
+
+  if (screen === 'venue_characteristics') {
+    return (
+      <VenueCharacteristicsStep
+        token={token}
+        initialVenueDetails={data.steps_data?.venue_characteristics ?? null}
         onBack={() => setScreen('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()

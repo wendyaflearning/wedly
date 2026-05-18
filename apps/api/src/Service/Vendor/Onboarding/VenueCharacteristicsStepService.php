@@ -8,6 +8,7 @@ use App\DTO\Vendor\Step\VenueCharacteristicsDto;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorVenueDetails;
 use App\Enum\Vendor\OnboardingStep;
+use App\Enum\Vendor\VendorType;
 use App\Trait\Vendor\Onboarding\HasServiceSlugGuard;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -26,6 +27,11 @@ readonly class VenueCharacteristicsStepService extends AbstractOnboardingStepHan
     public function supports(): OnboardingStep
     {
         return OnboardingStep::VenueCharacteristics;
+    }
+
+    public function supportsVendorType(VendorType $type): bool
+    {
+        return $type === VendorType::Lieu;
     }
 
     public function handle(Vendor $vendor, array $data): void
@@ -83,5 +89,26 @@ readonly class VenueCharacteristicsStepService extends AbstractOnboardingStepHan
         if ($isNew) {
             $this->em->persist($details);
         }
+    }
+
+    public function getStepData(Vendor $vendor): array
+    {
+        $details = $vendor->getVenueDetails();
+
+        if ($details === null) {
+            return [];
+        }
+
+        return [
+            'venue_type'        => $details->getVenueType()->value,
+            'capacity_min'      => $details->getCapacityMin(),
+            'capacity_max'      => $details->getCapacityMax(),
+            'has_catering'      => $details->isHasCatering(),
+            'has_accommodation' => $details->isHasAccommodation(),
+            'has_outdoor_space' => $details->isHasOutdoorSpace(),
+            'has_corkage_fee'   => $details->isHasCorkageFee(),
+            'has_toilets'       => $details->isHasToilets(),
+            'is_pmr_accessible' => $details->isIsPmrAccessible(),
+        ];
     }
 }

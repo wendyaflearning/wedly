@@ -6,6 +6,7 @@ namespace App\Service\Vendor\Onboarding;
 
 use App\DTO\DTOInterface;
 use App\Entity\Vendor\Vendor;
+use App\Enum\Vendor\VendorType;
 use App\Exception\ValidationException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -25,6 +26,11 @@ abstract readonly class AbstractOnboardingStepHandler implements StepHandlerInte
         }
 
         return $dto;
+    }
+
+    public function supportsVendorType(VendorType $type): bool
+    {
+        return true;
     }
 
     public function getStepData(Vendor $vendor): array
