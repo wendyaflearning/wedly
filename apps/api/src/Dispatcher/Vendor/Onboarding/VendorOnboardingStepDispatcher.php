@@ -25,13 +25,13 @@ readonly class VendorOnboardingStepDispatcher
 
     public function handle(Vendor $vendor, VendorOnboardingStepRequestDto $dto): ?VendorOnboardingStepResponseDto
     {
-        $step = OnboardingStep::tryFrom($dto->step)
+        $step       = OnboardingStep::tryFrom($dto->step)
             ?? throw new \DomainException(sprintf('Étape inconnue : %s', $dto->step), 422);
-
-        $this->resolveHandler($step)->handle($vendor, $dto->data ?? []);
-
         $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
-        $steps      = $this->resolver->getOnboardingSteps($vendorType);
+
+        $this->resolveHandler($step, $vendorType)->handle($vendor, $dto->data ?? []);
+
+        $steps = $this->resolver->getOnboardingSteps($vendorType);
 
         $currentStep    = $vendor->getOnboardingStep();
         $currentIndex   = $currentStep ? array_search($currentStep, $steps, true) : -1;
@@ -52,25 +52,25 @@ readonly class VendorOnboardingStepDispatcher
         return new VendorOnboardingStepResponseDto(
             next:      $this->resolver->resolveNextStep($vendorType, $step),
             completed: $completed,
-            stepsData: $this->buildStepsData($vendor, $completed),
+            stepsData: $this->buildStepsData($vendor, $completed, $vendorType),
         );
     }
 
-    private function resolveHandler(OnboardingStep $step): StepHandlerInterface
+    private function resolveHandler(OnboardingStep $step, VendorType $vendorType): StepHandlerInterface
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->supports() === $step) {
+            if ($handler->supports() === $step && $handler->supportsVendorType($vendorType)) {
                 return $handler;
             }
         }
         throw new \DomainException(sprintf('Aucun handler pour l\'étape : %s', $step->value), 500);
     }
 
-    private function buildStepsData(Vendor $vendor, array $completedSteps): array
+    private function buildStepsData(Vendor $vendor, array $completedSteps, VendorType $vendorType): array
     {
         $data = [];
         foreach ($completedSteps as $completedStep) {
-            $stepData = $this->resolveHandler($completedStep)->getStepData($vendor);
+            $stepData = $this->resolveHandler($completedStep, $vendorType)->getStepData($vendor);
             if (!empty($stepData)) {
                 $data[$completedStep->value] = $stepData;
             }

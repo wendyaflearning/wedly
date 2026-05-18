@@ -8,6 +8,7 @@ use App\DTO\Vendor\Step\CateringCharacteristicsDto;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorCateringDetails;
 use App\Enum\Vendor\OnboardingStep;
+use App\Enum\Vendor\VendorType;
 use App\Trait\Vendor\Onboarding\HasServiceSlugGuard;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -26,6 +27,11 @@ readonly class CateringCharacteristicsStepService extends AbstractOnboardingStep
     public function supports(): OnboardingStep
     {
         return OnboardingStep::CateringCharacteristics;
+    }
+
+    public function supportsVendorType(VendorType $type): bool
+    {
+        return $type === VendorType::Traiteur;
     }
 
     public function handle(Vendor $vendor, array $data): void
