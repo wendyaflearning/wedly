@@ -14,7 +14,9 @@
       "Bash(npx tsc *)",
       "Bash(xargs ls -la)",
       "Bash(find *)",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(git -C /Users/wendyafrim/Documents/wedly_dev status)",
+      "Bash(git *)"
     ]
   }
 }

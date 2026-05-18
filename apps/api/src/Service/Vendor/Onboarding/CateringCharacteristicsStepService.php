@@ -34,6 +34,28 @@ readonly class CateringCharacteristicsStepService extends AbstractOnboardingStep
         return $type === VendorType::Traiteur;
     }
 
+    public function getStepData(Vendor $vendor): array
+    {
+        $details = $vendor->getCateringDetails();
+        if ($details === null) {
+            return [];
+        }
+
+        return [
+            'covers_min'              => $details->getCoversMin(),
+            'covers_max'              => $details->getCoversMax(),
+            'is_offers_table_service' => $details->isOffersTableService(),
+            'is_offers_buffet'        => $details->isOffersBuffet(),
+            'is_offers_cocktail'      => $details->isOffersCocktail(),
+            'is_kosher'               => $details->isKosher(),
+            'is_halal'                => $details->isHalal(),
+            'is_vegan'                => $details->isVegan(),
+            'is_gluten_free'          => $details->isGlutenFree(),
+            'is_provide_tableware'    => $details->isProvidesTableware(),
+            'is_provide_furniture'    => $details->isProvidesFurniture(),
+        ];
+    }
+
     public function handle(Vendor $vendor, array $data): void
     {
         $this->assertHasServiceSlug($vendor, 'traiteur', 'Cette étape est réservée aux traiteurs.');

@@ -58,5 +58,12 @@ export interface OnboardingOverviewData {
       VenueDetails,
       'venue_type' | 'capacity_min' | 'capacity_max' | 'has_catering' | 'has_accommodation' | 'has_outdoor_space' | 'is_pmr_accessible'
     >
+    catering_characteristics?: Pick<
+      CateringDetails,
+      'covers_min' | 'covers_max' |
+      'is_kosher' | 'is_halal' | 'is_vegan' | 'is_gluten_free' |
+      'is_offers_table_service' | 'is_offers_buffet' | 'is_offers_cocktail' |
+      'is_provide_tableware' | 'is_provide_furniture'
+    >
   }
 }
