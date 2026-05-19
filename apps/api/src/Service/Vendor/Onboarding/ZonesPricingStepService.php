@@ -9,7 +9,6 @@ use App\DTO\Vendor\Step\FreelancePricingDto;
 use App\DTO\Vendor\Step\VenuePricingDto;
 use App\Entity\Region\Region;
 use App\Entity\Vendor\Vendor;
-use App\Entity\Vendor\VendorVenueDetails;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorType;
@@ -51,10 +50,40 @@ readonly class ZonesPricingStepService extends AbstractOnboardingStepHandler
         if ($dto instanceof VenuePricingDto) {
             $vendor->setCity($dto->city);
 
-            $venueDetails = $vendor->getVenueDetails() ?? new VendorVenueDetails();
+            $venueDetails = $vendor->getVenueDetails();
+            if ($venueDetails === null) {
+                throw new \DomainException("L'étape venue_characteristics doit être complétée avant zones_pricing.", 422);
+            }
             $venueDetails->setNearestCity($dto->nearestCity);
             $venueDetails->setDistanceToCityMinutes($dto->distanceToCityMinutes);
         }
+    }
+
+    public function getStepData(Vendor $vendor): array
+    {
+        if ($vendor->getRegions()->isEmpty()) {
+            return [];
+        }
+
+        $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
+
+        $data = [
+            'price_min'  => $vendor->getPriceMinCents(),
+            'price_max'  => $vendor->getPriceMaxCents(),
+            'price_type' => $vendor->getPriceType()->value,
+            'zones'      => $vendor->getRegions()
+                ->map(fn(Region $r) => $r->getId()->toRfc4122())
+                ->toArray(),
+        ];
+
+        if ($vendorType === VendorType::Lieu) {
+            $venueDetails                     = $vendor->getVenueDetails();
+            $data['city']                     = $vendor->getCity();
+            $data['nearest_city']             = $venueDetails?->getNearestCity();
+            $data['distance_to_city_minutes'] = $venueDetails?->getDistanceToCityMinutes();
+        }
+
+        return $data;
     }
 
     /** @return Region[] */

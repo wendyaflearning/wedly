@@ -8,6 +8,7 @@ import ProfessionsStep from './steps/professions/ProfessionsStep'
 import ExperiencesStep from './steps/experiences/ExperiencesStep'
 import VenueCharacteristicsStep from './steps/venue_characteristics/VenueCharacteristicsStep'
 import CateringCharacteristicsStep from './steps/catering_characteristics/CateringCharacteristicsStep'
+import ZonesPricingStep from './steps/zones-pricing/ZonesPricingStep'
 
 type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'experiences' | 'venue_characteristics' | 'catering_characteristics' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials'
 
@@ -77,6 +78,21 @@ export default function OnboardingClient({
       <VenueCharacteristicsStep
         token={token}
         initialVenueDetails={data.steps_data?.venue_characteristics ?? null}
+        onBack={() => setScreen('onboarding_overview')}
+        onNext={(nextStep) => {
+          router.refresh()
+          setScreen(nextStep as Screen)
+        }}
+      />
+    )
+  }
+
+  if (screen === 'zones_pricing') {
+    return (
+      <ZonesPricingStep
+        token={token}
+        initialData={data.steps_data?.zones_pricing ?? null}
+        vendorType={data.vendor_type}
         onBack={() => setScreen('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
