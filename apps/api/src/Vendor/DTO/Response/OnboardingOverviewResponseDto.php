@@ -8,6 +8,7 @@ readonly class OnboardingOverviewResponseDto
 {
     public function __construct(
         public string $firstname,
+        public string $vendor_type,
         /** @var array<OnboardingStepResponse> */
         public array $steps,
         public array $steps_data = [],

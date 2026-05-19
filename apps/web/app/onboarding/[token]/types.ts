@@ -37,6 +37,23 @@ export interface ExperienceOption {
   name: string
 }
 
+export interface RegionOption {
+  id: string
+  name: string
+}
+
+export type VendorType = 'freelance' | 'lieu' | 'traiteur'
+
+export interface ZonesPricingData {
+  price_min: number
+  price_max: number
+  price_type: string
+  zones: string[]
+  city?: string
+  nearest_city?: string
+  distance_to_city_minutes?: number
+}
+
 export interface OnboardingStep {
   stepKey: string
   label: string
@@ -47,6 +64,7 @@ export interface OnboardingStep {
 
 export interface OnboardingOverviewData {
   firstname: string
+  vendor_type: VendorType
   steps: OnboardingStep[]
   steps_data?: {
     professions?: { services: ServiceOption[] }
@@ -65,5 +83,6 @@ export interface OnboardingOverviewData {
       'is_offers_table_service' | 'is_offers_buffet' | 'is_offers_cocktail' |
       'is_provide_tableware' | 'is_provide_furniture'
     >
+    zones_pricing?: ZonesPricingData
   }
 }

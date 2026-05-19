@@ -36,7 +36,7 @@ readonly class GetOnboardingStepAction
 
             $slugs = $vendor->resolveVendorServices();
             if (empty($slugs)) {
-                return new JsonResponse(['error' => 'Type de prestataire non déterminable'], 422);
+                return new JsonResponse(['error' => 'Aucun service n\'a été associé à ce prestataire'], 422);
             }
 
             $vendorType    = VendorType::resolveVendorType($slugs);
@@ -65,9 +65,10 @@ readonly class GetOnboardingStepAction
             }
 
             return new JsonResponse(new OnboardingOverviewResponseDto(
-                firstname:  $vendor->getUser()->getFirstName(),
-                steps:      $steps,
-                steps_data: $stepsData,
+                firstname:   $vendor->getUser()->getFirstName(),
+                vendor_type: $vendorType->value,
+                steps:       $steps,
+                steps_data:  $stepsData,
             ));
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
