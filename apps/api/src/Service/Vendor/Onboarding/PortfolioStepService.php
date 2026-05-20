@@ -40,62 +40,102 @@ readonly class PortfolioStepService extends AbstractOnboardingStepHandler
         );
     }
 
-    public function upload(Vendor $vendor, PortfolioStepRequestDto $dto): void
+    public function getStepData(Vendor $vendor): array
     {
-        $oldImages    = $this->portfolioImageRepository->findByVendor($vendor);
-        $oldPublicIds = array_values(array_filter(
-            array_map(fn(PortfolioImage $img) => $img->getCloudinaryPublicId(), $oldImages),
-        ));
-
-        $newCount = 1 + count($dto->photos);
-
-        // TODO Year 2 : limite par type de prestataire (photographe/vidéaste = 10, autres = 5)
-        if ($newCount > 10) {
-            throw new DomainException(
-                sprintf('Limite dépassée : impossible d\'uploader %d photo(s).', $newCount),
-                422,
-            );
+        $images = $this->portfolioImageRepository->findByVendor($vendor);
+        if (empty($images)) {
+            return [];
         }
 
-        $coverResult = $this->cloudinaryUpload($dto->coverPhoto->getPathname(), (string) $vendor->getId());
+        return [
+            'images' => array_map(fn(PortfolioImage $img) => [
+                'id'         => $img->getId()->toRfc4122(),
+                'url'        => $img->getUrl(),
+                'is_cover'   => $img->isCover(),
+                'sort_order' => $img->getSortOrder(),
+            ], $images),
+        ];
+    }
 
-        // ⚠️ TODO Year 2 : si un upload échoue ici, les uploads précédents sont des orphelins
-        // Cloudinary. Nettoyer via cloudinary_public_id avec un job de réconciliation.
+    public function upload(Vendor $vendor, PortfolioStepRequestDto $dto): void
+    {
+        $oldImages     = $this->portfolioImageRepository->findByVendor($vendor);
+        $existingCover = array_values(array_filter($oldImages, fn(PortfolioImage $img) => $img->isCover()))[0] ?? null;
+
+        if ($dto->coverPhoto === null && $existingCover === null) {
+            throw new DomainException('Une photo de couverture est requise.', 422);
+        }
+
+        // Upload new files first — fail fast before any DB change
+        // ⚠️ TODO Year 2 : si un upload échoue ici, les uploads précédents sont des orphelins Cloudinary.
+        $coverResult = $dto->coverPhoto !== null
+            ? $this->cloudinaryUpload($dto->coverPhoto->getPathname(), (string) $vendor->getId())
+            : null;
+
         $additionalResults = [];
         foreach ($dto->photos as $photo) {
             $additionalResults[] = $this->cloudinaryUpload($photo->getPathname(), (string) $vendor->getId());
         }
 
-        foreach ($oldImages as $img) {
-            $this->em->remove($img);
-        }
-        $this->em->flush();
+        $oldCoverPublicId = null;
 
-        $coverImage = (new PortfolioImage())
-            ->setVendor($vendor)
-            ->setUrl($coverResult['secure_url'])
-            ->setCloudinaryPublicId($coverResult['public_id'])
-            ->setIsCover(true)
-            ->setSortOrder(0);
-        $this->em->persist($coverImage);
+        if ($coverResult !== null && $existingCover !== null) {
+            $oldCoverPublicId = $existingCover->getCloudinaryPublicId();
+            $this->em->remove($existingCover);
+        }
+
+        if ($coverResult !== null) {
+            $this->em->persist(
+                (new PortfolioImage())
+                    ->setVendor($vendor)
+                    ->setUrl($coverResult['secure_url'])
+                    ->setCloudinaryPublicId($coverResult['public_id'])
+                    ->setIsCover(true)
+                    ->setSortOrder(0)
+            );
+        }
+
+        $existingSecondaries  = array_filter($oldImages, fn(PortfolioImage $img) => !$img->isCover());
+        $totalSecondary       = count($existingSecondaries) + count($dto->photos);
+
+        if ($totalSecondary < 4) {
+            throw new DomainException(
+                sprintf('4 photos complémentaires sont requises (%d actuellement).', $totalSecondary),
+                422,
+            );
+        }
+
+        $maxExistingSortOrder  = empty($existingSecondaries)
+            ? 0
+            : max(array_map(fn(PortfolioImage $img) => $img->getSortOrder(), $existingSecondaries));
 
         foreach ($additionalResults as $i => $result) {
-            $image = (new PortfolioImage())
-                ->setVendor($vendor)
-                ->setUrl($result['secure_url'])
-                ->setCloudinaryPublicId($result['public_id'])
-                ->setIsCover(false)
-                ->setSortOrder($i + 1);
-            $this->em->persist($image);
+            $this->em->persist(
+                (new PortfolioImage())
+                    ->setVendor($vendor)
+                    ->setUrl($result['secure_url'])
+                    ->setCloudinaryPublicId($result['public_id'])
+                    ->setIsCover(false)
+                    ->setSortOrder($maxExistingSortOrder + $i + 1)
+            );
         }
+
         $this->em->flush();
 
-        foreach ($oldPublicIds as $publicId) {
+        $persistedImages = $this->portfolioImageRepository->findByVendor($vendor);
+        $hasCover        = !empty(array_filter($persistedImages, fn(PortfolioImage $img) => $img->isCover()));
+
+        if (count($persistedImages) >= 4 && $hasCover) {
+            $vendor->setOnboardingStep(OnboardingStep::Portfolio);
+            $this->em->flush();
+        }
+
+        if ($oldCoverPublicId !== null) {
             try {
-                $this->cloudinary->uploadApi()->destroy($publicId);
+                $this->cloudinary->uploadApi()->destroy($oldCoverPublicId);
             } catch (\Throwable $e) {
                 $this->logger->warning('Cloudinary destroy failed', [
-                    'public_id' => $publicId,
+                    'public_id' => $oldCoverPublicId,
                     'error'     => $e->getMessage(),
                 ]);
             }

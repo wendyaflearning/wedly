@@ -62,6 +62,17 @@ export interface OnboardingStep {
   isPreFilled: boolean
 }
 
+export interface PortfolioImage {
+  id: string
+  url: string
+  is_cover: boolean
+  sort_order: number
+}
+
+export interface PortfolioData {
+  images: PortfolioImage[]
+}
+
 export interface OnboardingOverviewData {
   firstname: string
   vendor_type: VendorType
@@ -84,5 +95,6 @@ export interface OnboardingOverviewData {
       'is_provide_tableware' | 'is_provide_furniture'
     >
     zones_pricing?: ZonesPricingData
+    portfolio?: PortfolioData
   }
 }

@@ -12,14 +12,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class PortfolioStepRequestDto implements DTOInterface
 {
     public function __construct(
-        #[Assert\NotNull]
         #[Assert\File(
             mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
             mimeTypesMessage: 'Seuls les formats JPG, PNG et WebP sont acceptés.',
         )]
         public ?UploadedFile $coverPhoto,
 
-        #[Assert\Count(max: 9)]
+        #[Assert\Count(min: 0, max: 9)]
         #[Assert\All([
             new Assert\File(
                 mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
