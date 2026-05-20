@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class VendorOnboardingStepAction
+readonly class PatchVendorOnboardingStepAction
 {
     public function __construct(
         private InviteTokenService $inviteTokenService,

@@ -25,6 +25,7 @@ class PortfolioImageRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('p')
             ->where('p.vendor = :vendor')
             ->setParameter('vendor', $vendor)
+            ->orderBy('p.sortOrder', 'ASC')
             ->getQuery()
             ->getResult();
     }
