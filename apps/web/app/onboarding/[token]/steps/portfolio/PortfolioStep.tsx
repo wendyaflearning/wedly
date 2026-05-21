@@ -278,19 +278,27 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
     setCoverSlot(prev => prev.localFile ? { ...prev, uploading: true } : prev)
     setSecondarySlots(prev => prev.map(s => s.localFile ? { ...s, uploading: true } : s))
 
-    const results = await Promise.allSettled(
-      toUpload.map(({ key, file }) => {
-        const fd = new FormData()
-        if (key === 'cover') fd.append('cover_photo', file)
-        else fd.append('photos[]', file)
-        return fetch(`/api/onboarding/${token}/portfolio`, { method: 'POST', body: fd })
-          .then(async res => {
-            if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur')
-            const images = ((await res.json()).images ?? []) as PortfolioImage[]
-            return { key, images }
-          })
-      })
+    async function postPhoto(key: 'cover' | number, file: File) {
+      const fd = new FormData()
+      if (key === 'cover') fd.append('cover_photo', file)
+      else fd.append('photos[]', file)
+      const res = await fetch(`/api/onboarding/${token}/portfolio`, { method: 'POST', body: fd })
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur')
+      const images = ((await res.json()).images ?? []) as PortfolioImage[]
+      return { key, images }
+    }
+
+    // La cover doit être persistée avant les secondaires pour éviter la race condition
+    const coverItem     = toUpload.find(t => t.key === 'cover')
+    const secondaryItems = toUpload.filter(t => t.key !== 'cover')
+
+    const coverResults     = coverItem
+      ? await Promise.allSettled([postPhoto('cover', coverItem.file)])
+      : []
+    const secondaryResults = await Promise.allSettled(
+      secondaryItems.map(({ key, file }) => postPhoto(key, file))
     )
+    const results = [...coverResults, ...secondaryResults]
 
     // Assigne chaque image renvoyée à son slot — traitement en ordre pour éviter les doublons
     const knownIds = new Set<string>(
