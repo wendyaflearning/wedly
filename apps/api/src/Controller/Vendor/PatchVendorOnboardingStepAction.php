@@ -50,6 +50,7 @@ readonly class PatchVendorOnboardingStepAction
             $response = $this->stepService->handle($vendor, $dto);
 
             if ($response === null) {
+                $this->inviteTokenService->consume($inviteToken);
                 return new JsonResponse(null, Response::HTTP_NO_CONTENT);
             }
 

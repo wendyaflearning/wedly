@@ -45,6 +45,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
+      suppressHydrationWarning
       className={`${cormorant.variable} ${manrope.variable} ${josefin.variable} ${dmSans.variable} bg-creme`}
     >
       <body className="font-manrope text-texte min-h-full">{children}</body>

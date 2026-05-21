@@ -18,6 +18,12 @@ readonly class InviteTokenService
      * @throws \DomainException 404 if token not found, 410 if already consumed
      * TODO: implement expires_at check in V2
      */
+    public function consume(InviteToken $inviteToken): void
+    {
+        $inviteToken->setStatus(InviteTokenStatus::Used);
+        $this->em->flush();
+    }
+
     public function resolve(string $token): InviteToken
     {
         $inviteToken = $this->em->getRepository(InviteToken::class)->findOneBy(['token' => $token]);

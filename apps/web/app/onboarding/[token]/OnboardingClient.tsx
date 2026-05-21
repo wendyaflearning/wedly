@@ -11,8 +11,10 @@ import CateringCharacteristicsStep from './steps/catering_characteristics/Cateri
 import ZonesPricingStep from './steps/zones-pricing/ZonesPricingStep'
 import PortfolioStep from './steps/portfolio/PortfolioStep'
 import LegalInfoStep from './steps/legal_info/LegalInfoStep'
+import CredentialsStep from './steps/credentials/CredentialsStep'
+import CompletionScreen from './CompletionScreen'
 
-type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'experiences' | 'venue_characteristics' | 'catering_characteristics' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials'
+type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'experiences' | 'venue_characteristics' | 'catering_characteristics' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials' | 'completed'
 
 export default function OnboardingClient({
   data,
@@ -132,11 +134,27 @@ export default function OnboardingClient({
         initialData={data.steps_data?.legal_info ?? null}
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
-          router.refresh()
+          if (nextStep !== 'credentials') router.refresh()
           navigate(nextStep as Screen)
         }}
       />
     )
+  }
+
+  if (screen === 'credentials') {
+    return (
+      <CredentialsStep
+        token={token}
+        vendorType={data.vendor_type}
+        initialEmail={data.steps_data?.credentials?.email ?? null}
+        onBack={() => navigate('onboarding_overview')}
+        onComplete={() => navigate('completed')}
+      />
+    )
+  }
+
+  if (screen === 'completed') {
+    return <CompletionScreen />
   }
 
   return (

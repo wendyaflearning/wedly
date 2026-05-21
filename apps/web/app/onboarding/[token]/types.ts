@@ -108,5 +108,6 @@ export interface OnboardingOverviewData {
     zones_pricing?: ZonesPricingData
     portfolio?: PortfolioData
     legal_info?: LegalInfoData
+    credentials?: { email: string }
   }
 }
