@@ -9,6 +9,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 readonly class PappersService
 {
+    /** Statuts INSEE indiquant une entreprise en activité selon l'API Pappers. */
+    public const ACTIVE_STATUSES = ['Actif'];
+
     public function __construct(
         private HttpClientInterface $client,
         private string $apiToken,
