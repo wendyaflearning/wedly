@@ -28,6 +28,11 @@ readonly class CredentialsStepService extends AbstractOnboardingStepHandler
         return OnboardingStep::Credentials;
     }
 
+    public function getStepData(Vendor $vendor): array
+    {
+        return ['email' => $vendor->getUser()->getEmail()];
+    }
+
     public function handle(Vendor $vendor, array $data): void
     {
         /** @var CredentialsStepRequestDto $dto */
@@ -35,7 +40,8 @@ readonly class CredentialsStepService extends AbstractOnboardingStepHandler
         $user = $vendor->getUser();
 
         if ($dto->email !== null) {
-            if ($this->userRepository->findOneBy(['email' => $dto->email]) !== null) {
+            $existing = $this->userRepository->findOneBy(['email' => $dto->email]);
+            if ($existing !== null && !$existing->getId()->equals($user->getId())) {
                 throw new \DomainException('Email already registered.', 409);
             }
             $user->setEmail($dto->email);
