@@ -23,11 +23,16 @@ export default function OnboardingClient({
   const router = useRouter()
   const [screen, setScreen] = useState<Screen>('welcome')
 
+  function navigate(next: Screen) {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+    setScreen(next)
+  }
+
   if (screen === 'welcome') {
     return (
       <WelcomeScreen
         firstname={data.firstname}
-        onContinue={() => setScreen('onboarding_overview')}
+        onContinue={() => navigate('onboarding_overview')}
       />
     )
   }
@@ -37,10 +42,10 @@ export default function OnboardingClient({
       <ProfessionsStep
         token={token}
         initialServices={data.steps_data?.professions?.services ?? []}
-        onBack={() => setScreen('onboarding_overview')}
+        onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
-          setScreen(nextStep as Screen)
+          navigate(nextStep as Screen)
         }}
       />
     )
@@ -51,10 +56,10 @@ export default function OnboardingClient({
       <ExperiencesStep
         token={token}
         initialExperiences={data.steps_data?.experiences ?? { confession_ids: [], culture_ids: [] }}
-        onBack={() => setScreen('onboarding_overview')}
+        onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
-          setScreen(nextStep as Screen)
+          navigate(nextStep as Screen)
         }}
       />
     )
@@ -65,10 +70,10 @@ export default function OnboardingClient({
       <CateringCharacteristicsStep
         token={token}
         initialData={data.steps_data?.catering_characteristics ?? null}
-        onBack={() => setScreen('onboarding_overview')}
+        onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
-          setScreen(nextStep as Screen)
+          navigate(nextStep as Screen)
         }}
       />
     )
@@ -79,10 +84,10 @@ export default function OnboardingClient({
       <VenueCharacteristicsStep
         token={token}
         initialVenueDetails={data.steps_data?.venue_characteristics ?? null}
-        onBack={() => setScreen('onboarding_overview')}
+        onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
-          setScreen(nextStep as Screen)
+          navigate(nextStep as Screen)
         }}
       />
     )
@@ -94,10 +99,10 @@ export default function OnboardingClient({
         token={token}
         initialData={data.steps_data?.zones_pricing ?? null}
         vendorType={data.vendor_type}
-        onBack={() => setScreen('onboarding_overview')}
+        onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
-          setScreen(nextStep as Screen)
+          navigate(nextStep as Screen)
         }}
       />
     )
@@ -109,10 +114,10 @@ export default function OnboardingClient({
         token={token}
         vendorType={data.vendor_type}
         initialData={data.steps_data?.portfolio ?? null}
-        onBack={() => setScreen('onboarding_overview')}
+        onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
-          setScreen(nextStep as Screen)
+          navigate(nextStep as Screen)
         }}
       />
     )
@@ -122,7 +127,7 @@ export default function OnboardingClient({
     <OnboardingOverview
       data={data}
       token={token}
-      onStepClick={(stepKey) => setScreen(stepKey as Screen)}
+      onStepClick={(stepKey) => navigate(stepKey as Screen)}
     />
   )
 }

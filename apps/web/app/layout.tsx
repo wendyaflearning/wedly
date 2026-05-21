@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, DM_Sans, Josefin_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 
@@ -26,6 +26,11 @@ const josefin = Josefin_Sans({
   subsets: ["latin"],
   weight: ["400"],
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   title: "Wedly",
