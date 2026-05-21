@@ -14,6 +14,12 @@ final readonly class LegalInfoStepRequest implements DTOInterface
         public string $brandName,
 
         #[Assert\NotBlank]
+        public string $firstName,
+
+        #[Assert\NotBlank]
+        public string $lastName,
+
+        #[Assert\NotBlank]
         #[Assert\Regex(pattern: '/^\d{14}$/')]
         public string $siret,
 
@@ -27,11 +33,13 @@ final readonly class LegalInfoStepRequest implements DTOInterface
     {
         return new self(
             brandName: $data['brand_name'] ?? '',
-            siret:     $data['siret'] ?? '',
-            phone:     $data['phone'] ?? null,
-            address:   $data['address'] ?? null,
-            zipcode:   $data['zipcode'] ?? null,
-            city:      $data['city'] ?? null,
+            firstName: $data['first_name'] ?? '',
+            lastName:  $data['last_name']  ?? '',
+            siret:     $data['siret']      ?? '',
+            phone:     $data['phone']      ?? null,
+            address:   $data['address']    ?? null,
+            zipcode:   $data['zipcode']    ?? null,
+            city:      $data['city']       ?? null,
         );
     }
 }

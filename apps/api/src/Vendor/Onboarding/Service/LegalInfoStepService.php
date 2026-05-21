@@ -33,6 +33,8 @@ readonly class LegalInfoStepService extends AbstractOnboardingStepHandler
         $dto = $this->validate(LegalInfoStepRequest::fromArray($data));
 
         $vendor->setBrandName($dto->brandName);
+        $vendor->getUser()->setFirstName($dto->firstName);
+        $vendor->getUser()->setLastName($dto->lastName);
         $vendor->setSiret($dto->siret);
         $vendor->setPhone($dto->phone);
         $vendor->setAddress($dto->address);
@@ -44,16 +46,48 @@ readonly class LegalInfoStepService extends AbstractOnboardingStepHandler
         if ($pappersData !== null) {
             $vendor->setLegalName($pappersData['legal_name']);
             $vendor->setLegalForm($pappersData['legal_form']);
+            $vendor->setLegalStatus($pappersData['legal_status']);
             $vendor->setIncorporatedAt(
                 isset($pappersData['incorporated_at'])
                     ? \DateTimeImmutable::createFromFormat('Y-m-d', $pappersData['incorporated_at']) ?: null
                     : null
             );
-            $vendor->setLegalStatus($pappersData['legal_status']);
-            $vendor->setSiretVerified(true);
+
+            $isActive = in_array($pappersData['legal_status'], PappersService::ACTIVE_STATUSES, true);
+            $vendor->setSiretVerified($isActive);
+
+            if (!$isActive) {
+                $this->logger->warning('SIRET trouvé mais entreprise inactive', [
+                    'siret'  => $dto->siret,
+                    'statut' => $pappersData['legal_status'],
+                ]);
+            }
         } else {
+            // legal_status laissé à null : Pappers inaccessible ≠ entreprise inactive
             $vendor->setSiretVerified(false);
             $this->logger->warning('SIRET non vérifié via Pappers', ['siret' => $dto->siret]);
         }
+    }
+
+    public function getStepData(Vendor $vendor): array
+    {
+        if ($vendor->getSiret() === null) {
+            return [];
+        }
+
+        return [
+            'brand_name'     => $vendor->getBrandName(),
+            'first_name'     => $vendor->getUser()->getFirstName(),
+            'last_name'      => $vendor->getUser()->getLastName(),
+            'siret'          => $vendor->getSiret(),
+            'phone'          => $vendor->getPhone(),
+            'address'        => $vendor->getAddress(),
+            'zipcode'        => $vendor->getZipcode(),
+            'city'           => $vendor->getCity(),
+            'siret_verified' => $vendor->isSiretVerified(),
+            'legal_name'     => $vendor->getLegalName(),
+            'legal_form'     => $vendor->getLegalForm(),
+            'legal_status'   => $vendor->getLegalStatus(),
+        ];
     }
 }

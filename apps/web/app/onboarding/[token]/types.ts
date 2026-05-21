@@ -73,6 +73,17 @@ export interface PortfolioData {
   images: PortfolioImage[]
 }
 
+export interface LegalInfoData {
+  brand_name:  string
+  first_name:  string
+  last_name:   string
+  siret:       string
+  phone?:      string
+  address?:    string
+  zipcode?:    string
+  city?:       string
+}
+
 export interface OnboardingOverviewData {
   firstname: string
   vendor_type: VendorType
@@ -96,5 +107,6 @@ export interface OnboardingOverviewData {
     >
     zones_pricing?: ZonesPricingData
     portfolio?: PortfolioData
+    legal_info?: LegalInfoData
   }
 }

@@ -10,6 +10,7 @@ import VenueCharacteristicsStep from './steps/venue_characteristics/VenueCharact
 import CateringCharacteristicsStep from './steps/catering_characteristics/CateringCharacteristicsStep'
 import ZonesPricingStep from './steps/zones-pricing/ZonesPricingStep'
 import PortfolioStep from './steps/portfolio/PortfolioStep'
+import LegalInfoStep from './steps/legal_info/LegalInfoStep'
 
 type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'experiences' | 'venue_characteristics' | 'catering_characteristics' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials'
 
@@ -114,6 +115,21 @@ export default function OnboardingClient({
         token={token}
         vendorType={data.vendor_type}
         initialData={data.steps_data?.portfolio ?? null}
+        onBack={() => navigate('onboarding_overview')}
+        onNext={(nextStep) => {
+          router.refresh()
+          navigate(nextStep as Screen)
+        }}
+      />
+    )
+  }
+
+  if (screen === 'legal_info') {
+    return (
+      <LegalInfoStep
+        token={token}
+        vendorType={data.vendor_type}
+        initialData={data.steps_data?.legal_info ?? null}
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
