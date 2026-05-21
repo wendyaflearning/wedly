@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor;
 
-use App\Builder\Vendor\Onboarding\VendorOnboardingOverviewBuilder;
 use App\DTO\Vendor\Step\PortfolioStepRequestDto;
 use App\Service\InviteTokenService;
 use App\Service\Vendor\Onboarding\PortfolioStepService;
@@ -16,10 +15,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 readonly class PostVendorOnboardingPortfolioAction
 {
     public function __construct(
-        private InviteTokenService              $inviteTokenService,
-        private PortfolioStepService            $portfolioStepService,
-        private ValidatorInterface              $validator,
-        private VendorOnboardingOverviewBuilder $overviewBuilder,
+        private InviteTokenService   $inviteTokenService,
+        private PortfolioStepService $portfolioStepService,
+        private ValidatorInterface   $validator,
     ) {}
 
     #[Route('/api/v1/vendors/onboarding/{token}/portfolio', name: 'api_vendor_onboarding_portfolio', methods: ['POST'])]
@@ -47,7 +45,9 @@ readonly class PostVendorOnboardingPortfolioAction
 
             $this->portfolioStepService->upload($vendor, $dto);
 
-            return new JsonResponse($this->overviewBuilder->buildStepResponse($vendor));
+            $data = $this->portfolioStepService->getStepData($vendor);
+
+            return new JsonResponse(['images' => $data['images'] ?? []]);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
         }

@@ -96,14 +96,6 @@ readonly class PortfolioStepService extends AbstractOnboardingStepHandler
         }
 
         $existingSecondaries  = array_filter($oldImages, fn(PortfolioImage $img) => !$img->isCover());
-        $totalSecondary       = count($existingSecondaries) + count($dto->photos);
-
-        if ($totalSecondary < 4) {
-            throw new DomainException(
-                sprintf('4 photos complémentaires sont requises (%d actuellement).', $totalSecondary),
-                422,
-            );
-        }
 
         $maxExistingSortOrder  = empty($existingSecondaries)
             ? 0
@@ -122,10 +114,11 @@ readonly class PortfolioStepService extends AbstractOnboardingStepHandler
 
         $this->em->flush();
 
-        $persistedImages = $this->portfolioImageRepository->findByVendor($vendor);
-        $hasCover        = !empty(array_filter($persistedImages, fn(PortfolioImage $img) => $img->isCover()));
+        $persistedImages  = $this->portfolioImageRepository->findByVendor($vendor);
+        $hasCover         = !empty(array_filter($persistedImages, fn(PortfolioImage $img) => $img->isCover()));
+        $secondaryCount   = count(array_filter($persistedImages, fn(PortfolioImage $img) => !$img->isCover()));
 
-        if (count($persistedImages) >= 4 && $hasCover) {
+        if ($hasCover && $secondaryCount >= 4) {
             $vendor->setOnboardingStep(OnboardingStep::Portfolio);
             $this->em->flush();
         }
