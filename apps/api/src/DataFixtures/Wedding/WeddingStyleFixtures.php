@@ -9,6 +9,7 @@ use App\Entity\Culture\Culture;
 use App\Entity\Plan\Plan;
 use App\Entity\Vendor\Service;
 use App\Entity\Wedding\WeddingStyle;
+use App\Enum\Vendor\VendorType;
 use App\Enum\Wedding\CultureType;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -112,21 +113,21 @@ class WeddingStyleFixtures extends Fixture
     private function loadServices(ObjectManager $manager): void
     {
         $services = [
-            [1,  'Photographe',       'photographe'],
-            [2,  'Vidéaste',          'vidéaste'],
-            [3,  'Traiteur',          'traiteur'],
-            [4,  'DJ',                'dj'],
-            [5,  'Groupe de musique', 'groupe-musique'],
-            [6,  'Fleuriste',         'fleuriste'],
-            [7,  'Lieu de réception', 'lieu-reception'],
-            [8,  'Wedding planner',   'wedding-planner'],
-            [9,  'Coiffeur & Maquillage', 'coiffeur-maquillage'],
-            [10, 'Traiteur desserts', 'traiteur-desserts'],
+            [1,  'Lieu de réception', 'lieu-de-reception', VendorType::Lieu],
+            [2,  'Traiteur',          'traiteur',          VendorType::Traiteur],
+            [3,  'Décoration',        'decoration',        VendorType::Freelance],
+            [4,  'Photographe',       'photographe',       VendorType::Freelance],
+            [5,  'Vidéaste',          'videaste',          VendorType::Freelance],
+            [6,  'Coiffeur',          'coiffeur',          VendorType::Freelance],
+            [7,  'Makeup artist',     'makeup-artist',     VendorType::Freelance],
+            [8,  'Coiffeuse & MUA',   'coiffeuse-et-mua',  VendorType::Freelance],
+            [9,  'Fleuriste',         'fleuriste',         VendorType::Freelance],
+            [10, 'DJ',                'dj',                VendorType::Freelance],
         ];
 
-        foreach ($services as [$sortOrder, $name, $slug]) {
+        foreach ($services as [$sortOrder, $name, $slug, $category]) {
             $service = new Service();
-            $service->setName($name)->setSlug($slug)->setSortOrder($sortOrder);
+            $service->setName($name)->setSlug($slug)->setSortOrder($sortOrder)->setCategory($category);
             $manager->persist($service);
         }
     }

@@ -14,4 +14,20 @@ final class ServiceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Service::class);
     }
+
+    /** @return Service[] */
+    public function findRootsWithChildren(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->leftJoin('s.children', 'c')
+            ->addSelect('c')
+            ->leftJoin('c.children', 'gc')
+            ->addSelect('gc')
+            ->where('s.parent IS NULL')
+            ->orderBy('s.sortOrder', 'ASC')
+            ->addOrderBy('c.sortOrder', 'ASC')
+            ->addOrderBy('gc.sortOrder', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

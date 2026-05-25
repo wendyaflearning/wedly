@@ -10,10 +10,15 @@ final readonly class ServiceResponseDto
 {
     public string $id;
     public string $name;
+    public array  $children;
 
     public function __construct(Service $service)
     {
-        $this->id   = $service->getId()->toString();
-        $this->name = $service->getName();
+        $children = $service->getChildren()->toArray();
+        usort($children, fn(Service $a, Service $b) => $a->getSortOrder() <=> $b->getSortOrder());
+
+        $this->id       = $service->getId()->toString();
+        $this->name     = $service->getName();
+        $this->children = array_map(fn(Service $child) => new self($child), $children);
     }
 }

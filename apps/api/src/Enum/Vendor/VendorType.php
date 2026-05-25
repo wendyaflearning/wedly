@@ -6,9 +6,10 @@ namespace App\Enum\Vendor;
 
 enum VendorType: string
 {
-    case Freelance = 'freelance';
-    case Lieu      = 'lieu';
-    case Traiteur  = 'traiteur';
+    case Freelance  = 'freelance';
+    case Lieu       = 'lieu';
+    case Traiteur   = 'traiteur';
+    case Createurs  = 'createurs';
 
     public static function resolveVendorType(array $slugs): self
     {
