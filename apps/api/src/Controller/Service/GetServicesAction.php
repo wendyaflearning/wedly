@@ -21,7 +21,7 @@ final readonly class GetServicesAction
     {
         $services = array_map(
             fn(Service $service) => new ServiceResponseDto($service),
-            $this->serviceRepository->findAll()
+            $this->serviceRepository->findRootsWithChildren()
         );
 
         return new JsonResponse($services);
