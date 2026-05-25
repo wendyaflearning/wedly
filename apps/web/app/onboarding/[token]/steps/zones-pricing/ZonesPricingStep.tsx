@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { Tooltip } from '@/app/components/Tooltip'
 import type { RegionOption, VendorType, ZonesPricingData } from '../../types'
 
 const PRICE_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
@@ -555,8 +556,9 @@ export default function ZonesPricingStep({
           </div>
 
           {/* ── Unité tarifaire ── */}
-          <span className="font-josefin uppercase text-bordeaux/50 block" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 14, marginTop: 24 }}>
+          <span className="font-josefin text-bordeaux/50 flex items-center gap-2" style={{ fontSize: 10, letterSpacing: '0.06em', marginBottom: 14, marginTop: 24 }}>
             Unité tarifaire
+            <Tooltip text="L'unité tarifaire précise comment votre prix est calculé — par personne, par prestation, par heure... Elle varie selon votre métier." />
           </span>
 
           {isVenue ? (
