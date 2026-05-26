@@ -39,6 +39,16 @@ readonly class OnboardingStepResolver
                 OnboardingStep::LegalInfo,
                 OnboardingStep::Credentials,
             ],
+            VendorType::Createurs => [
+                OnboardingStep::Professions,
+                OnboardingStep::Experiences,
+                OnboardingStep::CreatorUniverse,
+                OnboardingStep::CreatorProcess,
+                OnboardingStep::ZonesPricing,
+                OnboardingStep::Portfolio,
+                OnboardingStep::LegalInfo,
+                OnboardingStep::Credentials,
+            ],
         };
     }
 

@@ -21,6 +21,10 @@ enum VendorType: string
             return self::Traiteur;
         }
 
+        if (in_array('createurs', $slugs, true)) {
+            return self::Createurs;
+        }
+
         return self::Freelance;
     }
 }

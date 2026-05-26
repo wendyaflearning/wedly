@@ -22,7 +22,7 @@ readonly class VendorOnboardingOverviewBuilder
 
     public function build(Vendor $vendor): OnboardingOverviewResponseDto
     {
-        $vendorType    = VendorType::resolveVendorType($vendor->resolveVendorServices());
+        $vendorType    = $vendor->resolveVendorType();
         $lastCompleted = $vendor->getOnboardingStep();
 
         $currentStep = $lastCompleted === null
@@ -54,7 +54,7 @@ readonly class VendorOnboardingOverviewBuilder
 
     public function buildStepResponse(Vendor $vendor): VendorOnboardingStepResponseDto
     {
-        $vendorType    = VendorType::resolveVendorType($vendor->resolveVendorServices());
+        $vendorType    = $vendor->resolveVendorType();
         $lastCompleted = $vendor->getOnboardingStep();
 
         $currentStep = $lastCompleted === null

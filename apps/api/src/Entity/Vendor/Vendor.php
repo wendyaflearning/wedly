@@ -13,6 +13,7 @@ use App\Entity\Wedding\WeddingStyle;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
+use App\Enum\Vendor\VendorType;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -138,6 +139,9 @@ class Vendor
 
     #[ORM\OneToOne(targetEntity: VendorAnimationDetails::class, mappedBy: 'vendor', cascade: ['persist', 'remove'])]
     private ?VendorAnimationDetails $animationDetails = null;
+
+    #[ORM\OneToOne(targetEntity: VendorCreatorDetails::class, mappedBy: 'vendor', cascade: ['persist', 'remove'])]
+    private ?VendorCreatorDetails $creatorDetails = null;
 
     public function __construct()
     {
@@ -378,7 +382,18 @@ class Vendor
     /** @return string[] */
     public function resolveVendorServices(): array
     {
-        return array_map(fn($service) => $service->getSlug(), $this->services->toArray());
+        return array_map(fn(Service $service) => $service->getSlug(), $this->services->toArray());
+    }
+
+    public function resolveVendorType(): VendorType
+    {
+        foreach ($this->services as $service) {
+            if ($service->getCategory() !== VendorType::Freelance) {
+                return $service->getCategory();
+            }
+        }
+
+        return VendorType::Freelance;
     }
 
     public function addService(Service $service): static
@@ -527,6 +542,18 @@ class Vendor
     public function setAnimationDetails(?VendorAnimationDetails $animationDetails): static
     {
         $this->animationDetails = $animationDetails;
+
+        return $this;
+    }
+
+    public function getCreatorDetails(): ?VendorCreatorDetails
+    {
+        return $this->creatorDetails;
+    }
+
+    public function setCreatorDetails(?VendorCreatorDetails $creatorDetails): static
+    {
+        $this->creatorDetails = $creatorDetails;
 
         return $this;
     }

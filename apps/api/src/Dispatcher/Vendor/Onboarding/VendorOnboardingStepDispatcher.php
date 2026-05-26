@@ -27,7 +27,7 @@ readonly class VendorOnboardingStepDispatcher
     {
         $step       = OnboardingStep::tryFrom($dto->step)
             ?? throw new \DomainException(sprintf('Étape inconnue : %s', $dto->step), 422);
-        $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
+        $vendorType = $vendor->resolveVendorType();
 
         $this->resolveHandler($step, $vendorType)->handle($vendor, $dto->data ?? []);
 

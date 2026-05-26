@@ -30,7 +30,7 @@ readonly class OnboardingDataResponse
     public static function fromVendor(Vendor $vendor): self
     {
         $slugs    = $vendor->resolveVendorServices();
-        $category = empty($slugs) ? null : VendorType::resolveVendorType($slugs);
+        $category = $vendor->resolveVendorType();
 
         $cover  = null;
         $images = [];

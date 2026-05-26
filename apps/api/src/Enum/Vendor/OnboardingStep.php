@@ -14,6 +14,8 @@ enum OnboardingStep: string
     case Portfolio               = 'portfolio';
     case LegalInfo               = 'legal_info';
     case Credentials             = 'credentials';
+    case CreatorUniverse         = 'creator_universe';
+    case CreatorProcess          = 'creator_process';
 
     public function label(VendorType $vendorType): string
     {
@@ -26,6 +28,8 @@ enum OnboardingStep: string
             self::Portfolio               => 'Portfolio',
             self::LegalInfo               => 'Informations légales',
             self::Credentials             => 'Accès à votre espace',
+            self::CreatorUniverse         => 'Votre univers',
+            self::CreatorProcess          => 'Votre processus',
         };
     }
 }
