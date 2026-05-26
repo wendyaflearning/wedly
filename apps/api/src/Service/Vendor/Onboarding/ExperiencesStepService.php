@@ -31,7 +31,7 @@ readonly class ExperiencesStepService extends AbstractOnboardingStepHandler
     {
         $dto = ExperiencesDto::fromArray($data);
 
-        $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
+        $vendorType = $vendor->resolveVendorType();
 
         if ($vendorType !== VendorType::Lieu) {
             if (empty($dto->cultureIds)) {

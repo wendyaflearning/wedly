@@ -31,13 +31,14 @@ readonly class ZonesPricingStepService extends AbstractOnboardingStepHandler
 
     public function handle(Vendor $vendor, array $data): void
     {
-        $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
+        $vendorType = $vendor->resolveVendorType();
 
         /** @var VenuePricingDto|CateringPricingDto|FreelancePricingDto $dto */
         $dto = $this->validate(match ($vendorType) {
-            VendorType::Lieu      => VenuePricingDto::fromArray($data),
-            VendorType::Traiteur  => CateringPricingDto::fromArray($data),
-            VendorType::Freelance => FreelancePricingDto::fromArray($data),
+            VendorType::Lieu       => VenuePricingDto::fromArray($data),
+            VendorType::Traiteur   => CateringPricingDto::fromArray($data),
+            VendorType::Freelance,
+            VendorType::Createurs  => FreelancePricingDto::fromArray($data),
         });
 
         $vendor->setPriceMinCents($dto->priceMin);
@@ -65,7 +66,7 @@ readonly class ZonesPricingStepService extends AbstractOnboardingStepHandler
             return [];
         }
 
-        $vendorType = VendorType::resolveVendorType($vendor->resolveVendorServices());
+        $vendorType = $vendor->resolveVendorType();
 
         $data = [
             'price_min'  => $vendor->getPriceMinCents(),
