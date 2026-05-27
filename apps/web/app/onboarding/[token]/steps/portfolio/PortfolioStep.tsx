@@ -1,6 +1,7 @@
 'use client'
 import { useRef, useState } from 'react'
 import type { PortfolioData, PortfolioImage, VendorType } from '../../types'
+import { compressPortfolioImage } from '@/lib/compressPortfolioImage'
 
 // ─── Types & helpers ──────────────────────────────────────────────────────────
 
@@ -279,9 +280,10 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
     setSecondarySlots(prev => prev.map(s => s.localFile ? { ...s, uploading: true } : s))
 
     async function postPhoto(key: 'cover' | number, file: File) {
+      const compressed = await compressPortfolioImage(file)
       const fd = new FormData()
-      if (key === 'cover') fd.append('cover_photo', file)
-      else fd.append('photos[]', file)
+      if (key === 'cover') fd.append('cover_photo', compressed)
+      else fd.append('photos[]', compressed)
       const res = await fetch(`/api/onboarding/${token}/portfolio`, { method: 'POST', body: fd })
       if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur')
       const images = ((await res.json()).images ?? []) as PortfolioImage[]
@@ -331,7 +333,14 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
     if (failCount > 0) {
       setCoverSlot(prev => prev.uploading ? { ...prev, uploading: false } : prev)
       setSecondarySlots(prev => prev.map(s => s.uploading ? { ...s, uploading: false } : s))
-      setError(`${failCount} photo(s) n'ont pas pu être envoyées. Veuillez réessayer.`)
+      const hasCompressFail = results.some(
+        r => r.status === 'rejected' && (r.reason as Error)?.message === 'compress_failed'
+      )
+      setError(
+        hasCompressFail
+          ? 'Cette photo est trop volumineuse, veuillez en choisir une autre.'
+          : `${failCount} photo(s) n'ont pas pu être envoyées. Veuillez réessayer.`
+      )
     }
 
     setSubmitting(false)
