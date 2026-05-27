@@ -11,6 +11,6 @@ readonly class OnboardingStepResponse
         public string $label,
         public int $order,
         public string $status,
-        public bool $isPreFilled,
+        public bool $isFilled,
     ) {}
 }

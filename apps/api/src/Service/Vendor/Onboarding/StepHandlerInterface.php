@@ -16,4 +16,5 @@ interface StepHandlerInterface
     public function supportsVendorType(VendorType $type): bool;
     public function handle(Vendor $vendor, array $data): void;
     public function getStepData(Vendor $vendor): array;
+    public function isFilled(Vendor $vendor): bool;
 }

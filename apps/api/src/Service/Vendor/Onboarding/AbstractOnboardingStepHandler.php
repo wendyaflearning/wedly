@@ -37,4 +37,9 @@ abstract readonly class AbstractOnboardingStepHandler implements StepHandlerInte
     {
         return [];
     }
+
+    public function isFilled(Vendor $vendor): bool
+    {
+        return !empty($this->getStepData($vendor));
+    }
 }
