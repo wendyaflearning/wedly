@@ -85,7 +85,11 @@ export default function ZonesPricingStep({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ step: 'zones_pricing', data: payload }),
       })
-      if (!res.ok) { setError('Une erreur est survenue.'); return }
+      if (!res.ok) {
+        const json = await res.json()
+        setError(json.error ?? 'Une erreur est survenue.')
+        return
+      }
       const json = await res.json()
       setSuccess(true)
       setTimeout(() => onNext(json.current_step), 1000)
