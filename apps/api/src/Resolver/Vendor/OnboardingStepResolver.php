@@ -60,18 +60,24 @@ readonly class OnboardingStepResolver
         return $steps[$indexStep + 1] ?? null;
     }
 
-    /** @return array<OnboardingStepResponse> */
-    public function resolveAllSteps(VendorType $vendorType, OnboardingStep $currentStep): array
-    {
+    /**
+     * @param array<string, bool> $filledSteps
+     * @return array<OnboardingStepResponse>
+     */
+    public function resolveAllSteps(
+        VendorType $vendorType,
+        OnboardingStep $currentStep,
+        array $filledSteps,
+    ): array {
         $steps        = $this->getOnboardingSteps($vendorType);
         $currentIndex = array_search($currentStep, $steps, true);
 
         $result = [];
         foreach ($steps as $index => $step) {
             $status = match (true) {
-                $index < $currentIndex  => 'completed',
+                $index < $currentIndex   => 'completed',
                 $index === $currentIndex => 'current',
-                default                 => 'pending',
+                default                  => 'pending',
             };
 
             $result[] = new OnboardingStepResponse(
@@ -79,7 +85,7 @@ readonly class OnboardingStepResolver
                 label:       $step->label($vendorType),
                 order:       $index + 1,
                 status:      $status,
-                isPreFilled: $step === OnboardingStep::Professions,
+                isFilled: $filledSteps[$step->value] ?? false,
             );
         }
 

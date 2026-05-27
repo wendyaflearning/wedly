@@ -73,6 +73,11 @@ readonly class ExperiencesStepService extends AbstractOnboardingStepHandler
         }
     }
 
+    public function isFilled(Vendor $vendor): bool
+    {
+        return !$vendor->getConfessions()->isEmpty() || !$vendor->getCultures()->isEmpty();
+    }
+
     public function getStepData(Vendor $vendor): array
     {
         return [

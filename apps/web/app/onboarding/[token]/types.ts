@@ -59,7 +59,7 @@ export interface OnboardingStep {
   label: string
   order: number
   status: 'pending' | 'current' | 'completed'
-  isPreFilled: boolean
+  isFilled: boolean
 }
 
 export interface PortfolioImage {

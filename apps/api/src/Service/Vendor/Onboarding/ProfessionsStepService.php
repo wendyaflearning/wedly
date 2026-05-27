@@ -45,6 +45,11 @@ readonly class ProfessionsStepService extends AbstractOnboardingStepHandler
         }
     }
 
+    public function isFilled(Vendor $vendor): bool
+    {
+        return !$vendor->getServices()->isEmpty();
+    }
+
     public function getStepData(Vendor $vendor): array
     {
         return [

@@ -53,7 +53,7 @@ readonly class ZonesPricingStepService extends AbstractOnboardingStepHandler
 
             $venueDetails = $vendor->getVenueDetails();
             if ($venueDetails === null) {
-                throw new \DomainException("L'étape venue_characteristics doit être complétée avant zones_pricing.", 422);
+                throw new \DomainException("L'étape caractéristiques du lieu doit être complétée avant zones et tarifs.", 422);
             }
             $venueDetails->setNearestCity($dto->nearestCity);
             $venueDetails->setDistanceToCityMinutes($dto->distanceToCityMinutes);
