@@ -48,6 +48,61 @@ function LeafButton({ node, selected, onSelect }: {
   )
 }
 
+function PillButton({ node, selected, onSelect }: {
+  node: ServiceNode
+  selected: boolean
+  onSelect: (id: string) => void
+}) {
+  return (
+    <button
+      onClick={() => onSelect(node.id)}
+      className={[
+        'px-[13px] py-[7px] rounded-full border-[1.5px] cursor-pointer font-cormorant font-light transition-[background,border-color,color] duration-150',
+        selected
+          ? 'bg-bordeaux border-bordeaux text-creme'
+          : 'bg-transparent border-bordeaux/25 text-bordeaux',
+      ].join(' ')}
+      style={{ fontSize: 13 }}
+    >
+      {node.name}
+    </button>
+  )
+}
+
+function SubTypesPanel({ group, selectedId, onSelect }: {
+  group: ServiceNode
+  selectedId: string | null
+  onSelect: (id: string) => void
+}) {
+  const isThreeLevel = (group.children[0]?.children.length ?? 0) > 0
+  return (
+    <div className="border-[1.5px] border-bordeaux/[0.19] rounded-xl overflow-hidden">
+      <div className="px-[18px] pt-[18px] pb-[14px]">
+        {isThreeLevel ? (
+          group.children.map(sub => (
+            <div key={sub.id} className="mb-4">
+              <p className="font-josefin uppercase text-bordeaux/50 mb-2" style={{ fontSize: 10, letterSpacing: '0.1em' }}>
+                {sub.name}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {sub.children.map(leaf => (
+                  <PillButton key={leaf.id} node={leaf} selected={selectedId === leaf.id} onSelect={onSelect} />
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {group.children.map(child => (
+              <PillButton key={child.id} node={child} selected={selectedId === child.id} onSelect={onSelect} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function findSelectedLeafName(group: ServiceNode, selectedId: string | null): string | null {
   if (!selectedId) return null
   for (const child of group.children) {
@@ -60,48 +115,6 @@ function findSelectedLeafName(group: ServiceNode, selectedId: string | null): st
     }
   }
   return null
-}
-
-function GroupCard({ group, open, selectedLeafName, onToggle }: {
-  group: ServiceNode
-  open: boolean
-  selectedLeafName: string | null
-  onToggle: () => void
-}) {
-  const hasSelection = selectedLeafName !== null
-  return (
-    <button
-      onClick={onToggle}
-      className={[
-        'flex items-center gap-[10px] px-4 min-h-[44px] rounded-xl text-left w-full transition-[border-color] duration-[180ms] bg-creme',
-        hasSelection ? 'border-[1.5px] border-bordeaux' : 'border-[1.5px] border-bordeaux/20',
-      ].join(' ')}
-    >
-      <div className="w-4 h-4 rounded-[4px] shrink-0 border-2 border-bordeaux bg-transparent" />
-      <div className="flex flex-col flex-1 py-[2px]">
-        <span className="font-cormorant font-light text-bordeaux tracking-[0.01em]" style={{ fontSize: 15 }}>
-          {group.name}
-        </span>
-        {selectedLeafName && (
-          <span className="font-josefin" style={{ fontSize: 10, color: '#4E1A32', letterSpacing: '0.06em' }}>
-            {selectedLeafName}
-          </span>
-        )}
-      </div>
-      <Chevron open={open} />
-    </button>
-  )
-}
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="14" height="14" viewBox="0 0 14 14" fill="none"
-      className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-    >
-      <path d="M2 5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
 }
 
 function Accordion({ open, children }: { open: boolean; children: React.ReactNode }) {
@@ -123,14 +136,12 @@ export default function ProfessionsStep({
   onBack: () => void
   onNext: (nextStep: string) => void
 }) {
-  const [services,       setServices]       = useState<ServiceNode[]>([])
-  const [loading,        setLoading]        = useState(true)
-  const [selectedId,     setSelectedId]     = useState<string | null>(initialServices[0]?.id ?? null)
-  const [openGroupId,    setOpenGroupId]    = useState<string | null>(null)
-  const [openSubGroupId, setOpenSubGroupId] = useState<string | null>(null)
-  const [error,          setError]          = useState<string | null>(null)
-  const [submitting,     setSubmitting]     = useState(false)
-  const [success,        setSuccess]        = useState(false)
+  const [services,   setServices]   = useState<ServiceNode[]>([])
+  const [loading,    setLoading]    = useState(true)
+  const [selectedId, setSelectedId] = useState<string | null>(initialServices[0]?.id ?? null)
+  const [error,      setError]      = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [success,    setSuccess]    = useState(false)
 
   useEffect(() => {
     fetch('/api/services')
@@ -139,38 +150,6 @@ export default function ProfessionsStep({
       .catch(() => setError('Impossible de charger les services.'))
       .finally(() => setLoading(false))
   }, [])
-
-  // Ouvre les groupes parents du service pré-sélectionné
-  useEffect(() => {
-    if (!selectedId || !services.length) return
-    for (const group of services) {
-      if (!group.children.length) continue
-      const isThreeLevel = group.children[0]?.children.length > 0
-      if (isThreeLevel) {
-        for (const sub of group.children) {
-          if (sub.children.some(leaf => leaf.id === selectedId)) {
-            setOpenGroupId(group.id)
-            setOpenSubGroupId(sub.id)
-            return
-          }
-        }
-      } else {
-        if (group.children.some(leaf => leaf.id === selectedId)) {
-          setOpenGroupId(group.id)
-          return
-        }
-      }
-    }
-  }, [services, selectedId])
-
-  function toggleGroup(id: string) {
-    setOpenGroupId(prev => prev === id ? null : id)
-    setOpenSubGroupId(null)
-  }
-
-  function toggleSubGroup(id: string) {
-    setOpenSubGroupId(prev => prev === id ? null : id)
-  }
 
   async function handleConfirm() {
     if (!selectedId) return
@@ -263,8 +242,8 @@ export default function ProfessionsStep({
           ) : (
             <div className="mb-7 flex flex-col gap-[10px]">
 
-              {/* Items plats — grille 2 colonnes */}
-              {flatItems.length > 0 && (
+              {/* Grille 2 colonnes : items plats + tous les groupes */}
+              {(flatItems.length > 0 || groupItems.length > 0) && (
                 <div className="grid grid-cols-2 gap-[10px]">
                   {flatItems.map(node => (
                     <LeafButton
@@ -274,60 +253,33 @@ export default function ProfessionsStep({
                       onSelect={setSelectedId}
                     />
                   ))}
+                  {groupItems.map(group => {
+                    const isSelected = selectedId === group.id || findSelectedLeafName(group, selectedId) !== null
+                    return (
+                      <LeafButton
+                        key={group.id}
+                        node={group}
+                        selected={isSelected}
+                        onSelect={setSelectedId}
+                      />
+                    )
+                  })}
                 </div>
               )}
 
-              {/* Groupes expansibles */}
+              {/* SubTypesPanel pleine largeur — s'ouvre au clic, un seul à la fois */}
               {groupItems.map(group => {
-                const groupOpen        = openGroupId === group.id
-                const isThreeLevel     = group.children[0]?.children.length > 0
-                const selectedLeafName = findSelectedLeafName(group, selectedId)
-
+                const isSelected = selectedId === group.id || findSelectedLeafName(group, selectedId) !== null
                 return (
-                  <div key={group.id} className="flex flex-col gap-1">
-                    <GroupCard
-                      group={group}
-                      open={groupOpen}
-                      selectedLeafName={selectedLeafName}
-                      onToggle={() => toggleGroup(group.id)}
-                    />
-                    <Accordion open={groupOpen}>
-                      <div className="pl-2 pt-1 pb-1 flex flex-col gap-[6px]">
-                        {isThreeLevel ? (
-                          group.children.map(sub => {
-                            const subOpen = openSubGroupId === sub.id
-                            return (
-                              <div key={sub.id} className="flex flex-col gap-1">
-                                <button
-                                  onClick={() => toggleSubGroup(sub.id)}
-                                  className="flex items-center gap-[10px] px-4 min-h-[44px] rounded-xl text-left w-full border-[1.5px] border-bordeaux/15 bg-bordeaux/[0.02] transition-[border-color] duration-[180ms]"
-                                >
-                                  <div className="w-4 h-4 rounded-[4px] shrink-0 border-2 border-bordeaux/40 bg-transparent" />
-                                  <span className="flex-1 font-cormorant font-light text-bordeaux/80 tracking-[0.01em]" style={{ fontSize: 14 }}>
-                                    {sub.name}
-                                  </span>
-                                  <Chevron open={subOpen} />
-                                </button>
-                                <Accordion open={subOpen}>
-                                  <div className="grid grid-cols-2 gap-[6px] pl-2 pt-1 pb-1">
-                                    {sub.children.map(leaf => (
-                                      <LeafButton key={leaf.id} node={leaf} selected={selectedId === leaf.id} onSelect={setSelectedId} />
-                                    ))}
-                                  </div>
-                                </Accordion>
-                              </div>
-                            )
-                          })
-                        ) : (
-                          <div className="grid grid-cols-2 gap-[6px] pb-1">
-                            {group.children.map(leaf => (
-                              <LeafButton key={leaf.id} node={leaf} selected={selectedId === leaf.id} onSelect={setSelectedId} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </Accordion>
-                  </div>
+                  <Accordion key={group.id} open={isSelected}>
+                    <div className="pt-1">
+                      <SubTypesPanel
+                        group={group}
+                        selectedId={selectedId}
+                        onSelect={setSelectedId}
+                      />
+                    </div>
+                  </Accordion>
                 )
               })}
             </div>
