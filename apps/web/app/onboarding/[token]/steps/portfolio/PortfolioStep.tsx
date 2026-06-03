@@ -2,24 +2,26 @@
 import { useRef, useState } from 'react'
 import type { PortfolioData, PortfolioImage, VendorType } from '../../types'
 import { compressPortfolioImage } from '@/lib/compressPortfolioImage'
+import CropModal from './CropModal'
 
 // ─── Types & helpers ──────────────────────────────────────────────────────────
 
 const SECONDARY_COUNT = 4
 
 type SlotState = {
-  savedId:      string | null
-  savedUrl:     string | null
-  localFile:    File   | null
-  localPreview: string | null
-  uploading:    boolean
+  savedId:       string | null
+  savedUrl:      string | null
+  localFile:     File   | null
+  localPreview:  string | null
+  uploading:     boolean
+  originalFile:  File   | null  // fichier avant recadrage, pour re-ouvrir le CropModal
 }
 
 const emptySlot = (): SlotState =>
-  ({ savedId: null, savedUrl: null, localFile: null, localPreview: null, uploading: false })
+  ({ savedId: null, savedUrl: null, localFile: null, localPreview: null, uploading: false, originalFile: null })
 
 const fromImage = (img: PortfolioImage): SlotState =>
-  ({ savedId: img.id, savedUrl: img.url, localFile: null, localPreview: null, uploading: false })
+  ({ savedId: img.id, savedUrl: img.url, localFile: null, localPreview: null, uploading: false, originalFile: null })
 
 function initState(data: PortfolioData | null) {
   const cover       = data?.images?.find(img => img.is_cover) ?? null
@@ -37,18 +39,19 @@ function initState(data: PortfolioData | null) {
 
 interface PhotoSlotProps {
   slot:           SlotState
-  height:         number
+  height:         number | string
   label:          string
   iconSize:       number
   isCover?:       boolean
   disabled?:      boolean
   onFileSelected: (file: File) => void
   onClearLocal:   () => void
+  onReCrop:       () => void
   onDelete:       () => Promise<boolean>
 }
 
 function PhotoSlot({ slot, height, label, iconSize, isCover = false, disabled = false,
-  onFileSelected, onClearLocal, onDelete }: PhotoSlotProps) {
+  onFileSelected, onClearLocal, onReCrop, onDelete }: PhotoSlotProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [active, setActive]             = useState(false)
   const [confirmingDelete, setConfirming] = useState(false)
@@ -71,7 +74,7 @@ function PhotoSlot({ slot, height, label, iconSize, isCover = false, disabled = 
       type="file"
       accept="image/jpeg,image/png,image/webp"
       style={{ display: 'none' }}
-      onChange={e => { const f = e.target.files?.[0]; if (f) onFileSelected(f) }}
+      onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFileSelected(f) }}
     />
   )
 
@@ -135,27 +138,55 @@ function PhotoSlot({ slot, height, label, iconSize, isCover = false, disabled = 
         </div>
       )}
 
-      {/* Bouton × — locale → annule sans API, sauvegardée → confirmation */}
+      {/* Boutons de slot rempli */}
       {!slot.uploading && !confirmingDelete && !deleting && (
-        <button
-          onClick={() => isLocal ? onClearLocal() : setConfirming(true)}
-          aria-label={isLocal ? 'Annuler la sélection' : 'Supprimer'}
-          style={{
-            position: 'absolute', top: 0, right: 0, width: 44, height: 44,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'transparent', border: 'none', cursor: 'pointer',
-          }}
-        >
-          <span style={{
-            width: 24, height: 24, borderRadius: '50%',
-            background: isLocal ? 'rgba(227,87,4,0.7)' : 'rgba(41,26,16,0.55)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M2 2l6 6M8 2l-6 6" stroke="#FFF6ED" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </span>
-        </button>
+        <>
+          {/* Bouton recadrer — local uniquement, en haut à gauche */}
+          {isLocal && slot.originalFile && (
+            <button
+              onClick={onReCrop}
+              aria-label="Recadrer"
+              style={{
+                position: 'absolute', top: 0, left: 0, width: 44, height: 44,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+              }}
+            >
+              <span style={{
+                width: 24, height: 24, borderRadius: '50%',
+                background: 'rgba(41,26,16,0.55)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {/* Icône crop */}
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 3h7v7" stroke="#FFF6ED" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 1v7h7" stroke="#FFF6ED" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </button>
+          )}
+
+          {/* Bouton × — locale → annule sans API, sauvegardée → confirmation */}
+          <button
+            onClick={() => isLocal ? onClearLocal() : setConfirming(true)}
+            aria-label={isLocal ? 'Annuler la sélection' : 'Supprimer'}
+            style={{
+              position: 'absolute', top: 0, right: 0, width: 44, height: 44,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+            }}
+          >
+            <span style={{
+              width: 24, height: 24, borderRadius: '50%',
+              background: isLocal ? 'rgba(227,87,4,0.7)' : 'rgba(41,26,16,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M2 2l6 6M8 2l-6 6" stroke="#FFF6ED" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </span>
+          </button>
+        </>
       )}
 
       {/* Overlay confirmation suppression (photos sauvegardées uniquement) */}
@@ -224,6 +255,12 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
   const [submitting, setSubmitting]         = useState(false)
   const [success, setSuccess]               = useState(false)
   const [error, setError]                   = useState<string | null>(null)
+  const [pendingCrop, setPendingCrop]       = useState<{
+    file:        File
+    prev:        SlotState
+    apply:       (s: SlotState) => void
+    aspectRatio: '16:9' | '1:1'
+  } | null>(null)
 
   const totalSteps  = vendorType === 'traiteur' ? 7 : 6
   const currentStep = vendorType === 'traiteur' ? 5 : 4
@@ -238,15 +275,32 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
     file: File,
     prev: SlotState,
     apply: (updated: SlotState) => void,
+    aspectRatio: '16:9' | '1:1' = '16:9',
   ) {
+    setPendingCrop({ file, prev, apply, aspectRatio })
+  }
+
+  function handleCropConfirm(croppedFile: File) {
+    if (!pendingCrop) return
+    const { prev, apply } = pendingCrop
     if (prev.localPreview) URL.revokeObjectURL(prev.localPreview)
-    apply({ ...prev, localFile: file, localPreview: URL.createObjectURL(file) })
+    apply({
+      ...prev,
+      localFile:    croppedFile,
+      localPreview: URL.createObjectURL(croppedFile),
+      originalFile: pendingCrop.file,
+    })
     setError(null)
+    setPendingCrop(null)
+  }
+
+  function handleCropCancel() {
+    setPendingCrop(null)
   }
 
   function clearLocal(prev: SlotState, apply: (updated: SlotState) => void) {
     if (prev.localPreview) URL.revokeObjectURL(prev.localPreview)
-    apply({ ...prev, localFile: null, localPreview: null })
+    apply({ ...prev, localFile: null, localPreview: null, originalFile: null })
   }
 
   // ── Suppression ──
@@ -313,7 +367,7 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
 
       if (key === 'cover') {
         const img = images.find(i => i.is_cover)
-        if (img) setCoverSlot(() => ({ savedId: img.id, savedUrl: img.url, localFile: null, localPreview: null, uploading: false }))
+        if (img) setCoverSlot(() => ({ savedId: img.id, savedUrl: img.url, localFile: null, localPreview: null, uploading: false, originalFile: null }))
       } else {
         const img = images.find(i => !i.is_cover && !knownIds.has(i.id))
         if (img) {
@@ -321,7 +375,7 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
           const idx = key as number
           setSecondarySlots(prev => {
             const c = [...prev]
-            c[idx] = { savedId: img.id, savedUrl: img.url, localFile: null, localPreview: null, uploading: false }
+            c[idx] = { savedId: img.id, savedUrl: img.url, localFile: null, localPreview: null, uploading: false, originalFile: null }
             return c
           })
         }
@@ -354,6 +408,7 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
   const ctaLabel = submitting ? 'Envoi en cours…' : success ? '✓ Enregistré' : 'Confirmer →'
 
   return (
+    <>
     <div className="min-h-screen bg-creme">
       <div className="max-w-lg mx-auto">
 
@@ -419,6 +474,7 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
             isCover
             onFileSelected={file => pickFile(file, coverSlot, s => setCoverSlot(s))}
             onClearLocal={() => clearLocal(coverSlot, s => setCoverSlot(s))}
+            onReCrop={() => { if (coverSlot.originalFile) pickFile(coverSlot.originalFile, coverSlot, s => setCoverSlot(s)) }}
             onDelete={async () => {
               if (!coverSlot.savedId) return true
               const ok = await apiDelete(coverSlot.savedId)
@@ -437,35 +493,38 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
             {[0, 1, 2].map(i => (
-              <PhotoSlot
-                key={i}
-                slot={secondarySlots[i]}
-                height={110}
-                label={`Photo ${i + 2}`}
-                iconSize={22}
-                disabled={!coverHasContent}
-                onFileSelected={file => pickFile(file, secondarySlots[i], s => setSecondarySlots(prev => { const c = [...prev]; c[i] = s; return c }))}
-                onClearLocal={() => clearLocal(secondarySlots[i], s => setSecondarySlots(prev => { const c = [...prev]; c[i] = s; return c }))}
-                onDelete={async () => {
-                  const slot = secondarySlots[i]
-                  if (!slot.savedId) return true
-                  const ok = await apiDelete(slot.savedId)
-                  if (ok) setSecondarySlots(prev => { const c = [...prev]; c[i] = emptySlot(); return c })
-                  return ok
-                }}
-              />
+              <div key={i} style={{ aspectRatio: '1 / 1' }}>
+                <PhotoSlot
+                  slot={secondarySlots[i]}
+                  height="100%"
+                  label={`Photo ${i + 2}`}
+                  iconSize={22}
+                  disabled={!coverHasContent}
+                  onFileSelected={file => pickFile(file, secondarySlots[i], s => setSecondarySlots(prev => { const c = [...prev]; c[i] = s; return c }), '1:1')}
+                  onClearLocal={() => clearLocal(secondarySlots[i], s => setSecondarySlots(prev => { const c = [...prev]; c[i] = s; return c }))}
+                  onReCrop={() => { const s = secondarySlots[i]; if (s.originalFile) pickFile(s.originalFile, s, u => setSecondarySlots(prev => { const c = [...prev]; c[i] = u; return c }), '1:1') }}
+                  onDelete={async () => {
+                    const slot = secondarySlots[i]
+                    if (!slot.savedId) return true
+                    const ok = await apiDelete(slot.savedId)
+                    if (ok) setSecondarySlots(prev => { const c = [...prev]; c[i] = emptySlot(); return c })
+                    return ok
+                  }}
+                />
+              </div>
             ))}
           </div>
 
-          <div style={{ width: 'calc(33.33% - 7px)' }}>
+          <div style={{ width: 'calc(33.33% - 7px)', aspectRatio: '1 / 1' }}>
             <PhotoSlot
               slot={secondarySlots[3]}
-              height={110}
+              height="100%"
               label="Photo 5"
               iconSize={22}
               disabled={!coverHasContent}
-              onFileSelected={file => pickFile(file, secondarySlots[3], s => setSecondarySlots(prev => { const c = [...prev]; c[3] = s; return c }))}
+              onFileSelected={file => pickFile(file, secondarySlots[3], s => setSecondarySlots(prev => { const c = [...prev]; c[3] = s; return c }), '1:1')}
               onClearLocal={() => clearLocal(secondarySlots[3], s => setSecondarySlots(prev => { const c = [...prev]; c[3] = s; return c }))}
+              onReCrop={() => { const s = secondarySlots[3]; if (s.originalFile) pickFile(s.originalFile, s, u => setSecondarySlots(prev => { const c = [...prev]; c[3] = u; return c }), '1:1') }}
               onDelete={async () => {
                 const slot = secondarySlots[3]
                 if (!slot.savedId) return true
@@ -508,5 +567,15 @@ export default function PortfolioStep({ token, vendorType, initialData, onBack, 
         </div>
       </div>
     </div>
+
+    {pendingCrop && (
+      <CropModal
+        file={pendingCrop.file}
+        aspectRatio={pendingCrop.aspectRatio}
+        onConfirm={handleCropConfirm}
+        onCancel={handleCropCancel}
+      />
+    )}
+    </>
   )
 }
