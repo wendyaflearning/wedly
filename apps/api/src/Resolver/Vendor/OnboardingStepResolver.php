@@ -42,8 +42,6 @@ readonly class OnboardingStepResolver
             VendorType::Createurs => [
                 OnboardingStep::Professions,
                 OnboardingStep::Experiences,
-                OnboardingStep::CreatorUniverse,
-                OnboardingStep::CreatorProcess,
                 OnboardingStep::ZonesPricing,
                 OnboardingStep::Portfolio,
                 OnboardingStep::LegalInfo,

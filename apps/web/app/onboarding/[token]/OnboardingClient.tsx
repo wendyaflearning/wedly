@@ -58,6 +58,7 @@ export default function OnboardingClient({
     return (
       <ExperiencesStep
         token={token}
+        vendorType={data.vendor_type}
         initialExperiences={data.steps_data?.experiences ?? { confession_ids: [], culture_ids: [] }}
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {

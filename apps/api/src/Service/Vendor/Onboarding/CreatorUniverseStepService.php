@@ -8,7 +8,6 @@ use App\DTO\Vendor\Step\CreatorUniverseDto;
 use App\Entity\Creator\CreatorValue;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorCreatorDetails;
-use App\Enum\Vendor\CreatorSpecialty;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -46,7 +45,6 @@ readonly class CreatorUniverseStepService extends AbstractOnboardingStepHandler
             $details->setVendor($vendor);
         }
 
-        $details->setCreatorSpecialty(CreatorSpecialty::from($dto->creatorSpecialty));
         $details->setHasFixedWorkshop($dto->hasFixedWorkshop);
 
         $values = [];
@@ -76,7 +74,6 @@ readonly class CreatorUniverseStepService extends AbstractOnboardingStepHandler
         }
 
         return [
-            'creator_specialty'  => $details->getCreatorSpecialty()->value,
             'has_fixed_workshop' => $details->isHasFixedWorkshop(),
             'creator_value_ids'  => $details->getCreatorValues()
                 ->map(fn(CreatorValue $value) => ['id' => $value->getId()->toString(), 'name' => $value->getName()])
