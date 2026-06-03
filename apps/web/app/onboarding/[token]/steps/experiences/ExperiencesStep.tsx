@@ -1,14 +1,16 @@
 'use client'
 import { useState, useEffect } from 'react'
-import type { ExperienceOption } from '../../types'
+import type { ExperienceOption, VendorType } from '../../types'
 
 export default function ExperiencesStep({
   token,
+  vendorType,
   initialExperiences,
   onBack,
   onNext,
 }: {
   token: string
+  vendorType: VendorType
   initialExperiences: { confession_ids: ExperienceOption[]; culture_ids: ExperienceOption[] }
   onBack: () => void
   onNext: (nextStep: string) => void
@@ -80,7 +82,9 @@ export default function ExperiencesStep({
   const hasSelection = selectedIds.length > 0
   const title = isCulturesForm
     ? 'Quels univers de mariage connaissez-vous bien ?'
-    : 'Quels types de cérémonies religieuses avez-vous déjà accompagnées ?'
+    : vendorType === 'createurs'
+      ? 'Quels types de mariages avez-vous déjà habillés ?'
+      : 'Quels types de cérémonies religieuses avez-vous déjà accompagnées ?'
   const ctaLabel = isCulturesForm
     ? 'Continuer →'
     : (submitting ? 'ENVOI…' : success ? '✓ Enregistré' : 'Confirmer →')

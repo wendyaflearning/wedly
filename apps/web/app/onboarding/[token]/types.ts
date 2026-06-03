@@ -42,7 +42,17 @@ export interface RegionOption {
   name: string
 }
 
-export type VendorType = 'freelance' | 'lieu' | 'traiteur'
+export type VendorType = 'freelance' | 'lieu' | 'traiteur' | 'createurs'
+
+export interface CreatorValueOption {
+  id: string
+  name: string
+}
+
+export interface CreatorUniverseData {
+  creator_value_ids: CreatorValueOption[]
+  has_fixed_workshop: boolean | null
+}
 
 export interface ZonesPricingData {
   price_min: number
@@ -94,6 +104,7 @@ export interface OnboardingOverviewData {
       confession_ids: ExperienceOption[]
       culture_ids: ExperienceOption[]
     }
+    creator_universe?: CreatorUniverseData
     venue_characteristics?: Pick<
       VenueDetails,
       'venue_type' | 'capacity_min' | 'capacity_max' | 'has_catering' | 'has_accommodation' | 'has_outdoor_space' | 'is_pmr_accessible'

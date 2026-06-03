@@ -6,7 +6,6 @@ namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Creator\CreatorValue;
-use App\Enum\Vendor\CreatorSpecialty;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -29,9 +28,6 @@ class VendorCreatorDetails
     #[ORM\OneToOne(targetEntity: Vendor::class, inversedBy: 'creatorDetails')]
     #[ORM\JoinColumn(name: 'vendor_id', referencedColumnName: 'id', nullable: false)]
     private Vendor $vendor;
-
-    #[ORM\Column(name: 'creator_specialty', type: 'string', enumType: CreatorSpecialty::class)]
-    private CreatorSpecialty $creatorSpecialty;
 
     #[ORM\Column(name: 'has_fixed_workshop', type: 'boolean')]
     private bool $hasFixedWorkshop = false;
@@ -74,18 +70,6 @@ class VendorCreatorDetails
     public function setVendor(Vendor $vendor): static
     {
         $this->vendor = $vendor;
-
-        return $this;
-    }
-
-    public function getCreatorSpecialty(): CreatorSpecialty
-    {
-        return $this->creatorSpecialty;
-    }
-
-    public function setCreatorSpecialty(CreatorSpecialty $creatorSpecialty): static
-    {
-        $this->creatorSpecialty = $creatorSpecialty;
 
         return $this;
     }
