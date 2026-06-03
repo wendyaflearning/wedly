@@ -56,13 +56,15 @@ export default function ZonesPricingStep({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const isVenue = vendorType === 'lieu'
+  const isVenue   = vendorType === 'lieu'
+  const isCreator = vendorType === 'createurs'
 
   const isValid =
     regionIds.length > 0 &&
     priceMin !== '' && priceMax !== '' &&
     priceType !== null &&
-    (!isVenue || (city !== '' && nearestCity !== '' && distanceMin !== ''))
+    (!isVenue   || (city !== '' && nearestCity !== '' && distanceMin !== '')) &&
+    (!isCreator || city !== '')
 
   async function handleConfirm() {
     if (!isValid || submitting || success) return
@@ -79,6 +81,9 @@ export default function ZonesPricingStep({
         payload.city = city
         payload.nearest_city = nearestCity
         payload.distance_to_city_minutes = Number(distanceMin)
+      }
+      if (isCreator) {
+        payload.city = city
       }
       const res = await fetch(`/api/onboarding/${token}`, {
         method: 'PATCH',
@@ -150,6 +155,7 @@ export default function ZonesPricingStep({
               >
                 Où êtes-vous situé et à quel budget ?
               </h2>
+
 
               <span className="font-josefin uppercase text-bordeaux/50 block" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 14, marginTop: 28 }}>
                 3A — Localisation et tarifs
@@ -341,6 +347,171 @@ export default function ZonesPricingStep({
                     color: 'var(--color-bordeaux)', transition: 'border-color 0.2s',
                   }}
                 />
+              </div>
+            </>
+          ) : isCreator ? (
+            /* ─── Variante CRÉATEUR ─── */
+            <>
+              <h2
+                className="font-cormorant font-light text-bordeaux"
+                style={{ fontSize: 'clamp(18px, 2.6vw, 28px)', lineHeight: 1.35, marginBottom: 28 }}
+              >
+                Où êtes-vous situé et à quel budget ?
+              </h2>
+
+              <span className="font-josefin uppercase text-bordeaux/50 block" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 14, marginTop: 28 }}>
+                3A — Localisation et tarifs
+              </span>
+
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className="font-josefin uppercase block" style={{ fontSize: 10, letterSpacing: '0.09em', color: 'rgba(41,26,16,0.55)', marginBottom: 6 }}>
+                    Ville
+                  </label>
+                  <input
+                    placeholder="Ex : Paris, Lyon…"
+                    value={city}
+                    onChange={e => setCity(e.target.value)}
+                    style={{
+                      width: '100%', padding: '13px 16px',
+                      border: `1.5px solid ${city !== '' ? 'var(--color-bordeaux)' : 'rgba(78,26,50,0.25)'}`,
+                      borderRadius: 10, background: 'var(--color-creme)', outline: 'none',
+                      fontFamily: 'var(--font-cormorant-var, Georgia, serif)', fontSize: 15,
+                      color: 'var(--color-bordeaux)', transition: 'border-color 0.2s',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label className="font-josefin uppercase block" style={{ fontSize: 10, letterSpacing: '0.09em', color: 'rgba(41,26,16,0.55)', marginBottom: 6 }}>
+                    Région
+                  </label>
+                  <div ref={dropdownRef}>
+                    <button
+                      onClick={() => setDropdownOpen(prev => !prev)}
+                      className="w-full flex items-center justify-between font-cormorant"
+                      style={{
+                        padding: '13px 16px',
+                        border: `1.5px solid ${regionIds.length > 0 ? 'var(--color-bordeaux)' : 'rgba(78,26,50,0.25)'}`,
+                        borderRadius: dropdownOpen ? '10px 10px 0 0' : 10,
+                        background: 'transparent', cursor: 'pointer', fontSize: 15,
+                        color: regionIds.length > 0 ? 'var(--color-bordeaux)' : 'rgba(78,26,50,0.5)',
+                      }}
+                    >
+                      <span>
+                        {regionIds.length === 0
+                          ? 'Sélectionner une région'
+                          : (regions.find(r => r.id === regionIds[0])?.name ?? 'Sélectionner une région')}
+                      </span>
+                      <svg
+                        width="12" height="12" viewBox="0 0 12 12" fill="none"
+                        className="shrink-0"
+                        style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                      >
+                        <path d="M2 4l4 4 4-4" stroke="var(--color-bordeaux)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+
+                    {dropdownOpen && (
+                      <div style={{ border: '1.5px solid var(--color-bordeaux)', borderTop: 'none', borderRadius: '0 0 10px 10px', background: 'var(--color-creme)' }}>
+                        <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(78,26,50,0.10)' }}>
+                          <input
+                            type="text"
+                            placeholder="Rechercher une région…"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            autoFocus
+                            style={{
+                              width: '100%', padding: '8px 12px',
+                              border: '1px solid rgba(78,26,50,0.20)',
+                              borderRadius: 8, background: 'var(--color-creme)', outline: 'none',
+                              fontFamily: 'var(--font-cormorant-var, Georgia, serif)', fontSize: 14,
+                              color: 'var(--color-bordeaux)',
+                            }}
+                          />
+                        </div>
+                        <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                          {regionsLoading ? (
+                            <div className="p-3">
+                              {[1, 2, 3].map(i => (
+                                <div key={i} className="h-5 rounded bg-bordeaux/10 mb-2.5 animate-pulse" />
+                              ))}
+                            </div>
+                          ) : (() => {
+                            const filtered = regions.filter(r =>
+                              r.name.toLowerCase().includes(searchQuery.toLowerCase())
+                            )
+                            if (filtered.length === 0) {
+                              return (
+                                <p className="font-cormorant text-bordeaux/50 text-center" style={{ fontSize: 14, padding: '16px' }}>
+                                  Aucune région trouvée
+                                </p>
+                              )
+                            }
+                            return filtered.map(region => {
+                              const selected = regionIds[0] === region.id
+                              return (
+                                <button
+                                  key={region.id}
+                                  onClick={() => {
+                                    setRegionIds(selected ? [] : [region.id])
+                                    setDropdownOpen(false)
+                                    setSearchQuery('')
+                                  }}
+                                  className="w-full flex items-center gap-3 text-left cursor-pointer"
+                                  style={{
+                                    padding: '11px 16px',
+                                    background: selected ? 'rgba(78,26,50,0.05)' : 'transparent',
+                                    border: 'none',
+                                    borderBottom: '1px solid rgba(78,26,50,0.07)',
+                                  }}
+                                >
+                                  <div
+                                    className="shrink-0 flex items-center justify-center rounded-full"
+                                    style={{
+                                      width: 16, height: 16,
+                                      border: selected ? '2px solid var(--color-bordeaux)' : '2px solid rgba(78,26,50,0.25)',
+                                    }}
+                                  >
+                                    {selected && <div className="rounded-full bg-bordeaux" style={{ width: 8, height: 8 }} />}
+                                  </div>
+                                  <span className="font-cormorant text-bordeaux" style={{ fontSize: 15 }}>
+                                    {region.name}
+                                  </span>
+                                </button>
+                              )
+                            })
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {regionIds.length > 0 && (() => {
+                    const region = regions.find(r => r.id === regionIds[0])
+                    if (!region) return null
+                    return (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <span
+                          className="flex items-center gap-1.5 bg-bordeaux text-creme font-josefin uppercase"
+                          style={{ fontSize: 10, letterSpacing: '0.07em', padding: '5px 10px', borderRadius: 20 }}
+                        >
+                          {region.name}
+                          <button
+                            onClick={() => setRegionIds([])}
+                            className="flex items-center justify-center text-creme/70 hover:text-creme"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                            aria-label={`Retirer ${region.name}`}
+                          >
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                              <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        </span>
+                      </div>
+                    )
+                  })()}
+                </div>
               </div>
             </>
           ) : (
@@ -565,8 +736,8 @@ export default function ZonesPricingStep({
             <Tooltip text="L'unité tarifaire précise comment votre prix est calculé — par personne, par prestation, par heure... Elle varie selon votre métier." />
           </span>
 
-          {isVenue ? (
-            /* Radio buttons pour les lieux */
+          {(isVenue || isCreator) ? (
+            /* Radio buttons pour les lieux et créateurs */
             <div className="flex flex-col gap-2">
               {PRICE_TYPE_OPTIONS.map(({ value, label }) => {
                 const selected = priceType === value

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Vendor\Onboarding;
 
 use App\DTO\Vendor\Step\CateringPricingDto;
+use App\DTO\Vendor\Step\CreatorPricingDto;
 use App\DTO\Vendor\Step\FreelancePricingDto;
 use App\DTO\Vendor\Step\VenuePricingDto;
 use App\Entity\Region\Region;
@@ -33,12 +34,12 @@ readonly class ZonesPricingStepService extends AbstractOnboardingStepHandler
     {
         $vendorType = $vendor->resolveVendorType();
 
-        /** @var VenuePricingDto|CateringPricingDto|FreelancePricingDto $dto */
+        /** @var VenuePricingDto|CateringPricingDto|CreatorPricingDto|FreelancePricingDto $dto */
         $dto = $this->validate(match ($vendorType) {
-            VendorType::Lieu       => VenuePricingDto::fromArray($data),
-            VendorType::Traiteur   => CateringPricingDto::fromArray($data),
-            VendorType::Freelance,
-            VendorType::Createurs  => FreelancePricingDto::fromArray($data),
+            VendorType::Lieu      => VenuePricingDto::fromArray($data),
+            VendorType::Traiteur  => CateringPricingDto::fromArray($data),
+            VendorType::Createurs => CreatorPricingDto::fromArray($data),
+            VendorType::Freelance => FreelancePricingDto::fromArray($data),
         });
 
         $vendor->setPriceMinCents($dto->priceMin);
@@ -57,6 +58,10 @@ readonly class ZonesPricingStepService extends AbstractOnboardingStepHandler
             }
             $venueDetails->setNearestCity($dto->nearestCity);
             $venueDetails->setDistanceToCityMinutes($dto->distanceToCityMinutes);
+        }
+
+        if ($dto instanceof CreatorPricingDto) {
+            $vendor->setCity($dto->city);
         }
     }
 
@@ -82,6 +87,10 @@ readonly class ZonesPricingStepService extends AbstractOnboardingStepHandler
             $data['city']                     = $vendor->getCity();
             $data['nearest_city']             = $venueDetails?->getNearestCity();
             $data['distance_to_city_minutes'] = $venueDetails?->getDistanceToCityMinutes();
+        }
+
+        if ($vendorType === VendorType::Createurs) {
+            $data['city'] = $vendor->getCity();
         }
 
         return $data;
