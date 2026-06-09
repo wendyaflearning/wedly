@@ -29,9 +29,13 @@ readonly class VendorOnboardingStepDispatcher
             ?? throw new \DomainException(sprintf('Étape inconnue : %s', $dto->step), 422);
         $vendorType = $vendor->resolveVendorType();
 
-        $this->resolveHandler($step, $vendorType)->handle($vendor, $dto->data ?? []);
-
         $steps = $this->resolver->getOnboardingSteps($vendorType);
+
+        if ($step === OnboardingStep::Credentials) {
+            $this->assertAllStepsFilled($vendor, $vendorType, $steps);
+        }
+
+        $this->resolveHandler($step, $vendorType)->handle($vendor, $dto->data ?? []);
 
         $currentStep    = $vendor->getOnboardingStep();
         $currentIndex   = $currentStep ? array_search($currentStep, $steps, true) : -1;
@@ -64,6 +68,26 @@ readonly class VendorOnboardingStepDispatcher
             }
         }
         throw new \DomainException(sprintf('Aucun handler pour l\'étape : %s', $step->value), 500);
+    }
+
+    /** @param array<OnboardingStep> $steps */
+    private function assertAllStepsFilled(Vendor $vendor, VendorType $vendorType, array $steps): void
+    {
+        $incomplete = [];
+        foreach ($steps as $stepItem) {
+            if ($stepItem === OnboardingStep::Credentials) {
+                continue;
+            }
+            if (!$this->resolveHandler($stepItem, $vendorType)->isFilled($vendor)) {
+                $incomplete[] = $stepItem->label($vendorType);
+            }
+        }
+        if (!empty($incomplete)) {
+            throw new \DomainException(
+                sprintf('Étapes incomplètes : %s', implode(', ', $incomplete)),
+                422
+            );
+        }
     }
 
     private function buildStepsData(Vendor $vendor, array $completedSteps, VendorType $vendorType): array
