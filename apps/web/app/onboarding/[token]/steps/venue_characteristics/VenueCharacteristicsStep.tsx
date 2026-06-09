@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { OnboardingStep, VenueDetails } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
+import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
 
 const VENUE_TYPES = [
   { value: 'chateau',      label: 'Château' },
@@ -90,28 +91,19 @@ export default function VenueCharacteristicsStep({
     setSubmitting(true)
     setError(null)
     try {
-      const res = await fetch(`/api/onboarding/${token}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          step: 'venue_characteristics',
-          data: {
-            venue_type:        venueType,
-            capacity_min:      Number(capacityMin),
-            capacity_max:      Number(capacityMax),
-            has_catering:      bools.has_catering,
-            has_accommodation: bools.has_accommodation,
-            has_outdoor_space: bools.has_outdoor_space,
-            is_pmr_accessible: bools.is_pmr_accessible,
-          },
-        }),
+      const json = await patchOnboardingStep(token, 'venue_characteristics', {
+        venue_type:        venueType,
+        capacity_min:      Number(capacityMin),
+        capacity_max:      Number(capacityMax),
+        has_catering:      bools.has_catering,
+        has_accommodation: bools.has_accommodation,
+        has_outdoor_space: bools.has_outdoor_space,
+        is_pmr_accessible: bools.is_pmr_accessible,
       })
-      if (!res.ok) { setError('Une erreur est survenue.'); return }
-      const json = await res.json()
       setSuccess(true)
       setTimeout(() => onNext(json.current_step), 1000)
-    } catch {
-      setError('Une erreur est survenue.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.')
     } finally {
       setSubmitting(false)
     }

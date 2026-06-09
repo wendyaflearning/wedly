@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { CateringDetails, OnboardingStep } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
+import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
 
 type InitialData = Pick<
   CateringDetails,
@@ -114,26 +115,17 @@ export default function CateringCharacteristicsStep({
     setSubmitting(true)
     setError(null)
     try {
-      const res = await fetch(`/api/onboarding/${token}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          step: 'catering_characteristics',
-          data: {
-            covers_min: Number(coversMin),
-            covers_max: Number(coversMax),
-            ...formulas,
-            ...dietary,
-            ...equipment,
-          },
-        }),
+      const json = await patchOnboardingStep(token, 'catering_characteristics', {
+        covers_min: Number(coversMin),
+        covers_max: Number(coversMax),
+        ...formulas,
+        ...dietary,
+        ...equipment,
       })
-      if (!res.ok) { setError('Une erreur est survenue.'); return }
-      const json = await res.json()
       setSuccess(true)
       setTimeout(() => onNext(json.current_step), 1000)
-    } catch {
-      setError('Une erreur est survenue.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.')
     } finally {
       setSubmitting(false)
     }

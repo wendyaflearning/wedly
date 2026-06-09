@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import type { OnboardingStep, ServiceOption } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
+import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
 
 type ServiceNode = {
   id: string
@@ -165,20 +166,11 @@ export default function ProfessionsStep({
     setSubmitting(true)
     setError(null)
     try {
-      const res = await fetch(`/api/onboarding/${token}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: 'professions', data: { service_ids: [selectedId] } }),
-      })
-      if (!res.ok) {
-        setError('Une erreur est survenue.')
-        return
-      }
-      const json = await res.json()
+      const json = await patchOnboardingStep(token, 'professions', { service_ids: [selectedId] })
       setSuccess(true)
       setTimeout(() => onNext(json.current_step), 1000)
-    } catch {
-      setError('Une erreur est survenue.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.')
     } finally {
       setSubmitting(false)
     }

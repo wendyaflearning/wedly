@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Tooltip } from '@/app/components/Tooltip'
 import type { OnboardingStep, RegionOption, VendorType, ZonesPricingData } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
+import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
 
 const PRICE_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'per_service', label: 'Par prestation' },
@@ -103,21 +104,11 @@ export default function ZonesPricingStep({
       if (isCreator) {
         payload.city = city
       }
-      const res = await fetch(`/api/onboarding/${token}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: 'zones_pricing', data: payload }),
-      })
-      if (!res.ok) {
-        const json = await res.json()
-        setError(json.error ?? 'Une erreur est survenue.')
-        return
-      }
-      const json = await res.json()
+      const json = await patchOnboardingStep(token, 'zones_pricing', payload)
       setSuccess(true)
       setTimeout(() => onNext(json.current_step), 1000)
-    } catch {
-      setError('Une erreur est survenue.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.')
     } finally {
       setSubmitting(false)
     }

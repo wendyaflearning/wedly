@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { LegalInfoData, OnboardingStep } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
+import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
 
 function Field({
   label, value, onChange, type = 'text', placeholder, hint,
@@ -97,33 +98,20 @@ export default function LegalInfoStep({
     setSubmitting(true)
     setError(null)
     try {
-      const res = await fetch(`/api/onboarding/${token}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          step: 'legal_info',
-          data: {
-            brand_name: brandName.trim(),
-            first_name: firstName.trim(),
-            last_name:  lastName.trim(),
-            siret:      siretClean,
-            phone:      phone     || null,
-            address:    address   || null,
-            zipcode:    zipcode   || null,
-            city:       city      || null,
-          },
-        }),
+      const json = await patchOnboardingStep(token, 'legal_info', {
+        brand_name: brandName.trim(),
+        first_name: firstName.trim(),
+        last_name:  lastName.trim(),
+        siret:      siretClean,
+        phone:      phone     || null,
+        address:    address   || null,
+        zipcode:    zipcode   || null,
+        city:       city      || null,
       })
-      if (!res.ok) {
-        const json = await res.json()
-        setError(json.error ?? 'Une erreur est survenue.')
-        return
-      }
-      const json = await res.json()
       setSuccess(true)
       setTimeout(() => onNext(json.current_step), 1000)
-    } catch {
-      setError('Une erreur est survenue.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.')
     } finally {
       setSubmitting(false)
     }

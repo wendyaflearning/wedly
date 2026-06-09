@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import type { ExperienceOption, OnboardingStep, VendorType } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
+import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
 
 export default function ExperiencesStep({
   token,
@@ -65,23 +66,14 @@ export default function ExperiencesStep({
     setSubmitting(true)
     setError(null)
     try {
-      const res = await fetch(`/api/onboarding/${token}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          step: 'experiences',
-          data: { confession_ids: selectedConfessionIds, culture_ids: selectedCultureIds },
-        }),
+      const json = await patchOnboardingStep(token, 'experiences', {
+        confession_ids: selectedConfessionIds,
+        culture_ids:    selectedCultureIds,
       })
-      if (!res.ok) {
-        setError('Une erreur est survenue.')
-        return
-      }
-      const json = await res.json()
       setSuccess(true)
       setTimeout(() => onNext(json.current_step), 1000)
-    } catch {
-      setError('Une erreur est survenue.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.')
     } finally {
       setSubmitting(false)
     }
