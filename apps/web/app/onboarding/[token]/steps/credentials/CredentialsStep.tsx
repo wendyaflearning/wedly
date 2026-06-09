@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { OnboardingStep } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
+import IncompleteStepsModal from './IncompleteStepsModal'
 
 function Field({
   label, value, onChange, type = 'text', placeholder, hint,
@@ -133,12 +134,14 @@ export default function CredentialsStep({
 
   const isDirty = !success && (email !== (initialEmail ?? '') || password !== '' || passwordConfirm !== '')
 
-  const emailValid   = /^[^@]+@[^@]+\.[^@]+$/.test(email.trim())
-  const pwLengthOk   = password.length >= 8
-  const pwSpecialOk  = /[\W_]/.test(password)
-  const pwValid      = pwLengthOk && pwSpecialOk
-  const confirmValid = passwordConfirm !== '' && password === passwordConfirm
-  const isValid      = emailValid && pwValid && confirmValid
+  const emailValid     = /^[^@]+@[^@]+\.[^@]+$/.test(email.trim())
+  const pwLengthOk     = password.length >= 8
+  const pwSpecialOk    = /[\W_]/.test(password)
+  const pwValid        = pwLengthOk && pwSpecialOk
+  const confirmValid   = passwordConfirm !== '' && password === passwordConfirm
+  const isValid        = emailValid && pwValid && confirmValid
+
+  const incompleteSteps = steps.filter(s => s.stepKey !== 'credentials' && !s.isFilled)
 
   async function handleConfirm() {
     if (!isValid || submitting || success) return
@@ -179,6 +182,9 @@ export default function CredentialsStep({
 
   return (
     <div className="min-h-screen bg-creme">
+      {incompleteSteps.length > 0 && (
+        <IncompleteStepsModal steps={incompleteSteps} onNavigate={onNavigate} />
+      )}
       <div className="max-w-lg mx-auto">
 
         {/* Header sticky */}
@@ -277,14 +283,14 @@ export default function CredentialsStep({
           <div style={{ marginTop: 32, paddingBottom: 32 }}>
             <button
               onClick={handleConfirm}
-              disabled={!isValid || submitting || success}
+              disabled={!isValid || incompleteSteps.length > 0 || submitting || success}
               className="w-full font-josefin uppercase text-creme flex items-center justify-center gap-2.5"
               style={{
                 padding: '17px 28px', borderRadius: 12, border: 'none',
                 fontSize: 13, letterSpacing: '0.1em',
-                background: isValid ? 'var(--color-accent)' : 'rgba(78,26,50,0.145)',
-                cursor: isValid && !submitting && !success ? 'pointer' : 'default',
-                animation: isValid && !submitting && !success ? 'pulse-cta 2.8s ease-in-out 1s infinite' : 'none',
+                background: isValid && incompleteSteps.length === 0 ? 'var(--color-accent)' : 'rgba(78,26,50,0.145)',
+                cursor: isValid && incompleteSteps.length === 0 && !submitting && !success ? 'pointer' : 'default',
+                animation: isValid && incompleteSteps.length === 0 && !submitting && !success ? 'pulse-cta 2.8s ease-in-out 1s infinite' : 'none',
                 transition: 'background 0.3s, opacity 0.2s',
               }}
             >

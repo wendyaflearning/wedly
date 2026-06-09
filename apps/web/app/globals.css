@@ -42,3 +42,23 @@ body {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.88; transform: scale(0.997); }
 }
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.modal-enter {
+  animation: sheetUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (min-width: 640px) {
+  .modal-enter {
+    animation: modalPop 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
