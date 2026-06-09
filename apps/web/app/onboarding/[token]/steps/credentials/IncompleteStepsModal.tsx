@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import type { OnboardingStep } from '../../types'
 
 function WarningIcon() {
@@ -22,15 +23,28 @@ function ChevronRight() {
 export default function IncompleteStepsModal({
   steps,
   onNavigate,
+  onClose,
 }: {
   steps: OnboardingStep[]
   onNavigate: (stepKey: string) => void
+  onClose: () => void
 }) {
+  const [dragStartY, setDragStartY] = useState<number | null>(null)
+
   return (
-    <div className="fixed inset-0 bg-bordeaux/45 flex items-end sm:items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-bordeaux/45 flex items-end sm:items-center justify-center z-50"
+      onClick={onClose}
+    >
       <div
         className="modal-enter w-full sm:w-[480px] sm:max-w-[92vw] bg-creme rounded-t-[26px] sm:rounded-3xl"
         style={{ boxShadow: 'rgba(38,18,28,0.36) 0px 30px 80px' }}
+        onClick={e => e.stopPropagation()}
+        onTouchStart={e => setDragStartY(e.touches[0].clientY)}
+        onTouchEnd={e => {
+          if (dragStartY !== null && e.changedTouches[0].clientY - dragStartY > 60) onClose()
+          setDragStartY(null)
+        }}
       >
         {/* Drag handle (mobile only) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">

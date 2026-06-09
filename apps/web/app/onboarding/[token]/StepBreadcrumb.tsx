@@ -15,7 +15,7 @@ export default function StepBreadcrumb({
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '0 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px' }}>
         {steps.map((step, i) => {
           const isCompleted = step.status === 'completed'
           const isCurrent   = step.stepKey === currentStepKey
