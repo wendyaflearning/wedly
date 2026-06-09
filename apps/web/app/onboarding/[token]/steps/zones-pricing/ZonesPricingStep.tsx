@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { Tooltip } from '@/app/components/Tooltip'
-import type { RegionOption, VendorType, ZonesPricingData } from '../../types'
+import type { OnboardingStep, RegionOption, VendorType, ZonesPricingData } from '../../types'
+import StepBreadcrumb from '../../StepBreadcrumb'
 
 const PRICE_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'per_service', label: 'Par prestation' },
@@ -13,14 +14,20 @@ export default function ZonesPricingStep({
   token,
   initialData,
   vendorType,
+  steps,
+  currentStepKey,
   onBack,
   onNext,
+  onNavigate,
 }: {
   token: string
   initialData: ZonesPricingData | null
   vendorType: VendorType
+  steps: OnboardingStep[]
+  currentStepKey: string
   onBack: () => void
   onNext: (nextStep: string) => void
+  onNavigate: (stepKey: string) => void
 }) {
   const [regions, setRegions]               = useState<RegionOption[]>([])
   const [regionsLoading, setRegionsLoading] = useState(true)
@@ -37,6 +44,17 @@ export default function ZonesPricingStep({
   const [dropdownOpen, setDropdownOpen]     = useState(false)
   const [searchQuery, setSearchQuery]       = useState('')
   const dropdownRef                         = useRef<HTMLDivElement>(null)
+
+  const initRegionIds = (initialData?.zones ?? []).slice().sort().join(',')
+  const isDirty = !success && (
+    [...regionIds].sort().join(',') !== initRegionIds ||
+    priceMin    !== (initialData ? (initialData.price_min / 100).toString() : '') ||
+    priceMax    !== (initialData ? (initialData.price_max / 100).toString() : '') ||
+    priceType   !== (initialData?.price_type ?? null) ||
+    city        !== (initialData?.city ?? '') ||
+    nearestCity !== (initialData?.nearest_city ?? '') ||
+    distanceMin !== (initialData?.distance_to_city_minutes?.toString() ?? '')
+  )
 
   useEffect(() => {
     fetch('/api/regions')
@@ -116,33 +134,31 @@ export default function ZonesPricingStep({
           position: 'sticky', top: 0, zIndex: 10,
           background: 'var(--color-creme)',
           borderBottom: '1px solid rgba(78, 26, 50, 0.094)',
-          padding: '20px 32px 16px',
+          padding: '18px 24px 14px',
         }}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" style={{ minHeight: 18, marginBottom: 14 }}>
             <button
               onClick={onBack}
               className="flex items-center gap-1.5 font-josefin uppercase"
               style={{ fontSize: 11, letterSpacing: '0.08em', color: 'rgba(41,26,16,0.42)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <path d="M9 2L4 7l5 5" stroke="rgba(41,26,16,0.42)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Retour
             </button>
-            <span className="font-josefin uppercase text-bordeaux" style={{ fontSize: 11, letterSpacing: '0.08em' }}>
-              Étape 4 / 7
-            </span>
+            {isDirty && (
+              <span style={{ color: 'rgb(157,79,30)', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-manrope-var, Manrope, system-ui, sans-serif)', fontSize: 11, fontWeight: 500 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgb(157,79,30)', flexShrink: 0 }} />
+                Modifications non sauvegardées
+              </span>
+            )}
           </div>
         </div>
 
         <img src="/logo.png" alt="Wedly" className="h-16 w-auto mx-auto mt-8 mb-6" />
 
-        {/* Barre de progression */}
-        <div className="flex gap-1.5 mb-8 justify-center">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className={`w-8 h-[3px] rounded-full ${i < 4 ? 'bg-bordeaux' : 'bg-bordeaux/15'}`} />
-          ))}
-        </div>
+        <StepBreadcrumb steps={steps} currentStepKey={currentStepKey} onNavigate={onNavigate} />
 
         <div style={{ padding: '32px 32px 0' }}>
 

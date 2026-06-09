@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
-import type { VendorType } from '../../types'
+import type { OnboardingStep } from '../../types'
+import StepBreadcrumb from '../../StepBreadcrumb'
 
 function Field({
   label, value, onChange, type = 'text', placeholder, hint,
@@ -106,16 +107,20 @@ function PasswordField({
 
 export default function CredentialsStep({
   token,
-  vendorType,
   initialEmail,
+  steps,
+  currentStepKey,
   onBack,
   onComplete,
+  onNavigate,
 }: {
-  token:        string
-  vendorType:   VendorType
-  initialEmail: string | null
-  onBack:       () => void
-  onComplete:   () => void
+  token:          string
+  initialEmail:   string | null
+  steps:          OnboardingStep[]
+  currentStepKey: string
+  onBack:         () => void
+  onComplete:     () => void
+  onNavigate:     (stepKey: string) => void
 }) {
   const [email,           setEmail]           = useState(initialEmail ?? '')
   const [password,        setPassword]        = useState('')
@@ -126,8 +131,7 @@ export default function CredentialsStep({
   const [success,         setSuccess]         = useState(false)
   const [error,           setError]           = useState<string | null>(null)
 
-  const totalSteps  = vendorType === 'traiteur' ? 7 : 6
-  const currentStep = totalSteps
+  const isDirty = !success && (email !== (initialEmail ?? '') || password !== '' || passwordConfirm !== '')
 
   const emailValid   = /^[^@]+@[^@]+\.[^@]+$/.test(email.trim())
   const pwLengthOk   = password.length >= 8
@@ -182,33 +186,31 @@ export default function CredentialsStep({
           position: 'sticky', top: 0, zIndex: 10,
           background: 'var(--color-creme)',
           borderBottom: '1px solid rgba(78,26,50,0.094)',
-          padding: '20px 32px 16px',
+          padding: '18px 24px 14px',
         }}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" style={{ minHeight: 18, marginBottom: 14 }}>
             <button
               onClick={onBack}
               className="flex items-center gap-1.5 font-josefin uppercase"
               style={{ fontSize: 11, letterSpacing: '0.08em', color: 'rgba(41,26,16,0.42)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <path d="M9 2L4 7l5 5" stroke="rgba(41,26,16,0.42)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Retour
             </button>
-            <span className="font-josefin uppercase text-bordeaux" style={{ fontSize: 11, letterSpacing: '0.08em' }}>
-              Étape {currentStep} / {totalSteps}
-            </span>
+            {isDirty && (
+              <span style={{ color: 'rgb(157,79,30)', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-manrope-var, Manrope, system-ui, sans-serif)', fontSize: 11, fontWeight: 500 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgb(157,79,30)', flexShrink: 0 }} />
+                Modifications non sauvegardées
+              </span>
+            )}
           </div>
         </div>
 
         <img src="/logo.png" alt="Wedly" className="h-16 w-auto mx-auto mt-8 mb-6" />
 
-        {/* Barre de progression */}
-        <div className="flex gap-1.5 mb-8 justify-center">
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <div key={i} className={`w-8 h-[3px] rounded-full ${i < currentStep ? 'bg-bordeaux' : 'bg-bordeaux/15'}`} />
-          ))}
-        </div>
+        <StepBreadcrumb steps={steps} currentStepKey={currentStepKey} onNavigate={onNavigate} />
 
         <div style={{ padding: '32px 32px 0' }}>
 

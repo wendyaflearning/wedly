@@ -1,34 +1,6 @@
 'use client'
 import type { OnboardingOverviewData, OnboardingStep } from './types'
-
-function StepDot({ status }: { status: OnboardingStep['status'] }) {
-  if (status === 'completed') {
-    return (
-      <div className="w-5 h-5 rounded-full bg-bordeaux flex items-center justify-center shrink-0">
-        <svg width="10" height="8" viewBox="0 0 10 8" fill="none" aria-hidden="true">
-          <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-    )
-  }
-  if (status === 'current') {
-    return <div className="w-5 h-5 rounded-full bg-highlight shrink-0" />
-  }
-  return <div className="w-5 h-5 rounded-full border border-gris shrink-0" />
-}
-
-function ProgressBar({ steps }: { steps: OnboardingStep[] }) {
-  return (
-    <div className="flex items-center w-full">
-      {steps.map((step, i) => (
-        <div key={step.stepKey} className="flex items-center flex-1 last:flex-none">
-          <StepDot status={step.status} />
-          {i < steps.length - 1 && <div className="flex-1 h-px bg-gris mx-1" />}
-        </div>
-      ))}
-    </div>
-  )
-}
+import StepBreadcrumb from './StepBreadcrumb'
 
 function CompletedCard({ step, onStepClick, statusLabel }: { step: OnboardingStep; onStepClick: (stepKey: string) => void; statusLabel: string }) {
   return (
@@ -120,6 +92,8 @@ export default function OnboardingOverview({
   token: string
   onStepClick: (stepKey: string) => void
 }) {
+  const currentStepKey = data.steps.find(s => s.status === 'current')?.stepKey ?? ''
+
   return (
     <div className="min-h-screen bg-creme px-6 py-12">
       <div className="max-w-lg mx-auto flex flex-col gap-8">
@@ -131,10 +105,10 @@ export default function OnboardingOverview({
         </h1>
 
         <p className="font-manrope text-gris text-center text-sm">
-          Nous avons préparé le terrain. Il ne vous reste qu'à y poser votre signature.
+          Nous avons préparé le terrain. Il ne vous reste qu&apos;à y poser votre signature.
         </p>
 
-        <ProgressBar steps={data.steps} />
+        <StepBreadcrumb steps={data.steps} currentStepKey={currentStepKey} onNavigate={onStepClick} />
 
         <div className="flex flex-col gap-3">
           {data.steps.map(step => (
