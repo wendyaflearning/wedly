@@ -40,16 +40,21 @@ export default function OnboardingClient({
     )
   }
 
+  const navigateToStep = (stepKey: string) => navigate(stepKey as Screen)
+
   if (screen === 'professions') {
     return (
       <ProfessionsStep
         token={token}
         initialServices={data.steps_data?.professions?.services ?? []}
+        steps={data.steps}
+        currentStepKey="professions"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
           navigate(nextStep as Screen)
         }}
+        onNavigate={navigateToStep}
       />
     )
   }
@@ -60,11 +65,14 @@ export default function OnboardingClient({
         token={token}
         vendorType={data.vendor_type}
         initialExperiences={data.steps_data?.experiences ?? { confession_ids: [], culture_ids: [] }}
+        steps={data.steps}
+        currentStepKey="experiences"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
           navigate(nextStep as Screen)
         }}
+        onNavigate={navigateToStep}
       />
     )
   }
@@ -74,11 +82,14 @@ export default function OnboardingClient({
       <CateringCharacteristicsStep
         token={token}
         initialData={data.steps_data?.catering_characteristics ?? null}
+        steps={data.steps}
+        currentStepKey="catering_characteristics"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
           navigate(nextStep as Screen)
         }}
+        onNavigate={navigateToStep}
       />
     )
   }
@@ -88,11 +99,14 @@ export default function OnboardingClient({
       <VenueCharacteristicsStep
         token={token}
         initialVenueDetails={data.steps_data?.venue_characteristics ?? null}
+        steps={data.steps}
+        currentStepKey="venue_characteristics"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
           navigate(nextStep as Screen)
         }}
+        onNavigate={navigateToStep}
       />
     )
   }
@@ -103,11 +117,14 @@ export default function OnboardingClient({
         token={token}
         initialData={data.steps_data?.zones_pricing ?? null}
         vendorType={data.vendor_type}
+        steps={data.steps}
+        currentStepKey="zones_pricing"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
           navigate(nextStep as Screen)
         }}
+        onNavigate={navigateToStep}
       />
     )
   }
@@ -116,13 +133,15 @@ export default function OnboardingClient({
     return (
       <PortfolioStep
         token={token}
-        vendorType={data.vendor_type}
         initialData={data.steps_data?.portfolio ?? null}
+        steps={data.steps}
+        currentStepKey="portfolio"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           router.refresh()
           navigate(nextStep as Screen)
         }}
+        onNavigate={navigateToStep}
       />
     )
   }
@@ -131,13 +150,15 @@ export default function OnboardingClient({
     return (
       <LegalInfoStep
         token={token}
-        vendorType={data.vendor_type}
         initialData={data.steps_data?.legal_info ?? null}
+        steps={data.steps}
+        currentStepKey="legal_info"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
           if (nextStep !== 'credentials') router.refresh()
           navigate(nextStep as Screen)
         }}
+        onNavigate={navigateToStep}
       />
     )
   }
@@ -146,10 +167,12 @@ export default function OnboardingClient({
     return (
       <CredentialsStep
         token={token}
-        vendorType={data.vendor_type}
         initialEmail={data.steps_data?.credentials?.email ?? null}
+        steps={data.steps}
+        currentStepKey="credentials"
         onBack={() => navigate('onboarding_overview')}
         onComplete={() => navigate('completed')}
+        onNavigate={navigateToStep}
       />
     )
   }

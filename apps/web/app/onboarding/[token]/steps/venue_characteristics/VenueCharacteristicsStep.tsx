@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
-import type { VenueDetails } from '../../types'
+import type { OnboardingStep, VenueDetails } from '../../types'
+import StepBreadcrumb from '../../StepBreadcrumb'
 
 const VENUE_TYPES = [
   { value: 'chateau',      label: 'Château' },
@@ -38,13 +39,19 @@ type InitialData = Pick<
 export default function VenueCharacteristicsStep({
   token,
   initialVenueDetails,
+  steps,
+  currentStepKey,
   onBack,
   onNext,
+  onNavigate,
 }: {
   token: string
   initialVenueDetails: InitialData | null
+  steps: OnboardingStep[]
+  currentStepKey: string
   onBack: () => void
   onNext: (nextStep: string) => void
+  onNavigate: (stepKey: string) => void
 }) {
   const [venueType, setVenueType]     = useState<string | null>(initialVenueDetails?.venue_type ?? null)
   const [capacityMin, setCapacityMin] = useState<string>(initialVenueDetails?.capacity_min?.toString() ?? '')
@@ -58,6 +65,16 @@ export default function VenueCharacteristicsStep({
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess]       = useState(false)
   const [error, setError]           = useState<string | null>(null)
+
+  const isDirty = !success && (
+    venueType    !== (initialVenueDetails?.venue_type ?? null) ||
+    capacityMin  !== (initialVenueDetails?.capacity_min?.toString() ?? '') ||
+    capacityMax  !== (initialVenueDetails?.capacity_max?.toString() ?? '') ||
+    bools.has_catering      !== (initialVenueDetails?.has_catering ?? null) ||
+    bools.has_accommodation !== (initialVenueDetails?.has_accommodation ?? null) ||
+    bools.has_outdoor_space !== (initialVenueDetails?.has_outdoor_space ?? null) ||
+    bools.is_pmr_accessible !== (initialVenueDetails?.is_pmr_accessible ?? null)
+  )
 
   const isValid =
     venueType !== null &&
@@ -111,33 +128,31 @@ export default function VenueCharacteristicsStep({
           position: 'sticky', top: 0, zIndex: 10,
           background: 'var(--color-creme)',
           borderBottom: '1px solid rgba(78, 26, 50, 0.094)',
-          padding: '20px 32px 16px',
+          padding: '18px 24px 14px',
         }}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" style={{ minHeight: 18, marginBottom: 14 }}>
             <button
               onClick={onBack}
               className="flex items-center gap-1.5 font-josefin uppercase"
               style={{ fontSize: 11, letterSpacing: '0.08em', color: 'rgba(41,26,16,0.42)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                 <path d="M9 2L4 7l5 5" stroke="rgba(41,26,16,0.42)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Retour
             </button>
-            <span className="font-josefin uppercase" style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--color-bordeaux)' }}>
-              Étape 2 / 6
-            </span>
+            {isDirty && (
+              <span style={{ color: 'rgb(157,79,30)', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-manrope-var, Manrope, system-ui, sans-serif)', fontSize: 11, fontWeight: 500 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgb(157,79,30)', flexShrink: 0 }} />
+                Modifications non sauvegardées
+              </span>
+            )}
           </div>
         </div>
 
         <img src="/logo.png" alt="Wedly" className="h-16 w-auto mx-auto mt-8 mb-6" />
 
-        {/* Barre de progression */}
-        <div className="flex gap-1.5 mb-8 justify-center">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className={`w-8 h-[3px] rounded-full ${i < 2 ? 'bg-bordeaux' : 'bg-bordeaux/15'}`} />
-          ))}
-        </div>
+        <StepBreadcrumb steps={steps} currentStepKey={currentStepKey} onNavigate={onNavigate} />
 
         {/* Contenu */}
         <div style={{ padding: '32px 32px 0' }}>
