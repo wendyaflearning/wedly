@@ -8,7 +8,7 @@ use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\VendorType;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use App\DTO\Vendor\VendorOnboardingStepResponseDto;
-use App\Vendor\DTO\Response\OnboardingOverviewResponseDto;
+use App\DTO\Vendor\Onboarding\Response\OnboardingOverviewResponseDto;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 
 readonly class VendorOnboardingOverviewBuilder

@@ -10,7 +10,7 @@ use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Resolver\Vendor\OnboardingStepResolver;
-use App\Service\Vendor\Onboarding\StepHandlerInterface;
+use App\Handler\Vendor\Onboarding\StepHandlerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 
