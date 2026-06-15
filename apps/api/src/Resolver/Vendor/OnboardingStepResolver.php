@@ -6,7 +6,7 @@ namespace App\Resolver\Vendor;
 
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
-use App\Vendor\DTO\Response\OnboardingStepResponse;
+use App\DTO\Vendor\Onboarding\Response\OnboardingStepResponse;
 
 readonly class OnboardingStepResolver
 {
