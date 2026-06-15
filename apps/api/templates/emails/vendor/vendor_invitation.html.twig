@@ -1,0 +1,103 @@
+{% apply inline_css %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>C'est officiel — vous faites partie de Wedly</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #FFF6ED; font-family: Arial, Helvetica, sans-serif; }
+    table { border-spacing: 0; }
+    td { padding: 0; }
+    img { border: 0; display: block; }
+    .wrapper { background-color: #FFF6ED; width: 100%; }
+    .container { max-width: 580px; margin: 0 auto; }
+    .header { background-color: #4E1A32; padding: 28px 24px 20px 24px; text-align: center; }
+    .header-badge { display: inline-block; background-color: #E35704; color: #ffffff; font-size: 10px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; padding: 5px 14px; margin-top: 14px; }
+    .body { background-color: #ffffff; padding: 40px 32px; }
+    .greeting { font-size: 22px; font-weight: bold; color: #291A10; margin: 0 0 16px 0; }
+    .text { font-size: 15px; line-height: 1.7; color: #291A10; margin: 0 0 16px 0; }
+    .separator { height: 3px; background-color: #E35704; margin: 28px 0; border: none; }
+    .section-title { font-size: 11px; font-weight: bold; letter-spacing: 2px; color: #4E1A32; text-transform: uppercase; margin: 0 0 20px 0; }
+    .cards-wrapper { margin: 0 0 24px 0; }
+    .card { background-color: #FFF6ED; border-left: 3px solid #E35704; padding: 14px 18px; margin: 0 0 10px 0; }
+    .card-title { font-size: 14px; font-weight: bold; color: #291A10; margin: 0 0 4px 0; }
+    .card-desc { font-size: 13px; color: #6B5046; line-height: 1.5; margin: 0; }
+    .credentials-note { background-color: #F5EDE6; border-left: 4px solid #4E1A32; padding: 16px 20px; margin: 0 0 28px 0; font-size: 14px; color: #291A10; line-height: 1.6; }
+    .cta-wrapper { text-align: center; margin: 0 0 28px 0; }
+    .cta-button { display: inline-block; background-color: #4E1A32; color: #ffffff; font-size: 15px; font-weight: bold; text-decoration: none; padding: 14px 36px; }
+    .footer { background-color: #FFF6ED; padding: 24px 32px; text-align: center; }
+    .footer-signature { font-size: 13px; color: #4E1A32; font-weight: bold; margin: 0 0 12px 0; }
+    .footer-legal { font-size: 11px; color: #999999; margin: 0; }
+  </style>
+</head>
+<body>
+  <table class="wrapper" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <table class="container" width="580" align="center" cellpadding="0" cellspacing="0">
+
+          <!-- Header -->
+          <tr>
+            <td class="header">
+              <img src="https://res.cloudinary.com/dadvrspox/image/upload/v1781540174/logo_dark_qlvytq.png" alt="Wedly" width="120">
+              <div class="header-badge">Profil validé</div>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td class="body">
+              <p class="greeting">Bienvenue, {{ firstName }}.</p>
+              <p class="text">
+                Votre profil a été validé. À partir d'aujourd'hui, vous faites officiellement partie de Wedly — et on est sincèrement heureux de vous compter parmi les premiers.
+              </p>
+              <p class="text">
+                Votre espace vous attend. Il y a quelques petites choses à finaliser pour que votre profil soit au meilleur de lui-même dès le départ.
+              </p>
+
+              <hr class="separator">
+
+              <p class="section-title">Par où commencer</p>
+
+              <div class="cards-wrapper">
+                <div class="card">
+                  <p class="card-title">Complétez votre portfolio</p>
+                  <p class="card-desc">Vos plus belles réalisations — c'est la première chose que les couples verront.</p>
+                </div>
+                <div class="card">
+                  <p class="card-title">Renseignez vos disponibilités</p>
+                  <p class="card-desc">Indiquez vos dates bloquées pour ne recevoir que des demandes compatibles.</p>
+                </div>
+                <div class="card">
+                  <p class="card-title">Finalisez votre bio</p>
+                  <p class="card-desc">Un format guidé en 3 questions — pour que votre personnalité parle d'elle-même.</p>
+                </div>
+              </div>
+
+              <div class="credentials-note">
+                Pour vous connecter, utilisez les identifiants que vous avez choisis lors de la dernière étape de votre inscription.
+              </div>
+
+              <div class="cta-wrapper">
+                <a href="{{ dashboardUrl }}" class="cta-button" target="_blank">C'est parti</a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer">
+              <p class="footer-signature">Jennifer &amp; Wendy — L'équipe Wedly</p>
+              <p class="footer-legal">Vous recevez cet email car votre profil Wedly vient d'être validé.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+{% endapply %}

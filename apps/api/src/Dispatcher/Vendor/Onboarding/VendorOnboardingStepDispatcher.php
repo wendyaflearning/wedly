@@ -9,16 +9,19 @@ use App\DTO\Vendor\VendorOnboardingStepResponseDto;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
-use App\Resolver\Vendor\OnboardingStepResolver;
+use App\Event\StepperSubmittedEvent;
 use App\Handler\Vendor\Onboarding\StepHandlerInterface;
+use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 readonly class VendorOnboardingStepDispatcher
 {
     public function __construct(
         private EntityManagerInterface $em,
         private OnboardingStepResolver $resolver,
+        private EventDispatcherInterface $eventDispatcher,
         #[TaggedIterator('onboarding.step_handler')]
         private iterable $handlers,
     ) {}
@@ -48,6 +51,11 @@ readonly class VendorOnboardingStepDispatcher
         $this->em->flush();
 
         if ($step === OnboardingStep::Credentials) {
+            $user = $vendor->getUser();
+            $this->eventDispatcher->dispatch(
+                new StepperSubmittedEvent($user->getFirstName(), $user->getEmail())
+            );
+
             return null;
         }
 
