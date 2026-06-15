@@ -1,0 +1,90 @@
+{% apply inline_css %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Votre profil est entre nos mains</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #FFF6ED; font-family: Arial, Helvetica, sans-serif; }
+    table { border-spacing: 0; }
+    td { padding: 0; }
+    img { border: 0; display: block; }
+    .wrapper { background-color: #FFF6ED; width: 100%; }
+    .container { max-width: 580px; margin: 0 auto; }
+    .header { background-color: #4E1A32; padding: 32px 24px; text-align: center; }
+    .body { background-color: #ffffff; padding: 40px 32px; }
+    .greeting { font-size: 18px; font-weight: bold; color: #291A10; margin: 0 0 16px 0; }
+    .text { font-size: 15px; line-height: 1.7; color: #291A10; margin: 0 0 24px 0; }
+    .separator { height: 3px; background-color: #E35704; margin: 28px 0; border: none; }
+    .next-steps { background-color: #F5EDE6; border-left: 4px solid #4E1A32; padding: 20px 24px; margin: 0 0 24px 0; }
+    .next-steps-title { font-size: 11px; font-weight: bold; letter-spacing: 2px; color: #4E1A32; text-transform: uppercase; margin: 0 0 14px 0; }
+    .next-steps-item { font-size: 14px; color: #291A10; line-height: 1.6; margin: 0 0 10px 0; padding-left: 12px; }
+    .next-steps-item:last-child { margin-bottom: 0; }
+    .contact { font-size: 14px; color: #291A10; line-height: 1.6; margin: 0; }
+    .contact a { color: #E35704; text-decoration: none; }
+    .footer { background-color: #FFF6ED; padding: 24px 32px; text-align: center; }
+    .footer-links { font-size: 13px; color: #291A10; margin: 0 0 10px 0; }
+    .footer-links a { color: #291A10; text-decoration: none; font-weight: bold; }
+    .footer-signature { font-size: 13px; color: #4E1A32; font-weight: bold; margin: 0 0 12px 0; }
+    .footer-legal { font-size: 11px; color: #999999; margin: 0; }
+  </style>
+</head>
+<body>
+  <table class="wrapper" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <table class="container" width="580" align="center" cellpadding="0" cellspacing="0">
+
+          <!-- Header -->
+          <tr>
+            <td class="header">
+              <img src="https://res.cloudinary.com/dadvrspox/image/upload/v1781540174/logo_dark_qlvytq.png" alt="Wedly" width="120">
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td class="body">
+              <p class="greeting">Bonjour {{ firstName }},</p>
+              <p class="text">
+                Votre profil a bien été reçu — merci pour le temps que vous y avez consacré.
+                On sait que chaque minute compte en pleine saison.
+              </p>
+
+              <hr class="separator">
+
+              <div class="next-steps">
+                <p class="next-steps-title">Ce qui se passe ensuite</p>
+                <p class="next-steps-item">— Votre profil est examiné par notre équipe — comptez 24 à 48h.</p>
+                <p class="next-steps-item">— Une fois validé, vous recevrez un email pour accéder à votre dashboard et découvrir votre espace.</p>
+              </div>
+
+              <p class="contact">
+                D'ici là, si vous avez la moindre question, on est là :
+                <a href="mailto:contact@wedly-apps.com">contact@wedly-apps.com</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer">
+              <p class="footer-links">
+                <a href="https://instagram.com/wedly" target="_blank">Instagram</a>
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <a href="https://tiktok.com/@wedly" target="_blank">TikTok</a>
+              </p>
+              <p class="footer-signature">Jennifer &amp; Wendy — L'équipe Wedly</p>
+              <p class="footer-legal">Vous recevez cet email suite à la soumission de votre profil Wedly.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+{% endapply %}

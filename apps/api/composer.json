@@ -20,16 +20,22 @@
         "symfony/flex": "^2.10",
         "symfony/framework-bundle": "7.4.*",
         "symfony/http-client": "7.4.*",
+        "symfony/mailer": "7.4.*",
         "symfony/mime": "7.4.*",
         "symfony/password-hasher": "7.4.*",
         "symfony/property-access": "7.4.*",
         "symfony/property-info": "7.4.*",
+        "symfony/resend-mailer": "7.4.*",
         "symfony/runtime": "7.4.*",
         "symfony/security-bundle": "7.4.*",
         "symfony/serializer": "7.4.*",
+        "symfony/twig-bundle": "7.4.*",
         "symfony/uid": "7.4.*",
         "symfony/validator": "7.4.*",
-        "symfony/yaml": "7.4.*"
+        "symfony/yaml": "7.4.*",
+        "twig/cssinliner-extra": "^3.26",
+        "twig/extra-bundle": "^3.24",
+        "twig/inky-extra": "^3.26"
     },
     "config": {
         "allow-plugins": {
