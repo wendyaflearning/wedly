@@ -14,13 +14,14 @@ use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VendorType;
+use App\Repository\Vendor\VendorRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: VendorRepository::class)]
 #[ORM\Table(name: 'vendor')]
 #[ORM\HasLifecycleCallbacks]
 class Vendor
@@ -87,6 +88,12 @@ class Vendor
 
     #[ORM\Column(name: 'onboarding_step', type: 'string', enumType: OnboardingStep::class, nullable: true)]
     private ?OnboardingStep $onboardingStep = null;
+
+    #[ORM\Column(name: 'bio', type: 'text', nullable: true)]
+    private ?string $bio = null;
+
+    #[ORM\Column(name: 'is_published', type: 'boolean', options: ['default' => false])]
+    private bool $isPublished = false;
 
     #[ORM\ManyToMany(targetEntity: Service::class)]
     #[ORM\JoinTable(
@@ -370,6 +377,30 @@ class Vendor
     public function setOnboardingStep(?OnboardingStep $onboardingStep): static
     {
         $this->onboardingStep = $onboardingStep;
+
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): static
+    {
+        $this->bio = $bio;
+
+        return $this;
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->isPublished;
+    }
+
+    public function setIsPublished(bool $isPublished): static
+    {
+        $this->isPublished = $isPublished;
 
         return $this;
     }
