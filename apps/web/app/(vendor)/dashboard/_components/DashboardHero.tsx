@@ -6,26 +6,36 @@ interface DashboardHeroProps {
 
 export function DashboardHero({ firstName }: DashboardHeroProps) {
   return (
-    <section className="bg-bordeaux text-creme px-[72px] pt-12 pb-14 relative overflow-hidden">
+    <section className="bg-bordeaux text-creme px-5 pt-6 pb-7 md:px-[72px] md:pt-12 md:pb-14 relative overflow-hidden">
       {/* Cercles décoratifs */}
-      <div className="absolute -right-30 -top-30 w-90 h-90 rounded-full border border-creme/10 pointer-events-none" />
-      <div className="absolute -right-15 -top-15 w-60 h-60 rounded-full border border-creme/[0.06] pointer-events-none" />
+      <div className="absolute -right-20 -top-20 w-52 h-52 md:-right-30 md:-top-30 md:w-90 md:h-90 rounded-full border border-creme/10 pointer-events-none" />
+      <div className="absolute -right-10 -top-10 w-[130px] h-[130px] md:-right-15 md:-top-15 md:w-60 md:h-60 rounded-full border border-creme/[0.06] pointer-events-none" />
 
-      {/* Header : titre + badge */}
-      <div className="flex items-end justify-between mb-9 relative">
+      {/* Header */}
+      <div className="md:flex md:items-end md:justify-between mb-0 md:mb-9 relative">
         <div>
-          <span className="font-manrope text-[11px] font-medium tracking-[0.22em] uppercase text-creme/55">
+          {/* Eyebrow — deux variantes */}
+          <span className="md:hidden font-manrope text-[10px] font-medium tracking-[0.22em] uppercase text-creme/55">
+            Premier accès
+          </span>
+          <span className="hidden md:inline font-manrope text-[11px] font-medium tracking-[0.22em] uppercase text-creme/55">
             Tableau de bord · Premier accès
           </span>
-          <h1
-            className="font-cormorant font-light text-[56px] leading-none tracking-[-0.015em] text-creme mt-3.5"
-          >
+
+          <h1 className="font-cormorant font-light text-[34px] md:text-[56px] leading-none tracking-[-0.015em] text-creme mt-2.5 mb-[18px] md:mt-3.5 md:mb-0">
             Bienvenue,{' '}
             <em style={{ color: 'var(--color-dore)' }}>{firstName}.</em>
           </h1>
+
+          {/* Badge mobile (gauche, dot dore) */}
+          <div className="inline-flex md:hidden items-center gap-2 px-3 py-1.5 rounded-full border border-creme/[0.22] font-manrope text-[10px] font-medium tracking-[0.12em] uppercase text-creme">
+            <span className="w-[5px] h-[5px] rounded-full bg-dore" />
+            Profil en préparation
+          </div>
         </div>
 
-        <div className="text-right">
+        {/* Colonne droite desktop (badge + label "État du compte") */}
+        <div className="hidden md:block text-right">
           <span className="font-manrope text-[10px] font-medium tracking-[0.22em] uppercase text-creme/55">
             État du compte
           </span>
@@ -36,8 +46,20 @@ export function DashboardHero({ firstName }: DashboardHeroProps) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 border-t border-creme/[0.14]">
+      {/* Stats mobile */}
+      <div className="md:hidden mt-[22px] pt-[18px] grid grid-cols-3 border-t border-creme/[0.14]">
+        <MobileStatBlock ordinal="01" value="0" label="Couples vous ont liké" />
+        <MobileStatBlock ordinal="02" value="0" label="Matches actifs" withLeftBorder />
+        <MobileStatBlock
+          ordinal="03"
+          value={<>5<span className="text-[16px] opacity-55 not-italic">/5</span></>}
+          label="Likes restants aujourd'hui"
+          withLeftBorder
+        />
+      </div>
+
+      {/* Stats desktop */}
+      <div className="hidden md:grid grid-cols-3 border-t border-creme/[0.14]">
         <StatBlock
           label="Couples vous ont liké"
           value="0"
@@ -62,6 +84,34 @@ export function DashboardHero({ firstName }: DashboardHeroProps) {
         />
       </div>
     </section>
+  )
+}
+
+function MobileStatBlock({
+  ordinal,
+  value,
+  label,
+  withLeftBorder = false,
+}: {
+  ordinal: string
+  value: ReactNode
+  label: string
+  withLeftBorder?: boolean
+}) {
+  return (
+    <div
+      className={`py-1 pr-2.5 opacity-[0.78] ${withLeftBorder ? 'pl-3 border-l border-creme/[0.14]' : 'pl-0'}`}
+    >
+      <span className="font-manrope text-[8px] font-medium tracking-[0.22em] uppercase text-creme/55">
+        {ordinal}
+      </span>
+      <div className="mt-2 font-cormorant italic font-light text-[42px] leading-[0.9] text-creme tracking-[-0.04em]">
+        {value}
+      </div>
+      <div className="mt-1.5 font-manrope text-[10px] font-medium text-creme/72 leading-[1.3]">
+        {label}
+      </div>
+    </div>
   )
 }
 

@@ -51,9 +51,28 @@ export function DashboardSteps({ steps }: DashboardStepsProps) {
   const progressWidth = `${(completedCount / 4) * 100}%`
 
   return (
-    <section className="px-[72px] py-14">
-      {/* Header */}
-      <div className="flex items-baseline justify-between mb-8">
+    <section className="px-5 py-7 md:px-[72px] md:py-14">
+      {/* Header mobile */}
+      <div className="md:hidden">
+        <div className="flex items-baseline justify-between mb-0">
+          <span className="font-manrope text-[11px] font-medium tracking-[0.22em] uppercase text-accent">
+            Premières étapes
+          </span>
+          <span className="font-manrope text-[10px] font-medium tracking-[0.22em] uppercase text-texte/55">
+            {completedCount} / 4
+          </span>
+        </div>
+        <h2 className="font-cormorant font-light text-[24px] mt-2 mb-1.5 text-texte tracking-[-0.01em] leading-[1.15]">
+          Quatre gestes{' '}
+          <em className="text-accent">pour démarrer.</em>
+        </h2>
+        <div className="w-[90px] h-0.5 bg-bordeaux/10 mt-3.5 mb-2">
+          <div className="h-full bg-accent transition-all duration-500" style={{ width: progressWidth }} />
+        </div>
+      </div>
+
+      {/* Header desktop */}
+      <div className="hidden md:flex items-baseline justify-between mb-8">
         <div>
           <span className="font-manrope text-[11px] font-medium tracking-[0.22em] uppercase text-accent">
             Premières étapes
@@ -63,62 +82,54 @@ export function DashboardSteps({ steps }: DashboardStepsProps) {
             <em className="text-accent">pour démarrer.</em>
           </h2>
         </div>
-
         <div className="text-right">
           <span className="font-manrope text-[11px] font-medium tracking-[0.22em] uppercase text-texte/55">
             Progression
           </span>
           <div className="mt-2.5 w-[200px] h-0.5 bg-bordeaux/10">
-            <div
-              className="h-full bg-accent transition-all duration-500"
-              style={{ width: progressWidth }}
-            />
+            <div className="h-full bg-accent transition-all duration-500" style={{ width: progressWidth }} />
           </div>
         </div>
       </div>
 
       {/* Liste */}
-      <div className="relative">
-        <div className="absolute left-[54px] top-8 bottom-8 w-px bg-bordeaux/[0.18]" />
+      <div className="relative mt-2 md:mt-0">
+        <div className="absolute left-[18px] md:left-[54px] top-8 bottom-8 w-px bg-bordeaux/[0.18]" />
 
         {STEPS.map((step) => {
           const Wrapper = step.href ? 'a' : 'div'
-          const wrapperProps = step.href
-            ? { href: step.href }
-            : {}
+          const wrapperProps = step.href ? { href: step.href } : {}
 
           return (
             <Wrapper
               key={step.number}
               {...wrapperProps}
-              className="grid grid-cols-[76px_1fr_auto] items-center gap-8 px-4 py-5 rounded hover:bg-bordeaux/5 transition-colors no-underline text-inherit cursor-pointer"
+              className="grid grid-cols-[40px_1fr_16px] md:grid-cols-[76px_1fr_auto] items-center gap-3.5 md:gap-8 py-3.5 px-0 md:px-4 md:py-5 rounded md:hover:bg-bordeaux/5 md:transition-colors no-underline text-inherit cursor-pointer"
             >
               {/* Numéro */}
-              <div className="w-[76px] h-[76px] relative flex items-center justify-center bg-creme z-10">
+              <div className="w-[38px] h-[38px] md:w-[76px] md:h-[76px] relative flex items-center justify-center bg-creme z-10">
                 <div className="absolute inset-0 rounded-full border border-bordeaux/[0.18]" />
-                <span
-                  className="font-cormorant italic font-light text-[38px] text-accent tracking-[-0.04em] leading-none"
-                >
+                <span className="font-cormorant italic font-light text-[18px] md:text-[38px] text-accent tracking-[-0.03em] md:tracking-[-0.04em] leading-none">
                   {step.number}
                 </span>
               </div>
 
               {/* Contenu */}
               <div className="flex items-center gap-6">
-                <div className="flex-shrink-0 opacity-85">{step.icon}</div>
+                <div className="hidden md:block flex-shrink-0 opacity-85">{step.icon}</div>
                 <div>
-                  <div className="font-cormorant font-normal text-[26px] text-texte mb-1 tracking-[-0.01em]">
+                  <div className="font-cormorant font-normal text-[16px] md:text-[26px] text-texte mb-0.5 md:mb-1 tracking-[-0.005em] md:tracking-[-0.01em] leading-[1.2] md:leading-normal">
                     {step.title}
                   </div>
-                  <div className="font-manrope text-[13px] text-texte/55 leading-relaxed">
+                  <div className="font-manrope text-[11px] md:text-[13px] text-texte/55 leading-[1.45] md:leading-relaxed">
                     {step.description}
                   </div>
                 </div>
               </div>
 
               {/* CTA */}
-              <span className="inline-flex items-center gap-2.5 font-manrope text-[11px] font-semibold tracking-[0.18em] uppercase text-accent">
-                Commencer{' '}
+              <span className="inline-flex items-center gap-0 md:gap-2.5 font-manrope text-[11px] font-semibold tracking-[0.18em] uppercase text-accent">
+                <span className="hidden md:inline">Commencer </span>
                 <ArrowRightIcon />
               </span>
             </Wrapper>
