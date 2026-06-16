@@ -17,7 +17,7 @@ readonly class SendVendorInvitationListener
     public function __invoke(VendorValidatedEvent $event): void
     {
         $email = (new TemplatedEmail())
-            ->from('onboarding@resend.dev')
+            ->from('contact@wedly-apps.com')
             ->to($event->email)
             ->subject("C'est officiel — vous faites partie de Wedly")
             ->htmlTemplate('emails/vendor/vendor_invitation.html.twig')
