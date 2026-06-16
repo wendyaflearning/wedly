@@ -142,7 +142,8 @@ export default function CredentialsStep({
   const isValid        = emailValid && pwValid && confirmValid
 
   const incompleteSteps = steps.filter(s => s.stepKey !== 'credentials' && !s.isFilled)
-  const [showModal, setShowModal] = useState(incompleteSteps.length > 0)
+  const [dismissed, setDismissed] = useState(false)
+  const showModal = !dismissed && incompleteSteps.length > 0
 
   async function handleConfirm() {
     if (!isValid || submitting || success) return
@@ -183,11 +184,11 @@ export default function CredentialsStep({
 
   return (
     <div className="min-h-screen bg-creme">
-      {showModal && incompleteSteps.length > 0 && (
+      {showModal && (
         <IncompleteStepsModal
           steps={incompleteSteps}
           onNavigate={onNavigate}
-          onClose={() => setShowModal(false)}
+          onClose={() => setDismissed(true)}
         />
       )}
       <div className="max-w-lg mx-auto">
