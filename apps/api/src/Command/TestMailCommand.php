@@ -25,7 +25,7 @@ class TestMailCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->eventDispatcher->dispatch(
-            new VendorValidatedEvent('Jennifer', 'contact@wedly-apps.com', 'https://wedly-apps.com')
+            new StepperSubmittedEvent('Jennifer', 'wendyaf.learning@gmail.com')
         );
 
         $output->writeln('Mail envoyé ✅');
