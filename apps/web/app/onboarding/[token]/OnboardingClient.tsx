@@ -155,7 +155,7 @@ export default function OnboardingClient({
         currentStepKey="legal_info"
         onBack={() => navigate('onboarding_overview')}
         onNext={(nextStep) => {
-          if (nextStep !== 'credentials') router.refresh()
+          router.refresh()
           navigate(nextStep as Screen)
         }}
         onNavigate={navigateToStep}
