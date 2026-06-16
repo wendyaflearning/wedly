@@ -3,6 +3,10 @@ FROM composer:2 AS vendor
 
 WORKDIR /app
 
+# AJOUT : Installation des outils pour ajouter l'extension XSL sous Alpine (l'image Composer de base)
+RUN apk add --no-cache libxslt-dev \
+    && docker-php-ext-install xsl
+
 COPY composer.json composer.lock ./
 
 RUN composer install \
@@ -31,7 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
     libonig-dev \
     unzip \
+    libxslt1-dev \
     && rm -rf /var/lib/apt/lists/*
+# ^ AJOUT de libxslt1-dev dans la liste ci-dessus pour la production (Debian/Ubuntu)
 
 # PHP extensions (tokenizer is built-in, no need to install)
 RUN docker-php-ext-install \
@@ -42,7 +48,10 @@ RUN docker-php-ext-install \
     xml \
     curl \
     intl \
-    zip
+    zip \
+    xsl
+# ^ AJOUT de xsl dans la liste ci-dessus
+
 COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 # Composer binary (useful for bin/console and one-off commands in the container)
@@ -75,4 +84,3 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 80
 
 ENTRYPOINT ["/entrypoint.sh"]
-
