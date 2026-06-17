@@ -63,3 +63,21 @@ body {
     animation: modalPop 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
+
+@keyframes logo-reveal {
+  0%   { opacity: 0; transform: scale(0.55) translateY(16px); }
+  65%  { opacity: 1; transform: scale(1.04) translateY(0); }
+  82%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+@keyframes logo-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.82; transform: scale(0.985); }
+}
+
+.loader-logo {
+  animation:
+    logo-reveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) both,
+    logo-breathe 2.6s ease-in-out 0.75s infinite;
+}

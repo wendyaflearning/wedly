@@ -2,4 +2,4 @@ framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
         envelope:
-            sender: 'contact@wedly-apps.com'
+            sender: 'Wedly <contact@wedly-apps.com>'
