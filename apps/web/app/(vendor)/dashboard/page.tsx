@@ -1,16 +1,12 @@
+import { redirect } from 'next/navigation'
+import { fetchVendorDashboard } from '@/lib/vendor'
 import { DashboardHero } from './_components/DashboardHero'
 import { DashboardSteps } from './_components/DashboardSteps'
 
-// TODO: remplacer par les données de session quand l'auth est en place
-const VENDOR_FIRST_NAME = 'Claire'
-const STEPS = {
-  availability: false,
-  portfolio: false,
-  bio: false,
-  published: false,
-}
+export default async function DashboardPage() {
+  const data = await fetchVendorDashboard()
+  if (!data) redirect('/login')
 
-export default function DashboardPage() {
   return (
     <div className="relative">
       {/* Bouton "Relancer le guide" — dark pill sur mobile, transparent sur desktop */}
@@ -19,8 +15,8 @@ export default function DashboardPage() {
         Relancer le guide
       </button>
 
-      <DashboardHero firstName={VENDOR_FIRST_NAME} />
-      <DashboardSteps steps={STEPS} />
+      <DashboardHero firstName={data.firstName} />
+      <DashboardSteps steps={data.steps} />
     </div>
   )
 }
