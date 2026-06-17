@@ -14,6 +14,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/v1/auth/forgot-password', name: 'auth_forgot_password', methods: ['POST'])]
@@ -55,8 +56,8 @@ final class PostForgotPasswordAction extends AbstractController
             $resetLink = $this->frontendUrl . '/reset-password?token=' . $rawToken;
 
             $mail = (new TemplatedEmail())
-                ->from('contact@wedly-apps.com')
-                ->to($user->getEmail())
+                ->from(new Address('contact@wedly-apps.com', 'Wedly'))
+                ->to('wedly.newapps@gmail.com')
                 ->subject('Réinitialisez votre mot de passe Wedly')
                 ->htmlTemplate('emails/reset_password.html.twig')
                 ->context([

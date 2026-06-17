@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
 
       {/* Mobile header */}
       <div className="relative z-10 md:hidden flex flex-col items-center text-center gap-6 px-[22px] pt-[72px] pb-[32px]">
-        <img src="/logo_light.png" alt="Wedly" style={{ height: '42px', width: 'auto' }} />
+        <img src="/signature.svg" alt="Wedly" style={{ height: '42px', width: 'auto' }} />
         <h2
           className="font-cormorant italic font-medium text-[28px] leading-[1.15] text-creme tracking-[0.005em] max-w-[260px]"
           style={{ textShadow: 'rgba(34,12,22,0.5) 0px 2px 24px' }}
@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
         <div className="absolute inset-0" style={{ background: 'rgba(34,12,22,0.44)' }} />
 
         <div className="relative z-10 flex flex-col items-center text-center px-14 gap-8">
-          <img src="/logo_light.png" alt="Wedly" style={{ height: '54px', width: 'auto' }} />
+          <img src="/signature.svg" alt="Wedly" style={{ height: '54px', width: 'auto' }} />
           <div className="flex items-center justify-center gap-4 w-full">
             <span className="h-px w-[80px] bg-[rgba(255,246,237,0.25)]" />
             <svg width="36" height="12" viewBox="0 0 56 18" fill="none" aria-hidden="true">

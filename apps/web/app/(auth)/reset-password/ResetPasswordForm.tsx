@@ -15,16 +15,20 @@ export default function ResetPasswordForm() {
   const [loading, setLoading]                 = useState(false);
   const [error, setError]                     = useState('');
 
+  const pwLengthOk   = password.length >= 8;
+  const confirmMatch = passwordConfirm !== '' && password === passwordConfirm;
+  const confirmMismatch = passwordConfirm !== '' && password !== passwordConfirm;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
 
-    if (password !== passwordConfirm) {
-      setError('Les mots de passe ne correspondent pas. Recommencez, vous y êtes presque.');
+    if (!pwLengthOk) {
+      setError('Le mot de passe doit contenir au moins 8 caractères.');
       return;
     }
-    if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères.');
+    if (!confirmMatch) {
+      setError('Les mots de passe ne correspondent pas. Recommencez, vous y êtes presque.');
       return;
     }
 
@@ -39,7 +43,7 @@ export default function ResetPasswordForm() {
       });
 
       if (res.ok) {
-        router.push('/dashboard');
+        router.push('/dashboard?password_reset=success');
         return;
       }
 
@@ -51,8 +55,6 @@ export default function ResetPasswordForm() {
 
     setLoading(false);
   }
-
-  const passwordsMatch = password.length > 0 && passwordConfirm.length > 0 && password === passwordConfirm;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-[20px] md:gap-[24px] w-full text-left">
@@ -118,6 +120,19 @@ export default function ResetPasswordForm() {
               )}
             </button>
           </div>
+          {password !== '' && (
+            <span
+              className="font-manrope text-[11px] tracking-[0.06em]"
+              style={{ color: pwLengthOk ? '#4E7A3A' : 'rgba(255,246,237,0.45)' }}
+            >
+              <span className="md:hidden" style={{ color: pwLengthOk ? '#4E7A3A' : 'rgba(255,246,237,0.45)' }}>
+                {pwLengthOk ? '✓' : '○'} 8 caractères minimum
+              </span>
+              <span className="hidden md:inline" style={{ color: pwLengthOk ? '#4E7A3A' : 'rgba(41,26,16,0.38)' }}>
+                {pwLengthOk ? '✓' : '○'} 8 caractères minimum
+              </span>
+            </span>
+          )}
         </div>
 
         {/* Confirmer le mot de passe */}
@@ -144,11 +159,9 @@ export default function ResetPasswordForm() {
               required
               autoComplete="new-password"
               className={`w-full font-manrope text-[15px] text-creme md:text-texte bg-[rgba(255,246,237,0.06)] md:bg-white border-[1.5px] rounded-[13px] outline-none transition-[border-color,box-shadow] duration-[180ms] placeholder:text-[rgba(255,246,237,0.4)] md:placeholder:text-[rgba(41,26,16,0.34)] focus:shadow-[0_0_0_4px_rgba(240,168,117,0.2)] md:focus:shadow-[0_0_0_4px_rgba(227,87,4,0.14)] ${
-                error && error.includes('correspondent')
+                confirmMismatch
                   ? 'border-highlight focus:border-highlight md:border-highlight'
-                  : passwordsMatch
-                    ? 'border-[rgba(255,246,237,0.16)] md:border-[rgba(78,26,50,0.12)] focus:border-[#F0A875] md:focus:border-[#E35704]'
-                    : 'border-[rgba(255,246,237,0.16)] md:border-[rgba(78,26,50,0.12)] focus:border-[#F0A875] md:focus:border-[#E35704]'
+                  : 'border-[rgba(255,246,237,0.16)] md:border-[rgba(78,26,50,0.12)] focus:border-[#F0A875] md:focus:border-[#E35704]'
               }`}
               style={{ padding: '15px 46px 15px 43px' }}
             />
@@ -172,14 +185,20 @@ export default function ResetPasswordForm() {
               )}
             </button>
           </div>
-          {error && (
+
+          {confirmMatch && (
+            <span className="font-manrope text-[11px] tracking-[0.06em]" style={{ color: '#4E7A3A' }}>
+              ✓ Les mots de passe correspondent
+            </span>
+          )}
+          {(confirmMismatch || error) && (
             <p className="flex items-start gap-[6px] font-manrope text-[12.5px] leading-[1.5] text-highlight">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="flex-shrink-0 mt-[1px]">
                 <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M8 5v3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                 <circle cx="8" cy="11.5" r="0.75" fill="currentColor" />
               </svg>
-              {error}
+              {error || 'Les mots de passe ne correspondent pas.'}
             </p>
           )}
         </div>
@@ -187,16 +206,13 @@ export default function ResetPasswordForm() {
 
       <button
         type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-[9px] font-manrope text-[15px] font-semibold text-creme tracking-[0.01em] rounded-[13px] bg-gradient-to-br from-[#E35704] to-[#F58324] md:from-accent md:to-highlight shadow-[0px_14px_32px_rgba(227,87,4,0.42)] md:shadow-[0px_12px_28px_rgba(227,87,4,0.3)] transition-[transform,box-shadow,filter] duration-[150ms] hover:-translate-y-px hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 cursor-pointer whitespace-nowrap border-none"
+        className="w-full flex items-center justify-center gap-[9px] font-manrope text-[15px] font-semibold text-creme tracking-[0.01em] rounded-[13px] bg-gradient-to-br from-[#E35704] to-[#F58324] md:from-accent md:to-highlight shadow-[0px_14px_32px_rgba(227,87,4,0.42)] md:shadow-[0px_12px_28px_rgba(227,87,4,0.3)] transition-[transform,box-shadow,filter] duration-[150ms] hover:-translate-y-px hover:brightness-105 cursor-pointer whitespace-nowrap border-none"
         style={{ padding: '16px 24px' }}
       >
-        <span>{loading ? 'Mise à jour…' : 'Confirmer'}</span>
-        {!loading && (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M2.6 8h9.4M8.4 4l4 4-4 4" stroke="#FFF6ED" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
+        <span>Confirmer</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2.6 8h9.4M8.4 4l4 4-4 4" stroke="#FFF6ED" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
     </form>
   );
