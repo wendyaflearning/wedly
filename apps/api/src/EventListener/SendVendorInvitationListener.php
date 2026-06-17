@@ -8,6 +8,7 @@ use App\Event\VendorValidatedEvent;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
 
 #[AsEventListener]
 readonly class SendVendorInvitationListener
@@ -17,7 +18,7 @@ readonly class SendVendorInvitationListener
     public function __invoke(VendorValidatedEvent $event): void
     {
         $email = (new TemplatedEmail())
-            ->from('contact@wedly-apps.com')
+            ->from(new Address('contact@wedly-apps.com', 'Wedly'))
             ->to($event->email)
             ->subject("C'est officiel — vous faites partie de Wedly")
             ->htmlTemplate('emails/vendor/vendor_invitation.html.twig')
