@@ -6,29 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Votre profil est entre nos mains</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,400;1,600&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; padding: 0; background-color: #FFF6ED; font-family: Arial, Helvetica, sans-serif; }
+    body { margin: 0; padding: 0; background-color: #ffffff; font-family: 'Cormorant Garamond', Georgia, serif; }
     table { border-spacing: 0; }
     td { padding: 0; }
     img { border: 0; display: block; }
-    .wrapper { background-color: #FFF6ED; width: 100%; }
+    .wrapper { background-color: #ffffff; width: 100%; }
     .container { max-width: 580px; margin: 0 auto; }
-    .header { background-color: #4E1A32; padding: 32px 24px; text-align: center; }
-    .body { background-color: #ffffff; padding: 40px 32px; }
-    .greeting { font-size: 18px; font-weight: bold; color: #291A10; margin: 0 0 16px 0; }
-    .text { font-size: 15px; line-height: 1.7; color: #291A10; margin: 0 0 24px 0; }
-    .separator { height: 3px; background-color: #E35704; margin: 28px 0; border: none; }
-    .next-steps { background-color: #F5EDE6; border-left: 4px solid #4E1A32; padding: 20px 24px; margin: 0 0 24px 0; }
-    .next-steps-title { font-size: 11px; font-weight: bold; letter-spacing: 2px; color: #4E1A32; text-transform: uppercase; margin: 0 0 14px 0; }
-    .next-steps-item { font-size: 14px; color: #291A10; line-height: 1.6; margin: 0 0 10px 0; padding-left: 12px; }
+    .header { background-color: #4E1A32; padding: 28px 24px; text-align: center; }
+    .body { background-color: #FFF6ED; padding: 40px 36px; }
+    .greeting { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; font-weight: 600; color: #4E1A32; margin: 0 0 18px 0; line-height: 1.3; }
+    .greeting-italic { font-style: italic; font-weight: 400; }
+    .text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.75; color: #9D4F1E; margin: 0 0 20px 0; }
+    .separator { height: 3px; width: 48px; background-color: #E35704; margin: 0 0 24px 0; border: none; }
+    .next-steps-label { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; color: #4E1A32; margin: 0 0 14px 0; }
+    .next-steps-box { border-left: 3px solid #4E1A32; padding: 16px 20px; background-color: rgba(78,26,50,0.04); margin: 0 0 28px 0; }
+    .next-steps-item { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #9D4F1E; line-height: 1.65; margin: 0 0 8px 0; }
     .next-steps-item:last-child { margin-bottom: 0; }
-    .contact { font-size: 14px; color: #291A10; line-height: 1.6; margin: 0; }
-    .contact a { color: #E35704; text-decoration: none; }
-    .footer { background-color: #FFF6ED; padding: 24px 32px; text-align: center; }
-    .footer-links { font-size: 13px; color: #291A10; margin: 0 0 10px 0; }
-    .footer-links a { color: #291A10; text-decoration: none; font-weight: bold; }
-    .footer-signature { font-size: 13px; color: #4E1A32; font-weight: bold; margin: 0 0 12px 0; }
-    .footer-legal { font-size: 11px; color: #999999; margin: 0; }
+    .cta-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; background-color: #4E1A32; color: #FFF6ED !important; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 12px; padding: 16px 36px; letter-spacing: 0.01em; }
+    .expire-note { font-family: Arial, Helvetica, sans-serif; font-size: 12.5px; color: rgba(157,79,30,0.6); text-align: center; margin: 0 0 32px 0; line-height: 1.6; }
+    .divider { height: 1px; background-color: rgba(78,26,50,0.12); margin: 28px 0; border: none; }
+    .social-label { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 15px; font-style: italic; color: rgba(157,79,30,0.7); text-align: center; margin: 0 0 16px 0; }
+    .social-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; border: 1px solid rgba(78,26,50,0.18); border-radius: 20px; padding: 8px 20px; font-size: 13px; color: #9D4F1E; text-decoration: none; margin: 0 5px; }
+    .signature-label { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: rgba(157,79,30,0.65); margin: 0 0 4px 0; }
+    .signature-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; font-weight: 600; color: #4E1A32; margin: 0 0 2px 0; }
+    .signature-team { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: rgba(157,79,30,0.65); margin: 0; }
+    .footer { background-color: #FFF6ED; padding: 24px 32px 32px; text-align: center; border-top: 1px solid rgba(78,26,50,0.1); }
+    .footer-legal { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: rgba(157,79,30,0.5); margin: 0 0 4px 0; }
+    .footer-email { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: rgba(157,79,30,0.5); margin: 0; }
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; }
+      .body { padding: 28px 20px !important; }
+      .footer { padding: 20px !important; }
+      .header { padding: 22px 16px !important; }
+      .header img { width: 130px !important; }
+      .greeting { font-size: 22px !important; }
+      .text { font-size: 14px !important; }
+      .cta-btn { display: block !important; text-align: center !important; padding: 15px 20px !important; }
+      .social-btn { display: inline-block; margin: 4px 3px !important; }
+    }
   </style>
 </head>
 <body>
@@ -40,44 +57,68 @@
           <!-- Header -->
           <tr>
             <td class="header">
-              <img src="https://res.cloudinary.com/dadvrspox/image/upload/v1781540174/logo_dark_qlvytq.png" alt="Wedly" width="120">
+              <img src="https://res.cloudinary.com/dadvrspox/image/upload/v1781540174/logo_dark_qlvytq.png" alt="Wedly" width="160" style="margin: 0 auto;">
             </td>
           </tr>
 
           <!-- Body -->
           <tr>
             <td class="body">
-              <p class="greeting">Bonjour {{ firstName }},</p>
+
+              <p class="greeting">Bonjour <span class="greeting-italic">{{ firstName }},</span></p>
+
               <p class="text">
-                Votre profil a bien été reçu — merci pour le temps que vous y avez consacré.
-                On sait que chaque minute compte en pleine saison.
+                Votre profil a bien été reçu — merci pour le temps que vous y avez consacré. On sait que chaque minute compte en pleine saison.
               </p>
 
               <hr class="separator">
 
-              <div class="next-steps">
-                <p class="next-steps-title">Ce qui se passe ensuite</p>
-                <p class="next-steps-item">— Votre profil est examiné par notre équipe — comptez 24 à 48h.</p>
-                <p class="next-steps-item">— Une fois validé, vous recevrez un email pour accéder à votre dashboard et découvrir votre espace.</p>
+              <p class="text">
+                Notre équipe va le relire avec soin pour s'assurer qu'il vous représente au mieux sur la plateforme. Comptez <strong style="color: #4E1A32;">24 à 48h</strong>.
+              </p>
+
+              <p class="next-steps-label">Ce qui se passe ensuite</p>
+              <div class="next-steps-box">
+                <p class="next-steps-item">— Votre profil est examiné par notre équipe.</p>
+                <p class="next-steps-item">— Une fois validé, vous recevrez un email de confirmation et votre espace sera activé.</p>
               </div>
 
-              <p class="contact">
-                D'ici là, si vous avez la moindre question, on est là :
-                <a href="mailto:contact@wedly-apps.com">contact@wedly-apps.com</a>
-              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 0 0 12px 0;">
+                    <a href="{{ dashboardUrl }}" class="cta-btn">Voir mon espace prestataire</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p class="expire-note">D'ici là, si vous avez la moindre question, on est là : <a href="mailto:bonjour@wedly.fr" style="color: rgba(157,79,30,0.7);">bonjour@wedly.fr</a></p>
+
+              <hr class="divider">
+
+              <p class="social-label">En attendant, suivez l'aventure Wedly</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://instagram.com/wedly" class="social-btn">Instagram</a>
+                    <a href="https://tiktok.com/@wedly" class="social-btn">TikTok</a>
+                  </td>
+                </tr>
+              </table>
+
+              <hr class="divider">
+
+              <p class="signature-label">À très vite,</p>
+              <p class="signature-name">Jennifer &amp; Wendy</p>
+              <p class="signature-team">L'équipe Wedly</p>
+
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
             <td class="footer">
-              <p class="footer-links">
-                <a href="https://instagram.com/wedly" target="_blank">Instagram</a>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                <a href="https://tiktok.com/@wedly" target="_blank">TikTok</a>
-              </p>
-              <p class="footer-signature">Jennifer &amp; Wendy — L'équipe Wedly</p>
               <p class="footer-legal">Vous recevez cet email suite à la soumission de votre profil Wedly.</p>
+              <p class="footer-email">bonjour@wedly.fr</p>
             </td>
           </tr>
 
