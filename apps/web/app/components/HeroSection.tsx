@@ -79,7 +79,7 @@ export default function HeroSection() {
         <img
           src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796293/illustration_yaswvk.png"
           alt="Six couples enlacés, dessinés d'un seul trait continu"
-          className="w-full object-cover"
+          className="w-full object-cover illustration-animate"
           style={{ maxHeight: "320px", objectPosition: "center" }}
         />
       </div>
