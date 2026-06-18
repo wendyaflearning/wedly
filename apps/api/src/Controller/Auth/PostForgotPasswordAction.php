@@ -31,7 +31,7 @@ final class PostForgotPasswordAction extends AbstractController
     public function __invoke(Request $request): JsonResponse
     {
         $data  = json_decode($request->getContent(), true);
-        $email = trim($data['email'] ?? '');
+        $email = strtolower(trim($data['email'] ?? ''));
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return new JsonResponse(['error' => 'Adresse email invalide.'], 422);
@@ -57,7 +57,8 @@ final class PostForgotPasswordAction extends AbstractController
 
             $mail = (new TemplatedEmail())
                 ->from(new Address('contact@wedly-apps.com', 'Wedly'))
-                ->to(new Address($user->getEmail(), $user->getFirstName()))
+//                ->to(new Address($user->getEmail(), $user->getFirstName()))
+                ->to('contact@wedly-apps.com')
                 ->subject('Réinitialisez votre mot de passe Wedly')
                 ->htmlTemplate('emails/reset_password.html.twig')
                 ->context([
