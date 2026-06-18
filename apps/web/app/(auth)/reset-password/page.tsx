@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
       </div>
 
       {/* Right panel: form */}
-      <div className="relative z-10 flex-1 flex flex-col justify-start pt-[24px] md:justify-center md:pt-0 md:items-center md:bg-creme px-[22px] pb-[36px] md:p-0">
+      <div className="relative z-10 px-[22px] pt-[16px] pb-[36px] md:flex-1 md:flex md:flex-col md:justify-center md:items-center md:bg-creme md:p-0">
         <div className="w-full md:max-w-[400px] md:w-[400px] rounded-[26px] border border-[rgba(255,246,237,0.16)] bg-[rgba(46,18,32,0.52)] [backdrop-filter:blur(30px)_saturate(1.1)] shadow-[0px_28px_70px_rgba(15,6,11,0.5),inset_0px_1px_0px_rgba(255,246,237,0.14)] p-[28px_24px] md:rounded-none md:border-0 md:bg-transparent md:[backdrop-filter:none] md:shadow-none md:p-0">
           <Suspense>
             <ResetPasswordForm />
