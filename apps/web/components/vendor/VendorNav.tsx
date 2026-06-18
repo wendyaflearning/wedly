@@ -45,13 +45,13 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
         <div className="flex items-center gap-14">
           {/* Logo */}
           <Image
-            src="https://res.cloudinary.com/dadvrspox/image/upload/v1781546254/logo_light_horizontal_gqo1k9.png"
+            src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_dark_bbyd6m.svg"
             alt="Wedly"
             width={0}
             height={0}
             sizes="300px"
             className="flex-shrink-0"
-            style={{ height: '38px', width: 'auto' }}
+            style={{ height: '28px', width: 'auto' }}
             priority
           />
 

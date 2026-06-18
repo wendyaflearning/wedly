@@ -20,7 +20,7 @@ export default function LoginPage() {
       <div className="relative z-10 md:hidden flex flex-col items-center text-center gap-7 px-[22px] pt-[72px] pb-[32px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/logo_light.png"
+          src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg"
           alt="Wedly"
           style={{ height: '44px', width: 'auto' }}
         />
@@ -56,7 +56,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col items-center text-center px-14 gap-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo_light.png"
+            src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg"
             alt="Wedly"
             style={{ height: '54px', width: 'auto' }}
           />

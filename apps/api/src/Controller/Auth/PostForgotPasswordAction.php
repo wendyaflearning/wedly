@@ -57,7 +57,7 @@ final class PostForgotPasswordAction extends AbstractController
 
             $mail = (new TemplatedEmail())
                 ->from(new Address('contact@wedly-apps.com', 'Wedly'))
-                ->to('wedly.newapps@gmail.com')
+                ->to('contact@wedly-apps.com')
                 ->subject('Réinitialisez votre mot de passe Wedly')
                 ->htmlTemplate('emails/reset_password.html.twig')
                 ->context([
