@@ -97,6 +97,9 @@ export default function ResetPasswordForm() {
               placeholder="••••••••"
               required
               autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               className="w-full font-manrope text-[15px] text-creme md:text-texte bg-[rgba(255,246,237,0.06)] md:bg-white border-[1.5px] border-[rgba(255,246,237,0.16)] md:border-[rgba(78,26,50,0.12)] rounded-[13px] outline-none transition-[border-color,box-shadow] duration-[180ms] placeholder:text-[rgba(255,246,237,0.4)] md:placeholder:text-[rgba(41,26,16,0.34)] focus:border-[#F0A875] focus:shadow-[0_0_0_4px_rgba(240,168,117,0.2)] md:focus:border-[#E35704] md:focus:shadow-[0_0_0_4px_rgba(227,87,4,0.14)]"
               style={{ padding: '15px 46px 15px 43px' }}
             />
@@ -158,6 +161,9 @@ export default function ResetPasswordForm() {
               placeholder="••••••••"
               required
               autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               className={`w-full font-manrope text-[15px] text-creme md:text-texte bg-[rgba(255,246,237,0.06)] md:bg-white border-[1.5px] rounded-[13px] outline-none transition-[border-color,box-shadow] duration-[180ms] placeholder:text-[rgba(255,246,237,0.4)] md:placeholder:text-[rgba(41,26,16,0.34)] focus:shadow-[0_0_0_4px_rgba(240,168,117,0.2)] md:focus:shadow-[0_0_0_4px_rgba(227,87,4,0.14)] ${
                 confirmMismatch
                   ? 'border-highlight focus:border-highlight md:border-highlight'
