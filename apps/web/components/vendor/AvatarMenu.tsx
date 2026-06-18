@@ -7,9 +7,10 @@ interface AvatarMenuProps {
   firstName: string
   lastName: string
   direction?: 'down' | 'up'
+  variant?: 'light' | 'dark'
 }
 
-export function AvatarMenu({ firstName, lastName, direction = 'down' }: AvatarMenuProps) {
+export function AvatarMenu({ firstName, lastName, direction = 'down', variant = 'light' }: AvatarMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase()
@@ -45,7 +46,7 @@ export function AvatarMenu({ firstName, lastName, direction = 'down' }: AvatarMe
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="w-9 h-9 rounded-full bg-bordeaux text-white flex items-center justify-center text-xs font-semibold tracking-[0.04em] cursor-pointer"
+        className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold tracking-[0.04em] cursor-pointer ${variant === 'dark' ? 'bg-white text-bordeaux' : 'bg-bordeaux text-white'}`}
         style={{
           fontFamily: 'var(--font-manrope-var)',
           boxShadow: '0 0 0 2.5px rgba(255,246,237,0.4)',

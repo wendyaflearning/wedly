@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Sparkles, MessageSquare } from 'lucide-react'
+import { Home, Sparkles, MessageSquare, User } from 'lucide-react'
 import { AvatarMenu } from './AvatarMenu'
 
 interface VendorNavProps {
@@ -39,6 +39,25 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
 
   return (
     <>
+      {/* ── Mobile Topbar ──────────────────────────────────────────────── */}
+      <header className="md:hidden sticky top-0 z-50 h-16 px-5 bg-bordeaux flex items-center justify-between">
+        <span className="font-cormorant italic text-[22px] text-creme leading-none">
+          Wedly<span className="text-highlight not-italic">•</span>
+        </span>
+
+        <div className="flex items-center gap-3">
+          <button
+            className="w-9 h-9 rounded-full border border-creme/20 flex items-center justify-center text-creme"
+            aria-label="Menu"
+          >
+            <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+              <path d="M0 1h16M0 5.5h16M0 10h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} variant="dark" />
+        </div>
+      </header>
+
       {/* ── Desktop Topbar ─────────────────────────────────────────────── */}
       <header className="hidden md:flex sticky top-0 z-50 h-[72px] px-12 items-center justify-between bg-creme border-b border-bordeaux/10 font-manrope">
 
@@ -101,9 +120,19 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
           <span className="text-[10px] font-medium tracking-[0.02em]">Messages</span>
         </div>
 
-        <div className="flex flex-col items-center justify-center px-1 py-1.5">
-          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} direction="up" />
-        </div>
+        <Link
+          href="/profil"
+          className={`relative flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg no-underline ${isActive('/profil') ? 'text-accent' : 'text-texte/55'}`}
+        >
+          {isActive('/profil') && (
+            <span
+              className="absolute top-0 w-[22px] h-0.5 bg-accent rounded-full"
+              style={{ transform: 'translateY(-9px)' }}
+            />
+          )}
+          <User size={20} strokeWidth={1.4} />
+          <span className="text-[10px] font-medium tracking-[0.02em]">Profil</span>
+        </Link>
 
       </nav>
     </>
