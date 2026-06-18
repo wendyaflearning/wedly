@@ -3,7 +3,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Sparkles, MessageSquare, User } from 'lucide-react'
+import { Home, Sparkles, MessageSquare } from 'lucide-react'
+import { AvatarMenu } from './AvatarMenu'
 
 interface VendorNavProps {
   vendorFirstName: string
@@ -12,7 +13,6 @@ interface VendorNavProps {
 
 export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
   const pathname = usePathname()
-  const initials = `${vendorFirstName[0] ?? ''}${vendorLastName[0] ?? ''}`.toUpperCase()
 
   const isActive = (href: string) => pathname === href
 
@@ -70,9 +70,7 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
           <div className="w-8 h-8 rounded-full border border-bordeaux/20 flex items-center justify-center font-cormorant italic text-base text-texte">
             ?
           </div>
-          <div className="w-9 h-9 rounded-full bg-bordeaux text-creme flex items-center justify-center text-xs font-semibold tracking-[0.04em]">
-            {initials}
-          </div>
+          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} />
         </div>
       </header>
 
@@ -103,19 +101,9 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
           <span className="text-[10px] font-medium tracking-[0.02em]">Messages</span>
         </div>
 
-        <Link
-          href="/profil"
-          className={`relative flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg no-underline ${isActive('/profil') ? 'text-accent' : 'text-texte/55'}`}
-        >
-          {isActive('/profil') && (
-            <span
-              className="absolute top-0 w-[22px] h-0.5 bg-accent rounded-full"
-              style={{ transform: 'translateY(-9px)' }}
-            />
-          )}
-          <User size={20} strokeWidth={1.4} />
-          <span className="text-[10px] font-medium tracking-[0.02em]">Profil</span>
-        </Link>
+        <div className="flex flex-col items-center justify-center px-1 py-1.5">
+          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} direction="up" />
+        </div>
 
       </nav>
     </>
