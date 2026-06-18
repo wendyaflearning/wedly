@@ -41,9 +41,15 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
     <>
       {/* ── Mobile Topbar ──────────────────────────────────────────────── */}
       <header className="md:hidden sticky top-0 z-50 h-16 px-5 bg-bordeaux flex items-center justify-between">
-        <span className="font-cormorant italic text-[22px] text-creme leading-none">
-          Wedly<span className="text-highlight not-italic">•</span>
-        </span>
+        <Image
+          src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg"
+          alt="Wedly"
+          width={0}
+          height={0}
+          sizes="200px"
+          style={{ height: '22px', width: 'auto' }}
+          priority
+        />
 
         <div className="flex items-center gap-3">
           <button
