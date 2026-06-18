@@ -1,6 +1,7 @@
 import Navbar from "./components/Navbar";
 import HeroSection from "./components/HeroSection";
 import HowSection from "./components/HowSection";
+import BifurcationSection from "./components/BifurcationSection";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <Navbar />
       <HeroSection />
       <HowSection />
+      <BifurcationSection />
     </div>
   );
 }
