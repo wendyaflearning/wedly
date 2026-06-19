@@ -60,8 +60,8 @@ export default function PersonaSection() {
             </p>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1 min-h-14" />
+          {/* Spacer — desktop only, pushes CTA to bottom */}
+          <div className="hidden md:block flex-1 min-h-14" />
 
           {/* CTA block */}
           <div className="relative flex flex-col gap-4">
@@ -168,8 +168,8 @@ export default function PersonaSection() {
             </p>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1 min-h-14" />
+          {/* Spacer — desktop only, pushes CTA to bottom */}
+          <div className="hidden md:block flex-1 min-h-14" />
 
           {/* CTA block */}
           <div className="relative flex flex-col gap-4">
