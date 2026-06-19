@@ -87,7 +87,7 @@ export default function HowSection() {
             color: "var(--color-texte)",
           }}
         >
-          Trois temps, une promesse —<br />
+          Trois temps, une promesse <br />
           <em>la vôtre, vraiment.</em>
         </h2>
       </div>
