@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Tooltip } from '@/app/components/Tooltip'
+import { Tooltip } from '@/components/ui/Tooltip'
 import type { OnboardingStep, RegionOption, VendorType, ZonesPricingData } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
 import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
