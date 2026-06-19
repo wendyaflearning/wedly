@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -128,6 +129,13 @@ function GuideModal({ onClose }: { onClose: () => void }) {
   const Illustration = ILLUSTRATIONS[step]
   const isLast = step === STEPS.length - 1
 
+  // Swipe-to-close
+  const [dragY, setDragY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const touchStartY = useRef(0)
+  const dragActive = useRef(false)
+  const modalPanelRef = useRef<HTMLDivElement>(null)
+
   const handleNext = () => {
     if (isLast) {
       onClose()
@@ -150,16 +158,54 @@ function GuideModal({ onClose }: { onClose: () => void }) {
     return () => { document.body.style.overflow = prev }
   }, [])
 
+  function onTouchStart(e: React.TouchEvent) {
+    const touch = e.touches[0]
+    touchStartY.current = touch.clientY
+    // Activer le drag uniquement si le toucher démarre dans les 64px supérieurs du panel
+    if (modalPanelRef.current) {
+      const rect = modalPanelRef.current.getBoundingClientRect()
+      dragActive.current = touch.clientY - rect.top < 64
+    }
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (!dragActive.current) return
+    const delta = e.touches[0].clientY - touchStartY.current
+    if (delta > 0) {
+      setIsDragging(true)
+      setDragY(delta)
+    }
+  }
+
+  function onTouchEnd() {
+    if (!dragActive.current) return
+    dragActive.current = false
+    setIsDragging(false)
+    if (dragY > 80) {
+      onClose()
+    } else {
+      setDragY(0)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[60] bg-black/50 md:flex md:items-center md:justify-center">
       <div className="absolute inset-0" onClick={onClose} />
 
       <div
+        ref={modalPanelRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         className="modal-enter z-10 fixed inset-x-0 bottom-0 md:relative md:inset-auto md:max-w-[700px] md:w-full md:mx-4 rounded-t-2xl md:rounded-xl overflow-hidden flex flex-col"
-        style={{ maxHeight: '92vh' }}
+        style={{
+          maxHeight: '92vh',
+          transform: `translateY(${dragY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.32,0.72,0,1)',
+        }}
       >
         {/* Drag handle — mobile only */}
-        <div className="md:hidden bg-creme pt-3 pb-0 flex justify-center">
+        <div className="md:hidden bg-creme pt-3 pb-0 flex justify-center cursor-grab active:cursor-grabbing">
           <div className="w-9 h-1 rounded-full bg-bordeaux/20" />
         </div>
 
