@@ -3,16 +3,21 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { Home, Sparkles, MessageSquare, User } from 'lucide-react'
 import { AvatarMenu } from './AvatarMenu'
+import { MobileNavSheet } from './MobileNavSheet'
 
 interface VendorNavProps {
   vendorFirstName: string
   vendorLastName: string
+  vendorEmail?: string
+  vendorStatus?: string
 }
 
-export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
+export function VendorNav({ vendorFirstName, vendorLastName, vendorEmail, vendorStatus }: VendorNavProps) {
   const pathname = usePathname()
+  const [isNavOpen, setIsNavOpen] = useState(false)
 
   const isActive = (href: string) => pathname === href
 
@@ -54,15 +59,16 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
         </Link>
 
         <div className="flex items-center gap-3">
+          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} email={vendorEmail} status={vendorStatus} variant="dark" />
           <button
+            onClick={() => setIsNavOpen(true)}
             className="w-9 h-9 rounded-full border border-creme/20 flex items-center justify-center text-creme"
-            aria-label="Menu"
+            aria-label="Menu de navigation"
           >
             <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
               <path d="M0 1h16M0 5.5h16M0 10h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
-          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} variant="dark" />
         </div>
       </header>
 
@@ -99,7 +105,7 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
           <div className="w-8 h-8 rounded-full border border-bordeaux/20 flex items-center justify-center font-cormorant italic text-base text-texte">
             ?
           </div>
-          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} />
+          <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} email={vendorEmail} status={vendorStatus} />
         </div>
       </header>
 
@@ -145,6 +151,8 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
         </Link>
 
       </nav>
+
+      <MobileNavSheet isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} />
     </>
   )
 }

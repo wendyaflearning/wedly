@@ -1,7 +1,7 @@
 import Navbar from "./_components/Navbar";
 import HeroSection from "./_components/HeroSection";
 import HowSection from "./_components/HowSection";
-import BifurcationSection from "./_components/BifurcationSection";
+import PersonaSection from "./_components/PersonaSection";
 
 export default function Home() {
   return (
@@ -9,7 +9,7 @@ export default function Home() {
       <Navbar />
       <HeroSection />
       <HowSection />
-      <BifurcationSection />
+      <PersonaSection />
     </div>
   );
 }

@@ -11,7 +11,7 @@ interface AnimatedLineProps {
 const WORD_START = 0.18;
 const WORD_STEP = 0.1;
 const WORD_DURATION = 0.4;
-const TOTAL_WORDS = 13; // 4+5+4
+const TOTAL_WORDS = 11; // 4+3+4
 const HEADLINE_END = WORD_START + (TOTAL_WORDS - 1) * WORD_STEP + WORD_DURATION;
 
 function AnimatedLine({ words, startIndex, className = "", style, wordStyle }: AnimatedLineProps) {
@@ -35,7 +35,7 @@ function AnimatedLine({ words, startIndex, className = "", style, wordStyle }: A
 }
 
 const line1 = ["Le", "grand", "jour", "mérite"];
-const line2 = ["plus", "qu'une", "checklist", "—"];
+const line2 = ["plus", "qu'une", "checklist"];
 const line3 = ["il", "vous", "mérite,", "vous."];
 
 export default function HeroSection() {

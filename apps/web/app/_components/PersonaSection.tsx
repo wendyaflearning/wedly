@@ -1,4 +1,4 @@
-export default function BifurcationSection() {
+export default function PersonaSection() {
   return (
     <>
       <section id="bifurcation" className="flex flex-col md:flex-row">
