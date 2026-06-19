@@ -1,7 +1,7 @@
-import Navbar from "./components/Navbar";
-import HeroSection from "./components/HeroSection";
-import HowSection from "./components/HowSection";
-import BifurcationSection from "./components/BifurcationSection";
+import Navbar from "./_components/Navbar";
+import HeroSection from "./_components/HeroSection";
+import HowSection from "./_components/HowSection";
+import BifurcationSection from "./_components/BifurcationSection";
 
 export default function Home() {
   return (
