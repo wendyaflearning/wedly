@@ -93,7 +93,7 @@ export function DashboardSteps({ steps }: DashboardStepsProps) {
       </div>
 
       {/* Liste */}
-      <div className="relative mt-2 md:mt-0">
+      <div className="relative mt-4 md:mt-0">
         <div className="absolute left-[18px] md:left-[54px] top-8 bottom-8 w-px bg-bordeaux/[0.18]" />
 
         {STEPS.map((step) => {
@@ -104,7 +104,7 @@ export function DashboardSteps({ steps }: DashboardStepsProps) {
             <Wrapper
               key={step.number}
               {...wrapperProps}
-              className="grid grid-cols-[40px_1fr_16px] md:grid-cols-[76px_1fr_auto] items-center gap-3.5 md:gap-8 py-3.5 px-0 md:px-4 md:py-5 rounded md:hover:bg-bordeaux/5 md:transition-colors no-underline text-inherit cursor-pointer"
+              className="grid grid-cols-[40px_1fr_16px] md:grid-cols-[76px_1fr_auto] items-center gap-3.5 md:gap-8 py-[18px] px-0 md:px-4 md:py-5 rounded md:hover:bg-bordeaux/5 md:transition-colors no-underline text-inherit cursor-pointer"
             >
               {/* Numéro */}
               <div className="w-[38px] h-[38px] md:w-[76px] md:h-[76px] relative flex items-center justify-center bg-creme z-10">
