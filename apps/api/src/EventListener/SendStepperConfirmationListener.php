@@ -24,7 +24,7 @@ readonly class SendStepperConfirmationListener
     {
         $email = (new TemplatedEmail())
             ->from(new Address('contact@wedly-apps.com', 'Wedly'))
-            ->to($event->email)
+            ->to('wedly.newapps@gmail.com')
             ->subject('Votre profil est entre nos mains — on revient vers vous très vite')
             ->htmlTemplate('emails/vendor/stepper_confirmation.html.twig')
             ->context([

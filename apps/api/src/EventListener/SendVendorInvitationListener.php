@@ -19,8 +19,8 @@ readonly class SendVendorInvitationListener
     {
         $email = (new TemplatedEmail())
             ->from(new Address('contact@wedly-apps.com', 'Wedly'))
-            ->to($event->email)
-            ->subject("C'est officiel — vous faites partie de Wedly")
+            ->to('wedly.newapps@gmail.com')
+            ->subject("C'est officiel, vous faites partie de Wedly")
             ->htmlTemplate('emails/vendor/vendor_invitation.html.twig')
             ->context([
                 'firstName'    => $event->firstName,
