@@ -41,7 +41,7 @@ final class GetVendorDashboardAction extends AbstractController
 
         return new JsonResponse(new VendorDashboardResponseDto(
             $user->getFirstName(),
-            $user->getLastName() ?? 'Dupont',
+            $user->getLastName(),
             $user->getEmail(),
             $vendor->getCreatedAt(),
             $steps,
