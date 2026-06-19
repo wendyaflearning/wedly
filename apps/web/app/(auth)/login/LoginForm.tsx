@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { loginVendor } from '@/lib/auth';
 
 export default function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +18,7 @@ export default function LoginForm() {
     setError('');
     const result = await loginVendor(email, password);
     if (result.success) {
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } else {
       setError(result.error);
       setLoading(false);
