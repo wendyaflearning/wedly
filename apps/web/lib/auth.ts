@@ -3,10 +3,9 @@ export async function loginVendor(
   password: string
 ): Promise<{ success: true } | { success: false; error: string }> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/login`, {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
     if (res.ok) return { success: true };
