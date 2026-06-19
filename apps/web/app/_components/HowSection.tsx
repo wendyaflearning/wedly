@@ -10,17 +10,33 @@ interface StepProps {
 function Step({ num, title, description, icon }: StepProps) {
   return (
     <div className="flex flex-col gap-4 md:gap-5">
-      {/* Icon circle — on desktop this sits on the connector line */}
-      <div
-        aria-hidden="true"
-        className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full bg-creme relative"
-        style={{ border: "1px solid rgba(157, 79, 30, 0.45)", color: "var(--color-highlight)" }}
-      >
-        {icon}
+      {/* Icon + label: row on mobile (label beside icon), icon alone on desktop (label below separately) */}
+      <div className="flex items-center gap-4">
+        <div
+          aria-hidden="true"
+          className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full bg-creme relative"
+          style={{ border: "1px solid rgba(157, 79, 30, 0.45)", color: "var(--color-highlight)" }}
+        >
+          {icon}
+        </div>
+        {/* Label next to icon on mobile only */}
+        <span
+          className="md:hidden"
+          style={{
+            fontFamily: "var(--font-cormorant-var)",
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "15px",
+            color: "var(--color-gris)",
+          }}
+        >
+          {num}
+        </span>
       </div>
 
-      {/* Step label — below the circle so the connector line doesn't cross text */}
+      {/* Step label — desktop only: below icon so connector line doesn't cross text */}
       <span
+        className="hidden md:block"
         style={{
           fontFamily: "var(--font-cormorant-var)",
           fontStyle: "italic",
@@ -46,8 +62,9 @@ function Step({ num, title, description, icon }: StepProps) {
         {title}
       </h3>
 
-      {/* Description */}
+      {/* Description — indented on mobile to align under "Étape" label */}
       <p
+        className="pl-[72px] md:pl-0"
         style={{
           fontFamily: "var(--font-dm-sans-var)",
           fontSize: "15px",
