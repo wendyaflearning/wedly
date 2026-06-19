@@ -41,15 +41,17 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
     <>
       {/* ── Mobile Topbar ──────────────────────────────────────────────── */}
       <header className="md:hidden sticky top-0 z-50 h-16 px-5 bg-bordeaux flex items-center justify-between">
-        <Image
-          src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg"
-          alt="Wedly"
-          width={0}
-          height={0}
-          sizes="200px"
-          style={{ height: '22px', width: 'auto' }}
-          priority
-        />
+        <Link href="/">
+          <Image
+            src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg"
+            alt="Wedly"
+            width={0}
+            height={0}
+            sizes="200px"
+            style={{ height: '22px', width: 'auto' }}
+            priority
+          />
+        </Link>
 
         <div className="flex items-center gap-3">
           <button
@@ -69,16 +71,18 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
 
         <div className="flex items-center gap-14">
           {/* Logo */}
-          <Image
-            src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_dark_bbyd6m.svg"
-            alt="Wedly"
-            width={0}
-            height={0}
-            sizes="300px"
-            className="flex-shrink-0"
-            style={{ height: '28px', width: 'auto' }}
-            priority
-          />
+          <Link href="/">
+            <Image
+              src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_dark_bbyd6m.svg"
+              alt="Wedly"
+              width={0}
+              height={0}
+              sizes="300px"
+              className="flex-shrink-0"
+              style={{ height: '28px', width: 'auto' }}
+              priority
+            />
+          </Link>
 
           {/* Nav links */}
           <nav className="flex gap-8">
