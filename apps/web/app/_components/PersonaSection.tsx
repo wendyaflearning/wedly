@@ -6,7 +6,7 @@ export default function PersonaSection() {
         {/* COUPLES */}
         <div
           id="couples"
-          className="relative flex-1 overflow-hidden flex flex-col justify-between gap-10 px-6 md:px-16 py-12 md:py-28"
+          className="relative flex-1 overflow-hidden flex flex-col gap-10 px-6 md:px-16 py-12 md:py-28"
           style={{ backgroundColor: "var(--color-bordeaux)" }}
         >
           {/* Decorative rings */}
@@ -21,6 +21,18 @@ export default function PersonaSection() {
 
           {/* Text block */}
           <div className="relative flex flex-col gap-5">
+            <p
+              style={{
+                fontFamily: "var(--font-dm-sans-var)",
+                fontSize: "11px",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "rgba(255,246,237,0.55)",
+                margin: 0,
+              }}
+            >
+              Pour les couples &amp; mariés
+            </p>
             <h2
               style={{
                 fontFamily: "var(--font-cormorant-var)",
@@ -48,8 +60,11 @@ export default function PersonaSection() {
             </p>
           </div>
 
+          {/* Spacer */}
+          <div className="flex-1 min-h-14" />
+
           {/* CTA block */}
-          <div className="relative flex flex-col gap-5">
+          <div className="relative flex flex-col gap-4">
             <a
               href="#"
               className="inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-80"
@@ -68,6 +83,16 @@ export default function PersonaSection() {
             >
               Commencer gratuitement <span>→</span>
             </a>
+            <span
+              style={{
+                fontFamily: "var(--font-cormorant-var)",
+                fontStyle: "italic",
+                fontSize: "15px",
+                color: "rgba(255,246,237,0.45)",
+              }}
+            >
+              Sans carte bancaire · Prêt en 5 min
+            </span>
           </div>
 
           {/* Big background number (desktop) */}
@@ -89,7 +114,7 @@ export default function PersonaSection() {
         {/* PRESTATAIRES */}
         <div
           id="prestataires"
-          className="relative flex-1 overflow-hidden flex flex-col justify-between gap-10 px-6 md:px-16 py-12 md:py-28"
+          className="relative flex-1 overflow-hidden flex flex-col gap-10 px-6 md:px-16 py-12 md:py-28"
           style={{ backgroundColor: "var(--color-creme)" }}
         >
           {/* Decorative rings */}
@@ -143,6 +168,9 @@ export default function PersonaSection() {
             </p>
           </div>
 
+          {/* Spacer */}
+          <div className="flex-1 min-h-14" />
+
           {/* CTA block */}
           <div className="relative flex flex-col gap-4">
             <a
@@ -195,7 +223,7 @@ export default function PersonaSection() {
 
       {/* Footer */}
       <footer
-        className="bg-creme px-6 py-6 text-center"
+        className="bg-creme px-6 md:px-16 py-6 flex items-center justify-between"
         style={{ borderTop: "1px solid rgba(158, 142, 133, 0.25)" }}
       >
         <p
@@ -205,7 +233,16 @@ export default function PersonaSection() {
             color: "rgba(41, 26, 16, 0.4)",
           }}
         >
-          © 2026 <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>Wedly</em> · Tous droits réservés
+          © <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>Wedly</em> 2026 — <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>pensé en France, à deux.</em>
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans-var)",
+            fontSize: "13px",
+            color: "rgba(41, 26, 16, 0.4)",
+          }}
+        >
+          FR · 2026
         </p>
       </footer>
     </>

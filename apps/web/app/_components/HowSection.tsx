@@ -10,27 +10,27 @@ interface StepProps {
 function Step({ num, title, description, icon }: StepProps) {
   return (
     <div className="flex flex-col gap-4 md:gap-5">
-      {/* Icon + label row */}
-      <div className="flex items-center gap-4">
-        <div
-          aria-hidden="true"
-          className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full bg-creme"
-          style={{ border: "1px solid rgba(157, 79, 30, 0.45)", color: "var(--color-highlight)" }}
-        >
-          {icon}
-        </div>
-        <span
-          style={{
-            fontFamily: "var(--font-cormorant-var)",
-            fontStyle: "italic",
-            fontWeight: 400,
-            fontSize: "15px",
-            color: "var(--color-gris)",
-          }}
-        >
-          {num}
-        </span>
+      {/* Icon circle — on desktop this sits on the connector line */}
+      <div
+        aria-hidden="true"
+        className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full bg-creme relative"
+        style={{ border: "1px solid rgba(157, 79, 30, 0.45)", color: "var(--color-highlight)" }}
+      >
+        {icon}
       </div>
+
+      {/* Step label — below the circle so the connector line doesn't cross text */}
+      <span
+        style={{
+          fontFamily: "var(--font-cormorant-var)",
+          fontStyle: "italic",
+          fontWeight: 400,
+          fontSize: "15px",
+          color: "var(--color-gris)",
+        }}
+      >
+        {num}
+      </span>
 
       {/* Heading */}
       <h3
@@ -46,9 +46,8 @@ function Step({ num, title, description, icon }: StepProps) {
         {title}
       </h3>
 
-      {/* Description — indented on mobile to align under "Étape" label */}
+      {/* Description */}
       <p
-        className="pl-[72px] md:pl-0"
         style={{
           fontFamily: "var(--font-dm-sans-var)",
           fontSize: "15px",
@@ -107,7 +106,7 @@ export default function HowSection() {
         {/* Connector line (desktop only) */}
         <div
           className="hidden md:block absolute top-7 inset-x-0 h-px"
-          style={{ backgroundColor: "var(--color-accent)", opacity: 0.35 }}
+          style={{ backgroundColor: "var(--color-accent)", opacity: 0.55 }}
         />
 
         <div className="flex flex-col md:grid md:grid-cols-3 md:gap-16">
