@@ -54,10 +54,10 @@ const STEPS: StepConfig[] = [
 
 function IllustrationStep1() {
   return (
-    <div className="flex items-center gap-5 md:gap-7">
-      <div className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] rounded-full border border-bordeaux/[0.18] bg-bordeaux/[0.04]" />
-      <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-accent shrink-0" />
-      <div className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] rounded-full border border-bordeaux/[0.18] bg-bordeaux/[0.07]" />
+    <div className="relative" style={{ width: 170, height: 110 }}>
+      <div className="absolute left-0 w-[110px] h-[110px] rounded-full border border-bordeaux/[0.22] bg-bordeaux/[0.03]" />
+      <div className="absolute right-0 w-[110px] h-[110px] rounded-full border border-bordeaux/[0.18] bg-bordeaux/[0.05]" />
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-accent z-10" />
     </div>
   )
 }
@@ -151,11 +151,11 @@ function GuideModal({ onClose }: { onClose: () => void }) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 md:flex md:items-center md:justify-center">
+    <div className="fixed inset-0 z-[60] bg-black/50 md:flex md:items-center md:justify-center">
       <div className="absolute inset-0" onClick={onClose} />
 
       <div
-        className="modal-enter relative z-10 fixed inset-x-0 bottom-0 md:relative md:inset-auto md:max-w-[960px] md:w-full md:mx-4 rounded-t-2xl md:rounded-xl overflow-hidden flex flex-col"
+        className="modal-enter z-10 fixed inset-x-0 bottom-0 md:relative md:inset-auto md:max-w-[700px] md:w-full md:mx-4 rounded-t-2xl md:rounded-xl overflow-hidden flex flex-col"
         style={{ maxHeight: '92vh' }}
       >
         {/* Drag handle — mobile only */}
@@ -219,14 +219,14 @@ function GuideModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Footer bordeaux */}
-        <div className="bg-bordeaux shrink-0 px-6 md:px-10 py-4 md:py-5 flex items-center justify-between">
+        {/* Footer crème */}
+        <div className="bg-creme border-t border-bordeaux/[0.08] shrink-0 px-6 md:px-10 py-4 md:py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {STEPS.map((_, i) => (
               <div
                 key={i}
                 className={`rounded-full transition-all duration-300 ${
-                  i === step ? 'w-8 h-[3px] bg-creme' : 'w-[6px] h-[6px] bg-creme/30'
+                  i === step ? 'w-8 h-[3px] bg-bordeaux' : 'w-[6px] h-[6px] bg-bordeaux/20'
                 }`}
               />
             ))}
@@ -235,7 +235,7 @@ function GuideModal({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-5 md:gap-7">
             <button
               onClick={onClose}
-              className="font-manrope text-[10px] md:text-[11px] font-medium tracking-[0.16em] uppercase text-creme/55 hover:text-creme transition-colors"
+              className="font-manrope text-[10px] md:text-[11px] font-medium tracking-[0.16em] uppercase text-bordeaux/40 hover:text-bordeaux transition-colors"
             >
               Passer
             </button>

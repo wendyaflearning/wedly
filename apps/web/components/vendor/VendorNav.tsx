@@ -41,7 +41,7 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
     <>
       {/* ── Mobile Topbar ──────────────────────────────────────────────── */}
       <header className="md:hidden sticky top-0 z-50 h-16 px-5 bg-bordeaux flex items-center justify-between">
-        <Link href="/">
+        <Link href="/dashboard">
           <Image
             src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg"
             alt="Wedly"
@@ -71,7 +71,7 @@ export function VendorNav({ vendorFirstName, vendorLastName }: VendorNavProps) {
 
         <div className="flex items-center gap-14">
           {/* Logo */}
-          <Link href="/">
+          <Link href="/dashboard">
             <Image
               src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_dark_bbyd6m.svg"
               alt="Wedly"
