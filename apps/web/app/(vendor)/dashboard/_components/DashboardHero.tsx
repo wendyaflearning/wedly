@@ -2,9 +2,11 @@ import type { ReactNode } from 'react'
 
 interface DashboardHeroProps {
   firstName: string
+  guideButton?: ReactNode
+  desktopGuideButton?: ReactNode
 }
 
-export function DashboardHero({ firstName }: DashboardHeroProps) {
+export function DashboardHero({ firstName, guideButton, desktopGuideButton }: DashboardHeroProps) {
   return (
     <section className="bg-bordeaux text-creme px-5 pt-6 pb-7 md:px-[72px] md:pt-12 md:pb-14 relative overflow-hidden">
       {/* Cercles décoratifs */}
@@ -27,22 +29,23 @@ export function DashboardHero({ firstName }: DashboardHeroProps) {
             <em style={{ color: 'var(--color-dore)' }}>{firstName}.</em>
           </h1>
 
-          {/* Badge mobile (gauche, dot dore) */}
-          <div className="inline-flex md:hidden items-center gap-2 px-3 py-1.5 rounded-full border border-creme/[0.22] font-manrope text-[10px] font-medium tracking-[0.12em] uppercase text-creme">
-            <span className="w-[5px] h-[5px] rounded-full bg-dore" />
-            Profil en préparation
+          {/* Badge mobile + bouton guide côte à côte */}
+          <div className="md:hidden flex items-center gap-2 flex-wrap">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-creme/[0.22] font-manrope text-[10px] font-medium tracking-[0.12em] uppercase text-creme">
+              <span className="w-[5px] h-[5px] rounded-full bg-dore" />
+              Profil en préparation
+            </div>
+            {guideButton}
           </div>
         </div>
 
-        {/* Colonne droite desktop (badge + label "État du compte") */}
-        <div className="hidden md:block text-right">
-          <span className="font-manrope text-[10px] font-medium tracking-[0.22em] uppercase text-creme/55">
-            État du compte
-          </span>
-          <div className="mt-2 inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-creme/[0.22] font-manrope text-xs font-medium tracking-[0.12em] uppercase text-creme">
+        {/* Colonne droite desktop — badge + bouton guide côte à côte */}
+        <div className="hidden md:flex items-center gap-3">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-creme/[0.22] font-manrope text-xs font-medium tracking-[0.12em] uppercase text-creme">
             <span className="w-1.5 h-1.5 rounded-full bg-highlight" />
             Profil en préparation
           </div>
+          {desktopGuideButton}
         </div>
       </div>
 
