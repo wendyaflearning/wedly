@@ -24,11 +24,20 @@ export default function OnboardingClient({
   token: string
 }) {
   const router = useRouter()
-  const [screen, setScreen] = useState<Screen>('welcome')
+  const [screen, setScreen]               = useState<Screen>('welcome')
+  const [justCompleted, setJustCompleted] = useState<string | null>(null)
 
   function navigate(next: Screen) {
     window.scrollTo({ top: 0, behavior: 'instant' })
     setScreen(next)
+  }
+
+  function handleNext(currentStep: string) {
+    return (nextStep: string) => {
+      setJustCompleted(currentStep)
+      router.refresh()
+      navigate(nextStep as Screen)
+    }
   }
 
   if (screen === 'welcome') {
@@ -50,10 +59,7 @@ export default function OnboardingClient({
         steps={data.steps}
         currentStepKey="professions"
         onBack={() => navigate('onboarding_overview')}
-        onNext={(nextStep) => {
-          router.refresh()
-          navigate(nextStep as Screen)
-        }}
+        onNext={handleNext('professions')}
         onNavigate={navigateToStep}
       />
     )
@@ -68,10 +74,7 @@ export default function OnboardingClient({
         steps={data.steps}
         currentStepKey="experiences"
         onBack={() => navigate('onboarding_overview')}
-        onNext={(nextStep) => {
-          router.refresh()
-          navigate(nextStep as Screen)
-        }}
+        onNext={handleNext('experiences')}
         onNavigate={navigateToStep}
       />
     )
@@ -85,10 +88,7 @@ export default function OnboardingClient({
         steps={data.steps}
         currentStepKey="catering_characteristics"
         onBack={() => navigate('onboarding_overview')}
-        onNext={(nextStep) => {
-          router.refresh()
-          navigate(nextStep as Screen)
-        }}
+        onNext={handleNext('catering_characteristics')}
         onNavigate={navigateToStep}
       />
     )
@@ -102,10 +102,7 @@ export default function OnboardingClient({
         steps={data.steps}
         currentStepKey="venue_characteristics"
         onBack={() => navigate('onboarding_overview')}
-        onNext={(nextStep) => {
-          router.refresh()
-          navigate(nextStep as Screen)
-        }}
+        onNext={handleNext('venue_characteristics')}
         onNavigate={navigateToStep}
       />
     )
@@ -120,10 +117,7 @@ export default function OnboardingClient({
         steps={data.steps}
         currentStepKey="zones_pricing"
         onBack={() => navigate('onboarding_overview')}
-        onNext={(nextStep) => {
-          router.refresh()
-          navigate(nextStep as Screen)
-        }}
+        onNext={handleNext('zones_pricing')}
         onNavigate={navigateToStep}
       />
     )
@@ -137,10 +131,7 @@ export default function OnboardingClient({
         steps={data.steps}
         currentStepKey="portfolio"
         onBack={() => navigate('onboarding_overview')}
-        onNext={(nextStep) => {
-          router.refresh()
-          navigate(nextStep as Screen)
-        }}
+        onNext={handleNext('portfolio')}
         onNavigate={navigateToStep}
       />
     )
@@ -154,10 +145,7 @@ export default function OnboardingClient({
         steps={data.steps}
         currentStepKey="legal_info"
         onBack={() => navigate('onboarding_overview')}
-        onNext={(nextStep) => {
-          router.refresh()
-          navigate(nextStep as Screen)
-        }}
+        onNext={handleNext('legal_info')}
         onNavigate={navigateToStep}
       />
     )
@@ -170,6 +158,7 @@ export default function OnboardingClient({
         initialEmail={data.steps_data?.credentials?.email ?? null}
         steps={data.steps}
         currentStepKey="credentials"
+        justCompleted={justCompleted}
         onBack={() => navigate('onboarding_overview')}
         onComplete={() => navigate('completed')}
         onNavigate={navigateToStep}

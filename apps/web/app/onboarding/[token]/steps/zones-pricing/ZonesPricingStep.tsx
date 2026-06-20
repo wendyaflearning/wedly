@@ -5,6 +5,10 @@ import type { OnboardingStep, RegionOption, VendorType, ZonesPricingData } from 
 import StepBreadcrumb from '../../StepBreadcrumb'
 import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
 
+function normalizeSearch(str: string): string {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
 const PRICE_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'per_service', label: 'Par prestation' },
   { value: 'per_person',  label: 'Par personne' },
@@ -244,7 +248,7 @@ export default function ZonesPricingStep({
                             </div>
                           ) : (() => {
                             const filtered = regions.filter(r =>
-                              r.name.toLowerCase().includes(searchQuery.toLowerCase())
+                              normalizeSearch(r.name).includes(normalizeSearch(searchQuery))
                             )
                             if (filtered.length === 0) {
                               return (
@@ -446,7 +450,7 @@ export default function ZonesPricingStep({
                             </div>
                           ) : (() => {
                             const filtered = regions.filter(r =>
-                              r.name.toLowerCase().includes(searchQuery.toLowerCase())
+                              normalizeSearch(r.name).includes(normalizeSearch(searchQuery))
                             )
                             if (filtered.length === 0) {
                               return (
@@ -602,7 +606,7 @@ export default function ZonesPricingStep({
                         </div>
                       ) : (() => {
                         const filtered = regions.filter(r =>
-                          r.name.toLowerCase().includes(searchQuery.toLowerCase())
+                          normalizeSearch(r.name).includes(normalizeSearch(searchQuery))
                         )
                         if (filtered.length === 0) {
                           return (
