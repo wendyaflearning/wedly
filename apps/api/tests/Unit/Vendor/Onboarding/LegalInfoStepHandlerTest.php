@@ -8,14 +8,13 @@ use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
 use App\Handler\Vendor\Onboarding\LegalInfoStepHandler;
 use App\Integration\Pappers\PappersService;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-final class LegalInfoStepServiceTest extends TestCase
+final class LegalInfoStepHandlerTest extends TestCase
 {
     private ValidatorInterface&Stub $validator;
 
@@ -23,8 +22,8 @@ final class LegalInfoStepServiceTest extends TestCase
 
     private const VALID_DATA = [
         'brand_name' => 'Studio Lumière',
-        'first_name' => 'Camille',
-        'last_name'  => 'Martin',
+        'first_name' => 'Denis',
+        'last_name'  => 'Afrim',
         'siret'      => self::VALID_SIRET,
         'phone'      => '0612345678',
         'address'    => '12 rue de la Paix',
@@ -38,7 +37,7 @@ final class LegalInfoStepServiceTest extends TestCase
         $this->validator->method('validate')->willReturn(new ConstraintViolationList());
     }
 
-    private function makeService(PappersService $pappers, ?LoggerInterface $logger = null): LegalInfoStepHandler
+    private function makeHandler(PappersService $pappers, ?LoggerInterface $logger = null): LegalInfoStepHandler
     {
         return new LegalInfoStepHandler(
             $pappers,
@@ -54,8 +53,12 @@ final class LegalInfoStepServiceTest extends TestCase
         $pappers = $this->createStub(PappersService::class);
         $pappers->method('findBySiret')->willReturn($this->activePappersData());
 
+        $user = $this->createMock(User::class);
+        $user->expects($this->once())->method('setFirstName')->with('Denis');
+        $user->expects($this->once())->method('setLastName')->with('Afrim');
+
         $vendor = $this->createMock(Vendor::class);
-        $this->attachUser($vendor);
+        $vendor->method('getUser')->willReturn($user);
         $vendor->expects($this->once())->method('setBrandName')->with('Studio Lumière');
         $vendor->expects($this->once())->method('setSiret')->with(self::VALID_SIRET);
         $vendor->expects($this->once())->method('setPhone')->with('0612345678');
@@ -63,7 +66,7 @@ final class LegalInfoStepServiceTest extends TestCase
         $vendor->expects($this->once())->method('setZipcode')->with('75001');
         $vendor->expects($this->once())->method('setCity')->with('Paris');
 
-        $this->makeService($pappers)->handle($vendor, self::VALID_DATA);
+        $this->makeHandler($pappers)->handle($vendor, self::VALID_DATA);
     }
 
     // --- handle() : entreprise active ---
@@ -74,10 +77,10 @@ final class LegalInfoStepServiceTest extends TestCase
         $pappers->method('findBySiret')->willReturn($this->activePappersData());
 
         $vendor = $this->createMock(Vendor::class);
-        $this->attachUser($vendor);
+        $vendor->method('getUser')->willReturn($this->createStub(User::class));
         $vendor->expects($this->once())->method('setSiretVerified')->with(true);
 
-        $this->makeService($pappers)->handle($vendor, self::VALID_DATA);
+        $this->makeHandler($pappers)->handle($vendor, self::VALID_DATA);
     }
 
     public function test_handle_hydrates_legal_fields_from_pappers(): void
@@ -87,12 +90,15 @@ final class LegalInfoStepServiceTest extends TestCase
         $pappers->method('findBySiret')->willReturn($data);
 
         $vendor = $this->createMock(Vendor::class);
-        $this->attachUser($vendor);
+        $vendor->method('getUser')->willReturn($this->createStub(User::class));
         $vendor->expects($this->once())->method('setLegalName')->with($data['legal_name']);
         $vendor->expects($this->once())->method('setLegalForm')->with($data['legal_form']);
         $vendor->expects($this->once())->method('setLegalStatus')->with($data['legal_status']);
+        $vendor->expects($this->once())->method('setIncorporatedAt')->with(
+            new \DateTimeImmutable($data['incorporated_at'])
+        );
 
-        $this->makeService($pappers)->handle($vendor, self::VALID_DATA);
+        $this->makeHandler($pappers)->handle($vendor, self::VALID_DATA);
     }
 
     // --- handle() : entreprise inactive ---
@@ -112,10 +118,10 @@ final class LegalInfoStepServiceTest extends TestCase
         );
 
         $vendor = $this->createMock(Vendor::class);
-        $this->attachUser($vendor);
+        $vendor->method('getUser')->willReturn($this->createStub(User::class));
         $vendor->expects($this->once())->method('setSiretVerified')->with(false);
 
-        $this->makeService($pappers, $logger)->handle($vendor, self::VALID_DATA);
+        $this->makeHandler($pappers, $logger)->handle($vendor, self::VALID_DATA);
     }
 
     // --- handle() : Pappers inaccessible ---
@@ -132,11 +138,11 @@ final class LegalInfoStepServiceTest extends TestCase
         );
 
         $vendor = $this->createMock(Vendor::class);
-        $this->attachUser($vendor);
+        $vendor->method('getUser')->willReturn($this->createStub(User::class));
         $vendor->expects($this->once())->method('setSiretVerified')->with(false);
         $vendor->expects($this->never())->method('setLegalStatus');
 
-        $this->makeService($pappers, $logger)->handle($vendor, self::VALID_DATA);
+        $this->makeHandler($pappers, $logger)->handle($vendor, self::VALID_DATA);
     }
 
     // --- getStepData() ---
@@ -146,19 +152,20 @@ final class LegalInfoStepServiceTest extends TestCase
         $vendor = $this->createStub(Vendor::class);
         $vendor->method('getSiret')->willReturn(null);
 
-        $result = $this->makeService($this->createStub(PappersService::class))->getStepData($vendor);
+        $result = $this->makeHandler($this->createStub(PappersService::class))->getStepData($vendor);
 
         $this->assertSame([], $result);
     }
 
     public function test_get_step_data_returns_full_legal_payload(): void
     {
-        $vendor = $this->createStub(Vendor::class);
-        $vendor->method('getSiret')->willReturn(self::VALID_SIRET);
         $user = $this->createStub(User::class);
-        $user->method('getFirstName')->willReturn('Camille');
-        $user->method('getLastName')->willReturn('Martin');
+        $user->method('getFirstName')->willReturn('Denis');
+        $user->method('getLastName')->willReturn('Afrim');
+
+        $vendor = $this->createStub(Vendor::class);
         $vendor->method('getUser')->willReturn($user);
+        $vendor->method('getSiret')->willReturn(self::VALID_SIRET);
         $vendor->method('getBrandName')->willReturn('Studio Lumière');
         $vendor->method('getPhone')->willReturn('0612345678');
         $vendor->method('getAddress')->willReturn('12 rue de la Paix');
@@ -169,10 +176,12 @@ final class LegalInfoStepServiceTest extends TestCase
         $vendor->method('getLegalForm')->willReturn('Société par actions simplifiée');
         $vendor->method('getLegalStatus')->willReturn('Actif');
 
-        $result = $this->makeService($this->createStub(PappersService::class))->getStepData($vendor);
+        $result = $this->makeHandler($this->createStub(PappersService::class))->getStepData($vendor);
 
         $this->assertSame(self::VALID_SIRET, $result['siret']);
         $this->assertSame('Studio Lumière', $result['brand_name']);
+        $this->assertSame('Denis', $result['first_name']);
+        $this->assertSame('Afrim', $result['last_name']);
         $this->assertSame('75001', $result['zipcode']);
         $this->assertSame('Paris', $result['city']);
         $this->assertTrue($result['siret_verified']);
@@ -182,14 +191,6 @@ final class LegalInfoStepServiceTest extends TestCase
     }
 
     // --- helpers ---
-
-    private function attachUser(Vendor&MockObject $vendor): void
-    {
-        $user = $this->createStub(User::class);
-        $user->method('setFirstName')->willReturnSelf();
-        $user->method('setLastName')->willReturnSelf();
-        $vendor->method('getUser')->willReturn($user);
-    }
 
     private function activePappersData(): array
     {
