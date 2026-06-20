@@ -23,6 +23,10 @@ final readonly class LegalInfoStepRequestDto implements DTOInterface
         #[Assert\Regex(pattern: '/^\d{14}$/')]
         public string $siret,
 
+        #[Assert\Regex(
+            pattern: '/^(\+33|0)[1-9]\d{8}$/',
+            message: 'Le numéro de téléphone est invalide (ex : 0612345678 ou +33612345678).',
+        )]
         public ?string $phone,
         public ?string $address,
         public ?string $zipcode,

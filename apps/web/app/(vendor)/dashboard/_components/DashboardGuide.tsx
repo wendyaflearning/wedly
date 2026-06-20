@@ -93,7 +93,7 @@ function IllustrationStep3() {
         <span className="font-cormorant italic text-sm font-light text-bordeaux/60">vous</span>
       </div>
       <div className="absolute right-0 w-[96px] h-[96px] rounded-full border border-bordeaux/[0.22] flex items-center justify-center">
-        <span className="font-cormorant italic text-sm font-light text-bordeaux/60">elles</span>
+        <span className="font-cormorant italic text-sm font-light text-bordeaux/60">eux</span>
       </div>
       <div className="absolute left-[50%] -translate-x-[50%] w-9 h-9 rounded-full bg-accent flex items-center justify-center z-10">
         <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
@@ -269,11 +269,14 @@ function GuideModal({ onClose }: { onClose: () => void }) {
         <div className="bg-creme border-t border-bordeaux/[0.08] shrink-0 px-6 md:px-10 py-4 md:py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {STEPS.map((_, i) => (
-              <div
+              <button
                 key={i}
-                className={`rounded-full transition-all duration-300 ${
-                  i === step ? 'w-8 h-[3px] bg-bordeaux' : 'w-[6px] h-[6px] bg-bordeaux/20'
+                onClick={() => setStep(i)}
+                aria-label={`Étape ${i + 1}`}
+                className={`rounded-full transition-all duration-300 cursor-pointer ${
+                  i === step ? 'w-8 h-[3px] bg-bordeaux' : 'w-[6px] h-[6px] bg-bordeaux/20 hover:bg-bordeaux/40'
                 }`}
+                style={{ border: 'none', padding: 0 }}
               />
             ))}
           </div>

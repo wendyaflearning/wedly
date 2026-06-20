@@ -111,17 +111,19 @@ export default function CredentialsStep({
   initialEmail,
   steps,
   currentStepKey,
+  justCompleted,
   onBack,
   onComplete,
   onNavigate,
 }: {
-  token:          string
-  initialEmail:   string | null
-  steps:          OnboardingStep[]
-  currentStepKey: string
-  onBack:         () => void
-  onComplete:     () => void
-  onNavigate:     (stepKey: string) => void
+  token:           string
+  initialEmail:    string | null
+  steps:           OnboardingStep[]
+  currentStepKey:  string
+  justCompleted:   string | null
+  onBack:          () => void
+  onComplete:      () => void
+  onNavigate:      (stepKey: string) => void
 }) {
   const [email,           setEmail]           = useState(initialEmail ?? '')
   const [password,        setPassword]        = useState('')
@@ -141,7 +143,7 @@ export default function CredentialsStep({
   const confirmValid   = passwordConfirm !== '' && password === passwordConfirm
   const isValid        = emailValid && pwValid && confirmValid
 
-  const incompleteSteps = steps.filter(s => s.stepKey !== 'credentials' && !s.isFilled)
+  const incompleteSteps = steps.filter(s => s.stepKey !== 'credentials' && s.stepKey !== justCompleted && !s.isFilled)
   const [dismissed, setDismissed] = useState(false)
   const showModal = !dismissed && incompleteSteps.length > 0
 

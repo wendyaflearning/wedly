@@ -8,6 +8,7 @@ import StepBreadcrumb from '../../StepBreadcrumb'
 // ─── Types & helpers ──────────────────────────────────────────────────────────
 
 const SECONDARY_COUNT = 4
+const MIN_SECONDARY   = 2
 
 type SlotState = {
   savedId:       string | null
@@ -271,7 +272,7 @@ export default function PortfolioStep({ token, initialData, steps, currentStepKe
 
   const coverHasContent = coverSlot.savedUrl !== null || coverSlot.localFile !== null
   const secondaryFilled = secondarySlots.filter(s => s.savedUrl !== null || s.localFile !== null).length
-  const isValid         = coverHasContent && secondaryFilled === SECONDARY_COUNT && !submitting
+  const isValid         = coverHasContent && secondaryFilled >= MIN_SECONDARY && !submitting
 
   // ── Sélection de fichier ──
 
@@ -459,7 +460,7 @@ export default function PortfolioStep({ token, initialData, steps, currentStepKe
             borderRadius: 10, padding: '13px 17px', marginBottom: 28,
           }}>
             <p className="font-cormorant font-light text-texte" style={{ fontSize: 14, lineHeight: 1.8 }}>
-              5 photos pour commencer. Vous pourrez en ajouter depuis votre tableau de bord.<br />
+              1 photo de couverture + 2 photos complémentaires minimum. Vous pourrez en ajouter depuis votre tableau de bord.<br />
               <span style={{ color: 'rgba(41,26,16,0.5)' }}>Formats acceptés : JPG, PNG, WebP.</span>
             </p>
           </div>
@@ -561,7 +562,7 @@ export default function PortfolioStep({ token, initialData, steps, currentStepKe
               <p className="font-cormorant italic text-center" style={{ fontSize: 13, color: 'rgba(41,26,16,0.4)', marginTop: 10 }}>
                 {!coverHasContent
                   ? 'Ajoutez une photo de couverture pour continuer.'
-                  : `${secondaryFilled} / ${SECONDARY_COUNT} photos complémentaires ajoutées.`}
+                  : `${secondaryFilled} / ${MIN_SECONDARY} photos complémentaires ajoutées.`}
               </p>
             )}
           </div>

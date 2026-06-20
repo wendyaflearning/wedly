@@ -118,7 +118,7 @@ readonly class PortfolioStepHandler extends AbstractOnboardingStepHandler
         $hasCover         = !empty(array_filter($persistedImages, fn(PortfolioImage $img) => $img->isCover()));
         $secondaryCount   = count(array_filter($persistedImages, fn(PortfolioImage $img) => !$img->isCover()));
 
-        if ($hasCover && $secondaryCount >= 4) {
+        if ($hasCover && $secondaryCount >= 2) {
             $vendor->setOnboardingStep(OnboardingStep::Portfolio);
             $this->em->flush();
         }

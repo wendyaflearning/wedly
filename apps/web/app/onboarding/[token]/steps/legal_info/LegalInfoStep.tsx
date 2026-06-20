@@ -90,8 +90,10 @@ export default function LegalInfoStep({
     siret     !== (initialData?.siret      ?? '')
   )
 
-  const siretClean = siret.replace(/\s/g, '')
-  const isValid    = brandName.trim() !== '' && firstName.trim() !== '' && lastName.trim() !== '' && /^\d{14}$/.test(siretClean)
+  const siretClean   = siret.replace(/\s/g, '')
+  const phoneClean   = phone.replace(/[\s.\-()]/g, '')
+  const isPhoneValid = phone === '' || /^(\+33|0)[1-9]\d{8}$/.test(phoneClean)
+  const isValid      = brandName.trim() !== '' && firstName.trim() !== '' && lastName.trim() !== '' && /^\d{14}$/.test(siretClean) && isPhoneValid
 
   async function handleConfirm() {
     if (!isValid || submitting || success) return
@@ -103,7 +105,7 @@ export default function LegalInfoStep({
         first_name: firstName.trim(),
         last_name:  lastName.trim(),
         siret:      siretClean,
-        phone:      phone     || null,
+        phone:      phoneClean || null,
         address:    address   || null,
         zipcode:    zipcode   || null,
         city:       city      || null,
@@ -205,6 +207,11 @@ export default function LegalInfoStep({
               type="tel"
               placeholder="+33 6 00 00 00 00"
             />
+            {phone !== '' && !isPhoneValid && (
+              <p className="font-cormorant italic" style={{ fontSize: 13, color: 'var(--color-highlight)', marginTop: -6 }}>
+                Numéro invalide — attendu : 0612345678 ou +33612345678
+              </p>
+            )}
 
             <Field
               label="Adresse professionnelle"
