@@ -1,3 +1,8 @@
+# Wedly Schema Preview
+
+Open this file in Zed and use the Markdown preview.
+
+```mermaid
 erDiagram
     USER ||--o| VENDOR : manages
     USER ||--o| COUPLE : owns
@@ -17,7 +22,6 @@ erDiagram
     VENDOR ||--o{ PORTFOLIO_IMAGE : portfolio
     VENDOR ||--o{ BOOKING_BLOCKER : unavailable
     VENDOR ||--o{ OFFER : offers_list
-    VENDOR ||--o{ VENDOR_CONSENT : consents
 
     COUPLE ||--o{ SUBSCRIPTION : subscriptions
     SUBSCRIPTION }o--|| PLAN : plan
@@ -70,10 +74,6 @@ erDiagram
         string onboarding_step
         text bio
         boolean is_published
-        datetime submitted_for_review_at
-        datetime reviewed_at
-        json rejection_reasons
-        text rejection_note
         datetime created_at
         datetime updated_at
     }
@@ -173,15 +173,6 @@ erDiagram
         date start_date
         date end_date
         string reason
-        datetime created_at
-        datetime updated_at
-    }
-
-    VENDOR_CONSENT {
-        uuid id
-        uuid vendor_id
-        string consent_type
-        boolean granted
         datetime created_at
         datetime updated_at
     }
@@ -295,3 +286,4 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
+```
