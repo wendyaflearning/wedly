@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
-#[Route('/api/v1/vendors/{id}/availability', name: 'api_vendor_availability_list', methods: ['GET'])]
+#[Route('/api/v1/vendors/availability', name: 'api_vendor_availability_list', methods: ['GET'])]
 final class GetVendorAvailabilityAction extends AbstractController
 {
     public function __construct(
@@ -25,12 +25,12 @@ final class GetVendorAvailabilityAction extends AbstractController
         private readonly BookingBlockerRepository $bookingBlockerRepository,
     ) {}
 
-    public function __invoke(string $id): JsonResponse
+    public function __invoke(): JsonResponse
     {
         try {
             /** @var User $user */
             $user   = $this->security->getUser();
-            $vendor = $this->vendorOwnershipResolver->resolve($user, $id);
+            $vendor = $this->vendorOwnershipResolver->resolve($user);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
         }

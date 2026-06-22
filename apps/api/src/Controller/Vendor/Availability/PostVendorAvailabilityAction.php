@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
-#[Route('/api/v1/vendors/{id}/availability', name: 'api_vendor_availability_create', methods: ['POST'])]
+#[Route('/api/v1/vendors/availability', name: 'api_vendor_availability_create', methods: ['POST'])]
 final class PostVendorAvailabilityAction extends AbstractController
 {
     public function __construct(
@@ -26,12 +26,12 @@ final class PostVendorAvailabilityAction extends AbstractController
         private readonly BookingBlockerService $bookingBlockerService,
     ) {}
 
-    public function __invoke(string $id, #[MapRequestPayload] BookingBlockerRequestDto $dto): JsonResponse
+    public function __invoke(#[MapRequestPayload] BookingBlockerRequestDto $dto): JsonResponse
     {
         try {
             /** @var User $user */
             $user    = $this->security->getUser();
-            $vendor  = $this->vendorOwnershipResolver->resolve($user, $id);
+            $vendor  = $this->vendorOwnershipResolver->resolve($user);
             $blocker = $this->bookingBlockerService->create($vendor, $dto->date_start, $dto->date_end);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());

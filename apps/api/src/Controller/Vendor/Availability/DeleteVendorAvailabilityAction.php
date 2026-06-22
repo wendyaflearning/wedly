@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
-#[Route('/api/v1/vendors/{id}/availability/{blockerId}', name: 'api_vendor_availability_delete', methods: ['DELETE'])]
+#[Route('/api/v1/vendors/availability/{blockerId}', name: 'api_vendor_availability_delete', methods: ['DELETE'])]
 final class DeleteVendorAvailabilityAction extends AbstractController
 {
     public function __construct(
@@ -24,12 +24,12 @@ final class DeleteVendorAvailabilityAction extends AbstractController
         private readonly BookingBlockerService $bookingBlockerService,
     ) {}
 
-    public function __invoke(string $id, string $blockerId): JsonResponse
+    public function __invoke(string $blockerId): JsonResponse
     {
         try {
             /** @var User $user */
             $user   = $this->security->getUser();
-            $vendor = $this->vendorOwnershipResolver->resolve($user, $id);
+            $vendor = $this->vendorOwnershipResolver->resolve($user);
             $this->bookingBlockerService->delete($vendor, $blockerId);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
