@@ -26,19 +26,19 @@ final readonly class BookingBlockerRequestDto
         $maxDate = $today->modify('+12 months');
 
         if ($this->date_start > $this->date_end) {
-            $context->buildViolation('date_start doit être antérieure ou égale à date_end.')
+            $context->buildViolation('La date de début doit être antérieure ou égale à la date de fin.')
                 ->atPath('date_start')
                 ->addViolation();
         }
 
         if ($this->date_start < $today) {
-            $context->buildViolation('date_start ne peut pas être dans le passé.')
+            $context->buildViolation('La date de début ne peut pas être dans le passé.')
                 ->atPath('date_start')
                 ->addViolation();
         }
 
         if ($this->date_end > $maxDate) {
-            $context->buildViolation('date_end ne peut pas dépasser 12 mois à partir d\'aujourd\'hui.')
+            $context->buildViolation('La date de fin ne peut pas dépasser 12 mois à partir d\'aujourd\'hui.')
                 ->atPath('date_end')
                 ->addViolation();
         }

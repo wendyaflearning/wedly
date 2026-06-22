@@ -28,10 +28,10 @@ class BookingBlocker
     #[ORM\JoinColumn(name: 'vendor_id', referencedColumnName: 'id', nullable: false)]
     private Vendor $vendor;
 
-    #[ORM\Column(name: 'start_date', type: 'date')]
+    #[ORM\Column(name: 'start_date', type: 'date_immutable')]
     private \DateTimeImmutable $startDate;
 
-    #[ORM\Column(name: 'end_date', type: 'date')]
+    #[ORM\Column(name: 'end_date', type: 'date_immutable')]
     private \DateTimeImmutable $endDate;
 
     #[ORM\Column(name: 'reason', length: 255, nullable: true)]

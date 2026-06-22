@@ -15,11 +15,11 @@ class VendorOwnershipResolver
     /**
      * @throws \DomainException 403 if the connected user does not own the requested vendor
      */
-    public function resolve(User $user, string $vendorId): Vendor
+    public function resolve(User $user): Vendor
     {
         $vendor = $this->vendorRepository->findOneByUser($user);
 
-        if ($vendor === null || $vendor->getId()->toRfc4122() !== $vendorId) {
+        if ($vendor === null) {
             throw new \DomainException('Accès interdit.', 403);
         }
 
