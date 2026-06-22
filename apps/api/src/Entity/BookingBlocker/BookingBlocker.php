@@ -6,11 +6,12 @@ namespace App\Entity\BookingBlocker;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Vendor\Vendor;
+use App\Repository\BookingBlocker\BookingBlockerRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: BookingBlockerRepository::class)]
 #[ORM\Table(name: 'booking_blocker')]
 #[ORM\HasLifecycleCallbacks]
 class BookingBlocker
