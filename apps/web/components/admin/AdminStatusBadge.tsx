@@ -1,9 +1,9 @@
 import type { AdminVendorStatus } from '@/lib/admin-types'
 
 const STATUS_STYLES: Record<AdminVendorStatus, string> = {
-  under_review: 'border-[#d9b16f] bg-[#fff5df] text-[#7a5317]',
-  active: 'border-[#8dc9aa] bg-[#edf9f2] text-[#286342]',
-  rejected: 'border-[#df9b9b] bg-[#fff0f0] text-[#8a2f2f]',
+  under_review: 'border-dore/45 bg-dore/15 text-accent',
+  active: 'border-bordeaux/15 bg-bordeaux/5 text-bordeaux',
+  rejected: 'border-highlight/25 bg-highlight/10 text-highlight',
 }
 
 export function AdminStatusBadge({

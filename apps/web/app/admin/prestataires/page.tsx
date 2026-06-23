@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import { AlertCircle, ClipboardList } from 'lucide-react'
 import { fetchAdminVendors } from '@/lib/admin'
-import type { AdminVendorFilter } from '@/lib/admin-types'
+import type { AdminVendorFilter, AdminVendorListItem, AdminVendorStatus } from '@/lib/admin-types'
 
+import { AdminRetryButton } from '@/components/admin/AdminRetryButton'
 import { AdminToast } from '@/components/admin/AdminToast'
 import { AdminVendorTable } from '@/components/admin/AdminVendorTable'
 
@@ -12,9 +14,30 @@ const FILTERS: Array<{ value: AdminVendorFilter; label: string }> = [
   { value: 'all', label: 'Tous' },
 ]
 
+type StatusCounts = Record<AdminVendorFilter, number>
+
 function resolveFilter(value?: string): AdminVendorFilter {
   if (value === 'active' || value === 'rejected' || value === 'all') return value
   return 'under_review'
+}
+
+function getFilterHref(filter: AdminVendorFilter): string {
+  return filter === 'under_review' ? '/admin/prestataires' : `/admin/prestataires?status=${filter}`
+}
+
+function getStatusCounts(items: AdminVendorListItem[], totalAll: number): StatusCounts {
+  const counts: StatusCounts = {
+    under_review: 0,
+    active: 0,
+    rejected: 0,
+    all: totalAll,
+  }
+
+  for (const item of items) {
+    counts[item.status as AdminVendorStatus] += 1
+  }
+
+  return counts
 }
 
 function EmptyState({ filter, totalAll }: { filter: AdminVendorFilter; totalAll: number }) {
@@ -31,9 +54,29 @@ function EmptyState({ filter, totalAll }: { filter: AdminVendorFilter; totalAll:
       : 'Change de filtre pour consulter les autres profils.'
 
   return (
-    <div className="rounded-lg border border-[#e3d7cb] bg-white px-6 py-12 text-center">
-      <h2 className="font-cormorant text-3xl font-semibold text-bordeaux">{title}</h2>
-      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-texte/65">{subtitle}</p>
+    <div className="flex min-h-[520px] flex-col items-center justify-center rounded-lg border border-bordeaux/10 bg-white px-6 py-16 text-center shadow-sm">
+      <ClipboardList size={78} strokeWidth={1.6} className="text-bordeaux/22" aria-hidden="true" />
+      <h2 className="mt-9 font-cormorant text-[28px] font-semibold leading-tight text-bordeaux/75 md:text-[32px]">
+        {title}
+      </h2>
+      <p className="mt-4 max-w-[520px] text-[16px] leading-7 text-gris">{subtitle}</p>
+    </div>
+  )
+}
+
+function ErrorState() {
+  return (
+    <div className="flex min-h-[420px] flex-col items-center justify-center rounded-lg border border-bordeaux/10 bg-white px-6 py-14 text-center shadow-sm">
+      <AlertCircle size={56} strokeWidth={1.7} className="text-highlight" aria-hidden="true" />
+      <h2 className="mt-6 font-cormorant text-[30px] font-semibold leading-tight text-bordeaux">
+        Chargement impossible
+      </h2>
+      <p className="mt-3 max-w-[520px] text-sm leading-6 text-gris">
+        La liste des profils prestataires n&apos;a pas pu être chargée.
+      </p>
+      <div className="mt-7">
+        <AdminRetryButton />
+      </div>
     </div>
   )
 }
@@ -45,42 +88,60 @@ export default async function AdminVendorsPage({
 }) {
   const params = await searchParams
   const filter = resolveFilter(params.status)
-  const result = await fetchAdminVendors(filter)
+  const [result, allResult] = await Promise.all([
+    fetchAdminVendors(filter),
+    fetchAdminVendors('all'),
+  ])
+
+  const allItems = allResult.ok ? allResult.data.items : result.ok ? result.data.items : []
+  const totalAll = allResult.ok ? allResult.data.totalAll : result.ok ? result.data.totalAll : 0
+  const counts = getStatusCounts(allItems, totalAll)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-9">
       <AdminToast toast={params.toast} />
 
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-semibold text-texte/55">Espace admin</p>
-        <h1 className="font-cormorant text-4xl font-semibold text-bordeaux">Profils prestataires</h1>
-      </div>
+      <div className="flex flex-col gap-9">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:gap-5">
+          <h1 className="font-cormorant text-[42px] font-semibold leading-none text-bordeaux md:text-[48px]">
+            Profils prestataires
+          </h1>
+          <p className="pb-1 text-[17px] font-semibold text-gris">
+            {totalAll} {totalAll > 1 ? 'profils' : 'profil'} au total
+          </p>
+        </div>
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((item) => {
-          const active = item.value === filter
-          const href = item.value === 'under_review' ? '/admin/prestataires' : `/admin/prestataires?status=${item.value}`
+        <div className="border-b border-bordeaux/10">
+          <nav className="flex max-w-[650px] gap-3 overflow-x-auto md:gap-6" aria-label="Filtres prestataires">
+            {FILTERS.map((item) => {
+              const active = item.value === filter
 
-          return (
-            <Link
-              key={item.value}
-              href={href}
-              className={`rounded-md border px-4 py-2 text-sm font-semibold no-underline transition-colors ${
-                active
-                  ? 'border-bordeaux bg-bordeaux text-creme'
-                  : 'border-[#dfd2c6] bg-white text-texte/70 hover:text-texte'
-              }`}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
+              return (
+                <Link
+                  key={item.value}
+                  href={getFilterHref(item.value)}
+                  className={[
+                    'flex h-[56px] shrink-0 items-center gap-2 border-b-2 px-3 text-[16px] font-semibold no-underline transition-colors md:min-w-[120px] md:px-6',
+                    active
+                      ? 'border-highlight text-bordeaux'
+                      : 'border-transparent text-gris hover:text-bordeaux',
+                  ].join(' ')}
+                >
+                  <span>{item.label}</span>
+                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-bordeaux/7 px-2 text-sm font-bold text-gris">
+                    {counts[item.value]}
+                  </span>
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
       </div>
 
       {!result.ok ? (
-        <EmptyState filter={filter} totalAll={0} />
+        <ErrorState />
       ) : result.data.items.length === 0 ? (
-        <EmptyState filter={filter} totalAll={result.data.totalAll} />
+        <EmptyState filter={filter} totalAll={totalAll} />
       ) : (
         <AdminVendorTable items={result.data.items} />
       )}

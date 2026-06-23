@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import type {
+  AdminSession,
   AdminVendorFilter,
   AdminVendorListResponse,
   AdminVendorProfile,
@@ -43,8 +44,12 @@ async function parseResult<T>(response: Response | null): Promise<AdminFetchResu
 }
 
 export async function fetchAdminSession(): Promise<boolean> {
-  const response = await adminFetch('/api/v1/admin/me')
-  return response?.ok ?? false
+  return (await fetchCurrentAdmin()) !== null
+}
+
+export async function fetchCurrentAdmin(): Promise<AdminSession | null> {
+  const result = await parseResult<AdminSession>(await adminFetch('/api/v1/admin/me'))
+  return result.ok ? result.data : null
 }
 
 export async function fetchAdminVendors(

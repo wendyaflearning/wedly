@@ -1,6 +1,13 @@
 export type AdminVendorStatus = 'under_review' | 'active' | 'rejected'
 export type AdminVendorFilter = AdminVendorStatus | 'all'
 
+export type AdminSession = {
+  email: string
+  firstName: string
+  lastName: string | null
+  roles: string[]
+}
+
 export type RejectionReasonKey =
   | 'portfolio_quality'
   | 'legal_incomplete'
