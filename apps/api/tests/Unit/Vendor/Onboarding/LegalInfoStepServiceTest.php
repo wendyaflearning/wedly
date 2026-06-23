@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Vendor\Onboarding;
 
 use App\Entity\Vendor\Vendor;
+use App\Handler\Vendor\Onboarding\LegalInfoStepHandler;
 use App\Integration\Pappers\PappersService;
 use App\Vendor\Onboarding\Service\LegalInfoStepService;
 use PHPUnit\Framework\MockObject\Stub;
@@ -34,9 +35,9 @@ final class LegalInfoStepServiceTest extends TestCase
         $this->validator->method('validate')->willReturn(new ConstraintViolationList());
     }
 
-    private function makeService(PappersService $pappers, ?LoggerInterface $logger = null): LegalInfoStepService
+    private function makeService(PappersService $pappers, ?LoggerInterface $logger = null): LegalInfoStepHandler
     {
-        return new LegalInfoStepService(
+        return new LegalInfoStepHandler(
             $pappers,
             $logger ?? $this->createStub(LoggerInterface::class),
             $this->validator
