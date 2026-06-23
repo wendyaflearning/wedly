@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Service;
+
+use App\Entity\Vendor\PortfolioImage;
+use App\Entity\Vendor\Vendor;
+use App\Repository\Vendor\PortfolioImageRepository;
+use Cloudinary\Cloudinary;
+use Doctrine\ORM\EntityManagerInterface;
+use DomainException;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+
+final class PortfolioService
+{
+    public function __construct(
+        private readonly Cloudinary $cloudinary,
+        private readonly EntityManagerInterface $em,
+        private readonly PortfolioImageRepository $portfolioImageRepository,
+        private readonly LoggerInterface $logger,
+    ) {}
+
+    public function uploadPhoto(Vendor $vendor, UploadedFile $file): PortfolioImage
+    {
+        $result = $this->cloudinaryUpload($file->getPathname(), (string) $vendor->getId());
+
+        $image = (new PortfolioImage())
+            ->setVendor($vendor)
+            ->setUrl($result['secure_url'])
+            ->setCloudinaryPublicId($result['public_id'])
+            ->setIsCover(false)
+            ->setSortOrder(0);
+
+        $this->em->persist($image);
+
+        return $image;
+    }
+
+    public function deletePhoto(PortfolioImage $image): void
+    {
+        $publicId = $image->getCloudinaryPublicId();
+
+        $this->em->remove($image);
+
+        if ($publicId !== null) {
+            try {
+                $this->cloudinary->uploadApi()->destroy($publicId);
+            } catch (\Throwable $e) {
+                $this->logger->warning('Cloudinary destroy failed', [
+                    'public_id' => $publicId,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    public function setCover(PortfolioImage $image, Vendor $vendor): void
+    {
+        foreach ($this->portfolioImageRepository->findByVendor($vendor) as $img) {
+            $img->setIsCover(false);
+        }
+
+        $image->setIsCover(true);
+    }
+
+    private function cloudinaryUpload(string $filePath, string $vendorId): array
+    {
+        try {
+            return (array) $this->cloudinary->uploadApi()->upload($filePath, [
+                'folder' => 'wedly/vendors/' . $vendorId,
+            ]);
+        } catch (\Throwable $e) {
+            throw new DomainException(
+                sprintf('Échec de l\'upload Cloudinary : %s', $e->getMessage()),
+                500,
+                $e,
+            );
+        }
+    }
+}
