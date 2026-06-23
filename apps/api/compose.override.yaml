@@ -3,7 +3,7 @@ services:
     ports:
       - "5432:5432"
 
-###> symfony/mailer ###
+  ###> symfony/mailer ###
   mailer:
     image: axllent/mailpit
     ports:
