@@ -13,7 +13,7 @@ export async function DELETE(
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/availability/${blockerId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/booking-blockers/${blockerId}`,
       {
         method: 'DELETE',
         headers: { Cookie: `jwt_token=${token.value}` },

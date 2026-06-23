@@ -8,7 +8,7 @@ export async function GET() {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/availability`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/booking-blockers`,
       {
         headers: { Cookie: `jwt_token=${token.value}` },
         cache: 'no-store',
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/availability`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/booking-blockers`,
       {
         method: 'POST',
         headers: {

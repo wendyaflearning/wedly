@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Vendor\Availability;
+namespace App\Controller\Vendor\BookingBlocker;
 
 use App\Entity\User\User;
 use App\Service\BookingBlocker\BookingBlockerService;
@@ -15,8 +15,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
-#[Route('/api/v1/vendors/availability/{blockerId}', name: 'api_vendor_availability_delete', methods: ['DELETE'])]
-final class DeleteVendorAvailabilityAction extends AbstractController
+#[Route('/api/v1/vendors/booking-blockers/{blockerId}', name: 'api_vendor_booking_blocker_delete', methods: ['DELETE'])]
+final class DeleteVendorBookingBlockerAction extends AbstractController
 {
     public function __construct(
         private readonly Security $security,
