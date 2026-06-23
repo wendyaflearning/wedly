@@ -65,7 +65,8 @@ class VendorRepository extends ServiceEntityRepository
             ->leftJoin('vendor.user', 'user')
             ->leftJoin('vendor.services', 'service')
             ->addSelect('service')
-            ->orderBy('COALESCE(vendor.submittedForReviewAt, vendor.updatedAt)', 'DESC');
+            ->orderBy('vendor.submittedForReviewAt', 'DESC')
+            ->addOrderBy('vendor.updatedAt', 'DESC');
 
         if ($status !== null) {
             $qb->andWhere('vendor.status = :status')
