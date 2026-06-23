@@ -15,7 +15,7 @@ const STEPS = [
     icon: <CalendarIcon />,
     title: 'Renseignez vos disponibilités',
     description: 'Bloquez les dates déjà prises, ouvrez celles à venir.',
-    href: '/profil',
+    href: '/dashboard/availability',
   },
   {
     number: '02',
