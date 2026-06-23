@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Vendor\Availability;
+namespace App\Controller\Vendor\BookingBlocker;
 
 use App\DTO\BookingBlocker\BookingBlockerRequestDto;
 use App\DTO\BookingBlocker\BookingBlockerResponseDto;
@@ -17,8 +17,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
-#[Route('/api/v1/vendors/availability', name: 'api_vendor_availability_create', methods: ['POST'])]
-final class PostVendorAvailabilityAction extends AbstractController
+#[Route('/api/v1/vendors/booking-blockers', name: 'api_vendor_booking_blocker_create', methods: ['POST'])]
+final class PostVendorBookingBlockerAction extends AbstractController
 {
     public function __construct(
         private readonly Security $security,

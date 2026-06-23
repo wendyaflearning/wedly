@@ -87,6 +87,7 @@ export default function AvailabilityCalendar({
   const [pendingRemoveIds, setPendingRemoveIds] = useState<Set<string>>(new Set())
   const [activeMonthIndex, setActiveMonthIndex] = useState(0)
   const [savingMode, setSavingMode] = useState<'save' | 'continue' | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const confirmedDates = useMemo(() => {
     const activeBlockers = blockers.filter((b) => !pendingRemoveIds.has(b.id))
@@ -129,11 +130,12 @@ export default function AvailabilityCalendar({
   async function handleSave(mode: 'save' | 'continue') {
     if (isSaving) return
     setSavingMode(mode)
+    setSaveError(null)
 
     try {
       if (hasChanges) {
         const addPromises = Array.from(pendingAdd).map((dateStr) =>
-          fetch('/api/availability', {
+          fetch('/api/booking-blockers', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date_start: dateStr, date_end: dateStr }),
@@ -141,12 +143,16 @@ export default function AvailabilityCalendar({
         )
 
         const removePromises = Array.from(pendingRemoveIds).map((blockerId) =>
-          fetch(`/api/availability/${blockerId}`, { method: 'DELETE' })
+          fetch(`/api/booking-blockers/${blockerId}`, { method: 'DELETE' })
         )
 
-        await Promise.all([...addPromises, ...removePromises])
+        const responses = await Promise.all([...addPromises, ...removePromises])
+        if (responses.some((res) => !res.ok)) {
+          setSaveError('Une erreur est survenue. Vos modifications ne sont pas enregistrées.')
+          return
+        }
 
-        const res = await fetch('/api/availability')
+        const res = await fetch('/api/booking-blockers')
         if (res.ok) {
           const newBlockers: BookingBlocker[] = await res.json()
           setBlockers(newBlockers)
@@ -324,7 +330,15 @@ export default function AvailabilityCalendar({
             >
               {savingMode === 'continue' ? 'Enregistrement…' : 'Continuer · Étape 04 →'}
             </button>
-            {hasChanges && (
+            {saveError && (
+              <p
+                className="text-center text-[11px] text-red-600"
+                style={{ fontFamily: 'var(--font-manrope-var)' }}
+              >
+                {saveError}
+              </p>
+            )}
+            {hasChanges && !saveError && (
               <p
                 className="text-center text-[11px] text-gris"
                 style={{ fontFamily: 'var(--font-manrope-var)' }}
@@ -337,12 +351,14 @@ export default function AvailabilityCalendar({
           {/* ── Desktop footer ─────────────────────────────────────────── */}
           <div className="hidden md:flex items-center justify-between mt-8 pt-5 border-t border-bordeaux/[0.08]">
             <div className="flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasChanges ? 'bg-accent' : 'bg-gris/40'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${saveError ? 'bg-red-500' : hasChanges ? 'bg-accent' : 'bg-gris/40'}`} />
               <span
-                className="text-[10px] tracking-[0.16em] uppercase text-gris"
+                className={`text-[10px] tracking-[0.16em] uppercase ${saveError ? 'text-red-600' : 'text-gris'}`}
                 style={{ fontFamily: 'var(--font-manrope-var)' }}
               >
-                {hasChanges
+                {saveError
+                  ? saveError
+                  : hasChanges
                   ? `${pendingCount} modification${pendingCount > 1 ? 's' : ''} non enregistrée${pendingCount > 1 ? 's' : ''}`
                   : 'Disponibilités à jour'}
               </span>
@@ -384,7 +400,7 @@ export default function AvailabilityCalendar({
               className="text-texte text-[15px] leading-relaxed mb-4 italic font-light"
               style={{ fontFamily: 'var(--font-cormorant-var)' }}
             >
-              Cliquez sur un jour pour signaler qu'il est{' '}
+              Cliquez sur un jour pour signaler qu&apos;il est{' '}
               <em style={{ color: 'var(--color-accent)' }}>déjà pris</em>{' '}
               — vous pouvez revenir dessus à tout moment.
             </p>
