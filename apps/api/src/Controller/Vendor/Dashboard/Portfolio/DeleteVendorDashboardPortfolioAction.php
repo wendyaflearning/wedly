@@ -22,7 +22,7 @@ final class DeleteVendorDashboardPortfolioAction extends AbstractController
 {
     public function __construct(
         private readonly Security                  $security,
-        private readonly VendorOwnershipResolver   $vendorOwnershipResolver,
+        private readonly VendorOwnershipResolver  $vendorOwnershipResolver,
         private readonly PortfolioImageRepository  $portfolioImageRepository,
         private readonly PortfolioService          $portfolioService,
         private readonly EntityManagerInterface    $em,
