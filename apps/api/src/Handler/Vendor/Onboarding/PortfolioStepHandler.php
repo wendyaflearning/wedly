@@ -66,12 +66,15 @@ readonly class PortfolioStepHandler extends AbstractOnboardingStepHandler
             throw new DomainException('Une photo de couverture est requise.', 422);
         }
 
+        $oldCoverPublicId = null;
         if ($dto->coverPhoto !== null) {
+            $cover = $this->portfolioService->uploadPhoto($vendor, $dto->coverPhoto, 0);
+            $cover->setIsCover(true);
+
             if ($existingCover !== null) {
-                $this->portfolioService->deletePhoto($existingCover);
+                $oldCoverPublicId = $existingCover->getCloudinaryPublicId();
+                $this->em->remove($existingCover);
             }
-            $cover = $this->portfolioService->uploadPhoto($vendor, $dto->coverPhoto);
-            $cover->setIsCover(true)->setSortOrder(0);
         }
 
         $existingSecondaries = array_filter($oldImages, fn(PortfolioImage $image) => !$image->isCover());
@@ -80,11 +83,12 @@ readonly class PortfolioStepHandler extends AbstractOnboardingStepHandler
             : max(array_map(fn(PortfolioImage $image) => $image->getSortOrder(), $existingSecondaries));
 
         foreach ($dto->photos as $i => $photo) {
-            $img = $this->portfolioService->uploadPhoto($vendor, $photo);
-            $img->setSortOrder($maxOrder + $i + 1);
+            $this->portfolioService->uploadPhoto($vendor, $photo, $maxOrder + $i + 1);
         }
 
         $this->em->flush();
+
+        $this->portfolioService->destroyCloudinaryAsset($oldCoverPublicId);
 
         $persistedImages = $this->portfolioImageRepository->findByVendor($vendor);
         $hasCover        = !empty(array_filter($persistedImages, fn(PortfolioImage $image) => $image->isCover()));

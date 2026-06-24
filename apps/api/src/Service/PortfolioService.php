@@ -13,7 +13,7 @@ use DomainException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-final class PortfolioService
+class PortfolioService
 {
     public function __construct(
         private readonly Cloudinary $cloudinary,
@@ -22,16 +22,18 @@ final class PortfolioService
         private readonly LoggerInterface $logger,
     ) {}
 
-    public function uploadPhoto(Vendor $vendor, UploadedFile $file): PortfolioImage
+    public function uploadPhoto(Vendor $vendor, UploadedFile $file, ?int $sortOrder = null): PortfolioImage
     {
         $result = $this->cloudinaryUpload($file->getPathname(), (string) $vendor->getId());
+
+        $resolvedSortOrder = $sortOrder ?? count($this->portfolioImageRepository->findByVendor($vendor));
 
         $image = (new PortfolioImage())
             ->setVendor($vendor)
             ->setUrl($result['secure_url'])
             ->setCloudinaryPublicId($result['public_id'])
             ->setIsCover(false)
-            ->setSortOrder(0);
+            ->setSortOrder($resolvedSortOrder);
 
         $this->em->persist($image);
 
@@ -41,18 +43,23 @@ final class PortfolioService
     public function deletePhoto(PortfolioImage $image): void
     {
         $publicId = $image->getCloudinaryPublicId();
-
         $this->em->remove($image);
+        $this->destroyCloudinaryAsset($publicId);
+    }
 
-        if ($publicId !== null) {
-            try {
-                $this->cloudinary->uploadApi()->destroy($publicId);
-            } catch (\Throwable $e) {
-                $this->logger->warning('Cloudinary destroy failed', [
-                    'public_id' => $publicId,
-                    'error'     => $e->getMessage(),
-                ]);
-            }
+    public function destroyCloudinaryAsset(?string $publicId): void
+    {
+        if ($publicId === null) {
+            return;
+        }
+
+        try {
+            $this->cloudinary->uploadApi()->destroy($publicId);
+        } catch (\Throwable $e) {
+            $this->logger->warning('Cloudinary destroy failed', [
+                'public_id' => $publicId,
+                'error'     => $e->getMessage(),
+            ]);
         }
     }
 
