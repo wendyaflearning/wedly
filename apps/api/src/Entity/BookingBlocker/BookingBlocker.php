@@ -6,11 +6,12 @@ namespace App\Entity\BookingBlocker;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Vendor\Vendor;
+use App\Repository\BookingBlocker\BookingBlockerRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: BookingBlockerRepository::class)]
 #[ORM\Table(name: 'booking_blocker')]
 #[ORM\HasLifecycleCallbacks]
 class BookingBlocker
@@ -27,10 +28,10 @@ class BookingBlocker
     #[ORM\JoinColumn(name: 'vendor_id', referencedColumnName: 'id', nullable: false)]
     private Vendor $vendor;
 
-    #[ORM\Column(name: 'start_date', type: 'date')]
+    #[ORM\Column(name: 'start_date', type: 'date_immutable')]
     private \DateTimeImmutable $startDate;
 
-    #[ORM\Column(name: 'end_date', type: 'date')]
+    #[ORM\Column(name: 'end_date', type: 'date_immutable')]
     private \DateTimeImmutable $endDate;
 
     #[ORM\Column(name: 'reason', length: 255, nullable: true)]

@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 
 export type VendorDashboard = {
+  id: string
   firstName: string
   lastName?: string
   email?: string
