@@ -29,7 +29,7 @@ const STEPS = [
     icon: <DocumentIcon />,
     title: 'Complétez votre bio',
     description: 'Quelques lignes sur votre approche et votre univers.',
-    href: null,
+    href: '/profil',
   },
   {
     number: '04',

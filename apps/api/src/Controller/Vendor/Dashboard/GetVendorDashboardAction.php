@@ -45,6 +45,7 @@ final class GetVendorDashboardAction extends AbstractController
             $user->getEmail(),
             $vendor->getCreatedAt(),
             $steps,
+            $vendor->getBio(),
         ));
     }
 }

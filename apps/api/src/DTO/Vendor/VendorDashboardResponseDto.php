@@ -12,14 +12,15 @@ final readonly class VendorDashboardResponseDto
     public string $email;
     public string $createdAt;
     public array $steps;
+    public ?string $bio;
 
-    public function __construct(string $firstName, ?string $lastname, string $email, \DateTimeImmutable $createdAt, array $steps)
+    public function __construct(string $firstName, ?string $lastname, string $email, \DateTimeImmutable $createdAt, array $steps, ?string $bio = null)
     {
         $this->firstName = $firstName;
         $this->lastname =  $lastname;
         $this->email =     $email;
         $this->createdAt = $createdAt->format(\DateTimeInterface::ATOM);
         $this->steps     = $steps;
-
+        $this->bio       = $bio;
     }
 }
