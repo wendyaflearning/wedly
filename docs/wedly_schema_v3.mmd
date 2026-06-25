@@ -60,7 +60,7 @@ erDiagram
         string phone
         string legal_name
         string legal_form
-        date incorporated_at
+        date_immutable incorporated_at
         string legal_status
         boolean siret_verified
         string price_type
@@ -170,8 +170,8 @@ erDiagram
     BOOKING_BLOCKER {
         uuid id
         uuid vendor_id
-        date start_date
-        date end_date
+        date_immutable start_date
+        date_immutable end_date
         string reason
         datetime created_at
         datetime updated_at
@@ -203,7 +203,7 @@ erDiagram
         string stripe_id
         string status
         int amount_paid_cents
-        datetime expires_at
+        datetime_immutable expires_at
         datetime created_at
         datetime updated_at
     }
@@ -217,7 +217,7 @@ erDiagram
         uuid user_id
         uuid vendor_id
         uuid couple_id
-        datetime expires_at
+        datetime_immutable expires_at
         datetime created_at
         datetime updated_at
     }
@@ -226,7 +226,7 @@ erDiagram
         uuid id
         string token
         string status
-        datetime expires_at
+        datetime_immutable expires_at
         uuid user_id
         datetime created_at
         datetime updated_at
