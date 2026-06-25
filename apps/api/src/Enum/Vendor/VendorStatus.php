@@ -9,4 +9,5 @@ enum VendorStatus: string
     case Pending     = 'pending';
     case UnderReview = 'under_review';
     case Active      = 'active';
+    case Rejected    = 'rejected';
 }
