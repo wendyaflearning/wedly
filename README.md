@@ -108,6 +108,25 @@ cd apps/api
 php bin/phpunit
 ```
 
+## 5. Hooks Git locaux optionnels
+
+Le dépôt fournit un hook `pre-push` non bloquant dans `.githooks/pre-push`.
+Il avertit lors du premier push d'une branche si le mapping Doctrine a changé
+sans mise à jour visible du schema Mermaid.
+
+Activation locale :
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Le hook ne bloque jamais le push. En cas d'avertissement, régénérer le schema :
+
+```bash
+cd apps/api
+composer docs:schema
+```
+
 ## Technologies utilisées
 
 ## Frontend

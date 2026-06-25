@@ -1,44 +1,43 @@
 # Wedly Schema Preview
 
-Open this file in Zed and use the Markdown preview.
+Generated from Doctrine mapping.
+
+Run this command after entity mapping changes:
+
+```bash
+cd apps/api && composer docs:schema
+```
 
 ```mermaid
 erDiagram
-    USER ||--o| VENDOR : manages
-    USER ||--o| COUPLE : owns
-    COUPLE ||--|| WEDDING : plans
-
-    VENDOR }o--o{ SERVICE : offers
-    VENDOR }o--o{ "STYLE" : masters
-    VENDOR }o--o{ CULTURE : knows
-    VENDOR }o--o{ CONFESSION : serves
-    VENDOR }o--o{ REGION : covers
-
-    WEDDING }o--o{ "STYLE" : aesthetic
+    USER ||--o| VENDOR : user
+    VENDOR }o--o{ SERVICE : services
+    VENDOR }o--o{ "STYLE" : styles
+    VENDOR }o--o{ CULTURE : cultures
+    VENDOR }o--o{ CONFESSION : confessions
+    VENDOR }o--o{ REGION : regions
+    USER ||--o| COUPLE : user
+    WEDDING ||--o| COUPLE : wedding
+    WEDDING }o--o{ "STYLE" : styles
     WEDDING }o--o{ CULTURE : cultures
     WEDDING }o--o{ CONFESSION : confessions
-
-    PORTFOLIO_IMAGE }o--o{ "STYLE" : tags
-    VENDOR ||--o{ PORTFOLIO_IMAGE : portfolio
-    VENDOR ||--o{ BOOKING_BLOCKER : unavailable
-    VENDOR ||--o{ OFFER : offers_list
-
-    COUPLE ||--o{ SUBSCRIPTION : subscriptions
-    SUBSCRIPTION }o--|| PLAN : plan
-
-    USER ||--o{ INVITE_TOKEN : invite_subject
-    USER ||--o{ PASSWORD_RESET_TOKEN : reset_tokens
-    USER ||--o{ INVITE_TOKEN : invite_creator
-    VENDOR ||--o{ INVITE_TOKEN : vendor_invites
-    COUPLE ||--o{ INVITE_TOKEN : couple_invites
-
-    VENDOR ||--o| VENDOR_VENUE_DETAILS : venue_details
-    VENDOR ||--o| VENDOR_CATERING_DETAILS : catering_details
-    VENDOR ||--o| VENDOR_ANIMATION_DETAILS : animation_details
-    VENDOR ||--o| VENDOR_CREATOR_DETAILS : creator_details
-    VENDOR_CREATOR_DETAILS }o--o{ CREATOR_VALUE : values
-
-    SERVICE ||--o{ SERVICE : children
+    SERVICE ||--o{ SERVICE : parent
+    VENDOR ||--o{ OFFER : vendor
+    VENDOR ||--o{ PORTFOLIO_IMAGE : vendor
+    PORTFOLIO_IMAGE }o--o{ "STYLE" : styles
+    VENDOR ||--o{ BOOKING_BLOCKER : vendor
+    COUPLE ||--o{ SUBSCRIPTION : couple
+    PLAN ||--o{ SUBSCRIPTION : plan
+    USER ||--o{ INVITE_TOKEN : created_by
+    USER ||--o{ INVITE_TOKEN : user
+    VENDOR ||--o{ INVITE_TOKEN : vendor
+    COUPLE ||--o{ INVITE_TOKEN : couple
+    USER ||--o{ PASSWORD_RESET_TOKEN : user
+    VENDOR ||--o| VENDOR_VENUE_DETAILS : vendor
+    VENDOR ||--o| VENDOR_CATERING_DETAILS : vendor
+    VENDOR ||--o| VENDOR_ANIMATION_DETAILS : vendor
+    VENDOR ||--o| VENDOR_CREATOR_DETAILS : vendor
+    VENDOR_CREATOR_DETAILS }o--o{ CREATOR_VALUE : creator_values
 
     USER {
         uuid id
@@ -48,8 +47,8 @@ erDiagram
         string first_name
         string last_name
         string status
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     VENDOR {
@@ -74,8 +73,8 @@ erDiagram
         string onboarding_step
         text bio
         boolean is_published
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     COUPLE {
@@ -83,8 +82,8 @@ erDiagram
         uuid user_id
         uuid wedding_id
         string status
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     WEDDING {
@@ -96,8 +95,8 @@ erDiagram
         int guest_count
         string ambiance
         string ceremony_type
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     "STYLE" {
@@ -106,8 +105,8 @@ erDiagram
         string slug
         text description
         string cover_image_url
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     CULTURE {
@@ -115,35 +114,35 @@ erDiagram
         string name
         string slug
         string type
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     CONFESSION {
         uuid id
         string name
         string slug
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     REGION {
         uuid id
         string name
         string slug
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     SERVICE {
         uuid id
+        uuid parent_id
         string name
         string slug
         int sort_order
         string category
-        uuid parent_id
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     OFFER {
@@ -152,8 +151,8 @@ erDiagram
         string name
         text description
         int price_cents
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     PORTFOLIO_IMAGE {
@@ -163,8 +162,8 @@ erDiagram
         int sort_order
         string cloudinary_public_id
         boolean is_cover
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     BOOKING_BLOCKER {
@@ -173,8 +172,8 @@ erDiagram
         date_immutable start_date
         date_immutable end_date
         string reason
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     PLAN {
@@ -183,8 +182,8 @@ erDiagram
         int price_cents
         int service_count
         boolean is_active
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     SUBSCRIPTION {
@@ -195,32 +194,32 @@ erDiagram
         string status
         int amount_paid_cents
         datetime_immutable expires_at
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     INVITE_TOKEN {
         uuid id
-        string token
-        string persona
-        string status
         uuid created_by_id
         uuid user_id
         uuid vendor_id
         uuid couple_id
+        string token
+        string persona
+        string status
         datetime_immutable expires_at
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     PASSWORD_RESET_TOKEN {
         uuid id
+        uuid user_id
         string token
         string status
         datetime_immutable expires_at
-        uuid user_id
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     VENDOR_VENUE_DETAILS {
@@ -237,8 +236,8 @@ erDiagram
         int distance_to_city_minutes
         string venue_type
         string nearest_city
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     VENDOR_CATERING_DETAILS {
@@ -255,16 +254,16 @@ erDiagram
         boolean provides_furniture
         int covers_min
         int covers_max
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     VENDOR_ANIMATION_DETAILS {
         uuid id
         uuid vendor_id
         text description
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     VENDOR_CREATOR_DETAILS {
@@ -275,15 +274,15 @@ erDiagram
         int annual_capacity
         int rdv_count
         int first_rdv_duration_minutes
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 
     CREATOR_VALUE {
         uuid id
         string name
         string slug
-        datetime created_at
-        datetime updated_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
     }
 ```
