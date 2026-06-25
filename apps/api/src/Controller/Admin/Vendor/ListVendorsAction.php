@@ -20,7 +20,7 @@ final readonly class ListVendorsAction
 
     public function __invoke(Request $request): JsonResponse
     {
-        $status = $this->resolveStatus($request->query->get('status', 'under_review'));
+        $status = VendorStatus::fromAdminFilter($request->query->get('status', VendorStatus::UnderReview->value));
         if ($status === false) {
             return new JsonResponse(['error' => 'Invalid status filter.'], 422);
         }
@@ -29,16 +29,5 @@ final readonly class ListVendorsAction
         $totalAll = $this->vendorRepository->countAdminReviewableVendors();
 
         return new JsonResponse(new AdminVendorListResponseDto($vendors, $totalAll));
-    }
-
-    private function resolveStatus(?string $status): VendorStatus|false|null
-    {
-        return match ($status) {
-            'under_review' => VendorStatus::UnderReview,
-            'active'       => VendorStatus::Active,
-            'rejected'     => VendorStatus::Rejected,
-            'all'          => null,
-            default        => false,
-        };
     }
 }

@@ -10,6 +10,13 @@ type AdminFetchResult<T> =
   | { ok: true; data: T }
   | { ok: false; status: number; message: string }
 
+type AdminSessionResponse = {
+  email: string
+  first_name: string
+  last_name: string | null
+  roles: string[]
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 async function adminFetch(path: string, init?: RequestInit): Promise<Response | null> {
@@ -48,8 +55,15 @@ export async function fetchAdminSession(): Promise<boolean> {
 }
 
 export async function fetchCurrentAdmin(): Promise<AdminSession | null> {
-  const result = await parseResult<AdminSession>(await adminFetch('/api/v1/admin/me'))
-  return result.ok ? result.data : null
+  const result = await parseResult<AdminSessionResponse>(await adminFetch('/api/v1/admin/me'))
+  if (!result.ok) return null
+
+  return {
+    email: result.data.email,
+    firstName: result.data.first_name,
+    lastName: result.data.last_name,
+    roles: result.data.roles,
+  }
 }
 
 export async function fetchAdminVendors(

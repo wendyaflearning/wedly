@@ -17,12 +17,6 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class VendorRepository extends ServiceEntityRepository
 {
-    private const ADMIN_REVIEW_STATUSES = [
-        'under_review',
-        'active',
-        'rejected',
-    ];
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Vendor::class);
@@ -73,7 +67,7 @@ class VendorRepository extends ServiceEntityRepository
                 ->setParameter('status', $status->value);
         } else {
             $qb->andWhere('vendor.status IN (:statuses)')
-                ->setParameter('statuses', self::ADMIN_REVIEW_STATUSES);
+                ->setParameter('statuses', VendorStatus::adminReviewValues());
         }
 
         return $qb->getQuery()->getResult();
@@ -84,7 +78,7 @@ class VendorRepository extends ServiceEntityRepository
         return (int) $this->createQueryBuilder('vendor')
             ->select('COUNT(vendor.id)')
             ->andWhere('vendor.status IN (:statuses)')
-            ->setParameter('statuses', self::ADMIN_REVIEW_STATUSES)
+            ->setParameter('statuses', VendorStatus::adminReviewValues())
             ->getQuery()
             ->getSingleScalarResult();
     }

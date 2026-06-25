@@ -8,7 +8,7 @@ use App\DTO\Admin\Vendor\RejectVendorRequestDto;
 use App\Repository\Vendor\VendorRepository;
 use App\Service\Vendor\AdminVendorReviewService;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -21,7 +21,7 @@ final readonly class RejectVendorAction
         private AdminVendorReviewService $reviewService,
     ) {}
 
-    public function __invoke(string $id, Request $request): JsonResponse
+    public function __invoke(string $id, #[MapRequestPayload] RejectVendorRequestDto $dto): JsonResponse
     {
         $vendor = $this->vendorRepository->find($id);
 
@@ -30,7 +30,6 @@ final readonly class RejectVendorAction
         }
 
         try {
-            $dto = RejectVendorRequestDto::fromArray(json_decode($request->getContent(), true) ?? []);
             $this->reviewService->reject($vendor, $dto->reasons, $dto->note);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());

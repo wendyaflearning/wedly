@@ -24,10 +24,10 @@ final readonly class GetCurrentAdminAction
         }
 
         return new JsonResponse([
-            'email'     => $user->getEmail(),
-            'firstName' => $user->getFirstName(),
-            'lastName'  => $user->getLastName(),
-            'roles'     => $user->getRoles(),
+            'email'      => $user->getEmail(),
+            'first_name' => $user->getFirstName(),
+            'last_name'  => $user->getLastName(),
+            'roles'      => $user->getRoles(),
         ]);
     }
 }

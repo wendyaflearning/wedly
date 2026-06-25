@@ -45,10 +45,12 @@ final readonly class AdminVendorReviewService
         $this->em->flush();
     }
 
-    /** @param VendorRejectionReason[] $reasons */
-    public function reject(Vendor $vendor, array $reasons, ?string $note): void
+    /** @param string[] $reasonValues */
+    public function reject(Vendor $vendor, array $reasonValues, ?string $note): void
     {
         $alreadyRejected = $vendor->getStatus() === VendorStatus::Rejected;
+        $reasons         = $this->resolveRejectionReasons($reasonValues);
+        $note            = $this->normalizeRejectionNote($note, $reasons);
 
         $vendor->setStatus(VendorStatus::Rejected);
         $vendor->setIsPublished(false);
@@ -67,5 +69,44 @@ final readonly class AdminVendorReviewService
         }
 
         $this->em->flush();
+    }
+
+    /** @param string[] $reasonValues @return VendorRejectionReason[] */
+    private function resolveRejectionReasons(array $reasonValues): array
+    {
+        if ($reasonValues === []) {
+            throw new \DomainException('At least one rejection reason is required.', 422);
+        }
+
+        $reasons = [];
+        foreach ($reasonValues as $reasonValue) {
+            if (!is_string($reasonValue)) {
+                throw new \DomainException('Invalid rejection reason.', 422);
+            }
+
+            $reason = VendorRejectionReason::tryFrom($reasonValue);
+            if ($reason === null) {
+                throw new \DomainException(sprintf('Unknown rejection reason: %s.', $reasonValue), 422);
+            }
+
+            $reasons[] = $reason;
+        }
+
+        return $reasons;
+    }
+
+    /** @param VendorRejectionReason[] $reasons */
+    private function normalizeRejectionNote(?string $note, array $reasons): ?string
+    {
+        $note = $note !== null ? trim($note) : null;
+        if ($note === '') {
+            $note = null;
+        }
+
+        if (!in_array(VendorRejectionReason::Other, $reasons, true) && $note !== null) {
+            throw new \DomainException('A note can only be provided with the "other" reason.', 422);
+        }
+
+        return $note;
     }
 }
