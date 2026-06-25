@@ -41,8 +41,9 @@ readonly class DeleteVendorOnboardingPortfolioAction
                 return new JsonResponse(['error' => 'Image introuvable.'], 404);
             }
 
-            $this->portfolioService->deletePhoto($image);
+            $publicId = $this->portfolioService->deletePhoto($image);
             $this->em->flush();
+            $this->portfolioService->destroyCloudinaryAsset($publicId);
 
             return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         } catch (\DomainException $e) {

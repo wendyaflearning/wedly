@@ -71,26 +71,26 @@ final class PortfolioServiceTest extends TestCase
         $this->assertFalse($image->isCover());
     }
 
-    public function test_uploadPhoto_auto_computes_sort_order_from_existing_image_count(): void
+    public function test_uploadPhoto_auto_computes_sort_order_as_max_plus_one_to_handle_gaps(): void
     {
         $vendor    = $this->createStub(Vendor::class);
         $uploadApi = $this->createStub(UploadApi::class);
         $uploadApi->method('upload')->willReturn($this->makeCloudinaryResponse());
         $this->repository->method('findByVendor')->willReturn([
-            new PortfolioImage(),
-            new PortfolioImage(),
-            new PortfolioImage(),
+            (new PortfolioImage())->setSortOrder(0)->setUrl('https://example.com/1.jpg'),
+            (new PortfolioImage())->setSortOrder(1)->setUrl('https://example.com/2.jpg'),
+            (new PortfolioImage())->setSortOrder(4)->setUrl('https://example.com/3.jpg'),
         ]);
 
         $image = $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $uploadApi)
             ->uploadPhoto($vendor, $this->makeFile());
 
-        $this->assertSame(3, $image->getSortOrder());
+        $this->assertSame(5, $image->getSortOrder());
     }
 
     // --- deletePhoto() ---
 
-    public function test_deletePhoto_queues_db_removal_and_destroys_cloudinary_asset(): void
+    public function test_deletePhoto_queues_db_removal_and_returns_public_id(): void
     {
         $em        = $this->createMock(EntityManagerInterface::class);
         $uploadApi = $this->createMock(UploadApi::class);
@@ -100,12 +100,14 @@ final class PortfolioServiceTest extends TestCase
             ->setSortOrder(1);
 
         $em->expects($this->once())->method('remove')->with($image);
-        $uploadApi->expects($this->once())->method('destroy')->with('wedly/vendors/abc/img1');
+        $uploadApi->expects($this->never())->method('destroy');
 
-        $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)->deletePhoto($image);
+        $publicId = $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)->deletePhoto($image);
+
+        $this->assertSame('wedly/vendors/abc/img1', $publicId);
     }
 
-    public function test_deletePhoto_skips_cloudinary_when_public_id_is_null(): void
+    public function test_deletePhoto_queues_db_removal_and_returns_null_when_no_public_id(): void
     {
         $em        = $this->createMock(EntityManagerInterface::class);
         $uploadApi = $this->createMock(UploadApi::class);
@@ -116,7 +118,9 @@ final class PortfolioServiceTest extends TestCase
         $em->expects($this->once())->method('remove')->with($image);
         $uploadApi->expects($this->never())->method('destroy');
 
-        $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)->deletePhoto($image);
+        $publicId = $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)->deletePhoto($image);
+
+        $this->assertNull($publicId);
     }
 
     // --- destroyCloudinaryAsset() ---

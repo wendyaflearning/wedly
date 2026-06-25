@@ -48,8 +48,9 @@ final class DeleteVendorDashboardPortfolioAction extends AbstractController
                 return new JsonResponse(['error' => 'Image introuvable.'], 404);
             }
 
-            $this->portfolioService->deletePhoto($image);
+            $publicId = $this->portfolioService->deletePhoto($image);
             $this->em->flush();
+            $this->portfolioService->destroyCloudinaryAsset($publicId);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
         }

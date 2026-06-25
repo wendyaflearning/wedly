@@ -38,7 +38,8 @@ export default function PortfolioStep({ token, initialData, steps, currentStepKe
   const hook = usePortfolioUpload({
     uploadFn,
     deleteFn:   async (id) => {
-      await fetch(`/api/onboarding/${token}/portfolio/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/onboarding/${token}/portfolio/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur')
     },
     setCoverFn: async () => { /* non supporté en onboarding */ },
     initialPhotos: initialData?.images ?? [],

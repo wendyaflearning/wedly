@@ -26,7 +26,10 @@ class PortfolioService
     {
         $result = $this->cloudinaryUpload($file->getPathname(), (string) $vendor->getId());
 
-        $resolvedSortOrder = $sortOrder ?? count($this->portfolioImageRepository->findByVendor($vendor));
+        $images            = $this->portfolioImageRepository->findByVendor($vendor);
+        $resolvedSortOrder = $sortOrder ?? (
+            empty($images) ? 0 : max(array_map(fn(PortfolioImage $image) => $image->getSortOrder(), $images)) + 1
+        );
 
         $image = (new PortfolioImage())
             ->setVendor($vendor)
@@ -40,11 +43,12 @@ class PortfolioService
         return $image;
     }
 
-    public function deletePhoto(PortfolioImage $image): void
+    public function deletePhoto(PortfolioImage $image): ?string
     {
         $publicId = $image->getCloudinaryPublicId();
         $this->em->remove($image);
-        $this->destroyCloudinaryAsset($publicId);
+
+        return $publicId;
     }
 
     public function destroyCloudinaryAsset(?string $publicId): void
