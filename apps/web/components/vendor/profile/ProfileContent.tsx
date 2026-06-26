@@ -15,16 +15,17 @@ interface Steps {
 interface Props {
   firstName: string
   initialBio?: string | null
+  vendorServices: string[]
   steps: Steps
 }
 
-export function ProfileContent({ firstName, initialBio, steps }: Props) {
+export function ProfileContent({ firstName, initialBio, vendorServices, steps }: Props) {
   const [liveBio, setLiveBio] = useState(initialBio ?? '')
 
   return (
     <div className="px-5 py-8 md:px-[72px] md:py-12 flex gap-10 xl:gap-14 items-start">
       <ProfileSideNav steps={steps} />
-      <BioSection initialBio={initialBio} onBioChange={setLiveBio} />
+      <BioSection initialBio={initialBio} vendorServices={vendorServices} onBioChange={setLiveBio} />
       <BioPreviewPanel firstName={firstName} bio={liveBio} />
     </div>
   )

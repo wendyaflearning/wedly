@@ -13,14 +13,16 @@ final readonly class VendorDashboardResponseDto
     public string $createdAt;
     public array $steps;
     public ?string $bio;
+    public array $vendor_services;
 
-    public function __construct(string $firstName, ?string $lastname, string $email, \DateTimeImmutable $createdAt, array $steps, ?string $bio = null)
+    public function __construct(string $firstName, ?string $lastname, string $email, \DateTimeImmutable $createdAt, array $steps, ?string $bio = null, array $vendor_services = [])
     {
-        $this->firstName = $firstName;
-        $this->lastname =  $lastname;
-        $this->email =     $email;
-        $this->createdAt = $createdAt->format(\DateTimeInterface::ATOM);
-        $this->steps     = $steps;
-        $this->bio       = $bio;
+        $this->firstName        = $firstName;
+        $this->lastname         = $lastname;
+        $this->email            = $email;
+        $this->createdAt        = $createdAt->format(\DateTimeInterface::ATOM);
+        $this->steps            = $steps;
+        $this->bio              = $bio;
+        $this->vendor_services  = $vendor_services;
     }
 }

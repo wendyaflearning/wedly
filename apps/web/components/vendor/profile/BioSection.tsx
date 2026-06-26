@@ -1,38 +1,36 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { getSuggestionsForVendorServices } from '@/lib/bio-suggestions'
 
 const MAX = 300
 const MIN = 50
 
-const SUGGESTIONS = [
+const BADGE_LABELS = [
   { num: '01', text: 'Décrivez votre style' },
-  { num: '02', text: 'Parlez du type de mariage qui vous fait vibrer' },
-  { num: '03', text: 'Ce qui vous rend unique dans votre métier' },
+  { num: '02', text: 'Parlez du mariage qui vous fait vibrer' },
+  { num: '03', text: 'Ce qui vous rend unique' },
 ]
 
 const RADIUS = 22
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
-function getSuggestion(chars: number) {
-  if (chars === 0) return null
-  if (chars <= 100) return { index: 0, label: '1 / 3' }
-  if (chars <= 200) return { index: 1, label: '2 / 3' }
-  return { index: 2, label: chars >= 250 ? '3 / 3 · presque terminé' : '3 / 3' }
-}
-
 interface Props {
   initialBio?: string | null
+  vendorServices: string[]
   onBioChange?: (bio: string) => void
 }
 
-export function BioSection({ initialBio, onBioChange }: Props) {
+export function BioSection({ initialBio, vendorServices, onBioChange }: Props) {
   const [bio, setBio] = useState(initialBio ?? '')
+  const [usedBadges, setUsedBadges] = useState<Set<number>>(new Set())
   const [isPending, startTransition] = useTransition()
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
+  const suggestions = getSuggestionsForVendorServices(vendorServices)
+  const suggestionTexts = [suggestions.style, suggestions.mariage, suggestions.unique]
+
   const chars = bio.length
-  const suggestion = getSuggestion(chars)
   const isOverLimit = chars > MAX
   const isNearLimit = chars >= 250 && !isOverLimit
   const isDisabled = chars < MIN || isOverLimit || isPending
@@ -44,6 +42,15 @@ export function BioSection({ initialBio, onBioChange }: Props) {
     const value = e.target.value
     setBio(value)
     onBioChange?.(value)
+  }
+
+  function handleBadgeClick(index: number) {
+    if (usedBadges.has(index)) return
+    const text = suggestionTexts[index]
+    const newBio = bio ? bio + ' ' + text : text
+    setBio(newBio)
+    onBioChange?.(newBio)
+    setUsedBadges((prev) => new Set([...prev, index]))
   }
 
   function showToast(type: 'success' | 'error', message: string) {
@@ -76,6 +83,8 @@ export function BioSection({ initialBio, onBioChange }: Props) {
     })
   }
 
+  const usedCount = usedBadges.size
+
   return (
     <div className="flex-1 min-w-0">
       {/* Toast */}
@@ -93,86 +102,107 @@ export function BioSection({ initialBio, onBioChange }: Props) {
         </div>
       )}
 
-      {/* Suggestion label */}
-      {suggestion ? (
-        <p className="font-manrope text-sm text-gris mb-4">
-          Suggestion {suggestion.label}
-        </p>
-      ) : (
-        <p className="font-cormorant italic text-xl text-bordeaux/40 mb-4">
-          Commencez à écrire...
-        </p>
-      )}
+      {/* Suggestion counter */}
+      <p className="font-manrope text-sm text-gris mb-4">
+        {usedCount} / 3 suggestion{usedCount !== 1 ? 's' : ''} utilisée{usedCount !== 1 ? 's' : ''}
+      </p>
 
-      {/* Card */}
-      <div className="bg-white rounded-2xl border border-bordeaux/[0.08] p-6 shadow-sm">
+      {/* Card — transparent on mobile, white on desktop */}
+      <div className="md:bg-white md:rounded-2xl md:border md:border-bordeaux/[0.08] md:p-6 md:shadow-sm space-y-2 md:space-y-0">
 
-        {/* Empty state header */}
-        {!suggestion && (
-          <div className="relative mb-5 overflow-hidden">
-            <p className="font-manrope text-[10px] font-semibold tracking-[0.16em] uppercase text-accent/70 mb-3">
-              Champ libre · 300 caractères
-            </p>
-            <p className="font-cormorant text-3xl text-bordeaux leading-tight">
-              Votre voix,{' '}
-              <span className="italic text-accent">au fil des mots.</span>
-            </p>
-            <p className="font-manrope text-sm text-gris mt-2 leading-relaxed">
-              Trois suggestions progressives apparaîtront pendant votre saisie.
-              Aucune contrainte, juste un fil conducteur.
-            </p>
-            {/* Decorative "300" watermark */}
+        {/* Badge 01 — prominent */}
+        <button
+          onClick={() => handleBadgeClick(0)}
+          disabled={usedBadges.has(0)}
+          className={[
+            'w-full flex items-center justify-between rounded-full px-4 py-2.5 md:mb-2 transition-all',
+            usedBadges.has(0)
+              ? 'bg-bordeaux/[0.08] cursor-not-allowed'
+              : 'bg-bordeaux hover:bg-bordeaux/90 cursor-pointer active:scale-[0.99]',
+          ].join(' ')}
+        >
+          <span className="flex items-center gap-2">
             <span
-              className="absolute right-0 top-0 font-cormorant text-[88px] font-bold leading-none text-bordeaux/[0.04] select-none pointer-events-none"
+              className={[
+                'font-manrope text-[10px] font-semibold tracking-[0.1em]',
+                usedBadges.has(0) ? 'text-gris' : 'text-creme/60',
+              ].join(' ')}
+            >
+              {BADGE_LABELS[0].num}
+            </span>
+            {/* Séparateur mobile uniquement */}
+            <span
+              className={[
+                'md:hidden text-xs',
+                usedBadges.has(0) ? 'text-gris/40' : 'text-creme/30',
+              ].join(' ')}
               aria-hidden
             >
-              300
+              |
             </span>
-          </div>
-        )}
-
-        {/* Active suggestion chip */}
-        {suggestion && (
-          <div className="mb-4">
-            <span className="inline-flex items-center gap-2 bg-bordeaux text-creme rounded-full px-4 py-2">
-              <span className="font-manrope text-[10px] font-semibold tracking-[0.1em]">
-                {SUGGESTIONS[suggestion.index].num}
-              </span>
-              <span className="font-manrope text-xs">
-                {SUGGESTIONS[suggestion.index].text}
-              </span>
+            <span
+              className={[
+                'font-manrope text-xs',
+                usedBadges.has(0) ? 'text-gris' : 'text-creme',
+              ].join(' ')}
+            >
+              {BADGE_LABELS[0].text}
             </span>
-          </div>
-        )}
+          </span>
+          {usedBadges.has(0) ? (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <path d="M2 7L5.5 10.5L12 3.5" stroke="#9E8E85" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <path d="M5 3l4 4-4 4" stroke="rgba(255,246,237,0.6)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </button>
 
-        {/* Textarea */}
+        {/* Badges 02 & 03 */}
+        {/* Mobile: rectangular cards avec numéro en haut */}
+        {/* Desktop: pills inline */}
+        <div className="flex gap-2 md:mb-5">
+          {[1, 2].map((idx) => (
+            <button
+              key={idx}
+              onClick={() => handleBadgeClick(idx)}
+              disabled={usedBadges.has(idx)}
+              className={[
+                'flex-1 transition-all text-left',
+                // Mobile: rectangular card, numéro en haut
+                'flex flex-col gap-1 rounded-xl p-3',
+                // Desktop: pill inline
+                'md:inline-flex md:flex-row md:items-center md:justify-between md:gap-1.5 md:rounded-full md:px-3 md:py-1.5',
+                usedBadges.has(idx)
+                  ? 'bg-bordeaux/[0.04] border border-bordeaux/[0.08] text-gris cursor-not-allowed'
+                  : 'border border-bordeaux/15 text-bordeaux/60 hover:border-bordeaux/30 cursor-pointer',
+              ].join(' ')}
+            >
+              <span className="font-manrope text-[10px] text-gris shrink-0">{BADGE_LABELS[idx].num}</span>
+              <span className="font-manrope text-xs leading-snug">{BADGE_LABELS[idx].text}</span>
+              {usedBadges.has(idx) && (
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden className="shrink-0 md:ml-auto">
+                  <path d="M2 7L5.5 10.5L12 3.5" stroke="#9E8E85" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Textarea — fond propre sur mobile */}
         <textarea
           value={bio}
           onChange={handleChange}
-          rows={suggestion ? 8 : 4}
-          className="w-full resize-none font-manrope text-sm text-texte placeholder:text-gris/40 border border-bordeaux/10 rounded-xl p-4 focus:outline-none focus:border-bordeaux/25 transition-colors leading-relaxed bg-transparent"
-          placeholder={suggestion ? '' : ''}
+          rows={8}
+          className="w-full resize-none font-manrope text-sm text-texte placeholder:text-gris/40 rounded-xl p-4 focus:outline-none transition-colors leading-relaxed bg-white border border-bordeaux/[0.06] focus:border-bordeaux/20 md:bg-transparent md:border-bordeaux/10 md:focus:border-bordeaux/25"
+          placeholder="Votre plume, votre voix..."
         />
-
-        {/* Intro chips — empty state only */}
-        {!suggestion && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {SUGGESTIONS.map((s) => (
-              <span
-                key={s.num}
-                className="inline-flex items-center gap-1.5 border border-bordeaux/15 rounded-full px-3 py-1.5 font-manrope text-xs text-bordeaux/60"
-              >
-                <span className="text-[10px] text-gris">{s.num}</span>
-                {s.text}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Bottom row: circular counter + CTA */}
+      {/* Compteur */}
       <div className="flex items-center gap-3 mt-5">
-        {/* Circular SVG counter */}
         <div className="relative flex items-center justify-center shrink-0">
           <svg width="54" height="54" viewBox="0 0 54 54" aria-hidden>
             <circle
@@ -205,14 +235,13 @@ export function BioSection({ initialBio, onBioChange }: Props) {
             {chars}
           </span>
         </div>
-
         <span className="font-manrope text-sm text-gris">/ {MAX} caractères</span>
 
-        {/* CTA */}
+        {/* CTA desktop — inline */}
         <button
           onClick={handleSubmit}
           disabled={isDisabled}
-          className="ml-auto bg-bordeaux text-creme font-manrope text-[11px] font-semibold tracking-[0.14em] uppercase px-7 py-3.5 rounded-full disabled:opacity-40 disabled:cursor-not-allowed hover:bg-bordeaux/90 active:scale-[0.98] transition-all flex items-center gap-2 whitespace-nowrap"
+          className="hidden md:flex ml-auto bg-bordeaux text-creme font-manrope text-[11px] font-semibold tracking-[0.14em] uppercase px-7 py-3.5 rounded-full disabled:opacity-40 disabled:cursor-not-allowed hover:bg-bordeaux/90 active:scale-[0.98] transition-all items-center gap-2 whitespace-nowrap"
         >
           {isPending ? (
             <>
@@ -224,6 +253,22 @@ export function BioSection({ initialBio, onBioChange }: Props) {
           )}
         </button>
       </div>
+
+      {/* CTA mobile — pleine largeur dans le flux */}
+      <button
+        onClick={handleSubmit}
+        disabled={isDisabled}
+        className="md:hidden w-full mt-4 bg-bordeaux text-creme font-manrope text-[11px] font-semibold tracking-[0.14em] uppercase py-4 rounded-full disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+      >
+        {isPending ? (
+          <>
+            <span className="w-3.5 h-3.5 border-2 border-creme/40 border-t-creme rounded-full animate-spin" />
+            Enregistrement...
+          </>
+        ) : (
+          'Terminer ma bio →'
+        )}
+      </button>
     </div>
   )
 }

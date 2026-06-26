@@ -45,6 +45,7 @@ export default async function ProfilPage() {
       <ProfileContent
         firstName={data.firstName}
         initialBio={data.bio}
+        vendorServices={data.vendor_services ?? []}
         steps={data.steps}
       />
     </div>
