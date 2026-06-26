@@ -31,9 +31,9 @@ readonly class LegalInfoStepHandler extends AbstractOnboardingStepHandler
         /** @var LegalInfoStepRequestDto $dto */
         $dto = $this->validate(LegalInfoStepRequestDto::fromArray($data));
 
-        $vendor->setBrandName($dto->brandName);
-        $vendor->getUser()->setFirstName($dto->firstName);
-        $vendor->getUser()->setLastName($dto->lastName);
+        $vendor->setBrandName($dto->brandname);
+        $vendor->getUser()->setFirstName($dto->firstname);
+        $vendor->getUser()->setLastName($dto->lastname);
         $vendor->setSiret($dto->siret);
         $vendor->setPhone($dto->phone);
         $vendor->setAddress($dto->address);
