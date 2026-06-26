@@ -6,6 +6,7 @@ namespace App\DTO\Vendor;
 
 final readonly class VendorDashboardResponseDto
 {
+    public string $id;
     public string $firstName;
     public ?string $lastname;
 
@@ -13,8 +14,9 @@ final readonly class VendorDashboardResponseDto
     public string $createdAt;
     public array $steps;
 
-    public function __construct(string $firstName, ?string $lastname, string $email, \DateTimeImmutable $createdAt, array $steps)
+    public function __construct(string $id, string $firstName, ?string $lastname, string $email, \DateTimeImmutable $createdAt, array $steps)
     {
+        $this->id =        $id;
         $this->firstName = $firstName;
         $this->lastname =  $lastname;
         $this->email =     $email;
