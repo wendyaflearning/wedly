@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_ADMIN')]
-#[Route('/api/v1/admin/vendors/{id}/reject', name: 'api_admin_vendor_reject', methods: ['POST'])]
+#[Route('/api/v1/admin/vendors/{id}/reject', name: 'api_admin_vendor_reject', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
 final readonly class RejectVendorAction
 {
     public function __construct(

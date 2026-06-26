@@ -1,6 +1,7 @@
 import type { AdminVendorStatus } from '@/lib/admin-types'
 
 const STATUS_STYLES: Record<AdminVendorStatus, string> = {
+  pending: 'border-dore/35 bg-dore/10 text-accent',
   under_review: 'border-dore/45 bg-dore/15 text-accent',
   active: 'border-bordeaux/15 bg-bordeaux/5 text-bordeaux',
   rejected: 'border-highlight/25 bg-highlight/10 text-highlight',

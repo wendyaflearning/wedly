@@ -1,6 +1,10 @@
 import { cookies } from 'next/headers'
 import type {
   AdminSession,
+  AdminVendorDraft,
+  AdminVendorDraftListResponse,
+  AdminVendorInvitationListResponse,
+  AdminVendorInvitationScope,
   AdminVendorFilter,
   AdminVendorListResponse,
   AdminVendorProfile,
@@ -75,4 +79,19 @@ export async function fetchAdminVendors(
 
 export async function fetchAdminVendor(id: string): Promise<AdminFetchResult<AdminVendorProfile>> {
   return parseResult(await adminFetch(`/api/v1/admin/vendors/${id}`))
+}
+
+export async function fetchAdminVendorInvitations(
+  scope: AdminVendorInvitationScope
+): Promise<AdminFetchResult<AdminVendorInvitationListResponse>> {
+  const params = new URLSearchParams({ scope })
+  return parseResult(await adminFetch(`/api/v1/admin/vendor-invitations?${params.toString()}`))
+}
+
+export async function fetchAdminVendorDrafts(): Promise<AdminFetchResult<AdminVendorDraftListResponse>> {
+  return parseResult(await adminFetch('/api/v1/admin/vendors/drafts'))
+}
+
+export async function fetchAdminVendorDraft(id: string): Promise<AdminFetchResult<AdminVendorDraft>> {
+  return parseResult(await adminFetch(`/api/v1/admin/vendors/${id}/draft`))
 }

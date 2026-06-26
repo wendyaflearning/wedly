@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Repository\Vendor;
 
 use App\Entity\BookingBlocker\BookingBlocker;
+use App\Entity\User\InviteToken;
 use App\Entity\User\User;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
+use App\Enum\User\InviteTokenPersona;
 use App\Enum\Vendor\VendorStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -81,6 +83,23 @@ class VendorRepository extends ServiceEntityRepository
             ->setParameter('statuses', VendorStatus::adminReviewValues())
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /** @return Vendor[] */
+    public function findAdminDrafts(): array
+    {
+        return $this->createQueryBuilder('vendor')
+            ->addSelect('user', 'service')
+            ->leftJoin('vendor.user', 'user')
+            ->leftJoin('vendor.services', 'service')
+            ->leftJoin(InviteToken::class, 'inviteToken', 'WITH', 'inviteToken.vendor = vendor AND inviteToken.persona = :persona')
+            ->andWhere('vendor.status = :status')
+            ->andWhere('inviteToken.id IS NULL')
+            ->setParameter('status', VendorStatus::Pending->value)
+            ->setParameter('persona', InviteTokenPersona::Vendor->value)
+            ->orderBy('vendor.updatedAt', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
     public function findAdminProfile(string $id): ?Vendor

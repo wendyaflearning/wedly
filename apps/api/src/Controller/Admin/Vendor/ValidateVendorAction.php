@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_ADMIN')]
-#[Route('/api/v1/admin/vendors/{id}/validate', name: 'api_admin_vendor_validate', methods: ['POST'])]
+#[Route('/api/v1/admin/vendors/{id}/validate', name: 'api_admin_vendor_validate', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
 final readonly class ValidateVendorAction
 {
     public function __construct(

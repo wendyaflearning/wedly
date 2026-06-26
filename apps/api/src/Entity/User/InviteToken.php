@@ -9,11 +9,12 @@ use App\Entity\Couple\Couple;
 use App\Entity\Vendor\Vendor;
 use App\Enum\User\InviteTokenPersona;
 use App\Enum\User\InviteTokenStatus;
+use App\Repository\User\InviteTokenRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: InviteTokenRepository::class)]
 #[ORM\Table(name: 'invite_tokens')]
 #[ORM\HasLifecycleCallbacks]
 class InviteToken

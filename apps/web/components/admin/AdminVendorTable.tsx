@@ -13,7 +13,13 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-export function AdminVendorTable({ items }: { items: AdminVendorListItem[] }) {
+export function AdminVendorTable({
+  items,
+  hrefForItem = (item) => `/admin/prestataires/${item.id}`,
+}: {
+  items: AdminVendorListItem[]
+  hrefForItem?: (item: AdminVendorListItem) => string
+}) {
   const router = useRouter()
 
   return (
@@ -35,11 +41,11 @@ export function AdminVendorTable({ items }: { items: AdminVendorListItem[] }) {
                 key={item.id}
                 tabIndex={0}
                 role="button"
-                onClick={() => router.push(`/admin/prestataires/${item.id}`)}
+                onClick={() => router.push(hrefForItem(item))}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault()
-                    router.push(`/admin/prestataires/${item.id}`)
+                    router.push(hrefForItem(item))
                   }
                 }}
                 className="group outline-none transition-colors hover:bg-creme focus:bg-creme"

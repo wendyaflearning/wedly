@@ -1,5 +1,6 @@
-export type AdminVendorStatus = 'under_review' | 'active' | 'rejected'
-export type AdminVendorFilter = AdminVendorStatus | 'all'
+export type AdminVendorStatus = 'pending' | 'under_review' | 'active' | 'rejected'
+export type AdminVendorFilter = Exclude<AdminVendorStatus, 'pending'> | 'all'
+export type AdminVendorInvitationScope = 'active' | 'expired'
 
 export type AdminSession = {
   email: string
@@ -30,6 +31,135 @@ export type AdminVendorListResponse = {
   items: AdminVendorListItem[]
   totalAll: number
   totalFiltered: number
+}
+
+export type AdminVendorInvitation = {
+  id: string
+  token: string
+  vendorId: string
+  brandName: string
+  firstname: string
+  email: string
+  createdAt: string
+  expiresAt: string
+  service: {
+    id: string | null
+    name: string
+  }
+  regions: Array<{
+    id: string
+    name: string
+  }>
+}
+
+export type AdminVendorInvitationListResponse = {
+  items: AdminVendorInvitation[]
+  total: number
+}
+
+export type AdminVendorDraftListResponse = {
+  items: AdminVendorListItem[]
+  total: number
+}
+
+export type AdminVendorDraft = {
+  id: string
+  status: string
+  invitation: {
+    id: string
+    token: string
+    status: string
+    expiresAt: string
+  } | null
+  identity: {
+    firstname: string
+    lastName: string | null
+    email: string
+    brandName: string
+  }
+  profession: {
+    serviceId: string | null
+  }
+  experiences: {
+    cultureIds: string[]
+    confessionIds: string[]
+  }
+  zonesPricing: {
+    regions: string[]
+    priceMin: number
+    priceMax: number
+    priceType: string
+    city: string | null
+  }
+  legalInfo: {
+    phone: string | null
+    address: string | null
+    zipcode: string | null
+    city: string | null
+    siret: string | null
+  }
+  venueCharacteristics: {
+    venueType: string
+    capacityMin: number | null
+    capacityMax: number | null
+    hasCatering: boolean
+    hasAccommodation: boolean
+    hasOutdoorSpace: boolean
+    hasCorkageFee: boolean
+    hasToilets: boolean
+    isPmrAccessible: boolean
+    nearestCity: string | null
+    distanceToCityMinutes: number | null
+  } | null
+  cateringCharacteristics: {
+    coversMin: number | null
+    coversMax: number | null
+    isKosher: boolean
+    isHalal: boolean
+    isVegan: boolean
+    isGlutenFree: boolean
+    offersTableService: boolean
+    offersBuffet: boolean
+    offersCocktail: boolean
+    providesTableware: boolean
+    providesFurniture: boolean
+  } | null
+}
+
+export type AdminVendorInvitationSendResponse = {
+  vendorId: string
+  inviteToken: string
+  invitationUrl: string
+  emailSent: boolean
+}
+
+export type AdminCreatedVendorResponse = AdminVendorDraft
+
+export type ExperienceOption = {
+  id: string
+  name: string
+}
+
+export type CultureOption = ExperienceOption & {
+  slug?: string
+  type?: string
+}
+
+export type ConfessionOption = ExperienceOption & {
+  slug?: string
+}
+
+export type ServiceOptionNode = {
+  id: string
+  name: string
+  slug?: string
+  category?: string
+  children: ServiceOptionNode[]
+}
+
+export type RegionOption = {
+  id: string
+  name: string
 }
 
 export type NamedItem = {
