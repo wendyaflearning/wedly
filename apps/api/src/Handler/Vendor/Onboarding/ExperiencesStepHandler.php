@@ -35,10 +35,10 @@ readonly class ExperiencesStepHandler extends AbstractOnboardingStepHandler
 
         if ($vendorType !== VendorType::Lieu) {
             if (empty($dto->cultureIds)) {
-                throw new \DomainException('Le champ culture_ids doit contenir au moins un élément.', 422);
+                throw new \DomainException('Vous devez selectionner au moins une experience culturelle', 422);
             }
             if (empty($dto->confessionIds)) {
-                throw new \DomainException('Le champ confession_ids doit contenir au moins un élément.', 422);
+                throw new \DomainException('Vous devez selectionner au moins un type de céremonie.', 422);
             }
         }
 
