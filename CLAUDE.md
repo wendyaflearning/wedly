@@ -115,3 +115,8 @@ Generate realistic French wedding data for fixtures. Examples:
 - CONFESSION: catholique, musulman, juif, protestant, laïc, orthodoxe
 - SERVICE: photographe, vidéaste, traiteur, DJ, fleuriste, lieu de réception
 - PLAN: découverte (9€, 1 catégorie), essentiel (29€, 3 catégories), premium (99€, -1 = illimité)
+
+## Gestion du contexte
+- Ne jamais cat un fichier entier sauf si explicitement demandé
+- Préférer grep pour localiser, puis lire uniquement la section pertinente
+- Pour les fichiers > 100 lignes, lire uniquement les méthodes/blocs concernés
