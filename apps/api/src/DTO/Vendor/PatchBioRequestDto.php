@@ -6,7 +6,7 @@ namespace App\DTO\Vendor;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class UpdateBioRequestDto
+final readonly class PatchBioRequestDto
 {
     public function __construct(
         #[Assert\NotBlank(message: 'La bio ne peut pas être vide.')]

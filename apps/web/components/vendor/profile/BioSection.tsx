@@ -16,12 +16,13 @@ const RADIUS = 22
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 interface Props {
+  vendorId: string
   initialBio?: string | null
   vendorServices: string[]
   onBioChange?: (bio: string) => void
 }
 
-export function BioSection({ initialBio, vendorServices, onBioChange }: Props) {
+export function BioSection({ vendorId, initialBio, vendorServices, onBioChange }: Props) {
   const [bio, setBio] = useState(initialBio ?? '')
   const [usedBadges, setUsedBadges] = useState<Set<number>>(new Set())
   const [isPending, startTransition] = useTransition()
@@ -61,7 +62,7 @@ export function BioSection({ initialBio, vendorServices, onBioChange }: Props) {
   function handleSubmit() {
     startTransition(async () => {
       try {
-        const res = await fetch('/api/vendors/me/bio', {
+        const res = await fetch(`/api/vendors/${vendorId}/bio`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ bio }),

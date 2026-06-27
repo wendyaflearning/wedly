@@ -7,7 +7,7 @@ export type VendorDashboard = {
   email?: string
   createdAt: string
   bio?: string | null
-  vendor_services?: string[]
+  vendorServices?: string[]
   steps: {
     availability: boolean
     portfolio: boolean
