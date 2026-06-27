@@ -2,25 +2,23 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Vendor;
+namespace App\Controller\Vendor\Onboarding;
 
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Service\InviteTokenService;
-use Cloudinary\Cloudinary;
+use App\Service\PortfolioService;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-readonly class DeleteVendorPortfolioAction
+readonly class DeleteVendorOnboardingPortfolioAction
 {
     public function __construct(
-        private InviteTokenService        $inviteTokenService,
-        private PortfolioImageRepository  $portfolioImageRepository,
-        private EntityManagerInterface    $em,
-        private Cloudinary                $cloudinary,
-        private LoggerInterface           $logger,
+        private InviteTokenService       $inviteTokenService,
+        private PortfolioImageRepository $portfolioImageRepository,
+        private EntityManagerInterface   $em,
+        private PortfolioService         $portfolioService,
     ) {}
 
     #[Route('/api/v1/vendors/onboarding/{token}/portfolio/{imageId}', name: 'api_vendor_portfolio_delete', methods: ['DELETE'])]
@@ -43,21 +41,9 @@ readonly class DeleteVendorPortfolioAction
                 return new JsonResponse(['error' => 'Image introuvable.'], 404);
             }
 
-            $publicId = $image->getCloudinaryPublicId();
-
-            $this->em->remove($image);
+            $publicId = $this->portfolioService->deletePhoto($image);
             $this->em->flush();
-
-            try {
-                if ($publicId) {
-                    $this->cloudinary->uploadApi()->destroy($publicId);
-                }
-            } catch (\Throwable $e) {
-                $this->logger->warning('Cloudinary destroy failed', [
-                    'public_id' => $publicId,
-                    'error'     => $e->getMessage(),
-                ]);
-            }
+            $this->portfolioService->destroyCloudinaryAsset($publicId);
 
             return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         } catch (\DomainException $e) {

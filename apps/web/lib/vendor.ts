@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import type { PortfolioImage } from '@/app/onboarding/[token]/types'
 
 export type VendorDashboard = {
   id: string
@@ -33,5 +34,25 @@ export async function fetchVendorDashboard(): Promise<VendorDashboard | null> {
     return res.json() as Promise<VendorDashboard>
   } catch {
     return null
+  }
+}
+
+export async function fetchVendorPortfolio(vendorId: string): Promise<PortfolioImage[]> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('jwt_token')
+  if (!token) return []
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/${vendorId}/portfolio`,
+      {
+        headers: { Cookie: `jwt_token=${token.value}` },
+        cache: 'no-store',
+      }
+    )
+    if (!res.ok) return []
+    return res.json() as Promise<PortfolioImage[]>
+  } catch {
+    return []
   }
 }

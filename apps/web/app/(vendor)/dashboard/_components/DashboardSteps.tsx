@@ -22,7 +22,7 @@ const STEPS = [
     icon: <ImageIcon />,
     title: 'Ajoutez vos photos de portfolio',
     description: '5 à 12 images — les couples décident souvent en images.',
-    href: null,
+    href: '/profil/portfolio',
   },
   {
     number: '03',

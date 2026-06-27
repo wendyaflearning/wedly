@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Vendor;
+namespace App\Controller\Vendor\Onboarding;
 
 use App\DTO\Vendor\Step\PortfolioStepRequestDto;
 use App\Service\InviteTokenService;
