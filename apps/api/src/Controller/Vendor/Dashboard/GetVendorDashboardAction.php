@@ -39,12 +39,17 @@ final class GetVendorDashboardAction extends AbstractController
             'published'    => $vendor->isPublished(),
         ];
 
+        $vendorServices = $vendor->resolveVendorServices();
+
         return new JsonResponse(new VendorDashboardResponseDto(
+            $vendor->getId()->toRfc4122(),
             $user->getFirstName(),
             $user->getLastName(),
             $user->getEmail(),
             $vendor->getCreatedAt(),
             $steps,
+            $vendor->getBio(),
+            $vendorServices,
         ));
     }
 }
