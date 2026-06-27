@@ -95,7 +95,7 @@ export function VendorNav({ vendorFirstName, vendorLastName, vendorEmail, vendor
             {desktopLink('/dashboard', 'Dashboard')}
             {lockedDesktopItem('Wedmatch')}
             {lockedDesktopItem('Matches & Messagerie')}
-            {desktopLink('/profil', 'Mon Profil')}
+            {desktopLink('/dashboard/profile', 'Mon Profil')}
             {desktopLink('/parametres', 'Paramètres')}
           </nav>
         </div>
@@ -137,10 +137,10 @@ export function VendorNav({ vendorFirstName, vendorLastName, vendorEmail, vendor
         </div>
 
         <Link
-          href="/profil"
-          className={`relative flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg no-underline ${isActive('/profil') ? 'text-accent' : 'text-texte/55'}`}
+          href="/dashboard/profile"
+          className={`relative flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg no-underline ${isActive('/dashboard/profile') ? 'text-accent' : 'text-texte/55'}`}
         >
-          {isActive('/profil') && (
+          {isActive('/dashboard/profile') && (
             <span
               className="absolute top-0 w-[22px] h-0.5 bg-accent rounded-full"
               style={{ transform: 'translateY(-9px)' }}

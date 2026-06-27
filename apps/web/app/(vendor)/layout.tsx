@@ -6,7 +6,9 @@ export default async function VendorLayout({ children }: { children: React.React
   const dashboard = await fetchVendorDashboard()
   if (!dashboard) redirect('/login')
 
-  const vendorStatus = dashboard.steps.published ? 'EN LIGNE' : 'EN PRÉPARATION'
+  const s = dashboard.sections_status
+  const allComplete = s.general_info && s.pricing_zone && s.experiences && s.bio && s.portfolio && s.booking_blocker
+  const vendorStatus = allComplete ? 'EN LIGNE' : 'EN PRÉPARATION'
 
   return (
     <div className="min-h-screen bg-creme">
