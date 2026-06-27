@@ -40,9 +40,9 @@ export default function ExperiencesForm({ vendorId }: { vendorId: string }) {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/confessions').then(r => r.json()),
-      fetch('/api/cultures').then(r => r.json()),
-      fetch(`/api/vendors/${vendorId}/experiences`).then(r => r.json()),
+      fetch('/api/confessions').then(r => r.ok ? r.json() : Promise.reject()),
+      fetch('/api/cultures').then(r => r.ok ? r.json() : Promise.reject()),
+      fetch(`/api/vendors/${vendorId}/experiences`).then(r => r.ok ? r.json() : Promise.reject()),
     ])
       .then(([confData, cultData, expData]: [ExperienceOption[], ExperienceOption[], ExperiencesData]) => {
         setConfessions(confData)

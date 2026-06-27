@@ -65,7 +65,7 @@ export default function PricingZoneForm({
 
   useEffect(() => {
     const fetches: [Promise<RegionOption[]>, Promise<PricingZoneData | null>] = [
-      fetch('/api/regions').then(r => r.json()),
+      fetch('/api/regions').then(r => r.ok ? r.json() : Promise.reject()),
       initialData === null
         ? fetch(`/api/vendors/${vendorId}/zone-pricing`).then(r => r.ok ? r.json() : null)
         : Promise.resolve(null),
@@ -82,7 +82,7 @@ export default function PricingZoneForm({
         setMainRegion(mr); setDepartments(depts)
         setSnapshot({ priceFrom: pf, priceTo: pt, pricingUnit: pu, mainRegion: mr, departments: depts })
       }
-    }).finally(() => setRegionsLoading(false))
+    }).catch(() => showToast('error', 'Impossible de charger les données.')).finally(() => setRegionsLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

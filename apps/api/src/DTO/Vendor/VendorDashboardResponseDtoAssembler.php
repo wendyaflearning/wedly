@@ -6,6 +6,7 @@ namespace App\DTO\Vendor;
 
 use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
+use App\Enum\Vendor\VendorType;
 use App\Repository\Vendor\VendorRepository;
 
 final readonly class VendorDashboardResponseDtoAssembler
@@ -22,7 +23,8 @@ final readonly class VendorDashboardResponseDtoAssembler
         $sectionsStatus = [
             'general_info'    => $vendor->getSiret() !== null,
             'pricing_zone'    => !$vendor->getRegions()->isEmpty(),
-            'experiences'     => !$vendor->getConfessions()->isEmpty() || !$vendor->getCultures()->isEmpty(),
+            'experiences'     => $vendor->resolveVendorType() === VendorType::Lieu
+                || (!$vendor->getConfessions()->isEmpty() && !$vendor->getCultures()->isEmpty()),
             'bio'             => $vendor->getBio() !== null && trim($vendor->getBio()) !== '',
             'portfolio'       => $portfolioCount > 0,
             'booking_blocker' => $bookingBlockerCount > 0,
@@ -31,7 +33,7 @@ final readonly class VendorDashboardResponseDtoAssembler
         return new VendorDashboardResponseDto(
             id:                      $vendor->getId()->toRfc4122(),
             firstName:               $user->getFirstName(),
-            lastname:                $user->getLastName(),
+            lastName:                $user->getLastName(),
             email:                   $user->getEmail(),
             createdAt:               $vendor->getCreatedAt(),
             vendorType:              $vendor->resolveVendorType()->value,

@@ -8,7 +8,7 @@ final readonly class VendorDashboardResponseDto
 {
     public string $id;
     public string $firstName;
-    public ?string $lastname;
+    public ?string $lastName;
     public string $email;
     public string $createdAt;
     public string $vendorType;
@@ -23,7 +23,7 @@ final readonly class VendorDashboardResponseDto
     public function __construct(
         string $id,
         string $firstName,
-        ?string $lastname,
+        ?string $lastName,
         string $email,
         \DateTimeImmutable $createdAt,
         string $vendorType,
@@ -37,7 +37,7 @@ final readonly class VendorDashboardResponseDto
     ) {
         $this->id                          = $id;
         $this->firstName                   = $firstName;
-        $this->lastname                    = $lastname;
+        $this->lastName                    = $lastName;
         $this->email                       = $email;
         $this->createdAt                   = $createdAt->format(\DateTimeInterface::ATOM);
         $this->vendorType                  = $vendorType;

@@ -11,13 +11,13 @@ final readonly class LegalInfoStepRequestDto implements DTOInterface
 {
     public function __construct(
         #[Assert\NotBlank]
-        public string $brandname,
+        public string $brandName,
 
         #[Assert\NotBlank]
-        public string $firstname,
+        public string $firstName,
 
         #[Assert\NotBlank]
-        public string $lastname,
+        public string $lastName,
 
         #[Assert\NotBlank]
         #[Assert\Regex(pattern: '/^\d{14}$/')]
@@ -36,9 +36,9 @@ final readonly class LegalInfoStepRequestDto implements DTOInterface
     public static function fromArray(array $data): static
     {
         return new self(
-            brandname: $data['brand_name'] ?? '',
-            firstname: $data['first_name'] ?? '',
-            lastname:  $data['last_name']  ?? '',
+            brandName: $data['brand_name'] ?? '',
+            firstName: $data['first_name'] ?? '',
+            lastName:  $data['last_name']  ?? '',
             siret:     $data['siret']      ?? '',
             phone:     $data['phone']      ?? null,
             address:   $data['address']    ?? null,
