@@ -2,11 +2,21 @@ when@prod:
     sentry:
         dsn: '%env(SENTRY_DSN)%'
         options:
-            enable_logs: true
+            ignore_exceptions:
+                - 'Symfony\Component\ErrorHandler\Error\FatalError'
+                - 'Symfony\Component\Debug\Exception\FatalErrorException'
         register_error_listener: false
         register_error_handler: false
 
-services:
-    Sentry\SentryBundle\Monolog\LogsHandler:
-        arguments:
-            - !php/const Monolog\Logger::ERROR
+    monolog:
+        handlers:
+            sentry:
+                type: service
+                id: Sentry\Monolog\Handler
+
+    services:
+        Sentry\Monolog\Handler:
+            arguments:
+                $hub: '@Sentry\State\HubInterface'
+                $level: !php/const Monolog\Logger::ERROR
+                $fillExtraContext: true

@@ -32,9 +32,6 @@ when@test:
 when@prod:
     monolog:
         handlers:
-            sentry_logs:
-                type: service
-                id: Sentry\SentryBundle\Monolog\LogsHandler
             main:
                 type: fingers_crossed
                 action_level: error
