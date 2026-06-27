@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
   const cookieStore = await cookies()
   const token = cookieStore.get('jwt_token')
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const { id } = await params
+  const { vendorId } = await params
 
   try {
     const body = await request.json()
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/${id}/bio`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/${vendorId}/bio`,
       {
         method: 'PATCH',
         headers: {
