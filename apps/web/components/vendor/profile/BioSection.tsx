@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { getSuggestionsForVendorServices } from '@/lib/bio-suggestions'
+import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/hooks/useToast'
 
 const MAX = 300
 const MIN = 50
@@ -26,7 +28,7 @@ export function BioSection({ vendorId, initialBio, vendorServices, onBioChange }
   const [bio, setBio] = useState(initialBio ?? '')
   const [usedBadges, setUsedBadges] = useState<Set<number>>(new Set())
   const [isPending, startTransition] = useTransition()
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const { toast, showToast } = useToast()
 
   const suggestions = getSuggestionsForVendorServices(vendorServices)
   const suggestionTexts = [suggestions.style, suggestions.mariage, suggestions.unique]
@@ -52,11 +54,6 @@ export function BioSection({ vendorId, initialBio, vendorServices, onBioChange }
     setBio(newBio)
     onBioChange?.(newBio)
     setUsedBadges((prev) => new Set([...prev, index]))
-  }
-
-  function showToast(type: 'success' | 'error', message: string) {
-    setToast({ type, message })
-    setTimeout(() => setToast(null), 5000)
   }
 
   function handleSubmit() {
@@ -88,20 +85,7 @@ export function BioSection({ vendorId, initialBio, vendorServices, onBioChange }
 
   return (
     <div className="flex-1 min-w-0">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={[
-            'fixed top-4 right-4 z-50 max-w-sm px-5 py-4 rounded-xl shadow-lg font-manrope text-sm text-creme',
-            toast.type === 'success' ? 'bg-accent' : 'bg-highlight',
-          ].join(' ')}
-          style={{ animation: 'toast-in 0.3s cubic-bezier(0.22,1,0.36,1) both' }}
-          role="status"
-          aria-live="polite"
-        >
-          {toast.message}
-        </div>
-      )}
+      <Toast toast={toast} />
 
       {/* Suggestion counter */}
       <p className="font-manrope text-sm text-gris mb-4">

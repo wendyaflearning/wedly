@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Vendor\Dashboard;
 
-use App\DTO\Vendor\VendorDashboardResponseDto;
+use App\DTO\Vendor\VendorDashboardResponseDtoAssembler;
 use App\Entity\User\User;
 use App\Repository\Vendor\VendorRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,6 +20,7 @@ final class GetVendorDashboardAction extends AbstractController
     public function __construct(
         private readonly Security $security,
         private readonly VendorRepository $vendorRepository,
+        private readonly VendorDashboardResponseDtoAssembler $assembler,
     ) {}
 
     public function __invoke(): JsonResponse
@@ -32,24 +33,6 @@ final class GetVendorDashboardAction extends AbstractController
             return new JsonResponse(['error' => 'No vendor associated with this account.'], 403);
         }
 
-        $steps = [
-            'availability' => $this->vendorRepository->countBookingBlockersByVendor($vendor) > 0,
-            'portfolio'    => $this->vendorRepository->countPortfolioImagesByVendor($vendor) >= 10,
-            'bio'          => $vendor->getBio() !== null && trim($vendor->getBio()) !== '',
-            'published'    => $vendor->isPublished(),
-        ];
-
-        $vendorServices = $vendor->resolveVendorServices();
-
-        return new JsonResponse(new VendorDashboardResponseDto(
-            $vendor->getId()->toRfc4122(),
-            $user->getFirstName(),
-            $user->getLastName(),
-            $user->getEmail(),
-            $vendor->getCreatedAt(),
-            $steps,
-            $vendor->getBio(),
-            $vendorServices,
-        ));
+        return new JsonResponse($this->assembler->assemble($vendor, $user));
     }
 }

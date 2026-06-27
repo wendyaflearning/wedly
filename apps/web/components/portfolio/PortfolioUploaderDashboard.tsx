@@ -8,7 +8,8 @@ interface Props extends UsePortfolioUploadReturn {
 
 export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePhoto, setCover, isUploading, count, isFull, maxPhotos }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [localError, setLocalError] = useState<string | null>(null)
+  const [localError, setLocalError]     = useState<string | null>(null)
+  const [justAddedId, setJustAddedId]   = useState<string | null>(null)
 
   const coverPhoto      = photos.find(p => p.is_cover)
   const secondaryPhotos = photos.filter(p => !p.is_cover).sort((a, b) => a.sort_order - b.sort_order)
@@ -20,7 +21,9 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
     if (!file) return
     setLocalError(null)
     try {
-      await addPhoto(file, count === 0)  // first photo becomes cover automatically
+      const newPhoto = await addPhoto(file, count === 0)  // first photo becomes cover automatically
+      setJustAddedId(newPhoto.id)
+      setTimeout(() => setJustAddedId(null), 2000)
     } catch (err) {
       const msg = (err as Error).message === 'compress_failed'
         ? 'Cette photo est trop volumineuse, veuillez en choisir une autre.'
@@ -174,6 +177,7 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
                 </span>
               </div>
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '28px 14px 14px', background: 'linear-gradient(to top, rgba(41,26,16,0.6) 0%, transparent 100%)' }} />
+              {coverPhoto.id === justAddedId && <SuccessBadge />}
             </>
           ) : (
             <div style={{ width: '100%', height: '100%', background: 'rgba(78,26,50,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -208,6 +212,23 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
                   {String(i + 2).padStart(2, '0')}
                 </span>
                 <DeleteButton onDelete={() => deletePhoto(photo.id)} />
+                {photo.id === justAddedId && <SuccessBadge />}
+              </div>
+            ) : isUploading && i === secondaryPhotos.length ? (
+              /* Emplacement en cours de chargement */
+              <div
+                key={`loading-${i}`}
+                style={{
+                  aspectRatio: '1 / 1', borderRadius: 8,
+                  background: 'rgba(78,26,50,0.06)',
+                  border: '1.5px dashed rgba(78,26,50,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <svg className="animate-spin" width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  <circle cx="11" cy="11" r="8" stroke="rgba(78,26,50,0.18)" strokeWidth="2" />
+                  <path d="M11 3a8 8 0 0 1 8 8" stroke="var(--color-bordeaux)" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </div>
             ) : (
               /* Emplacement vide */
@@ -234,9 +255,30 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
         </div>
       </div>
 
+      <div style={{ marginTop: 16, padding: '13px 17px', background: 'rgba(78,26,50,0.03)', border: '1px solid rgba(78,26,50,0.1)', borderRadius: 10 }}>
+        <p className="font-cormorant italic" style={{ fontSize: 14, color: '#8C7B6B', lineHeight: 1.7, margin: 0 }}>
+          <span style={{ color: 'var(--color-bordeaux)', marginRight: 6 }}>·</span>
+          Chaque modification est{' '}
+          <span style={{ color: 'var(--color-accent)' }}>enregistrée automatiquement</span>
+          {' '}— aucune action supplémentaire n&apos;est nécessaire.
+        </p>
+      </div>
+
       {localError && (
         <p className="font-josefin text-sm text-highlight text-center" style={{ marginTop: 12 }}>{localError}</p>
       )}
+    </div>
+  )
+}
+
+// ── Badge succès upload ──────────────────────────────────────────────────────
+
+function SuccessBadge() {
+  return (
+    <div style={{ position: 'absolute', bottom: 8, right: 8, width: 26, height: 26, borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.25)' }}>
+      <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+        <path d="M1 4.5l3 3L10 1" stroke="#FFF6ED" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </div>
   )
 }

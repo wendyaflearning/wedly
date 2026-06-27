@@ -39,7 +39,7 @@ export default async function DashboardPage({
           guideButton={mobileTrigger}
           desktopGuideButton={desktopTrigger}
         />
-        <DashboardSteps steps={data.steps} />
+        <DashboardSteps sections={data.sections_status} />
       </div>
     </GuideProvider>
   )
