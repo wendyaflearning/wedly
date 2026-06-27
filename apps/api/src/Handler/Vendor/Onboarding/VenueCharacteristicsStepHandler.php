@@ -106,9 +106,11 @@ readonly class VenueCharacteristicsStepHandler extends AbstractOnboardingStepHan
             'has_catering'      => $details->isHasCatering(),
             'has_accommodation' => $details->isHasAccommodation(),
             'has_outdoor_space' => $details->isHasOutdoorSpace(),
-            'has_corkage_fee'   => $details->isHasCorkageFee(),
-            'has_toilets'       => $details->isHasToilets(),
-            'is_pmr_accessible' => $details->isIsPmrAccessible(),
+            'has_corkage_fee'         => $details->isHasCorkageFee(),
+            'has_toilets'             => $details->isHasToilets(),
+            'is_pmr_accessible'       => $details->isIsPmrAccessible(),
+            'distance_to_city_minutes' => $details->getDistanceToCityMinutes(),
+            'nearest_city'            => $details->getNearestCity(),
         ];
     }
 }
