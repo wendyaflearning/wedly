@@ -254,7 +254,7 @@ export default async function AdminVendorsPage({
         ) : draftsResult.data.items.length === 0 ? (
           <EmptyDraftState />
         ) : (
-          <AdminVendorTable items={draftsResult.data.items} hrefForItem={(item) => `/admin/vendors/${item.id}/edit`} />
+          <AdminVendorTable items={draftsResult.data.items} hrefVariant="draft" />
         )
       ) : view === 'invitations' ? (
         !invitationsResult?.ok ? (

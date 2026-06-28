@@ -1,6 +1,4 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Eye } from 'lucide-react'
 import type { AdminVendorListItem } from '@/lib/admin-types'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
@@ -15,12 +13,13 @@ function formatDate(value: string) {
 
 export function AdminVendorTable({
   items,
-  hrefForItem = (item) => `/admin/prestataires/${item.id}`,
+  hrefVariant = 'profile',
 }: {
   items: AdminVendorListItem[]
-  hrefForItem?: (item: AdminVendorListItem) => string
+  hrefVariant?: 'profile' | 'draft'
 }) {
-  const router = useRouter()
+  const getHref = (item: AdminVendorListItem) =>
+    hrefVariant === 'draft' ? `/admin/vendors/${item.id}/edit` : `/admin/prestataires/${item.id}`
 
   return (
     <div className="overflow-hidden rounded-lg border border-bordeaux/10 bg-white shadow-sm">
@@ -36,38 +35,40 @@ export function AdminVendorTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-bordeaux/8 text-sm">
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                tabIndex={0}
-                role="button"
-                onClick={() => router.push(hrefForItem(item))}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    router.push(hrefForItem(item))
-                  }
-                }}
-                className="group outline-none transition-colors hover:bg-creme focus:bg-creme"
-              >
-                <td className="px-6 py-5 font-semibold text-texte">{item.name}</td>
-                <td className="px-6 py-5 text-texte/70">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-texte">{item.vendorTypeLabel}</span>
-                    <span className="max-w-[360px] text-xs leading-5 text-texte/55">
-                      {item.services.length > 0 ? item.services.join(', ') : 'Non renseigné'}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-5 text-texte/70">{formatDate(item.submittedAt)}</td>
-                <td className="px-6 py-5">
-                  <AdminStatusBadge status={item.status} label={item.statusLabel} />
-                </td>
-                <td className="px-6 py-5 text-gris group-hover:text-bordeaux">
-                  <Eye size={18} aria-hidden="true" />
-                </td>
-              </tr>
-            ))}
+            {items.map((item) => {
+              const href = getHref(item)
+
+              return (
+                <tr key={item.id} className="group transition-colors hover:bg-creme">
+                  <td className="px-6 py-5 font-semibold text-texte">
+                    <Link href={href} className="text-texte no-underline hover:text-bordeaux">
+                      {item.name}
+                    </Link>
+                  </td>
+                  <td className="px-6 py-5 text-texte/70">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-semibold text-texte">{item.vendorTypeLabel}</span>
+                      <span className="max-w-[360px] text-xs leading-5 text-texte/55">
+                        {item.services.length > 0 ? item.services.join(', ') : 'Non renseigné'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 text-texte/70">{formatDate(item.submittedAt)}</td>
+                  <td className="px-6 py-5">
+                    <AdminStatusBadge status={item.status} label={item.statusLabel} />
+                  </td>
+                  <td className="px-6 py-5 text-gris group-hover:text-bordeaux">
+                    <Link
+                      href={href}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gris transition-colors hover:bg-bordeaux/5 hover:text-bordeaux"
+                      aria-label={`Ouvrir ${item.name}`}
+                    >
+                      <Eye size={18} aria-hidden="true" />
+                    </Link>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
