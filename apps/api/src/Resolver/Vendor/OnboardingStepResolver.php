@@ -16,6 +16,7 @@ readonly class OnboardingStepResolver
         return match ($vendorType) {
             VendorType::Freelance => [
                 OnboardingStep::Professions,
+                OnboardingStep::Consent,
                 OnboardingStep::Experiences,
                 OnboardingStep::ZonesPricing,
                 OnboardingStep::Portfolio,
@@ -24,6 +25,7 @@ readonly class OnboardingStepResolver
             ],
             VendorType::Traiteur => [
                 OnboardingStep::Professions,
+                OnboardingStep::Consent,
                 OnboardingStep::Experiences,
                 OnboardingStep::CateringCharacteristics,
                 OnboardingStep::ZonesPricing,
@@ -41,6 +43,7 @@ readonly class OnboardingStepResolver
             ],
             VendorType::Createurs => [
                 OnboardingStep::Professions,
+                OnboardingStep::Consent,
                 OnboardingStep::Experiences,
                 OnboardingStep::ZonesPricing,
                 OnboardingStep::Portfolio,

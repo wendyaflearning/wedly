@@ -8,6 +8,8 @@ use App\DTO\Vendor\Step\ExperiencesRequestDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorConsent;
+use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -75,6 +77,16 @@ readonly class ExperiencesStepHandler extends AbstractOnboardingStepHandler
 
     public function isFilled(Vendor $vendor): bool
     {
+        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy([
+            'vendor'      => $vendor,
+            'consentType' => ConsentType::SensitiveData,
+        ]);
+
+        // Consent refusé → étape auto-satisfaite pour ne pas bloquer assertAllStepsFilled()
+        if ($consent !== null && !$consent->isGranted()) {
+            return true;
+        }
+
         return !$vendor->getConfessions()->isEmpty() || !$vendor->getCultures()->isEmpty();
     }
 
