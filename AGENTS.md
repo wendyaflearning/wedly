@@ -18,8 +18,7 @@ wedly/
 │   ├── api/        ← Symfony 7 backend
 │   └── web/        ← Next.js frontend
 └── docs/
-    └── schema/
-        └── wedly_schema_v3.mmd   ← Database schema — source of truth
+    └── wedly_schema_v3.mmd   ← Database schema — source of truth
 ```
 
 - Backend work usually happens in `apps/api/`.
@@ -66,7 +65,7 @@ Do not use nullable or a separate boolean for this.
 
 ## Database schema
 
-Reference file: `docs/schema/wedly_schema_v3.mmd`
+Reference file: `docs/wedly_schema_v3.mmd`
 
 This file is the single source of truth for entities, fields, and relations.
 Read it before generating entities or migrations. Do not invent fields that are not in the schema.
@@ -85,6 +84,36 @@ Read it before generating entities or migrations. Do not invent fields that are 
 `portfolio_image_style` · `PORTFOLIO_IMAGE` · `BOOKING_BLOCKER`
 
 Verify migration order before execution.
+
+---
+
+## Business rules memory vault
+
+Reference directory: `docs/memory-vault/`
+
+Use the Memory Vault when a task creates, modifies, reviews, or audits a
+business rule.
+
+Before changing business behavior, check:
+
+- `docs/memory-vault/business-rules-index.md`
+- the relevant file in `docs/memory-vault/rules/`
+- the related ADR if one is referenced by the rule
+
+When a business rule changes, update the vault in the same ticket unless the
+change is purely exploratory and not merged.
+
+Each new or changed business rule should record:
+
+- the stable rule id
+- the expected behavior
+- the code locations that enforce it
+- existing or expected unit coverage
+- E2E impact when a user journey is affected
+- known regression risks
+
+If code and vault disagree, state the discrepancy explicitly and do not silently
+rewrite history to match the current implementation.
 
 ---
 
@@ -134,4 +163,3 @@ Generate realistic French wedding data for fixtures. Examples:
 - If you start a local dev server for verification, stop it before ending the task unless the user explicitly asked to keep it running.
 - Before finishing local runtime work, check whether touched ports are still occupied by processes started during the task.
 - Be careful with common local ports: `3000`, `3004`, `5432`, `8000`, `8001`.
-
