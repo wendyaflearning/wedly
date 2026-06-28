@@ -83,6 +83,51 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
         );
     }
 
+    public function test_handle_throws_when_step_is_unknown(): void
+    {
+        $dispatcher = new VendorOnboardingStepDispatcher(
+            $this->createStub(EntityManagerInterface::class),
+            new OnboardingStepResolver(),
+            $this->createStub(EventDispatcherInterface::class),
+            []
+        );
+
+        $vendor = $this->createStub(Vendor::class);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Étape inconnue : unknown');
+
+        $dispatcher->handle($vendor, new VendorOnboardingStepRequestDto(step: 'unknown', data: null));
+    }
+
+    public function test_handle_throws_when_no_handler_supports_step_for_vendor_type(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->never())->method('flush');
+
+        $dispatcher = new VendorOnboardingStepDispatcher(
+            $em,
+            new OnboardingStepResolver(),
+            $this->createStub(EventDispatcherInterface::class),
+            [
+                new TestStepHandler(OnboardingStep::Professions, filled: true, vendorType: VendorType::Lieu),
+            ]
+        );
+
+        $vendor = $this->createStub(Vendor::class);
+        $vendor->method('resolveVendorType')->willReturn(VendorType::Freelance);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(500);
+        $this->expectExceptionMessage("Aucun handler pour l'étape : professions");
+
+        $dispatcher->handle(
+            $vendor,
+            new VendorOnboardingStepRequestDto(step: OnboardingStep::Professions->value, data: null)
+        );
+    }
+
     public function test_handle_credentials_throws_when_previous_steps_are_incomplete(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);

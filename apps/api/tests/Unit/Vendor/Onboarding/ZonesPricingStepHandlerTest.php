@@ -80,6 +80,28 @@ final class ZonesPricingStepHandlerTest extends TestCase
         $this->assertSame(45, $venueDetails->getDistanceToCityMinutes());
     }
 
+    public function test_handle_updates_creator_city_pricing_and_zone(): void
+    {
+        $region = $this->regionWithId('Ile-de-France');
+
+        $repository = $this->createMock(RegionRepository::class);
+        $repository->expects($this->once())->method('find')->with('region-1')->willReturn($region);
+
+        $vendor = $this->vendorWithService('createurs', VendorType::Createurs);
+
+        $this->makeHandler($repository)->handle($vendor, [
+            'price_min'  => 50000,
+            'price_max'  => 120000,
+            'price_type' => 'per_service',
+            'zones'      => ['region-1'],
+            'city'       => 'Paris',
+        ]);
+
+        $this->assertSame('Paris', $vendor->getCity());
+        $this->assertSame(50000, $vendor->getPriceMinCents());
+        $this->assertSame([$region], $vendor->getRegions()->toArray());
+    }
+
     public function test_handle_throws_when_venue_details_are_missing_for_venue_pricing(): void
     {
         $repository = $this->createMock(RegionRepository::class);

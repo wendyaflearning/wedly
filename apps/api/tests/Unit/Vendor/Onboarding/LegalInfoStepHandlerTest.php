@@ -46,6 +46,13 @@ final class LegalInfoStepHandlerTest extends TestCase
         );
     }
 
+    public function test_supports_legal_info_step(): void
+    {
+        $handler = $this->makeHandler($this->createStub(PappersService::class));
+
+        $this->assertSame(\App\Enum\Vendor\OnboardingStep::LegalInfo, $handler->supports());
+    }
+
     // --- handle() : champs DTO → Vendor ---
 
     public function test_handle_hydrates_vendor_fields_from_dto(): void
