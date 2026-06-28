@@ -30,10 +30,17 @@ export default async function VendorLayout({ children }: { children: React.React
   const dashboard = await fetchVendorDashboard()
   if (!dashboard) redirect('/login')
 
+  const sections = dashboard.sections_status
+  const allSectionsComplete = sections.general_info
+    && sections.pricing_zone
+    && sections.experiences
+    && sections.bio
+    && sections.portfolio
+    && sections.booking_blocker
   const isActive = dashboard.status === 'active'
   const isPendingValidation = dashboard.status === 'pending' || dashboard.status === 'under_review'
   const vendorStatus = dashboard.status === 'active'
-    ? 'EN LIGNE'
+    ? allSectionsComplete ? 'EN LIGNE' : 'EN PRÉPARATION'
     : isPendingValidation
       ? 'EN ATTENTE'
       : 'NON VALIDÉ'

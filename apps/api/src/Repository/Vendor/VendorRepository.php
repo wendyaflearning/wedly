@@ -119,4 +119,35 @@ class VendorRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function hasPortfolioCoverByVendor(Vendor $vendor): bool
+    {
+        return (int) $this->getEntityManager()
+            ->createQueryBuilder()
+            ->select('COUNT(p.id)')
+            ->from(PortfolioImage::class, 'p')
+            ->where('p.vendor = :vendor')
+            ->andWhere('p.isCover = :isCover')
+            ->setParameter('vendor', $vendor)
+            ->setParameter('isCover', true)
+            ->getQuery()
+            ->getSingleScalarResult() > 0;
+    }
+
+    public function findLatestBookingBlockerUpdatedAt(Vendor $vendor): ?\DateTimeImmutable
+    {
+        /** @var BookingBlocker|null $blocker */
+        $blocker = $this->getEntityManager()
+            ->createQueryBuilder()
+            ->select('b')
+            ->from(BookingBlocker::class, 'b')
+            ->where('b.vendor = :vendor')
+            ->orderBy('b.updatedAt', 'DESC')
+            ->setMaxResults(1)
+            ->setParameter('vendor', $vendor)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $blocker?->getUpdatedAt();
+    }
 }

@@ -1,12 +1,14 @@
-interface Steps {
-  availability: boolean
-  portfolio: boolean
+interface Sections {
+  general_info: boolean
+  pricing_zone: boolean
+  experiences: boolean
   bio: boolean
-  published: boolean
+  portfolio: boolean
+  booking_blocker: boolean
 }
 
 interface DashboardStepsProps {
-  steps: Steps
+  sections: Sections
 }
 
 const STEPS = [
@@ -15,21 +17,21 @@ const STEPS = [
     icon: <CalendarIcon />,
     title: 'Renseignez vos disponibilités',
     description: 'Bloquez les dates déjà prises, ouvrez celles à venir.',
-    href: '/dashboard/availability',
+    href: '/dashboard/profile/booking-blocker',
   },
   {
     number: '02',
     icon: <ImageIcon />,
     title: 'Ajoutez vos photos de portfolio',
     description: '5 à 12 images — les couples décident souvent en images.',
-    href: null,
+    href: '/dashboard/profile/portfolio',
   },
   {
     number: '03',
     icon: <DocumentIcon />,
     title: 'Complétez votre bio',
     description: 'Quelques lignes sur votre approche et votre univers.',
-    href: null,
+    href: '/dashboard/profile/bio',
   },
   {
     number: '04',
@@ -40,12 +42,12 @@ const STEPS = [
   },
 ]
 
-export function DashboardSteps({ steps }: DashboardStepsProps) {
+export function DashboardSteps({ sections }: DashboardStepsProps) {
   const completedCount = [
-    steps.availability,
-    steps.portfolio,
-    steps.bio,
-    steps.published,
+    sections.booking_blocker,
+    sections.portfolio,
+    sections.bio,
+    sections.general_info && sections.pricing_zone && sections.experiences,
   ].filter(Boolean).length
 
   const progressWidth = `${(completedCount / 4) * 100}%`
