@@ -158,6 +158,8 @@ final class VenueCharacteristicsStepHandlerTest extends TestCase
             'has_corkage_fee'   => false,
             'has_toilets'       => true,
             'is_pmr_accessible' => true,
+            'distance_to_city_minutes' => null,
+            'nearest_city'      => null,
         ], $result);
     }
 

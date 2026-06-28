@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Controller\Vendor;
 
-use App\Controller\Vendor\PatchVendorOnboardingStepAction;
+use App\Controller\Vendor\Onboarding\PatchVendorOnboardingStepAction;
 use App\DTO\Vendor\VendorOnboardingStepRequestDto;
 use App\DTO\Vendor\VendorOnboardingStepResponseDto;
 use App\Entity\User\InviteToken;
