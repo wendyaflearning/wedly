@@ -21,6 +21,7 @@ erDiagram
     VENDOR  ||--o{ PORTFOLIO_IMAGE  : "showcases"
     VENDOR  ||--o{ BOOKING_BLOCKER  : "has_indispos"
     VENDOR  ||--o{ OFFER            : "proposes"
+    VENDOR  ||--o{ VENDOR_CONSENT   : "has"
     COUPLE  ||--o{ SUBSCRIPTION     : "purchases"
     SUBSCRIPTION }o--|| PLAN        : "references"
 
@@ -144,6 +145,15 @@ erDiagram
         date   start_date
         date   end_date
         string reason     "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    VENDOR_CONSENT {
+        uuid     id           PK
+        uuid     vendor_id    FK
+        string   consent_type "enum: sensitive_data"
+        boolean  granted
         datetime created_at
         datetime updated_at
     }
