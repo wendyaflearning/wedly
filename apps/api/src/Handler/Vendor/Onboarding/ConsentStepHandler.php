@@ -12,7 +12,7 @@ use App\Enum\Vendor\OnboardingStep;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-// granted: false → ExperiencesStepHandler::isFilled() retourne true (skip implicite)
+// granted: false → ExperiencesStepHandler et CateringCharacteristicsStepHandler::isFilled() retournent true (skip implicite)
 readonly class ConsentStepHandler extends AbstractOnboardingStepHandler
 {
     public function __construct(
@@ -27,15 +27,26 @@ readonly class ConsentStepHandler extends AbstractOnboardingStepHandler
         return OnboardingStep::Consent;
     }
 
+    public function record(Vendor $vendor, array $data): VendorConsent
+    {
+        /** @var ConsentStepRequestDto $dto */
+        $dto = $this->validate(ConsentStepRequestDto::fromArray($data));
+
+        $consent = new VendorConsent($vendor, ConsentType::SensitiveData, $dto->granted);
+        $this->em->persist($consent);
+
+        return $consent;
+    }
+
     public function handle(Vendor $vendor, array $data): void
     {
         /** @var ConsentStepRequestDto $dto */
         $dto = $this->validate(ConsentStepRequestDto::fromArray($data));
 
-        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy([
-            'vendor'      => $vendor,
-            'consentType' => ConsentType::SensitiveData,
-        ]);
+        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
+            ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
+            ['createdAt' => 'DESC'],
+        );
 
         if ($consent !== null) {
             $consent->setGranted($dto->granted);
@@ -47,18 +58,18 @@ readonly class ConsentStepHandler extends AbstractOnboardingStepHandler
 
     public function isFilled(Vendor $vendor): bool
     {
-        return null !== $this->em->getRepository(VendorConsent::class)->findOneBy([
-            'vendor'      => $vendor,
-            'consentType' => ConsentType::SensitiveData,
-        ]);
+        return null !== $this->em->getRepository(VendorConsent::class)->findOneBy(
+            ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
+            ['createdAt' => 'DESC'],
+        );
     }
 
     public function getStepData(Vendor $vendor): array
     {
-        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy([
-            'vendor'      => $vendor,
-            'consentType' => ConsentType::SensitiveData,
-        ]);
+        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
+            ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
+            ['createdAt' => 'DESC'],
+        );
 
         if ($consent === null) {
             return [];

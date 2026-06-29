@@ -22,7 +22,7 @@ enum OnboardingStep: string
     {
         return match ($this) {
             self::Professions             => 'Vos services',
-            self::Consent                 => 'Données sensibles',
+            self::Consent                 => 'Votre consentement',
             self::Experiences             => 'Votre expérience',
             self::VenueCharacteristics    => 'Caractéristiques du lieu',
             self::CateringCharacteristics => 'Caractéristiques traiteur',

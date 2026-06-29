@@ -7,6 +7,8 @@ namespace App\Dispatcher\Vendor\Onboarding;
 use App\DTO\Vendor\VendorOnboardingStepRequestDto;
 use App\DTO\Vendor\VendorOnboardingStepResponseDto;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorConsent;
+use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Event\StepperSubmittedEvent;
@@ -61,8 +63,27 @@ readonly class VendorOnboardingStepDispatcher
 
         $completed = array_slice($steps, 0, $submittedIndex + 1);
 
+        $next = $this->resolver->resolveNextStep($vendorType, $step);
+
+        // Consent refusé → sauter tous les steps sensibles (Experiences + CateringCharacteristics)
+        if ($step === OnboardingStep::Consent) {
+            $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
+                ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
+                ['createdAt' => 'DESC'],
+            );
+            if ($consent !== null && !$consent->isGranted()) {
+                $afterConsent = array_slice($steps, array_search(OnboardingStep::Consent, $steps, true) + 1);
+                foreach ($afterConsent as $candidate) {
+                    if ($candidate !== OnboardingStep::Experiences) {
+                        $next = $candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
         return new VendorOnboardingStepResponseDto(
-            next:      $this->resolver->resolveNextStep($vendorType, $step),
+            next:      $next,
             completed: $completed,
             stepsData: $this->buildStepsData($vendor, $completed, $vendorType),
         );

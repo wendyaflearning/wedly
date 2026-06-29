@@ -62,15 +62,17 @@ readonly class OnboardingStepResolver
     }
 
     /**
-     * @param array<string, bool> $filledSteps
+     * @param array<string, bool>      $filledSteps
+     * @param array<OnboardingStep>|null $steps Pre-filtered steps; falls back to getOnboardingSteps() if null
      * @return array<OnboardingStepResponse>
      */
     public function resolveAllSteps(
         VendorType $vendorType,
         OnboardingStep $currentStep,
         array $filledSteps,
+        ?array $steps = null,
     ): array {
-        $steps        = $this->getOnboardingSteps($vendorType);
+        $steps ??= $this->getOnboardingSteps($vendorType);
         $currentIndex = array_search($currentStep, $steps, true);
 
         $result = [];
