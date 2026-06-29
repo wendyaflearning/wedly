@@ -12,7 +12,7 @@ use App\Enum\Vendor\OnboardingStep;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-// granted: false → ExperiencesStepHandler et CateringCharacteristicsStepHandler::isFilled() retournent true (skip implicite)
+// granted: false → ExperiencesStepHandler::isFilled() retourne true (skip implicite)
 readonly class ConsentStepHandler extends AbstractOnboardingStepHandler
 {
     public function __construct(

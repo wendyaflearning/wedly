@@ -65,7 +65,7 @@ readonly class VendorOnboardingStepDispatcher
 
         $next = $this->resolver->resolveNextStep($vendorType, $step);
 
-        // Consent refusé → sauter tous les steps sensibles (Experiences + CateringCharacteristics)
+        // Consent refusé → sauter Experiences ; pour Traiteur, CateringCharacteristics reste dans le parcours
         if ($step === OnboardingStep::Consent) {
             $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
                 ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],

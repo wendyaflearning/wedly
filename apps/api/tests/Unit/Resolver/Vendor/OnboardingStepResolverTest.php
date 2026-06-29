@@ -20,9 +20,15 @@ final class OnboardingStepResolverTest extends TestCase
 
     // --- Freelance : parcours complet ---
 
-    public function test_freelance_professions_returns_experiences(): void
+    public function test_freelance_professions_returns_consent(): void
     {
         $nextStep = $this->resolver->resolveNextStep(VendorType::Freelance, OnboardingStep::Professions);
+        $this->assertSame(OnboardingStep::Consent, $nextStep);
+    }
+
+    public function test_freelance_consent_returns_experiences(): void
+    {
+        $nextStep = $this->resolver->resolveNextStep(VendorType::Freelance, OnboardingStep::Consent);
         $this->assertSame(OnboardingStep::Experiences, $nextStep);
     }
 
@@ -57,6 +63,18 @@ final class OnboardingStepResolverTest extends TestCase
     }
 
     // --- Traiteur : transitions spécifiques ---
+
+    public function test_traiteur_professions_returns_consent(): void
+    {
+        $nextStep = $this->resolver->resolveNextStep(VendorType::Traiteur, OnboardingStep::Professions);
+        $this->assertSame(OnboardingStep::Consent, $nextStep);
+    }
+
+    public function test_traiteur_consent_returns_experiences(): void
+    {
+        $nextStep = $this->resolver->resolveNextStep(VendorType::Traiteur, OnboardingStep::Consent);
+        $this->assertSame(OnboardingStep::Experiences, $nextStep);
+    }
 
     public function test_traiteur_experiences_returns_catering_characteristics(): void
     {
@@ -98,16 +116,28 @@ final class OnboardingStepResolverTest extends TestCase
 
     // --- Nombre d'étapes par catégorie ---
 
-    public function test_freelance_has_6_steps(): void
+    public function test_freelance_has_7_steps(): void
     {
         $steps = $this->resolver->getOnboardingSteps(VendorType::Freelance);
-        $this->assertCount(6, $steps);
+        $this->assertCount(7, $steps);
     }
 
-    public function test_traiteur_has_7_steps(): void
+    public function test_traiteur_has_8_steps(): void
     {
         $steps = $this->resolver->getOnboardingSteps(VendorType::Traiteur);
+        $this->assertCount(8, $steps);
+    }
+
+    public function test_createurs_has_7_steps(): void
+    {
+        $steps = $this->resolver->getOnboardingSteps(VendorType::Createurs);
         $this->assertCount(7, $steps);
+    }
+
+    public function test_createurs_consent_returns_experiences(): void
+    {
+        $nextStep = $this->resolver->resolveNextStep(VendorType::Createurs, OnboardingStep::Consent);
+        $this->assertSame(OnboardingStep::Experiences, $nextStep);
     }
 
     public function test_lieu_has_6_steps(): void

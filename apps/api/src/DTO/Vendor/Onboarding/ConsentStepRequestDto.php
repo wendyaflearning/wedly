@@ -16,7 +16,9 @@ final readonly class ConsentStepRequestDto implements DTOInterface
     {
         return new self(
             granted: array_key_exists('granted', $data)
-                ? (bool) $data['granted']
+                ? (is_bool($data['granted'])
+                    ? $data['granted']
+                    : throw new \DomainException('Le champ "granted" doit être un booléen natif.', 422))
                 : throw new \DomainException('Le champ "granted" est requis.', 422),
         );
     }
