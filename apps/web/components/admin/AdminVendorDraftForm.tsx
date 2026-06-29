@@ -170,6 +170,7 @@ export function AdminVendorDraftForm({
   const [notice, setNotice] = useState<string | null>(null)
   const [sendResult, setSendResult] = useState<AdminVendorInvitationSendResponse | null>(null)
   const [copied, setCopied] = useState(false)
+  const hasPendingInvitation = draft?.invitation?.status === 'pending' || sendResult !== null
 
   const serviceOptions = useMemo(() => flattenServices(services), [services])
   const selectedService = serviceOptions.find((service) => service.id === form.serviceId)
@@ -326,7 +327,9 @@ export function AdminVendorDraftForm({
       <div className="sticky top-16 z-30 rounded-lg border border-bordeaux/10 bg-white px-4 py-3 shadow-sm lg:top-0">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase text-gris">Brouillon prestataire</p>
+            <p className="text-xs font-bold uppercase text-gris">
+              {hasPendingInvitation ? 'Invitation en attente' : 'Brouillon prestataire'}
+            </p>
             <h1 className="font-cormorant text-[34px] font-semibold leading-tight text-bordeaux">
               {vendorId ? 'Modifier un prestataire' : 'Ajouter un prestataire'}
             </h1>
@@ -335,15 +338,17 @@ export function AdminVendorDraftForm({
             <Link href="/admin/prestataires" className="inline-flex h-10 items-center rounded-md border border-[#d8c9ba] px-4 text-sm font-semibold text-texte no-underline">
               Retour
             </Link>
-            <button
-              type="button"
-              onClick={() => void saveDraft()}
-              disabled={saving || sending}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-bordeaux/20 px-4 text-sm font-semibold text-bordeaux disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              <Save size={16} aria-hidden="true" />
-              {saving ? 'Sauvegarde...' : 'Enregistrer le brouillon'}
-            </button>
+            {!hasPendingInvitation && (
+              <button
+                type="button"
+                onClick={() => void saveDraft()}
+                disabled={saving || sending}
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-bordeaux/20 px-4 text-sm font-semibold text-bordeaux disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                <Save size={16} aria-hidden="true" />
+                {saving ? 'Sauvegarde...' : 'Enregistrer le brouillon'}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void sendInvitation()}
@@ -351,7 +356,7 @@ export function AdminVendorDraftForm({
               className="inline-flex h-10 items-center gap-2 rounded-md bg-highlight px-4 text-sm font-semibold text-creme disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Send size={16} aria-hidden="true" />
-              {sending ? 'Envoi...' : "Envoyer l'invitation"}
+              {sending ? 'Envoi...' : hasPendingInvitation ? "Renvoyer l'invitation" : "Envoyer l'invitation"}
             </button>
           </div>
         </div>
