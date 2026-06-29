@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Builder\Vendor\Onboarding;
 
 use App\Entity\Vendor\Vendor;
+use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use App\DTO\Vendor\VendorOnboardingStepResponseDto;
@@ -21,9 +22,11 @@ readonly class VendorOnboardingOverviewBuilder
 
     public function build(Vendor $vendor): OnboardingOverviewResponseDto
     {
-        $vendorType  = $vendor->resolveVendorType();
-        $allSteps    = $this->resolver->getOnboardingSteps($vendorType);
-        $filledSteps = $this->buildFilledStepsMap($vendor, $vendorType);
+        $vendorType     = $vendor->resolveVendorType();
+        $allSteps       = $this->resolver->getOnboardingSteps($vendorType);
+        $filledSteps    = $this->buildFilledStepsMap($vendor, $vendorType);
+        $consentGranted = $this->resolveConsentGranted($vendor, $vendorType);
+        $allSteps       = $this->filterSensitiveSteps($allSteps, $consentGranted);
 
         $currentStep = $allSteps[count($allSteps) - 1];
         foreach ($allSteps as $step) {
@@ -33,7 +36,7 @@ readonly class VendorOnboardingOverviewBuilder
             }
         }
 
-        $steps     = $this->resolver->resolveAllSteps($vendorType, $currentStep, $filledSteps);
+        $steps     = $this->resolver->resolveAllSteps($vendorType, $currentStep, $filledSteps, $allSteps);
         $stepsData = [];
 
         foreach ($allSteps as $step) {
@@ -58,9 +61,11 @@ readonly class VendorOnboardingOverviewBuilder
 
     public function buildStepResponse(Vendor $vendor): VendorOnboardingStepResponseDto
     {
-        $vendorType  = $vendor->resolveVendorType();
-        $allSteps    = $this->resolver->getOnboardingSteps($vendorType);
-        $filledSteps = $this->buildFilledStepsMap($vendor, $vendorType);
+        $vendorType     = $vendor->resolveVendorType();
+        $allSteps       = $this->resolver->getOnboardingSteps($vendorType);
+        $filledSteps    = $this->buildFilledStepsMap($vendor, $vendorType);
+        $consentGranted = $this->resolveConsentGranted($vendor, $vendorType);
+        $allSteps       = $this->filterSensitiveSteps($allSteps, $consentGranted);
 
         $currentStep = $allSteps[count($allSteps) - 1];
         foreach ($allSteps as $step) {
@@ -91,6 +96,31 @@ readonly class VendorOnboardingOverviewBuilder
             completed: $completed,
             stepsData: $stepsData,
         );
+    }
+
+    /**
+     * @param array<OnboardingStep> $steps
+     * @return array<OnboardingStep>
+     */
+    private function filterSensitiveSteps(array $steps, ?bool $consentGranted): array
+    {
+        if ($consentGranted === true) {
+            return $steps;
+        }
+
+        return array_values(array_filter($steps, fn(OnboardingStep $s) => $s !== OnboardingStep::Experiences));
+    }
+
+    private function resolveConsentGranted(Vendor $vendor, VendorType $vendorType): ?bool
+    {
+        foreach ($this->handlers as $handler) {
+            if ($handler->supports() === OnboardingStep::Consent && $handler->supportsVendorType($vendorType)) {
+                $data = $handler->getStepData($vendor);
+                return $data['granted'] ?? null;
+            }
+        }
+
+        return null;
     }
 
     /** @return array<string, bool> */

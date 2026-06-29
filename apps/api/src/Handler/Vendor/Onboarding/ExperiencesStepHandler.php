@@ -77,10 +77,10 @@ readonly class ExperiencesStepHandler extends AbstractOnboardingStepHandler
 
     public function isFilled(Vendor $vendor): bool
     {
-        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy([
-            'vendor'      => $vendor,
-            'consentType' => ConsentType::SensitiveData,
-        ]);
+        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
+            ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
+            ['createdAt' => 'DESC'],
+        );
 
         // Consent refusé → étape auto-satisfaite pour ne pas bloquer assertAllStepsFilled()
         if ($consent !== null && !$consent->isGranted()) {
