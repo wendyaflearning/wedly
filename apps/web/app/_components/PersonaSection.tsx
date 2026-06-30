@@ -44,7 +44,7 @@ export default function PersonaSection() {
               }}
             >
               Organisez votre mariage<br />
-              <em>comme vous l'imaginez</em>
+              <em>comme vous l&apos;imaginez</em>
             </h2>
             <p
               style={{

@@ -50,19 +50,31 @@ erDiagram
     }
 
     VENDOR {
-        uuid    id              PK
-        uuid    user_id         FK
-        string  brand_name
-        text    bio             "nullable"
-        string  siret
-        string  address
-        string  zipcode
-        string  city
-        string  zone            "idf | nord | sud | etc"
-        integer price_min_cents
-        integer price_max_cents
-        boolean is_validated
-        boolean is_active
+        uuid     id                       PK
+        uuid     user_id                  FK
+        string   brand_name
+        text     description              "nullable"
+        string   siret                    "nullable"
+        string   address                  "nullable"
+        string   zipcode                  "nullable"
+        string   city                     "nullable"
+        string   phone                    "nullable"
+        string   legal_name               "nullable"
+        string   legal_form               "nullable"
+        date     incorporated_at          "nullable"
+        string   legal_status             "nullable"
+        boolean  siret_verified
+        string   price_type               "per_service | per_person | per_hour"
+        integer  price_min_cents
+        integer  price_max_cents
+        string   status                   "pending | under_review | active | rejected"
+        string   onboarding_step          "nullable"
+        text     bio                      "nullable"
+        boolean  is_published
+        datetime submitted_for_review_at "nullable"
+        datetime reviewed_at             "nullable"
+        json     rejection_reasons        "nullable"
+        text     rejection_note           "nullable"
         datetime created_at
         datetime updated_at
     }

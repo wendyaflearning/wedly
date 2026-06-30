@@ -33,10 +33,12 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
   }, [isOpen])
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) return
+    const frame = requestAnimationFrame(() => {
       setDragY(0)
       setIsDragging(false)
-    }
+    })
+    return () => cancelAnimationFrame(frame)
   }, [isOpen])
 
   function onTouchStart(e: React.TouchEvent) {

@@ -18,7 +18,6 @@ use App\DTO\Vendor\CreateVendorInputDto;
 use App\DTO\Vendor\VendorCreatedResponseDto;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 final class VendorService
 {
@@ -28,7 +27,7 @@ final class VendorService
         private readonly UserPasswordHasherInterface $passwordHasher,
     ) {}
 
-    public function createVendor(CreateVendorInputDto $dto, UserInterface $adminUser): VendorCreatedResponseDto
+    public function createVendor(CreateVendorInputDto $dto, User $adminUser): VendorCreatedResponseDto
     {
         if ($this->userRepository->findOneBy(['email' => $dto->email]) !== null) {
             throw new \DomainException('Email already registered.', 409);

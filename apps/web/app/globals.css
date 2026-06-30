@@ -8,6 +8,12 @@
   --color-highlight: #E35704;
   --color-gris: #9E8E85;
   --color-dore: #E8A87C;
+  --color-success: #286342;
+  --color-success-soft: #f4fbf6;
+  --color-success-border: #d8eadf;
+  --color-danger: #8a2f2f;
+  --color-danger-soft: #fff0f0;
+  --color-danger-border: #df9b9b;
 
   --font-cormorant: var(--font-cormorant-var);
   --font-manrope: var(--font-manrope-var);

@@ -39,7 +39,7 @@ class PortfolioImage
     #[ORM\Column(name: 'cloudinary_public_id', length: 255, nullable: true)]
     private ?string $cloudinaryPublicId = null;
 
-    #[ORM\Column(name: 'is_cover', type: 'boolean')]
+    #[ORM\Column(name: 'is_cover', type: 'boolean', options: ['default' => false])]
     private bool $isCover = false;
 
     #[ORM\ManyToMany(targetEntity: WeddingStyle::class)]

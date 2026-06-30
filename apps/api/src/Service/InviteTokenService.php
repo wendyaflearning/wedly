@@ -15,8 +15,7 @@ readonly class InviteTokenService
     ) {}
 
     /**
-     * @throws \DomainException 404 if token not found, 410 if already consumed
-     * TODO: implement expires_at check in V2
+     * @throws \DomainException 404 if token not found, 410 if expired or already consumed
      */
     public function consume(InviteToken $inviteToken): void
     {
@@ -34,6 +33,13 @@ readonly class InviteTokenService
 
         if (InviteTokenStatus::Pending !== $inviteToken->getStatus()) {
             throw new \DomainException('Token déjà utilisé', 410);
+        }
+
+        if ($inviteToken->getExpiresAt() < new \DateTimeImmutable()) {
+            $inviteToken->setStatus(InviteTokenStatus::Expired);
+            $this->em->flush();
+
+            throw new \DomainException('Token expiré', 410);
         }
 
         return $inviteToken;

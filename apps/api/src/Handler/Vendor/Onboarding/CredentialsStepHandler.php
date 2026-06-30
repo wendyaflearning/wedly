@@ -56,6 +56,10 @@ readonly class CredentialsStepHandler extends AbstractOnboardingStepHandler
         );
 
         $vendor->setStatus(VendorStatus::UnderReview);
+        $vendor->setSubmittedForReviewAt(new \DateTimeImmutable());
+        $vendor->setReviewedAt(null);
+        $vendor->setRejectionReasons(null);
+        $vendor->setRejectionNote(null);
         $user->setStatus(UserStatus::UnderReview);
     }
 }

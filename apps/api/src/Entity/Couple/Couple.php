@@ -33,7 +33,7 @@ class Couple
     #[ORM\JoinColumn(name: 'wedding_id', referencedColumnName: 'id', nullable: false)]
     private Wedding $wedding;
 
-    #[ORM\Column(name: 'status', type: 'string', enumType: CoupleStatus::class)]
+    #[ORM\Column(name: 'status', type: 'string', length: 20, enumType: CoupleStatus::class, options: ['default' => 'pending'])]
     private CoupleStatus $status = CoupleStatus::Pending;
 
     public function getId(): UuidV7

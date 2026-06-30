@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Vendor\Onboarding;
 
+use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
 use App\Handler\Vendor\Onboarding\LegalInfoStepHandler;
 use App\Integration\Pappers\PappersService;
-use App\Vendor\Onboarding\Service\LegalInfoStepService;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -22,6 +23,8 @@ final class LegalInfoStepServiceTest extends TestCase
 
     private const VALID_DATA = [
         'brand_name' => 'Studio Lumière',
+        'first_name' => 'Camille',
+        'last_name'  => 'Martin',
         'siret'      => self::VALID_SIRET,
         'phone'      => '0612345678',
         'address'    => '12 rue de la Paix',
@@ -52,6 +55,7 @@ final class LegalInfoStepServiceTest extends TestCase
         $pappers->method('findBySiret')->willReturn($this->activePappersData());
 
         $vendor = $this->createMock(Vendor::class);
+        $this->attachUser($vendor);
         $vendor->expects($this->once())->method('setBrandName')->with('Studio Lumière');
         $vendor->expects($this->once())->method('setSiret')->with(self::VALID_SIRET);
         $vendor->expects($this->once())->method('setPhone')->with('0612345678');
@@ -70,6 +74,7 @@ final class LegalInfoStepServiceTest extends TestCase
         $pappers->method('findBySiret')->willReturn($this->activePappersData());
 
         $vendor = $this->createMock(Vendor::class);
+        $this->attachUser($vendor);
         $vendor->expects($this->once())->method('setSiretVerified')->with(true);
 
         $this->makeService($pappers)->handle($vendor, self::VALID_DATA);
@@ -82,6 +87,7 @@ final class LegalInfoStepServiceTest extends TestCase
         $pappers->method('findBySiret')->willReturn($data);
 
         $vendor = $this->createMock(Vendor::class);
+        $this->attachUser($vendor);
         $vendor->expects($this->once())->method('setLegalName')->with($data['legal_name']);
         $vendor->expects($this->once())->method('setLegalForm')->with($data['legal_form']);
         $vendor->expects($this->once())->method('setLegalStatus')->with($data['legal_status']);
@@ -106,6 +112,7 @@ final class LegalInfoStepServiceTest extends TestCase
         );
 
         $vendor = $this->createMock(Vendor::class);
+        $this->attachUser($vendor);
         $vendor->expects($this->once())->method('setSiretVerified')->with(false);
 
         $this->makeService($pappers, $logger)->handle($vendor, self::VALID_DATA);
@@ -125,6 +132,7 @@ final class LegalInfoStepServiceTest extends TestCase
         );
 
         $vendor = $this->createMock(Vendor::class);
+        $this->attachUser($vendor);
         $vendor->expects($this->once())->method('setSiretVerified')->with(false);
         $vendor->expects($this->never())->method('setLegalStatus');
 
@@ -147,6 +155,10 @@ final class LegalInfoStepServiceTest extends TestCase
     {
         $vendor = $this->createStub(Vendor::class);
         $vendor->method('getSiret')->willReturn(self::VALID_SIRET);
+        $user = $this->createStub(User::class);
+        $user->method('getFirstName')->willReturn('Camille');
+        $user->method('getLastName')->willReturn('Martin');
+        $vendor->method('getUser')->willReturn($user);
         $vendor->method('getBrandName')->willReturn('Studio Lumière');
         $vendor->method('getPhone')->willReturn('0612345678');
         $vendor->method('getAddress')->willReturn('12 rue de la Paix');
@@ -170,6 +182,14 @@ final class LegalInfoStepServiceTest extends TestCase
     }
 
     // --- helpers ---
+
+    private function attachUser(Vendor&MockObject $vendor): void
+    {
+        $user = $this->createStub(User::class);
+        $user->method('setFirstName')->willReturnSelf();
+        $user->method('setLastName')->willReturnSelf();
+        $vendor->method('getUser')->willReturn($user);
+    }
 
     private function activePappersData(): array
     {

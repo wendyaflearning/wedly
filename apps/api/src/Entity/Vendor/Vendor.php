@@ -83,7 +83,7 @@ class Vendor
     #[ORM\Column(name: 'price_max_cents', type: 'integer')]
     private int $priceMaxCents;
 
-    #[ORM\Column(name: 'status', type: 'string', enumType: VendorStatus::class)]
+    #[ORM\Column(name: 'status', type: 'string', length: 20, enumType: VendorStatus::class, options: ['default' => 'pending'])]
     private VendorStatus $status = VendorStatus::Pending;
 
     #[ORM\Column(name: 'onboarding_step', type: 'string', enumType: OnboardingStep::class, nullable: true)]
@@ -94,6 +94,18 @@ class Vendor
 
     #[ORM\Column(name: 'is_published', type: 'boolean', options: ['default' => false])]
     private bool $isPublished = false;
+
+    #[ORM\Column(name: 'submitted_for_review_at', type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $submittedForReviewAt = null;
+
+    #[ORM\Column(name: 'reviewed_at', type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $reviewedAt = null;
+
+    #[ORM\Column(name: 'rejection_reasons', type: 'json', nullable: true)]
+    private ?array $rejectionReasons = null;
+
+    #[ORM\Column(name: 'rejection_note', type: 'text', nullable: true)]
+    private ?string $rejectionNote = null;
 
     #[ORM\ManyToMany(targetEntity: Service::class)]
     #[ORM\JoinTable(
@@ -401,6 +413,54 @@ class Vendor
     public function setIsPublished(bool $isPublished): static
     {
         $this->isPublished = $isPublished;
+
+        return $this;
+    }
+
+    public function getSubmittedForReviewAt(): ?\DateTimeImmutable
+    {
+        return $this->submittedForReviewAt;
+    }
+
+    public function setSubmittedForReviewAt(?\DateTimeImmutable $submittedForReviewAt): static
+    {
+        $this->submittedForReviewAt = $submittedForReviewAt;
+
+        return $this;
+    }
+
+    public function getReviewedAt(): ?\DateTimeImmutable
+    {
+        return $this->reviewedAt;
+    }
+
+    public function setReviewedAt(?\DateTimeImmutable $reviewedAt): static
+    {
+        $this->reviewedAt = $reviewedAt;
+
+        return $this;
+    }
+
+    public function getRejectionReasons(): ?array
+    {
+        return $this->rejectionReasons;
+    }
+
+    public function setRejectionReasons(?array $rejectionReasons): static
+    {
+        $this->rejectionReasons = $rejectionReasons;
+
+        return $this;
+    }
+
+    public function getRejectionNote(): ?string
+    {
+        return $this->rejectionNote;
+    }
+
+    public function setRejectionNote(?string $rejectionNote): static
+    {
+        $this->rejectionNote = $rejectionNote;
 
         return $this;
     }

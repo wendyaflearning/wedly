@@ -7,6 +7,7 @@ export type VendorDashboard = {
   firstName: string
   lastName?: string
   email?: string
+  status: 'pending' | 'under_review' | 'active' | 'rejected'
   createdAt: string
   vendorType: string
   bio?: string | null

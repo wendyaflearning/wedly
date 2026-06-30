@@ -24,10 +24,10 @@ export default function CropModal({ file, aspectRatio, onConfirm, onCancel }: Cr
   // Dimensions naturelles de l'image — en state pour éviter les ref-reads pendant le render
   const [imgW, setImgW]             = useState(0)
   const [imgH, setImgH]             = useState(0)
+  const [containScale, setContainScale] = useState(1)
 
   const canvasRef    = useRef<HTMLCanvasElement>(null)
   const imgRef       = useRef<HTMLImageElement | null>(null)
-  const containScale = useRef(1)
   const dragRef      = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null)
 
   // ── Détection mobile + animation slide-up ──
@@ -46,15 +46,17 @@ export default function CropModal({ file, aspectRatio, onConfirm, onCancel }: Cr
   // ── Chargement image ──
   useEffect(() => {
     const url = URL.createObjectURL(file)
-    const img = new window.Image()
-    img.onload = () => {
-      imgRef.current = img
-      const cs   = Math.min(OUT_W / img.naturalWidth, OUT_H / img.naturalHeight)
-      const cv   = Math.max(OUT_W / img.naturalWidth, OUT_H / img.naturalHeight)
-      containScale.current = cs
-      setMaxZoom(Math.max((cv / cs) * 2, 3))
-      setReady(true)
-    }
+      const img = new window.Image()
+      img.onload = () => {
+        imgRef.current = img
+        const cs   = Math.min(OUT_W / img.naturalWidth, OUT_H / img.naturalHeight)
+        const cv   = Math.max(OUT_W / img.naturalWidth, OUT_H / img.naturalHeight)
+        setImgW(img.naturalWidth)
+        setImgH(img.naturalHeight)
+        setContainScale(cs)
+        setMaxZoom(Math.max((cv / cs) * 2, 3))
+        setReady(true)
+      }
     img.src = url
     return () => URL.revokeObjectURL(url)
   }, [file, OUT_W, OUT_H])
@@ -65,7 +67,7 @@ export default function CropModal({ file, aspectRatio, onConfirm, onCancel }: Cr
     const img    = imgRef.current
     if (!canvas || !img || !ready) return
     const ctx = canvas.getContext('2d')!
-    const ts  = containScale.current * zoom
+    const ts  = containScale * zoom
     const dw  = img.naturalWidth  * ts
     const dh  = img.naturalHeight * ts
     const dx  = (OUT_W - dw) / 2 + pan.x
@@ -73,7 +75,7 @@ export default function CropModal({ file, aspectRatio, onConfirm, onCancel }: Cr
     ctx.fillStyle = '#291A10'
     ctx.fillRect(0, 0, OUT_W, OUT_H)
     ctx.drawImage(img, dx, dy, dw, dh)
-  }, [zoom, pan, ready, OUT_W, OUT_H])
+  }, [zoom, pan, ready, OUT_W, OUT_H, containScale])
 
   function clamp(px: number, py: number) {
     return {
@@ -82,12 +84,10 @@ export default function CropModal({ file, aspectRatio, onConfirm, onCancel }: Cr
     }
   }
 
-  function coversCanvas(z: number, p: { x: number; y: number }) {
-    const img = imgRef.current
-    if (!img) return false
-    const ts = containScale.current * z
-    const dw = img.naturalWidth  * ts
-    const dh = img.naturalHeight * ts
+  function coversCanvas(z: number, p: { x: number; y: number }, naturalWidth: number, naturalHeight: number, scale: number) {
+    const ts = scale * z
+    const dw = naturalWidth  * ts
+    const dh = naturalHeight * ts
     const dx = (OUT_W - dw) / 2 + p.x
     const dy = (OUT_H - dh) / 2 + p.y
     return dx <= 0.5 && dy <= 0.5 && dx + dw >= OUT_W - 0.5 && dy + dh >= OUT_H - 0.5
@@ -148,7 +148,7 @@ export default function CropModal({ file, aspectRatio, onConfirm, onCancel }: Cr
     }
   }
 
-  const covers     = ready && coversCanvas(zoom, pan)
+  const covers     = ready && imgW > 0 && imgH > 0 && coversCanvas(zoom, pan, imgW, imgH, containScale)
   const canConfirm = covers && !confirming
 
   // ── Valeurs responsive ──
