@@ -321,7 +321,9 @@ export function GuideProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!localStorage.getItem(GUIDE_KEY)) setIsOpen(true)
+    if (localStorage.getItem(GUIDE_KEY)) return
+    const frame = requestAnimationFrame(() => setIsOpen(true))
+    return () => cancelAnimationFrame(frame)
   }, [])
 
   return (

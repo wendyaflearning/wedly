@@ -1,30 +1,22 @@
 <?php
 
-// TODO: endpoint temporaire pour recette — remplacer par US-D011 (vraie page admin)
-
 declare(strict_types=1);
 
 namespace App\Controller\Admin\Vendor;
 
-use App\Event\VendorValidatedEvent;
 use App\Repository\Vendor\VendorRepository;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Service\Vendor\AdminVendorReviewService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[IsGranted('ROLE_ADMIN')]
-#[Route('/api/v1/admin/vendors/{id}/validate', name: 'api_admin_vendor_validate', methods: ['POST'])]
-class ValidateVendorAction
+#[Route('/api/v1/admin/vendors/{id}/validate', name: 'api_admin_vendor_validate', requirements: ['id' => '[0-9a-fA-F-]{36}'], methods: ['POST'])]
+final readonly class ValidateVendorAction
 {
     public function __construct(
-        private readonly VendorRepository        $vendorRepository,
-        private readonly EntityManagerInterface  $em,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        #[Autowire('%env(FRONTEND_URL)%')]
-        private readonly string                  $frontendUrl,
+        private VendorRepository $vendorRepository,
+        private AdminVendorReviewService $reviewService,
     ) {}
 
     public function __invoke(string $id): JsonResponse
@@ -35,16 +27,8 @@ class ValidateVendorAction
             return new JsonResponse(['error' => 'Vendor not found.'], 404);
         }
 
-        $vendor->setIsPublished(true);
+        $this->reviewService->validate($vendor);
 
-        $this->eventDispatcher->dispatch(new VendorValidatedEvent(
-            $vendor->getUser()->getFirstName(),
-            $vendor->getUser()->getEmail(),
-            $this->frontendUrl . '/dashboard',
-        ));
-
-        $this->em->flush();
-
-        return new JsonResponse(['message' => 'Vendor validated.'], 200);
+        return new JsonResponse(['message' => 'Vendor validated.', 'status' => 'active'], 200);
     }
 }

@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(_request: NextRequest) {
-  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/logout`, {
-    method: 'POST',
+function clearAuthCookie(response: NextResponse) {
+  response.cookies.set('jwt_token', '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 0,
   });
+}
 
+export async function GET(request: NextRequest) {
+  const response = NextResponse.redirect(new URL('/login', request.url));
+  clearAuthCookie(response);
+
+  return response;
+}
+
+export async function POST() {
   const response = NextResponse.json({ ok: true });
-  response.cookies.delete('jwt_token');
+  clearAuthCookie(response);
+
   return response;
 }

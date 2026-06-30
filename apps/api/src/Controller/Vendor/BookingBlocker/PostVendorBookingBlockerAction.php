@@ -31,7 +31,7 @@ final class PostVendorBookingBlockerAction extends AbstractController
         try {
             /** @var User $user */
             $user    = $this->security->getUser();
-            $vendor  = $this->vendorOwnershipResolver->resolve($user);
+            $vendor  = $this->vendorOwnershipResolver->resolveActive($user);
             $blocker = $this->bookingBlockerService->create($vendor, $dto->date_start, $dto->date_end);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());

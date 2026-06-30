@@ -30,7 +30,7 @@ final class GetVendorBookingBlockerAction extends AbstractController
         try {
             /** @var User $user */
             $user   = $this->security->getUser();
-            $vendor = $this->vendorOwnershipResolver->resolve($user);
+            $vendor = $this->vendorOwnershipResolver->resolveActive($user);
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
         }

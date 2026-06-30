@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { loginVendor } from '@/lib/auth';
 
-export default function LoginForm() {
+export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,9 +16,9 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const result = await loginVendor(email, password);
+    const result = await loginVendor(email, password, redirectTo);
     if (result.success) {
-      window.location.href = '/dashboard';
+      window.location.href = result.redirectTo;
     } else {
       setError(result.error);
       setLoading(false);

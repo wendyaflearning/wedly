@@ -10,6 +10,8 @@ final readonly class ServiceResponseDto
 {
     public string $id;
     public string $name;
+    public string $slug;
+    public string $category;
     public array  $children;
 
     public function __construct(Service $service)
@@ -19,6 +21,8 @@ final readonly class ServiceResponseDto
 
         $this->id       = $service->getId()->toString();
         $this->name     = $service->getName();
+        $this->slug     = $service->getSlug();
+        $this->category = $service->getCategory()->value;
         $this->children = array_map(fn(Service $child) => new self($child), $children);
     }
 }

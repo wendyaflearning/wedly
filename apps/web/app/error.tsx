@@ -1,21 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string }
-  reset: () => void
-}) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  useEffect(() => {
-    setIsAuthenticated(document.cookie.includes('jwt_token'))
-  }, [])
+export default function Error() {
+  const [isAuthenticated] = useState(
+    () => typeof document !== 'undefined' && document.cookie.includes('jwt_token')
+  )
 
   return (
     <div className="min-h-screen bg-creme flex flex-col items-center justify-center gap-10 px-6 py-12">

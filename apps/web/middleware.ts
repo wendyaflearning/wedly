@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const PROTECTED_ROUTES = [
   '/dashboard',
+  '/admin',
 ]
 
 export function middleware(request: NextRequest) {
@@ -17,6 +18,7 @@ export function middleware(request: NextRequest) {
 
   if (!hasToken) {
     const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', `${pathname}${request.nextUrl.search}`)
     return NextResponse.redirect(loginUrl)
   }
 

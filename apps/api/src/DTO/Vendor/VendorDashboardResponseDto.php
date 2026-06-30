@@ -10,6 +10,7 @@ final readonly class VendorDashboardResponseDto
     public string $firstName;
     public ?string $lastName;
     public string $email;
+    public string $status;
     public string $createdAt;
     public string $vendorType;
     public array $sections_status;
@@ -25,6 +26,7 @@ final readonly class VendorDashboardResponseDto
         string $firstName,
         ?string $lastName,
         string $email,
+        string $status,
         \DateTimeImmutable $createdAt,
         string $vendorType,
         array $sectionsStatus,
@@ -39,6 +41,7 @@ final readonly class VendorDashboardResponseDto
         $this->firstName                   = $firstName;
         $this->lastName                    = $lastName;
         $this->email                       = $email;
+        $this->status                      = $status;
         $this->createdAt                   = $createdAt->format(\DateTimeInterface::ATOM);
         $this->vendorType                  = $vendorType;
         $this->sections_status             = $sectionsStatus;

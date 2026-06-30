@@ -32,7 +32,7 @@ export default async function NotFound() {
         </div>
 
         <h1 className="font-cormorant italic text-bordeaux text-2xl mb-4">
-          Cette page s'est envolée...
+          Cette page s&apos;est envolée...
         </h1>
 
         <p className="font-manrope text-gris text-sm leading-relaxed mb-8">

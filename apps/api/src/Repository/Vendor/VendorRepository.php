@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Repository\Vendor;
 
 use App\Entity\BookingBlocker\BookingBlocker;
+use App\Entity\User\InviteToken;
 use App\Entity\User\User;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
+use App\Enum\User\InviteTokenPersona;
+use App\Enum\Vendor\VendorStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -48,6 +51,73 @@ class VendorRepository extends ServiceEntityRepository
             ->setParameter('vendor', $vendor)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /** @return Vendor[] */
+    public function findForAdminReview(?VendorStatus $status): array
+    {
+        $qb = $this->createQueryBuilder('vendor')
+            ->addSelect('user')
+            ->leftJoin('vendor.user', 'user')
+            ->leftJoin('vendor.services', 'service')
+            ->addSelect('service')
+            ->orderBy('vendor.submittedForReviewAt', 'DESC')
+            ->addOrderBy('vendor.updatedAt', 'DESC');
+
+        if ($status !== null) {
+            $qb->andWhere('vendor.status = :status')
+                ->setParameter('status', $status->value);
+        } else {
+            $qb->andWhere('vendor.status IN (:statuses)')
+                ->setParameter('statuses', VendorStatus::adminReviewValues());
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function countAdminReviewableVendors(): int
+    {
+        return (int) $this->createQueryBuilder('vendor')
+            ->select('COUNT(vendor.id)')
+            ->andWhere('vendor.status IN (:statuses)')
+            ->setParameter('statuses', VendorStatus::adminReviewValues())
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /** @return Vendor[] */
+    public function findAdminDrafts(): array
+    {
+        return $this->createQueryBuilder('vendor')
+            ->addSelect('user', 'service')
+            ->leftJoin('vendor.user', 'user')
+            ->leftJoin('vendor.services', 'service')
+            ->leftJoin(InviteToken::class, 'inviteToken', 'WITH', 'inviteToken.vendor = vendor AND inviteToken.persona = :persona')
+            ->andWhere('vendor.status = :status')
+            ->andWhere('inviteToken.id IS NULL')
+            ->setParameter('status', VendorStatus::Pending->value)
+            ->setParameter('persona', InviteTokenPersona::Vendor->value)
+            ->orderBy('vendor.updatedAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findAdminProfile(string $id): ?Vendor
+    {
+        return $this->createQueryBuilder('vendor')
+            ->addSelect('user', 'service', 'culture', 'confession', 'region', 'portfolio', 'venueDetails', 'cateringDetails')
+            ->leftJoin('vendor.user', 'user')
+            ->leftJoin('vendor.services', 'service')
+            ->leftJoin('vendor.cultures', 'culture')
+            ->leftJoin('vendor.confessions', 'confession')
+            ->leftJoin('vendor.regions', 'region')
+            ->leftJoin('vendor.portfolioImages', 'portfolio')
+            ->leftJoin('vendor.venueDetails', 'venueDetails')
+            ->leftJoin('vendor.cateringDetails', 'cateringDetails')
+            ->andWhere('vendor.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     public function hasPortfolioCoverByVendor(Vendor $vendor): bool

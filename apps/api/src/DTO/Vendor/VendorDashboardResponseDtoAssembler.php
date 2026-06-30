@@ -35,6 +35,7 @@ final readonly class VendorDashboardResponseDtoAssembler
             firstName:               $user->getFirstName(),
             lastName:                $user->getLastName(),
             email:                   $user->getEmail(),
+            status:                  $vendor->getStatus()->value,
             createdAt:               $vendor->getCreatedAt(),
             vendorType:              $vendor->resolveVendorType()->value,
             sectionsStatus:          $sectionsStatus,

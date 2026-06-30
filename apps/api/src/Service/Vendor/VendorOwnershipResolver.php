@@ -6,6 +6,7 @@ namespace App\Service\Vendor;
 
 use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
+use App\Enum\Vendor\VendorStatus;
 use App\Repository\Vendor\VendorRepository;
 
 class VendorOwnershipResolver
@@ -21,6 +22,20 @@ class VendorOwnershipResolver
 
         if ($vendor === null) {
             throw new \DomainException('Accès interdit.', 403);
+        }
+
+        return $vendor;
+    }
+
+    /**
+     * @throws \DomainException 403 if the connected vendor is not active
+     */
+    public function resolveActive(User $user): Vendor
+    {
+        $vendor = $this->resolve($user);
+
+        if ($vendor->getStatus() !== VendorStatus::Active) {
+            throw new \DomainException('Profil en attente de validation - cela peut prendre 24h à 48h.', 403);
         }
 
         return $vendor;

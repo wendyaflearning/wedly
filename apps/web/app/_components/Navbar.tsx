@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import MobileMenu from "./MobileMenu";
 
@@ -12,9 +13,9 @@ export default function Navbar() {
         className="relative w-full bg-creme px-6 py-4 md:px-10 md:py-8 flex items-center justify-between"
         style={{ borderBottom: "1px solid rgba(158, 142, 133, 0.25)" }}
       >
-        <a href="/" className="shrink-0" aria-label="Wedly — accueil">
+        <Link href="/" className="shrink-0" aria-label="Wedly — accueil">
           <Image src="/logo.png" alt="Wedly" width={120} height={40} priority />
-        </a>
+        </Link>
 
         {/* Desktop nav — centered absolutely */}
         <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
