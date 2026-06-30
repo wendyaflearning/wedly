@@ -1,0 +1,104 @@
+{% apply inline_css %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+  <title>{% block title %}{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; padding: 0; background-color: #ffffff; font-family: 'Cormorant Garamond', Georgia, serif; }
+    table { border-spacing: 0; }
+    td { padding: 0; }
+    img { border: 0; display: block; }
+    .wrapper { background-color: #ffffff; width: 100%; }
+    .container { max-width: 580px; margin: 0 auto; }
+    .header { background-color: #4E1A32; padding: 28px 24px; text-align: center; }
+    .body { background-color: #FFF6ED; padding: 40px 36px; }
+    .greeting { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; font-weight: 600; color: #4E1A32; margin: 0 0 18px 0; line-height: 1.3; }
+    .greeting-italic { font-style: italic; font-weight: 400; }
+    .text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.75; color: #9D4F1E; margin: 0 0 20px 0; }
+    .separator { height: 3px; width: 48px; background-color: #E35704; margin: 0 0 24px 0; border: none; }
+    .divider { height: 1px; background-color: rgba(78,26,50,0.12); margin: 28px 0; border: none; }
+    .social-label { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 15px; font-style: italic; color: rgba(157,79,30,0.7); text-align: center; margin: 0 0 16px 0; }
+    .social-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; border: 1px solid rgba(78,26,50,0.18); border-radius: 20px; padding: 8px 20px; font-size: 13px; color: #9D4F1E; text-decoration: none; margin: 0 5px; }
+    .signature-label { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: rgba(157,79,30,0.65); margin: 0 0 4px 0; }
+    .signature-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; font-weight: 600; color: #4E1A32; margin: 0 0 2px 0; }
+    .signature-team { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: rgba(157,79,30,0.65); margin: 0; }
+    .footer { background-color: #FFF6ED; padding: 24px 32px 32px; text-align: center; border-top: 1px solid rgba(78,26,50,0.1); }
+    .footer-legal { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: rgba(157,79,30,0.5); margin: 0 0 4px 0; }
+    .footer-email { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: rgba(157,79,30,0.5); margin: 0; }
+    {% block extra_styles %}{% endblock %}
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; }
+      .body { padding: 28px 20px !important; }
+      .footer { padding: 20px !important; }
+      .header { padding: 22px 16px !important; }
+      .header img { width: 130px !important; }
+      .greeting { font-size: 22px !important; }
+      .text { font-size: 14px !important; }
+      .cta-btn { display: block !important; text-align: center !important; padding: 15px 20px !important; }
+      .social-btn { display: inline-block; margin: 4px 3px !important; }
+    }
+    @media (prefers-color-scheme: dark) {
+      body,
+      .wrapper,
+      .wrapper > tr > td        { background-color: #FFFFFF !important; }
+      .header                   { background-color: #4E1A32 !important; }
+      .body                     { background-color: #FFF6ED !important; }
+      .footer                   { background-color: #FFF6ED !important; }
+      .greeting                 { color: #4E1A32 !important; }
+      .text                     { color: #9D4F1E !important; }
+      .separator                { background-color: #E35704 !important; }
+      .signature-name           { color: #4E1A32 !important; }
+      .social-btn               { color: #9D4F1E !important; border-color: rgba(78,26,50,0.18) !important; }
+      .expire-note, .note       { color: rgba(157,79,30,0.6) !important; }
+      .footer-legal,
+      .footer-email             { color: rgba(157,79,30,0.5) !important; }
+      .steps-box,
+      .next-steps-box           { background-color: rgba(78,26,50,0.04) !important; }
+      .steps-label,
+      .next-steps-label         { color: #4E1A32 !important; }
+      .steps-item,
+      .next-steps-item          { color: #9D4F1E !important; }
+    }
+  </style>
+</head>
+<body>
+  <table class="wrapper" width="100%" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF">
+    <tr>
+      <td bgcolor="#FFFFFF">
+        <table class="container" width="580" align="center" cellpadding="0" cellspacing="0">
+
+          <!-- Header -->
+          <tr>
+            <td class="header" bgcolor="#4E1A32">
+              <img src="{% block logo_src %}https://res.cloudinary.com/dadvrspox/image/upload/v1781540174/logo_dark_qlvytq.png{% endblock %}" alt="Wedly" width="160" style="margin: 0 auto;">
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td class="body" bgcolor="#FFF6ED">
+              {% block body %}{% endblock %}
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer" bgcolor="#FFF6ED">
+              <p class="footer-legal">{% block footer_text %}{% endblock %}</p>
+              <p class="footer-email">contact@wedly-apps.com</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+{% endapply %}

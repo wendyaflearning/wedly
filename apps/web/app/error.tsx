@@ -21,15 +21,6 @@ export default function Error() {
         priority
       />
 
-      <div className="h-44 w-44 rounded-full overflow-hidden bg-bordeaux/5">
-        <Image
-          src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796293/illustration_yaswvk.png"
-          alt=""
-          width={176}
-          height={176}
-          className="object-cover w-full h-full"
-        />
-      </div>
 
       <div className="flex flex-col items-center text-center w-full max-w-sm">
         <span className="font-cormorant italic text-bordeaux text-[112px] leading-none tracking-tight">
