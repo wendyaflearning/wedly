@@ -11,6 +11,7 @@ Code principal :
 - `apps/api/src/Handler/Vendor/Onboarding/*StepHandler.php`
 - `apps/api/src/Enum/Vendor/OnboardingStep.php`
 - `apps/api/src/Enum/Vendor/VendorType.php`
+- `apps/api/src/Builder/Vendor/Onboarding/VendorOnboardingOverviewBuilder.php`
 
 ADR liée :
 
@@ -127,3 +128,56 @@ Fragilité à surveiller :
 - `LegalInfoStepHandler` contient une vraie règle métier et une intégration
 externe. Si la logique Pappers grossit, extraire une politique dédiée rendra les
 tests plus directs.
+
+## VENDOR-ONBOARDING-005 — Filtrage des steps sensibles selon consentement
+
+Statut : `active`
+
+Les steps qui collectent des données sensibles ne doivent pas être exposées dans
+l'overview onboarding si le prestataire n'a pas accordé le consentement
+correspondant.
+
+Règle actuelle :
+
+- `Consent` est présent pour les types `Freelance`, `Traiteur` et `Createurs`
+- `Consent` est absent du parcours `Lieu`
+- `Experiences` est visible uniquement si le consentement `SensitiveData` est
+accordé
+- si le consentement n'existe pas encore ou vaut `false`, `Experiences` est
+filtré de l'overview
+- pour `Traiteur`, refuser le consentement saute `Experiences` mais conserve
+`CateringCharacteristics` dans le parcours
+
+Implémentation actuelle :
+
+- `OnboardingStepResolver::getOnboardingSteps()`
+- `VendorOnboardingOverviewBuilder::filterSensitiveSteps()`
+- `VendorOnboardingOverviewBuilder::resolveConsentGranted()`
+- `VendorOnboardingStepDispatcher::handle()`
+
+Couverture existante :
+
+- `apps/api/tests/Unit/Resolver/Vendor/OnboardingStepResolverTest.php` couvre
+l'ordre nominal des steps et la présence de `Consent` selon le type vendor
+
+Couverture manquante :
+
+- test unitaire du filtrage `Experiences` dans l'overview quand consentement
+absent ou refusé
+- test unitaire du skip `Consent -> ZonesPricing` pour `Freelance` et
+`Createurs` quand `granted = false`
+- test unitaire du skip `Consent -> CateringCharacteristics` pour `Traiteur`
+quand `granted = false`
+
+E2E attendu :
+
+- parcours prestataire `Freelance` : refuser le consentement, vérifier que la
+step expériences disparaît et que la progression continue vers zone/tarifs
+- parcours prestataire `Traiteur` : refuser le consentement, vérifier que la
+step caractéristiques traiteur reste accessible
+
+Fragilité à surveiller :
+
+- le filtrage est réparti entre resolver, overview builder, dispatcher et
+handler `Experiences`. Un changement de parcours doit donc vérifier les quatre
+points ensemble.

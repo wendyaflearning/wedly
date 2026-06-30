@@ -11,6 +11,17 @@ dans les fichiers de règles.
 | `VENDOR-ONBOARDING-002` | La soumission finale est bloquée tant que les steps obligatoires ne sont pas remplies | `active` | `rules/vendor-onboarding.md` |
 | `VENDOR-ONBOARDING-003` | Les `steps_data` sont produits par les handlers de steps | `active` | `rules/vendor-onboarding.md` |
 | `VENDOR-ONBOARDING-004` | Pappers inaccessible ne signifie pas entreprise inactive | `active` | `rules/vendor-onboarding.md` |
+| `VENDOR-ONBOARDING-005` | Les steps sensibles sont filtrées si le consentement RGPD n'est pas accordé | `active` | `rules/vendor-onboarding.md` |
+
+## RGPD consent
+
+| ID | Règle | Statut | Fichier |
+|---|---|---|---|
+| `RGPD-CONSENT-001` | Le consentement données sensibles est explicite avant collecte cultures/confessions | `active` | `rules/rgpd-consent.md` |
+| `RGPD-CONSENT-002` | Refuser le consentement saute la step expériences et ne bloque pas la soumission finale | `active` | `rules/rgpd-consent.md` |
+| `RGPD-CONSENT-003` | Le payload de consentement exige un booléen natif | `active` | `rules/rgpd-consent.md` |
+| `RGPD-CONSENT-004` | Le consentement profil est limité au vendor propriétaire et crée une entrée datée | `active` | `rules/rgpd-consent.md` |
+| `RGPD-CONSENT-005` | La sémantique historique vs dernier état doit être clarifiée | `at-risk` | `rules/rgpd-consent.md` |
 
 ## Admin vendor lifecycle
 
@@ -37,6 +48,7 @@ dans les fichiers de règles.
 | `DATA-SCHEMA-002` | `PLAN.category_count = -1` signifie illimité | `active` | `rules/data-and-schema.md` |
 | `DATA-SCHEMA-003` | Les ManyToMany doivent passer par des tables de jointure explicites | `active` | `rules/data-and-schema.md` |
 | `DATA-SCHEMA-004` | Les référentiels sont chargés par fixtures, pas par API métier | `active` | `rules/data-and-schema.md` |
+| `DATA-SCHEMA-005` | `vendor_consent` conserve les décisions de consentement par vendor | `active` | `rules/data-and-schema.md` |
 
 ## À ajouter lors des prochains tickets
 

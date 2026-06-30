@@ -100,3 +100,38 @@ Point d'audit :
 
 - toute API de création/modification de référentiel doit être justifiée par un
 besoin produit explicite.
+
+## DATA-SCHEMA-005 — `vendor_consent`
+
+Statut : `active`
+
+Les décisions de consentement prestataire sont stockées dans la table
+`vendor_consent`.
+
+Structure attendue :
+
+- `id` : UUID v7
+- `vendor_id` : lien obligatoire vers `vendor`, suppression en cascade
+- `consent_type` : enum métier, actuellement `sensitive_data`
+- `granted` : booléen
+- `created_at` et `updated_at` via `TimestampableTrait`
+
+Implémentation actuelle :
+
+- `apps/api/src/Entity/Vendor/VendorConsent.php`
+- `apps/api/src/Enum/Vendor/ConsentType.php`
+- `apps/api/migrations/Version20260628211210.php`
+- `docs/wedly_schema_v3.mmd`
+
+Contrat attendu :
+
+- ne pas stocker de données sensibles culturelles ou confessionnelles sans
+consentement explicite
+- conserver la date de création de la décision pour audit
+- récupérer le dernier consentement par vendor et type via `createdAt DESC`
+
+Point d'audit :
+
+- clarifier si chaque changement de consentement doit créer une nouvelle ligne
+ou si l'onboarding peut modifier la dernière ligne. Cette nuance est suivie dans
+`RGPD-CONSENT-005`.
