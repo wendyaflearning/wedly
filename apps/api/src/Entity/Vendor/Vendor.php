@@ -83,7 +83,7 @@ class Vendor
     #[ORM\Column(name: 'price_max_cents', type: 'integer')]
     private int $priceMaxCents;
 
-    #[ORM\Column(name: 'status', type: 'string', enumType: VendorStatus::class)]
+    #[ORM\Column(name: 'status', type: 'string', length: 20, enumType: VendorStatus::class, options: ['default' => 'pending'])]
     private VendorStatus $status = VendorStatus::Pending;
 
     #[ORM\Column(name: 'onboarding_step', type: 'string', enumType: OnboardingStep::class, nullable: true)]
