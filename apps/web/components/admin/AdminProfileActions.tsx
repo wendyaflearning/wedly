@@ -97,7 +97,7 @@ export function AdminProfileActions({ profile }: { profile: AdminVendorProfile }
               type="button"
               onClick={validateProfile}
               disabled={!actionsEnabled || submitting !== null}
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-[#286342] px-4 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex h-10 items-center gap-2 rounded-md bg-success px-4 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
             >
               <CheckCircle2 size={17} aria-hidden="true" />
               {submitting === 'validate' ? 'Validation...' : 'Valider'}
@@ -110,7 +110,7 @@ export function AdminProfileActions({ profile }: { profile: AdminVendorProfile }
                 setModalOpen(true)
               }}
               disabled={!actionsEnabled || submitting !== null}
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-[#8a2f2f] px-4 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex h-10 items-center gap-2 rounded-md bg-danger px-4 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
             >
               <XCircle size={17} aria-hidden="true" />
               Refuser
@@ -118,7 +118,7 @@ export function AdminProfileActions({ profile }: { profile: AdminVendorProfile }
           </div>
         </div>
         {validateError && (
-          <div className="mt-3 flex flex-col gap-2 rounded-md border border-[#df9b9b] bg-[#fff0f0] px-3 py-3 text-sm text-[#8a2f2f] md:flex-row md:items-center md:justify-between">
+          <div className="mt-3 flex flex-col gap-2 rounded-md border border-danger-border bg-danger-soft px-3 py-3 text-sm text-danger md:flex-row md:items-center md:justify-between">
             <span>{validateError}</span>
             <button type="button" onClick={validateProfile} className="font-semibold underline underline-offset-2">
               Réessayer
@@ -174,7 +174,7 @@ export function AdminProfileActions({ profile }: { profile: AdminVendorProfile }
               </label>
             )}
 
-            {rejectError && <p className="mt-4 text-sm font-semibold text-[#8a2f2f]">{rejectError}</p>}
+            {rejectError && <p className="mt-4 text-sm font-semibold text-danger">{rejectError}</p>}
 
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -187,7 +187,7 @@ export function AdminProfileActions({ profile }: { profile: AdminVendorProfile }
               <button
                 type="submit"
                 disabled={submitting !== null}
-                className="h-10 rounded-md bg-[#8a2f2f] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
+                className="h-10 rounded-md bg-danger px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {submitting === 'reject' ? 'Refus...' : 'Confirmer le refus'}
               </button>

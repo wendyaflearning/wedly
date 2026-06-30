@@ -18,7 +18,7 @@ readonly class SendVendorRejectionListener
     public function __invoke(VendorRejectedEvent $event): void
     {
         $email = (new TemplatedEmail())
-            ->from(new Address('bonjour@wedly.fr', 'Wedly'))
+            ->from(new Address('contact@wedly-apps.com', 'Wedly'))
             ->to($event->email)
             ->subject('Votre profil Wedly nécessite quelques ajustements')
             ->htmlTemplate('emails/vendor/vendor_rejection.html.twig')

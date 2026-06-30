@@ -12,14 +12,14 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-class CreateVendorAction
+#[IsGranted('ROLE_ADMIN')]
+#[Route('/api/v1/admin/vendors', name: 'api_admin_vendor_create', methods: ['POST'])]
+final readonly class CreateVendorAction
 {
     public function __construct(
-        private readonly AdminVendorDraftService $draftService,
+        private AdminVendorDraftService $draftService,
     ) {}
 
-    #[IsGranted('ROLE_ADMIN')]
-    #[Route('/api/v1/admin/vendors', name: 'api_admin_vendor_create', methods: ['POST'])]
     public function __invoke(#[MapRequestPayload] CreateVendorInputDto $dto): JsonResponse
     {
         try {

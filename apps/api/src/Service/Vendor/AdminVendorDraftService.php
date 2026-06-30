@@ -390,7 +390,7 @@ final readonly class AdminVendorDraftService
     {
         try {
             $email = (new TemplatedEmail())
-                ->from(new Address('bonjour@wedly.fr', 'Wedly'))
+                ->from(new Address('contact@wedly-apps.com', 'Wedly'))
                 ->to($vendor->getUser()->getEmail())
                 ->subject('Complétez votre profil Wedly')
                 ->htmlTemplate('emails/vendor/vendor_admin_invitation.html.twig')

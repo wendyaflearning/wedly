@@ -8,6 +8,10 @@ import type {
   AdminVendorFilter,
   AdminVendorListResponse,
   AdminVendorProfile,
+  ConfessionOption,
+  CultureOption,
+  RegionOption,
+  ServiceOptionNode,
 } from '@/lib/admin-types'
 
 type AdminFetchResult<T> =
@@ -21,7 +25,23 @@ type AdminSessionResponse = {
   roles: string[]
 }
 
+type AdminVendorFormOptions = {
+  services: ServiceOptionNode[]
+  regions: RegionOption[]
+  cultures: CultureOption[]
+  confessions: ConfessionOption[]
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+async function publicFetch<T>(path: string): Promise<T[]> {
+  if (!API_URL) return []
+
+  const response = await fetch(`${API_URL}${path}`, { cache: 'no-store' }).catch(() => null)
+  if (!response?.ok) return []
+
+  return response.json() as Promise<T[]>
+}
 
 async function adminFetch(path: string, init?: RequestInit): Promise<Response | null> {
   const cookieStore = await cookies()
@@ -94,4 +114,15 @@ export async function fetchAdminVendorDrafts(): Promise<AdminFetchResult<AdminVe
 
 export async function fetchAdminVendorDraft(id: string): Promise<AdminFetchResult<AdminVendorDraft>> {
   return parseResult(await adminFetch(`/api/v1/admin/vendors/${id}/draft`))
+}
+
+export async function fetchAdminVendorFormOptions(): Promise<AdminVendorFormOptions> {
+  const [services, regions, cultures, confessions] = await Promise.all([
+    publicFetch<ServiceOptionNode>('/api/v1/services'),
+    publicFetch<RegionOption>('/api/v1/regions'),
+    publicFetch<CultureOption>('/api/v1/cultures'),
+    publicFetch<ConfessionOption>('/api/v1/confessions'),
+  ])
+
+  return { services, regions, cultures, confessions }
 }

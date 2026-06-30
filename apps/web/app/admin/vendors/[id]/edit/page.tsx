@@ -1,17 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { AdminVendorDraftForm } from '@/components/admin/AdminVendorDraftForm'
-import { fetchAdminVendorDraft } from '@/lib/admin'
-import type { ConfessionOption, CultureOption, RegionOption, ServiceOptionNode } from '@/lib/admin-types'
-
-async function fetchPublicOptions<T>(path: string): Promise<T[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL
-  if (!apiUrl) return []
-
-  const response = await fetch(`${apiUrl}${path}`, { cache: 'no-store' }).catch(() => null)
-  if (!response?.ok) return []
-
-  return response.json() as Promise<T[]>
-}
+import { fetchAdminVendorDraft, fetchAdminVendorFormOptions } from '@/lib/admin'
 
 export default async function EditAdminVendorPage({
   params,
@@ -19,12 +8,9 @@ export default async function EditAdminVendorPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [draftResult, services, regions, cultures, confessions] = await Promise.all([
+  const [draftResult, formOptions] = await Promise.all([
     fetchAdminVendorDraft(id),
-    fetchPublicOptions<ServiceOptionNode>('/api/v1/services'),
-    fetchPublicOptions<RegionOption>('/api/v1/regions'),
-    fetchPublicOptions<CultureOption>('/api/v1/cultures'),
-    fetchPublicOptions<ConfessionOption>('/api/v1/confessions'),
+    fetchAdminVendorFormOptions(),
   ])
 
   if (!draftResult.ok) {
@@ -35,10 +21,10 @@ export default async function EditAdminVendorPage({
   return (
     <AdminVendorDraftForm
       draft={draftResult.data}
-      services={services}
-      regions={regions}
-      cultures={cultures}
-      confessions={confessions}
+      services={formOptions.services}
+      regions={formOptions.regions}
+      cultures={formOptions.cultures}
+      confessions={formOptions.confessions}
     />
   )
 }

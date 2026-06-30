@@ -23,8 +23,8 @@ export default async function AdminVendorProfilePage({
           <ArrowLeft size={16} aria-hidden="true" />
           Retour
         </Link>
-        <div className="rounded-lg border border-[#df9b9b] bg-white px-6 py-10 text-center">
-          <h1 className="font-cormorant text-3xl font-semibold text-[#8a2f2f]">Chargement impossible</h1>
+        <div className="rounded-lg border border-danger-border bg-white px-6 py-10 text-center">
+          <h1 className="font-cormorant text-3xl font-semibold text-danger">Chargement impossible</h1>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-texte/65">
             Une erreur est survenue pendant le chargement du profil.
           </p>
