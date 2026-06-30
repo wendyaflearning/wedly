@@ -7,6 +7,7 @@ namespace App\Enum\Vendor;
 enum OnboardingStep: string
 {
     case Professions             = 'professions';
+    case Consent                 = 'consent';
     case Experiences             = 'experiences';
     case VenueCharacteristics    = 'venue_characteristics';
     case CateringCharacteristics = 'catering_characteristics';
@@ -21,6 +22,7 @@ enum OnboardingStep: string
     {
         return match ($this) {
             self::Professions             => 'Vos services',
+            self::Consent                 => 'Votre consentement',
             self::Experiences             => 'Votre expérience',
             self::VenueCharacteristics    => 'Caractéristiques du lieu',
             self::CateringCharacteristics => 'Caractéristiques traiteur',

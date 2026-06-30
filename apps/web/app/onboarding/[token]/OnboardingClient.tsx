@@ -12,9 +12,10 @@ import ZonesPricingStep from './steps/zones-pricing/ZonesPricingStep'
 import PortfolioStep from './steps/portfolio/PortfolioStep'
 import LegalInfoStep from './steps/legal_info/LegalInfoStep'
 import CredentialsStep from './steps/credentials/CredentialsStep'
+import ConsentStep from './steps/consent/ConsentStep'
 import CompletionScreen from './CompletionScreen'
 
-type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'experiences' | 'venue_characteristics' | 'catering_characteristics' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials' | 'completed'
+type Screen = 'welcome' | 'onboarding_overview' | 'professions' | 'consent' | 'experiences' | 'venue_characteristics' | 'catering_characteristics' | 'zones_pricing' | 'portfolio' | 'legal_info' | 'credentials' | 'completed'
 
 export default function OnboardingClient({
   data,
@@ -60,6 +61,19 @@ export default function OnboardingClient({
         currentStepKey="professions"
         onBack={() => navigate('onboarding_overview')}
         onNext={handleNext('professions')}
+        onNavigate={navigateToStep}
+      />
+    )
+  }
+
+  if (screen === 'consent') {
+    return (
+      <ConsentStep
+        token={token}
+        steps={data.steps}
+        currentStepKey="consent"
+        onBack={() => navigate('onboarding_overview')}
+        onNext={handleNext('consent')}
         onNavigate={navigateToStep}
       />
     )

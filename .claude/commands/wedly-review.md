@@ -1,122 +1,144 @@
-# /wedly-review — Wedly-specific PR review
+# /wedly-review — Revue de PR spécifique Wedly
 
-Review the current branch diff (or a GitHub PR) against Wedly conventions and MVP scope rules.
+Analyse le diff de la branche courante (ou d'une PR GitHub) selon les conventions Wedly et les règles de périmètre MVP.
 
 ## Usage
 
 ```
-/wedly-review          ← reviews current branch diff vs develop
-/wedly-review <PR#>    ← reviews a GitHub PR
+/wedly-review          ← analyse la branche courante vs develop
+/wedly-review <PR#>    ← analyse une PR GitHub
 ```
 
 ---
 
 ## Instructions
 
-### Step 1 — Get the diff
+### Étape 1 — Récupérer le diff
 
-**From a PR number:**
+**Depuis un numéro de PR :**
 ```bash
 gh pr diff <PR#>
 gh pr view <PR#> --json title,body,files
 ```
 
-**From current branch:**
+**Depuis la branche courante :**
 ```bash
 git diff develop...HEAD
 git diff develop...HEAD --stat
 ```
 
-### Step 2 — Run the checklist
+### Étape 2 — Appliquer la checklist
 
-Go through each section below. For every finding, assign a severity:
-
-- 🔴 **Blocker** — must be fixed before merge
-- 🟠 **Warning** — should be fixed, acceptable to merge with a note
-- 🟡 **Tech debt** — non-blocking, flag for awareness
+Pour chaque constat, attribuer une sévérité :
+- 🔴 **Bloquant** — doit être corrigé avant le merge
+- 🟠 **Avertissement** — devrait être corrigé, acceptable de merger avec une note
+- 🟡 **Dette technique** — non-bloquant, signaler pour information
 
 ---
 
 #### Backend (Symfony / PHP)
 
 **Architecture**
-- [ ] Controllers are Single Action and thin — no business logic inside them
-- [ ] DTOs and Assemblers are separate classes — no inline mapping in the controller
-- [ ] Business logic lives in services, not in DTOs or controllers
+- [ ] Les controllers sont Single Action et minces — aucune logique métier à l'intérieur
+- [ ] Les DTOs et Assemblers sont des classes séparées — pas de mapping inline dans le controller
+- [ ] La logique métier vit dans les services, pas dans les DTOs ni les controllers
+- [ ] Les erreurs des services utilisent `DomainException` — pas d'objet `Response` construit dans un service
+- [ ] Les erreurs de validation utilisent `ValidationException` (→ 422 via ExceptionListener) — pas de `JsonResponse` manuel
 
-**API & Security**
-- [ ] Auth guards are in place on endpoints, or explicitly marked `// TODO auth`
-- [ ] HTTP status codes are correct: 400/404/422 for client errors, not 500 generics
+**Strategy Pattern (ADR-004)**
+- [ ] Chaque nouveau step handler implémente `StepHandlerInterface` et étend `AbstractOnboardingStepHandler`
+- [ ] Le handler est taggé avec `#[AutoconfigureTag]` — jamais instancié manuellement
+- [ ] `isFilled(Vendor $vendor): bool` est implémenté — le statut de l'étape n'est PAS dérivé du curseur `onboarding_step`
 
-**Database & Schema**
-- [ ] No fields added that are not in `docs/schema/wedly_schema_v3.mmd`
-- [ ] SQL identifiers are snake_case, PHP classes are PascalCase
-- [ ] Monetary values use integer cents (e.g. `price_cents`) — no floats
-- [ ] All new entities use `TimestampableTrait`
-- [ ] Primary keys are UUID v7
-- [ ] ManyToMany relations use explicit join tables — no silent Doctrine management
-- [ ] New migrations respect the entity dependency order (Wave 1 → 2 → 3)
-- [ ] New FK columns have a corresponding index in the migration
+**API & Sécurité**
+- [ ] Les guards d'auth sont en place sur les endpoints, ou explicitement marqués `// TODO auth`
+- [ ] Les codes HTTP sont corrects : 400/404/422 pour les erreurs client, pas de 500 génériques
+
+**Base de données & Schéma**
+- [ ] Pas de champ ajouté absent de `docs/wedly_schema_v3.mmd`
+- [ ] Identifiants SQL en snake_case, classes PHP en PascalCase
+- [ ] Les valeurs monétaires utilisent des centimes entiers (ex. `price_cents`) — jamais de floats
+- [ ] Toutes les nouvelles entités utilisent `TimestampableTrait`
+- [ ] Les clés primaires sont des UUID v7
+- [ ] Les relations ManyToMany utilisent des tables de jointure explicites — jamais gérées silencieusement par Doctrine
+- [ ] Les nouvelles migrations respectent l'ordre de dépendance des entités (Wave 1 → 2 → 3)
+- [ ] Les nouvelles colonnes FK ont un index correspondant dans la migration
 
 **Performance**
-- [ ] No N+1 queries — check for `findBy` or repository calls inside loops
+- [ ] Pas de requêtes N+1 — vérifier les appels `findBy` ou repository dans des boucles
 
-**Code style**
-- [ ] Closure parameters use explicit names: `fn($service)` not `fn($s)`
+**Style de code**
+- [ ] Les paramètres de closures utilisent des noms explicites : `fn($service)` pas `fn($s)`
 
-**Tests** *(non-blocking — tech debt)*
-- [ ] New services or business logic have a corresponding test in `tests/Unit/`
-  - If missing: flag as 🟡 tech debt, not a blocker
+**Tests** *(non-bloquant — dette technique)*
+- [ ] Les nouveaux services ou logiques métier ont un test correspondant dans `tests/Unit/`
+  - Si absent : signaler en 🟡 dette technique, pas bloquant
 
 ---
 
 #### Frontend (Next.js / TypeScript)
 
-**Component hygiene**
-- [ ] No unnecessary `'use client'` — Server Components by default
-- [ ] No `any` in TypeScript
-- [ ] No business logic inside UI components — keep them presentational
+**Architecture Wedly**
+- [ ] Les Server Components appellent directement les fonctions `lib/` — pas de `fetch()` inline dans un Server Component
+- [ ] Les Client Components passent par des Next.js Route Handlers — jamais d'appel direct navigateur → Symfony
+- [ ] Le pattern `useEffect` GET au montage + `onSubmit` PATCH est respecté — pas de React Hook Form ni Zustand introduits
 
-**API layer**
-- [ ] API calls go through `lib/vendor.ts` (or the dedicated lib layer), not inline `fetch()` in components
-- [ ] Every `fetch()` checks `res.ok` before consuming the response
+**Hygiène des composants**
+- [ ] Pas de `'use client'` inutile — Server Components par défaut
+- [ ] Pas de `any` en TypeScript
+- [ ] Pas de logique métier dans les composants UI — rester présentationnels
 
----
+**Couche API**
+- [ ] Les appels API passent par `lib/vendor.ts` (ou la lib dédiée), pas de `fetch()` inline dans les composants
+- [ ] Chaque `fetch()` vérifie `res.ok` avant de consommer la réponse
 
-#### General / Wedly rules
-
-**MVP scope**
-- [ ] No code added beyond the explicitly requested scope — flag scope creep as 🟠
-
-**Data & Fixtures**
-- [ ] Fixtures use realistic French data (no "John Doe", "test@test.com", lorem ipsum)
-
-**Git hygiene**
-- [ ] Commits are in English
-- [ ] Branch follows `feature/` or `refactor/` naming — no direct commits to `develop`
+**Guards vendor_type**
+- [ ] Les sections conditionnelles Lieu/Traiteur sont contrôlées via `sections_status` de `GET /api/v1/vendors/me` — aucune logique dupliquée côté backend
 
 ---
 
-### Step 3 — Report findings
+#### Règles générales / Wedly
 
-Group findings by severity and present them clearly:
+**Périmètre MVP**
+- [ ] Pas de code ajouté au-delà du périmètre explicitement demandé — signaler le scope creep en 🟠
+
+**Images & assets**
+- [ ] Aucune image stockée localement sur le VPS — tout passe par Cloudinary
+- [ ] Les nouvelles `portfolio_photos` ont des métadonnées de style/catégorie (compatibilité moodboard Année 2)
+
+**Design system**
+- [ ] Pas de couleur hardcodée en dehors du design system — toujours les classes Tailwind ou `var(--color-xxx)`
+- [ ] Les nouvelles couleurs sémantiques (succès, danger…) sont ajoutées comme tokens dans `globals.css`
+
+**Données & Fixtures**
+- [ ] Les fixtures utilisent des données françaises réalistes (pas de "John Doe", "test@test.com", lorem ipsum)
+
+**Hygiène git**
+- [ ] Les commits sont en anglais
+- [ ] La branche suit le nommage `feature/` ou `refactor/` — aucun commit direct sur `develop`
+
+---
+
+### Étape 3 — Présenter les constats
+
+Regrouper par sévérité :
 
 ```
-## Wedly Review — <branch or PR title>
+## Wedly Review — <branche ou titre de PR>
 
-### 🔴 Blockers
-- <finding> — <file:line if relevant>
+### 🔴 Bloquants
+- <constat> — <fichier:ligne si pertinent>
 
-### 🟠 Warnings
-- <finding>
+### 🟠 Avertissements
+- <constat>
 
-### 🟡 Tech debt (non-blocking)
-- <finding>
+### 🟡 Dette technique (non-bloquant)
+- <constat>
 
-### ✅ All clear
-<sections with no findings>
+### ✅ RAS
+<sections sans constat>
 ```
 
-If there are no findings in a severity tier, omit that tier.
+Omettre un niveau de sévérité s'il n'a aucun constat.
 
-After presenting findings, ask the user if they want you to apply the fixes.
+Après avoir présenté les constats, demander à l'utilisateur s'il souhaite appliquer les corrections.

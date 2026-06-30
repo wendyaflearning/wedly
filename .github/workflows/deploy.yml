@@ -58,6 +58,7 @@ jobs:
           CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
           PAPPERS_API_TOKEN=${{ secrets.PAPPERS_API_TOKEN }}
           MAILER_DSN=${{ secrets.MAILER_DSN }}
+          SENTRY_DSN=${{ secrets.SENTRY_DSN }}
           EOF"
 
       - name: Deploy on VPS
