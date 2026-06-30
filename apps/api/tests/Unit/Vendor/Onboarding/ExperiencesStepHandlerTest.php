@@ -8,6 +8,8 @@ use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorConsent;
+use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Enum\Wedding\CultureType;
@@ -156,6 +158,26 @@ final class ExperiencesStepHandlerTest extends TestCase
         $this->assertTrue($handler->isFilled($vendor));
         $this->assertSame('France', $handler->getStepData($vendor)['culture_ids'][0]['name']);
         $this->assertSame('Laic', $handler->getStepData($vendor)['confession_ids'][0]['name']);
+    }
+
+    public function test_is_filled_returns_true_when_sensitive_data_consent_is_refused(): void
+    {
+        $vendor = new Vendor();
+        $consent = new VendorConsent($vendor, ConsentType::SensitiveData, false);
+
+        $repository = $this->createMock(EntityRepository::class);
+        $repository->expects($this->once())
+            ->method('findOneBy')
+            ->with(
+                ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
+                ['createdAt' => 'DESC']
+            )
+            ->willReturn($consent);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('getRepository')->with(VendorConsent::class)->willReturn($repository);
+
+        $this->assertTrue($this->makeHandler($em)->isFilled($vendor));
     }
 
     private function makeHandler(EntityManagerInterface $em): ExperiencesStepHandler

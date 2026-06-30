@@ -22,6 +22,7 @@ final class VendorOnboardingOverviewBuilderTest extends TestCase
             new OnboardingStepResolver(),
             [
                 new OverviewTestStepHandler(OnboardingStep::Professions, true, ['services' => ['photographe']]),
+                new OverviewTestStepHandler(OnboardingStep::Consent, true, ['granted' => true]),
                 new OverviewTestStepHandler(OnboardingStep::Experiences, false),
                 new OverviewTestStepHandler(OnboardingStep::ZonesPricing, false),
                 new OverviewTestStepHandler(OnboardingStep::Portfolio, false),
@@ -36,10 +37,10 @@ final class VendorOnboardingOverviewBuilderTest extends TestCase
         $this->assertSame('freelance', $response->vendor_type);
         $this->assertSame(['services' => ['photographe']], $response->steps_data['professions']);
         $this->assertSame('completed', $response->steps[0]->status);
-        $this->assertSame('current', $response->steps[1]->status);
-        $this->assertSame('pending', $response->steps[2]->status);
+        $this->assertSame('completed', $response->steps[1]->status);
+        $this->assertSame('current', $response->steps[2]->status);
         $this->assertTrue($response->steps[0]->isFilled);
-        $this->assertFalse($response->steps[1]->isFilled);
+        $this->assertFalse($response->steps[2]->isFilled);
     }
 
     public function test_build_step_response_returns_next_step_completed_steps_and_completed_step_data(): void
@@ -48,6 +49,7 @@ final class VendorOnboardingOverviewBuilderTest extends TestCase
             new OnboardingStepResolver(),
             [
                 new OverviewTestStepHandler(OnboardingStep::Professions, true, ['services' => ['photographe']]),
+                new OverviewTestStepHandler(OnboardingStep::Consent, true, ['granted' => true]),
                 new OverviewTestStepHandler(OnboardingStep::Experiences, true, ['culture_ids' => ['france']]),
                 new OverviewTestStepHandler(OnboardingStep::ZonesPricing, false, ['zones' => ['idf']]),
                 new OverviewTestStepHandler(OnboardingStep::Portfolio, false),
@@ -59,8 +61,9 @@ final class VendorOnboardingOverviewBuilderTest extends TestCase
         $response = $builder->buildStepResponse($this->freelanceVendor());
 
         $this->assertSame('zones_pricing', $response->current_step);
-        $this->assertSame(['professions', 'experiences'], $response->completed_steps);
+        $this->assertSame(['professions', 'consent', 'experiences'], $response->completed_steps);
         $this->assertSame(['services' => ['photographe']], $response->steps_data['professions']);
+        $this->assertSame(['granted' => true], $response->steps_data['consent']);
         $this->assertSame(['culture_ids' => ['france']], $response->steps_data['experiences']);
         $this->assertArrayNotHasKey('zones_pricing', $response->steps_data);
     }

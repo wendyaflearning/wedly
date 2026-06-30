@@ -33,6 +33,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             stepData: ['services' => ['photographe']]
         );
         $experiencesHandler = new TestStepHandler(OnboardingStep::Experiences, filled: true);
+        $consentHandler = new TestStepHandler(OnboardingStep::Consent, filled: true);
         $zonesPricingHandler = new TestStepHandler(OnboardingStep::ZonesPricing, filled: true);
         $portfolioHandler = new TestStepHandler(OnboardingStep::Portfolio, filled: true);
         $legalInfoHandler = new TestStepHandler(
@@ -47,6 +48,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             $eventDispatcher,
             [
                 $professionsHandler,
+                $consentHandler,
                 $experiencesHandler,
                 $zonesPricingHandler,
                 $portfolioHandler,
@@ -70,7 +72,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
         $this->assertNotNull($response);
         $this->assertSame(OnboardingStep::Credentials->value, $response->current_step);
         $this->assertSame(
-            ['professions', 'experiences', 'zones_pricing', 'portfolio', 'legal_info'],
+            ['professions', 'consent', 'experiences', 'zones_pricing', 'portfolio', 'legal_info'],
             $response->completed_steps
         );
         $this->assertSame(['brand_name' => 'Studio Lumiere'], $legalInfoHandler->handledPayloads[0]);
@@ -144,6 +146,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             $eventDispatcher,
             [
                 new TestStepHandler(OnboardingStep::Professions, filled: true),
+                new TestStepHandler(OnboardingStep::Consent, filled: true),
                 new TestStepHandler(OnboardingStep::Experiences, filled: true),
                 new TestStepHandler(OnboardingStep::ZonesPricing, filled: false),
                 new TestStepHandler(OnboardingStep::Portfolio, filled: true),
@@ -192,6 +195,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             $eventDispatcher,
             [
                 new TestStepHandler(OnboardingStep::Professions, filled: true),
+                new TestStepHandler(OnboardingStep::Consent, filled: true),
                 new TestStepHandler(OnboardingStep::Experiences, filled: true),
                 new TestStepHandler(OnboardingStep::ZonesPricing, filled: true),
                 new TestStepHandler(OnboardingStep::Portfolio, filled: true),
