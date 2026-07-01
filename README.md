@@ -14,6 +14,7 @@ infra/
   docker-compose.vps.yml
 docs/
   ADR/
+  memory-vault/
 ```
 
 ## Description rapide
@@ -196,4 +197,4 @@ Déclenchement :
 
 - `infra/docker-compose.vps.yml` documente la stack VPS cible autour de Traefik, PostgreSQL et du conteneur `symfony`.
 - `docs/ADR` contient les décisions d'architecture utiles pour comprendre les choix de stack et de structure.
-
+- `docs/memory-vault` contient le registre vivant des règles métier, leur couverture attendue et les audits de non-régression.
