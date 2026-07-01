@@ -17,6 +17,8 @@ rm -rf /var/www/html/var/cache/*
 if [ $# -gt 0 ]; then
   exec "$@"
 else
+  echo "Warming up cache as www-data..."
+  su -s /bin/sh www-data -c "cd /var/www/html && php bin/console cache:warmup --env=prod"
   echo "Starting supervisord..."
   exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 fi
