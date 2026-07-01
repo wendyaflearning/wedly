@@ -14,6 +14,7 @@ export default async function ProfileMobileNav() {
     { label: 'Tarifs & Zone', href: '/dashboard/profile/pricing-zone', completed: s.pricing_zone },
     { label: 'Disponibilités', href: '/dashboard/profile/booking-blocker', completed: s.booking_blocker },
     { label: 'Expériences', href: '/dashboard/profile/experiences', completed: s.experiences },
+    { label: 'Matching culturel', href: '/dashboard/profile/matching-consent', completed: s.matching_consent },
     { label: 'Portfolio', href: '/dashboard/profile/portfolio', completed: s.portfolio },
     { label: 'Bio', href: '/dashboard/profile/bio', completed: s.bio },
   ]

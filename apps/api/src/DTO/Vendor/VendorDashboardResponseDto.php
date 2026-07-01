@@ -14,6 +14,7 @@ final readonly class VendorDashboardResponseDto
     public string $createdAt;
     public string $vendorType;
     public array $sections_status;
+    public ?bool $consent_granted;
     public int $portfolio_photos_count;
     public bool $portfolio_has_cover;
     public int $booking_blockers_count;
@@ -30,6 +31,7 @@ final readonly class VendorDashboardResponseDto
         \DateTimeImmutable $createdAt,
         string $vendorType,
         array $sectionsStatus,
+        ?bool $consentGranted,
         int $portfolioPhotosCount,
         bool $portfolioHasCover,
         int $bookingBlockersCount,
@@ -45,6 +47,7 @@ final readonly class VendorDashboardResponseDto
         $this->createdAt                   = $createdAt->format(\DateTimeInterface::ATOM);
         $this->vendorType                  = $vendorType;
         $this->sections_status             = $sectionsStatus;
+        $this->consent_granted             = $consentGranted;
         $this->portfolio_photos_count      = $portfolioPhotosCount;
         $this->portfolio_has_cover         = $portfolioHasCover;
         $this->booking_blockers_count      = $bookingBlockersCount;

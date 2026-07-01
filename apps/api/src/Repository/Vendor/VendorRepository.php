@@ -9,7 +9,9 @@ use App\Entity\User\InviteToken;
 use App\Entity\User\User;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorConsent;
 use App\Enum\User\InviteTokenPersona;
+use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\VendorStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -132,6 +134,19 @@ class VendorRepository extends ServiceEntityRepository
             ->setParameter('isCover', true)
             ->getQuery()
             ->getSingleScalarResult() > 0;
+    }
+
+    public function findLatestMatchingConsent(Vendor $vendor): ?bool
+    {
+        // id (UuidV7) tie-break si collision infra-seconde — risque accepté, pas de lock.
+        $consent = $this->getEntityManager()
+            ->getRepository(VendorConsent::class)
+            ->findOneBy(
+                ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
+                ['createdAt' => 'DESC', 'id' => 'DESC'],
+            );
+
+        return $consent?->isGranted();
     }
 
     public function findLatestBookingBlockerUpdatedAt(Vendor $vendor): ?\DateTimeImmutable

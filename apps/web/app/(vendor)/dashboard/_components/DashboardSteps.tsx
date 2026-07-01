@@ -2,6 +2,7 @@ interface Sections {
   general_info: boolean
   pricing_zone: boolean
   experiences: boolean
+  matching_consent: boolean
   bio: boolean
   portfolio: boolean
   booking_blocker: boolean
@@ -47,7 +48,7 @@ export function DashboardSteps({ sections }: DashboardStepsProps) {
     sections.booking_blocker,
     sections.portfolio,
     sections.bio,
-    sections.general_info && sections.pricing_zone && sections.experiences,
+    sections.general_info && sections.pricing_zone && sections.experiences && sections.matching_consent,
   ].filter(Boolean).length
 
   const progressWidth = `${(completedCount / 4) * 100}%`

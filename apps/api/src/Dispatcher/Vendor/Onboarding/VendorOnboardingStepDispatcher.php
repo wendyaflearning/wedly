@@ -7,12 +7,11 @@ namespace App\Dispatcher\Vendor\Onboarding;
 use App\DTO\Vendor\VendorOnboardingStepRequestDto;
 use App\DTO\Vendor\VendorOnboardingStepResponseDto;
 use App\Entity\Vendor\Vendor;
-use App\Entity\Vendor\VendorConsent;
-use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Event\StepperSubmittedEvent;
 use App\Handler\Vendor\Onboarding\StepHandlerInterface;
+use App\Repository\Vendor\VendorRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
@@ -22,6 +21,7 @@ readonly class VendorOnboardingStepDispatcher
 {
     public function __construct(
         private EntityManagerInterface $em,
+        private VendorRepository $vendorRepository,
         private OnboardingStepResolver $resolver,
         private EventDispatcherInterface $eventDispatcher,
         #[TaggedIterator('onboarding.step_handler')]
@@ -67,11 +67,7 @@ readonly class VendorOnboardingStepDispatcher
 
         // Consent refusé → sauter Experiences ; pour Traiteur, CateringCharacteristics reste dans le parcours
         if ($step === OnboardingStep::Consent) {
-            $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
-                ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-                ['createdAt' => 'DESC'],
-            );
-            if ($consent !== null && !$consent->isGranted()) {
+            if ($this->vendorRepository->findLatestMatchingConsent($vendor) === false) {
                 $afterConsent = array_slice($steps, array_search(OnboardingStep::Consent, $steps, true) + 1);
                 foreach ($afterConsent as $candidate) {
                     if ($candidate !== OnboardingStep::Experiences) {

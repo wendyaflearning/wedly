@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Vendor\Consent;
+namespace App\Controller\Vendor\MatchingConsent;
 
 use App\DTO\Vendor\VendorProfileStepRequestDto;
 use App\Entity\User\User;
 use App\Handler\Vendor\Onboarding\ConsentStepHandler;
+use App\Handler\Vendor\Onboarding\ExperiencesStepHandler;
 use App\Repository\Vendor\VendorRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,13 +18,14 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
-#[Route('/api/v1/vendors/{id}/consent', name: 'api_vendor_consent_post', methods: ['POST'])]
-final class PostVendorConsentAction extends AbstractController
+#[Route('/api/v1/vendors/{id}/matching-consent', name: 'api_vendor_matching_consent_post', methods: ['POST'])]
+final class PostVendorMatchingConsentAction extends AbstractController
 {
     public function __construct(
         private readonly Security $security,
         private readonly VendorRepository $vendorRepository,
         private readonly ConsentStepHandler $handler,
+        private readonly ExperiencesStepHandler $experiencesHandler,
         private readonly EntityManagerInterface $em,
     ) {}
 
@@ -43,6 +45,16 @@ final class PostVendorConsentAction extends AbstractController
 
         try {
             $consent = $this->handler->record($vendor, $dto->data);
+
+            if ($consent->isGranted()) {
+                $this->experiencesHandler->handle($vendor, [
+                    'culture_ids'    => $dto->data['culture_ids'] ?? [],
+                    'confession_ids' => $dto->data['confession_ids'] ?? [],
+                ]);
+            } else {
+                $vendor->getCultures()->clear();
+                $vendor->getConfessions()->clear();
+            }
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 422);
         }
