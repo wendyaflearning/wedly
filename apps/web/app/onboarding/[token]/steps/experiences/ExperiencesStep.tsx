@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import type { ExperienceOption, OnboardingStep, VendorType } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
 import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
+import { Tooltip } from '@/components/ui/Tooltip'
 
 export default function ExperiencesStep({
   token,
@@ -148,6 +149,18 @@ export default function ExperiencesStep({
           >
             {title}
           </h2>
+
+          {!isCulturesForm && (
+            <div className="flex items-start gap-2" style={{ marginTop: -12, marginBottom: 20 }}>
+              <p
+                className="font-cormorant"
+                style={{ fontStyle: 'italic', fontWeight: 300, fontSize: 14, lineHeight: 1.6, color: 'rgba(78,26,50,0.52)' }}
+              >
+                Si vous êtes familier avec toutes ces cérémonies, cochez toutes les cases.
+              </p>
+              <Tooltip text="Ces informations permettent à Wedmatch de vous proposer des couples dont la cérémonie correspond à votre expérience." />
+            </div>
+          )}
 
           {/* Skeleton */}
           {loading && (

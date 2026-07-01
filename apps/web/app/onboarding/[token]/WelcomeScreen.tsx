@@ -13,18 +13,6 @@ export default function WelcomeScreen({
         {/* Logo */}
         <img src="/logo.png" alt="Wedly logo" className="h-20 md:h-28  w-auto block mx-auto" />
 
-        {/* Icône anneaux */}
-        <div
-          className="w-24 h-24 rounded-full border border-gray-200 flex items-center justify-center"
-          style={{ animation: 'float 3.2s ease-in-out infinite' }}
-        >
-          <svg width="72" height="44" viewBox="0 0 72 44" fill="none" aria-hidden="true">
-            <circle cx="24" cy="22" r="19" stroke="var(--color-bordeaux)" strokeWidth="3" fill="none" />
-            <circle cx="48" cy="22" r="19" stroke="var(--color-highlight)" strokeWidth="3" fill="var(--color-creme)" />
-            <path d="M43 11 A19 19 0 0 1 43 33" stroke="var(--color-bordeaux)" strokeWidth="3" fill="none" strokeLinecap="round" />
-          </svg>
-        </div>
-
         {/* Titre */}
         <h1 className="font-cormorant text-3xl md:text-5xl text-bordeaux text-center">
           <span>{firstname}, </span>

@@ -228,12 +228,12 @@ export default function AvailabilityCalendar({
               Vos jours sont libres
             </p>
             <p
-              className="text-texte text-[15px] leading-relaxed mb-4 italic font-light"
+              className="text-texte text-[18px] leading-relaxed mb-4 italic font-light"
               style={{ fontFamily: 'var(--font-cormorant-var)' }}
             >
               Cliquez sur un jour pour signaler qu&apos;il est{' '}
-              <em style={{ color: 'var(--color-accent)' }}>déjà pris</em>{' '}
-              — vous pouvez revenir dessus à tout moment.
+              <em style={{ color: 'var(--color-accent)' }}>déjà pris</em>
+              , vous pouvez revenir dessus à tout moment.
             </p>
             <p
               className="text-gris text-xs leading-relaxed"

@@ -46,7 +46,7 @@ export default function Navbar() {
           className="hidden md:block shrink-0"
           style={{ fontFamily: "var(--font-dm-sans-var)", fontSize: "11px", color: "rgba(41, 26, 16, 0.5)", fontStyle: "italic" }}
         >
-          Lancement France · 2025 · Accès sur invitation
+          Lancement France · 2026 · Accès sur invitation
         </p>
 
         {/* Mobile hamburger */}

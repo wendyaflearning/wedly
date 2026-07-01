@@ -36,10 +36,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {/* Séparateur décoratif */}
         <div className="flex items-center justify-center gap-3 w-full">
           <span className="h-px w-[60px] bg-[rgba(255,246,237,0.22)]" />
-          <svg width="28" height="9" viewBox="0 0 44 14" fill="none" aria-hidden="true">
-            <circle cx="16" cy="7" r="6" stroke="rgba(255,246,237,0.4)" strokeWidth="1.2" />
-            <circle cx="27" cy="7" r="6" stroke="rgba(227,87,4,0.65)" strokeWidth="1.2" />
-          </svg>
           <span className="h-px w-[60px] bg-[rgba(255,246,237,0.22)]" />
         </div>
         <h2
@@ -53,7 +49,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       {/* ── Desktop panneau gauche ────────────────────────────────────── */}
       <div
         className="hidden md:flex w-[52%] relative flex-col items-center justify-center overflow-hidden bg-bordeaux bg-cover bg-center"
-        style={{ backgroundImage: "url('/wedly-silk-plum2.png')" }}
       >
         {/* Overlay */}
         <div
@@ -72,10 +67,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           {/* Séparateur décoratif */}
           <div className="flex items-center justify-center gap-4 w-full">
             <span className="h-px w-[80px] bg-[rgba(255,246,237,0.25)]" />
-            <svg width="36" height="12" viewBox="0 0 56 18" fill="none" aria-hidden="true">
-              <circle cx="20" cy="9" r="8" stroke="rgba(255,246,237,0.45)" strokeWidth="1.3" />
-              <circle cx="34" cy="9" r="8" stroke="rgba(227,87,4,0.7)" strokeWidth="1.3" />
-            </svg>
             <span className="h-px w-[80px] bg-[rgba(255,246,237,0.25)]" />
           </div>
           <h2
@@ -88,10 +79,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         {/* Branding bas — ancré en bas au centre */}
         <div className="absolute bottom-[48px] flex items-center gap-[14px]">
-          <svg width="40" height="26" viewBox="0 0 62 40" fill="none" aria-hidden="true">
-            <circle cx="24" cy="20" r="15" stroke="rgba(255,246,237,0.5)" strokeWidth="1.6" />
-            <circle cx="40" cy="20" r="15" stroke="#E35704" strokeWidth="1.6" />
-          </svg>
           <span className="font-manrope text-[10.5px] font-medium tracking-[0.2em] uppercase text-[rgba(255,246,237,0.45)]">
             L&apos;excellence du mariage
           </span>

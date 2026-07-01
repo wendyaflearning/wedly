@@ -106,10 +106,10 @@ export function DashboardSteps({ sections }: DashboardStepsProps) {
             <Wrapper
               key={step.number}
               {...wrapperProps}
-              className="grid grid-cols-[40px_1fr_16px] md:grid-cols-[76px_1fr_auto] items-center gap-3.5 md:gap-8 py-[18px] px-0 md:px-4 md:py-5 rounded md:hover:bg-bordeaux/5 md:transition-colors no-underline text-inherit cursor-pointer"
+              className="group grid grid-cols-[40px_1fr_16px] md:grid-cols-[76px_1fr_auto] items-center gap-3.5 md:gap-8 py-[18px] px-0 md:px-4 md:py-5 rounded md:hover:bg-bordeaux/5 md:transition-colors no-underline text-inherit cursor-pointer focus-visible:outline-none"
             >
               {/* Numéro */}
-              <div className="w-[38px] h-[38px] md:w-[76px] md:h-[76px] relative flex items-center justify-center bg-creme z-10">
+              <div className="w-[38px] h-[38px] md:w-[76px] md:h-[76px] relative flex items-center justify-center bg-creme md:group-hover:bg-[#F6EBE4] md:transition-colors z-10">
                 <div className="absolute inset-0 rounded-full border border-bordeaux/[0.18]" />
                 <span className="font-cormorant italic font-light text-[18px] md:text-[38px] text-accent tracking-[-0.03em] md:tracking-[-0.04em] leading-none">
                   {step.number}
