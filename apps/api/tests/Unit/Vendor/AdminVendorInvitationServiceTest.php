@@ -133,6 +133,30 @@ final class AdminVendorInvitationServiceTest extends TestCase
         self::assertSame('active-token', $response->inviteToken);
     }
 
+    public function test_send_returns_false_when_mailer_fails(): void
+    {
+        $vendor = $this->makeReadyVendor();
+        $activeToken = (new InviteToken())
+            ->setToken('active-token')
+            ->setStatus(InviteTokenStatus::Pending)
+            ->setPersona(InviteTokenPersona::Vendor)
+            ->setVendor($vendor)
+            ->setUser($vendor->getUser())
+            ->setExpiresAt(new \DateTimeImmutable('+10 days'));
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasUsedVendorInvitation')->willReturn(false);
+        $inviteTokenRepository->method('findActiveVendorInvitation')->willReturn($activeToken);
+
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())->method('send')->willThrowException(new \RuntimeException('SMTP down'));
+
+        $response = $this->makeService($inviteTokenRepository, mailer: $mailer)
+            ->send($vendor, new User());
+
+        self::assertFalse($response->emailSent);
+    }
+
     public function test_send_rejects_incomplete_vendor(): void
     {
         $vendor = (new Vendor())->setUser((new User())->setFirstName('Camille')->setEmail('camille@example.fr')->setPassword('password'));
@@ -145,6 +169,28 @@ final class AdminVendorInvitationServiceTest extends TestCase
         $this->expectExceptionCode(422);
 
         $this->makeService(mailer: $mailer)->send($vendor, new User());
+    }
+
+    public function test_send_rejects_used_invitation_and_invalid_price_range(): void
+    {
+        $usedInvitationRepository = $this->createStub(InviteTokenRepository::class);
+        $usedInvitationRepository->method('hasUsedVendorInvitation')->willReturn(true);
+
+        try {
+            $this->makeService(inviteTokenRepository: $usedInvitationRepository)->send($this->makeReadyVendor(), new User());
+            $this->fail('Expected used invitation exception.');
+        } catch (\DomainException $exception) {
+            self::assertSame('Invitation already used; vendor draft can no longer be edited.', $exception->getMessage());
+        }
+
+        $invalidPriceVendor = $this->makeReadyVendor()->setPriceMinCents(300)->setPriceMaxCents(200);
+
+        try {
+            $this->makeService()->send($invalidPriceVendor, new User());
+            $this->fail('Expected invalid price range exception.');
+        } catch (\DomainException $exception) {
+            self::assertSame('Invalid price range.', $exception->getMessage());
+        }
     }
 
     private function makeService(
