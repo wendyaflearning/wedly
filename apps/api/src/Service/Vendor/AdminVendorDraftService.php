@@ -6,18 +6,14 @@ namespace App\Service\Vendor;
 
 use App\DTO\Admin\Vendor\AdminVendorDraftRequestDto;
 use App\DTO\Admin\Vendor\AdminVendorDraftResponseDto;
-use App\DTO\Admin\Vendor\AdminVendorInvitationSendResponseDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Region\Region;
-use App\Entity\User\InviteToken;
 use App\Entity\User\User;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorCateringDetails;
 use App\Entity\Vendor\VendorVenueDetails;
-use App\Enum\User\InviteTokenPersona;
-use App\Enum\User\InviteTokenStatus;
 use App\Enum\User\Role;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
@@ -25,10 +21,6 @@ use App\Enum\Vendor\VenueType;
 use App\Repository\User\InviteTokenRepository;
 use App\Repository\User\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final readonly class AdminVendorDraftService
@@ -38,9 +30,6 @@ final readonly class AdminVendorDraftService
         private UserRepository $userRepository,
         private InviteTokenRepository $inviteTokenRepository,
         private UserPasswordHasherInterface $passwordHasher,
-        private MailerInterface $mailer,
-        #[Autowire('%env(FRONTEND_URL)%')]
-        private string $frontendUrl,
     ) {}
 
     public function create(AdminVendorDraftRequestDto $dto): AdminVendorDraftResponseDto
@@ -91,32 +80,6 @@ final readonly class AdminVendorDraftService
         $this->em->flush();
 
         return $this->get($vendor);
-    }
-
-    public function sendInvitation(Vendor $vendor, User $adminUser): AdminVendorInvitationSendResponseDto
-    {
-        $this->assertEditable($vendor);
-        $this->assertVendorReadyForInvitation($vendor);
-
-        $now = new \DateTimeImmutable();
-        $inviteToken = $this->inviteTokenRepository->findActiveVendorInvitation($vendor, $now);
-        if ($inviteToken === null) {
-            $inviteToken = (new InviteToken())
-                ->setToken(bin2hex(random_bytes(64)))
-                ->setCreatedBy($adminUser)
-                ->setPersona(InviteTokenPersona::Vendor)
-                ->setStatus(InviteTokenStatus::Pending)
-                ->setUser($vendor->getUser())
-                ->setVendor($vendor)
-                ->setExpiresAt($now->modify('+30 days'));
-
-            $this->em->persist($inviteToken);
-            $this->em->flush();
-        }
-
-        $emailSent = $this->sendInvitationEmail($vendor, $inviteToken);
-
-        return new AdminVendorInvitationSendResponseDto($vendor, $inviteToken, $this->frontendUrl, $emailSent);
     }
 
     private function applyDraft(Vendor $vendor, AdminVendorDraftRequestDto $dto, bool $requireCoreFields): void
@@ -322,19 +285,6 @@ final readonly class AdminVendorDraftService
         }
     }
 
-    private function assertVendorReadyForInvitation(Vendor $vendor): void
-    {
-        if ($vendor->getUser()->getFirstName() === '' || $vendor->getUser()->getEmail() === '' || $vendor->getBrandName() === '') {
-            throw new \DomainException('Missing required identity fields.', 422);
-        }
-        if ($vendor->getServices()->isEmpty() || $vendor->getRegions()->isEmpty()) {
-            throw new \DomainException('Missing required profession or region fields.', 422);
-        }
-        if ($vendor->getPriceMinCents() < 0 || $vendor->getPriceMaxCents() < 0 || $vendor->getPriceMinCents() > $vendor->getPriceMaxCents()) {
-            throw new \DomainException('Invalid price range.', 422);
-        }
-    }
-
     private function assertEditable(Vendor $vendor): void
     {
         if ($this->inviteTokenRepository->hasUsedVendorInvitation($vendor)) {
@@ -386,25 +336,4 @@ final readonly class AdminVendorDraftService
         return is_numeric($value) ? (int) $value : null;
     }
 
-    private function sendInvitationEmail(Vendor $vendor, InviteToken $inviteToken): bool
-    {
-        try {
-            $email = (new TemplatedEmail())
-                ->from(new Address('contact@wedly-apps.com', 'Wedly'))
-                ->to($vendor->getUser()->getEmail())
-                ->subject('Complétez votre profil Wedly')
-                ->htmlTemplate('emails/vendor/vendor_admin_invitation.html.twig')
-                ->context([
-                    'firstName'     => $vendor->getUser()->getFirstName(),
-                    'brandName'     => $vendor->getBrandName(),
-                    'invitationUrl' => rtrim($this->frontendUrl, '/') . '/onboarding/' . $inviteToken->getToken(),
-                    'expiresAt'     => $inviteToken->getExpiresAt(),
-                ]);
-
-            $this->mailer->send($email);
-            return true;
-        } catch (\Throwable) {
-            return false;
-        }
-    }
 }
