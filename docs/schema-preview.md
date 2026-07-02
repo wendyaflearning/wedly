@@ -1,3 +1,14 @@
+# Wedly Schema Preview
+
+Generated from Doctrine mapping.
+
+Run this command after entity mapping changes:
+
+```bash
+cd apps/api && composer docs:schema
+```
+
+```mermaid
 erDiagram
     USER ||--o| VENDOR : user
     VENDOR }o--o{ SERVICE : services
@@ -15,7 +26,6 @@ erDiagram
     VENDOR ||--o{ PORTFOLIO_IMAGE : vendor
     PORTFOLIO_IMAGE }o--o{ "STYLE" : styles
     VENDOR ||--o{ BOOKING_BLOCKER : vendor
-    VENDOR ||--o{ VENDOR_CONSENT : consents
     COUPLE ||--o{ SUBSCRIPTION : couple
     PLAN ||--o{ SUBSCRIPTION : plan
     USER ||--o{ INVITE_TOKEN : created_by
@@ -63,10 +73,6 @@ erDiagram
         string onboarding_step
         text bio
         boolean is_published
-        datetime_immutable submitted_for_review_at
-        datetime_immutable reviewed_at
-        json rejection_reasons
-        text rejection_note
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -168,15 +174,6 @@ erDiagram
         string reason
         datetime_immutable created_at
         datetime_immutable updated_at
-    }
-
-    VENDOR_CONSENT {
-        uuid id
-        uuid vendor_id
-        string consent_type
-        boolean granted
-        datetime created_at
-        datetime updated_at
     }
 
     PLAN {
@@ -288,3 +285,4 @@ erDiagram
         datetime_immutable created_at
         datetime_immutable updated_at
     }
+```

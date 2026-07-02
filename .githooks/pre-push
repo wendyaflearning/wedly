@@ -1,0 +1,81 @@
+#!/bin/sh
+
+set -u
+
+ZERO_SHA="0000000000000000000000000000000000000000"
+SCHEMA_DOC_PATHS="docs/wedly_schema_v3.mmd docs/schema-preview.md"
+DOCTRINE_MAPPING_PATHS="apps/api/src/Entity apps/api/src/Trait apps/api/src/Doctrine apps/api/config/doctrine apps/api/config/packages/doctrine.yaml"
+
+warn() {
+    printf '%s\n' "$*" >&2
+}
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "$repo_root" ]; then
+    exit 0
+fi
+
+cd "$repo_root" || exit 0
+
+while read -r local_ref local_sha remote_ref remote_sha
+do
+    case "$local_ref" in
+        refs/heads/*) ;;
+        *) continue ;;
+    esac
+
+    if [ "$remote_sha" != "$ZERO_SHA" ] || [ "$local_sha" = "$ZERO_SHA" ]; then
+        continue
+    fi
+
+    branch_name="${local_ref#refs/heads/}"
+    base_sha=""
+
+    if git rev-parse --verify --quiet origin/develop >/dev/null; then
+        base_sha="$(git merge-base "$local_sha" origin/develop 2>/dev/null || true)"
+    elif git rev-parse --verify --quiet develop >/dev/null; then
+        base_sha="$(git merge-base "$local_sha" develop 2>/dev/null || true)"
+    fi
+
+    if [ -z "$base_sha" ]; then
+        warn "[Wedly] Warning: could not determine a base commit for '$branch_name'; Doctrine schema docs were not checked."
+        continue
+    fi
+
+    changed_mapping="$(git diff --name-only "$base_sha" "$local_sha" -- $DOCTRINE_MAPPING_PATHS | sed -n '1p')"
+    if [ -z "$changed_mapping" ]; then
+        continue
+    fi
+
+    changed_schema_docs="$(git diff --name-only "$base_sha" "$local_sha" -- $SCHEMA_DOC_PATHS | sed -n '1p')"
+
+    warn "[Wedly] Doctrine mapping changed on first push of '$branch_name'."
+
+    if [ -z "$changed_schema_docs" ]; then
+        warn "[Wedly] Warning: schema docs were not changed in the commits being pushed."
+        warn "[Wedly] Run: cd apps/api && composer docs:schema"
+        warn "[Wedly] Then commit docs/wedly_schema_v3.mmd and docs/schema-preview.md if they changed."
+    fi
+
+    if ! command -v composer >/dev/null 2>&1; then
+        warn "[Wedly] Warning: composer is not available, so docs:schema:check could not run."
+        warn "[Wedly] Push continues because this hook is advisory only."
+        continue
+    fi
+
+    check_output="$(mktemp "${TMPDIR:-/tmp}/wedly-schema-check.XXXXXX")"
+
+    if (cd apps/api && composer docs:schema:check >"$check_output" 2>&1); then
+        warn "[Wedly] Doctrine schema docs check passed."
+    else
+        warn "[Wedly] Warning: Doctrine schema docs may be out of date."
+        sed 's/^/[Wedly]   /' "$check_output" >&2
+        warn "[Wedly] Run: cd apps/api && composer docs:schema"
+        warn "[Wedly] Then commit the updated schema docs."
+    fi
+
+    rm -f "$check_output"
+    warn "[Wedly] Push continues because this hook is advisory only."
+done
+
+exit 0

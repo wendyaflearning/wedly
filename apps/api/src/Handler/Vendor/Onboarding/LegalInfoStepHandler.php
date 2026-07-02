@@ -48,7 +48,7 @@ readonly class LegalInfoStepHandler extends AbstractOnboardingStepHandler
             $vendor->setLegalStatus($pappersData['legal_status']);
             $vendor->setIncorporatedAt(
                 isset($pappersData['incorporated_at'])
-                    ? \DateTimeImmutable::createFromFormat('Y-m-d', $pappersData['incorporated_at']) ?: null
+                    ? \DateTimeImmutable::createFromFormat('!Y-m-d', $pappersData['incorporated_at']) ?: null
                     : null
             );
 
