@@ -5,6 +5,7 @@ const port = Number(process.env.MOCK_API_PORT ?? 4010)
 const services = [
   { id: 'service-photo', name: 'Photographe', children: [] },
   { id: 'service-dj', name: 'DJ', children: [] },
+  { id: 'service-createur', name: 'Createur de robes', children: [] },
   {
     id: 'service-traiteur',
     name: 'Traiteur',
@@ -13,6 +14,7 @@ const services = [
       { id: 'service-diner', name: 'Diner assis', children: [] },
     ],
   },
+  { id: 'service-lieu', name: 'Lieu de reception', children: [] },
 ]
 
 const cultures = [
@@ -32,39 +34,64 @@ const regions = [
   { id: 'region-na', name: 'Nouvelle-Aquitaine' },
 ]
 
-const baseSteps = [
-  { stepKey: 'professions', label: 'Professions', order: 1, status: 'current', isFilled: false },
-  { stepKey: 'consent', label: 'Consentement', order: 2, status: 'pending', isFilled: false },
-  { stepKey: 'experiences', label: 'Experiences', order: 3, status: 'pending', isFilled: false },
-  { stepKey: 'zones_pricing', label: 'Zones et tarifs', order: 4, status: 'pending', isFilled: false },
-  { stepKey: 'legal_info', label: 'Informations legales', order: 5, status: 'pending', isFilled: false },
-  { stepKey: 'credentials', label: 'Connexion', order: 6, status: 'pending', isFilled: false },
+const legacySteps = [
+  step('professions', 'Professions', 1),
+  step('consent', 'Consentement', 2),
+  step('experiences', 'Experiences', 3),
+  step('zones_pricing', 'Zones et tarifs', 4),
+  step('legal_info', 'Informations legales', 5),
+  step('credentials', 'Connexion', 6),
+]
+
+const freelanceSteps = [
+  step('professions', 'Professions', 1),
+  step('consent', 'Consentement', 2),
+  step('experiences', 'Experiences', 3),
+  step('zones_pricing', 'Zones et tarifs', 4),
+  step('portfolio', 'Portfolio', 5),
+  step('legal_info', 'Informations legales', 6),
+  step('credentials', 'Connexion', 7),
 ]
 
 const cateringSteps = [
-  { stepKey: 'professions', label: 'Professions', order: 1, status: 'completed', isFilled: true },
-  { stepKey: 'consent', label: 'Consentement', order: 2, status: 'current', isFilled: false },
-  { stepKey: 'experiences', label: 'Experiences', order: 3, status: 'pending', isFilled: false },
-  { stepKey: 'catering_characteristics', label: 'Caracteristiques traiteur', order: 4, status: 'pending', isFilled: false },
-  { stepKey: 'zones_pricing', label: 'Zones et tarifs', order: 5, status: 'pending', isFilled: false },
-  { stepKey: 'legal_info', label: 'Informations legales', order: 6, status: 'pending', isFilled: false },
-  { stepKey: 'credentials', label: 'Connexion', order: 7, status: 'pending', isFilled: false },
+  step('professions', 'Professions', 1),
+  step('consent', 'Consentement', 2),
+  step('experiences', 'Experiences', 3),
+  step('catering_characteristics', 'Caracteristiques traiteur', 4),
+  step('zones_pricing', 'Zones et tarifs', 5),
+  step('portfolio', 'Portfolio', 6),
+  step('legal_info', 'Informations legales', 7),
+  step('credentials', 'Connexion', 8),
+]
+
+const venueSteps = [
+  step('professions', 'Professions', 1),
+  step('venue_characteristics', 'Caracteristiques lieu', 2),
+  step('zones_pricing', 'Zones et tarifs', 3),
+  step('portfolio', 'Portfolio', 4),
+  step('legal_info', 'Informations legales', 5),
+  step('credentials', 'Connexion', 6),
 ]
 
 const state = {
   requests: [],
   sessions: {},
+  portfolioUploads: {},
+}
+
+function step(stepKey, label, order) {
+  return { stepKey, label, order, status: 'pending', isFilled: false }
 }
 
 function overviewForToken(token) {
-  if (token === 'full-flow-token') {
+  if (isSessionToken(token)) {
     return overviewForSession(sessionForToken(token))
   }
 
-  const steps = baseSteps.map(step => ({ ...step }))
+  const steps = legacySteps.map(item => ({ ...item }))
   const setStep = (stepKey, patch) => {
-    const step = steps.find(item => item.stepKey === stepKey)
-    if (step) Object.assign(step, patch)
+    const item = steps.find(candidate => candidate.stepKey === stepKey)
+    if (item) Object.assign(item, patch)
   }
 
   if (token === 'consent-token') {
@@ -76,7 +103,12 @@ function overviewForToken(token) {
   }
 
   if (token === 'catering-consent-token') {
-    return overview(cateringSteps.map(step => ({ ...step })), {
+    const cateringConsentSteps = cateringSteps.map(item => ({ ...item }))
+    for (const item of cateringConsentSteps) {
+      if (item.stepKey === 'professions') Object.assign(item, { status: 'completed', isFilled: true })
+      if (item.stepKey === 'consent') Object.assign(item, { status: 'current', isFilled: false })
+    }
+    return overview(cateringConsentSteps, {
       professions: { services: [{ id: 'service-traiteur', name: 'Traiteur' }] },
     }, 'traiteur')
   }
@@ -104,9 +136,9 @@ function overviewForToken(token) {
   }
 
   if (token === 'credentials-complete-token') {
-    for (const step of steps) {
-      step.status = 'completed'
-      step.isFilled = true
+    for (const item of steps) {
+      item.status = 'completed'
+      item.isFilled = true
     }
     setStep('credentials', { status: 'current', isFilled: false })
     return overview(steps, {
@@ -131,26 +163,96 @@ function overviewForToken(token) {
     })
   }
 
+  for (const item of steps) {
+    item.status = item.stepKey === 'professions' ? 'current' : 'pending'
+  }
   return overview(steps)
+}
+
+function isSessionToken(token) {
+  return [
+    'full-flow-token',
+    'catering-full-flow-token',
+    'venue-full-flow-token',
+    'creator-full-flow-token',
+    'portfolio-token',
+  ].includes(token)
 }
 
 function sessionForToken(token) {
   if (!state.sessions[token]) {
+    const config = sessionConfig(token)
     state.sessions[token] = {
-      currentStep: 'professions',
-      data: {},
+      currentStep: config.currentStep,
+      data: { ...config.initialData },
+      steps: config.steps,
+      vendorType: config.vendorType,
+    }
+    if (config.initialData.portfolio) {
+      state.portfolioUploads[token] = config.initialData.portfolio.images
     }
   }
   return state.sessions[token]
 }
 
-function overviewForSession(session) {
-  const steps = baseSteps.map(step => {
-    const isFilled = Boolean(session.data[step.stepKey])
+function sessionConfig(token) {
+  if (token === 'catering-full-flow-token') {
     return {
-      ...step,
+      steps: cateringSteps,
+      vendorType: 'traiteur',
+      currentStep: 'professions',
+      initialData: { portfolio: prefilledPortfolio() },
+    }
+  }
+  if (token === 'venue-full-flow-token') {
+    return {
+      steps: venueSteps,
+      vendorType: 'lieu',
+      currentStep: 'professions',
+      initialData: { portfolio: prefilledPortfolio() },
+    }
+  }
+  if (token === 'creator-full-flow-token') {
+    return {
+      steps: freelanceSteps,
+      vendorType: 'createurs',
+      currentStep: 'professions',
+      initialData: { portfolio: prefilledPortfolio() },
+    }
+  }
+  if (token === 'portfolio-token') {
+    return {
+      steps: freelanceSteps,
+      vendorType: 'freelance',
+      currentStep: 'portfolio',
+      initialData: {},
+    }
+  }
+  return {
+    steps: freelanceSteps,
+    vendorType: 'freelance',
+    currentStep: 'professions',
+    initialData: { portfolio: prefilledPortfolio() },
+  }
+}
+
+function prefilledPortfolio() {
+  return {
+    images: [
+      { id: 'portfolio-cover', url: 'https://example.test/portfolio-cover.jpg', is_cover: true, sort_order: 0 },
+      { id: 'portfolio-2', url: 'https://example.test/portfolio-2.jpg', is_cover: false, sort_order: 1 },
+      { id: 'portfolio-3', url: 'https://example.test/portfolio-3.jpg', is_cover: false, sort_order: 2 },
+    ],
+  }
+}
+
+function overviewForSession(session) {
+  const steps = session.steps.map(item => {
+    const isFilled = Boolean(session.data[item.stepKey])
+    return {
+      ...item,
       isFilled,
-      status: step.stepKey === session.currentStep ? 'current' : isFilled ? 'completed' : 'pending',
+      status: item.stepKey === session.currentStep ? 'current' : isFilled ? 'completed' : 'pending',
     }
   })
 
@@ -164,12 +266,15 @@ function overviewForSession(session) {
           confession_ids: optionsFromIds(confessions, session.data.experiences.confession_ids ?? []),
         }
       : undefined,
+    venue_characteristics: session.data.venue_characteristics,
+    catering_characteristics: session.data.catering_characteristics,
     zones_pricing: session.data.zones_pricing,
+    portfolio: session.data.portfolio,
     legal_info: session.data.legal_info,
     credentials: session.data.credentials
       ? { email: session.data.credentials.email }
       : undefined,
-  })
+  }, session.vendorType)
 }
 
 function optionsFromIds(options, ids) {
@@ -200,7 +305,7 @@ function jsonResponse(res, status, payload) {
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   })
   res.end(JSON.stringify(payload))
@@ -209,20 +314,35 @@ function jsonResponse(res, status, payload) {
 function emptyResponse(res, status = 204) {
   res.writeHead(status, {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   })
   res.end()
 }
 
-async function readJson(req) {
+async function readBody(req) {
   const chunks = []
   for await (const chunk of req) chunks.push(chunk)
-  const raw = Buffer.concat(chunks).toString('utf8')
+  return Buffer.concat(chunks)
+}
+
+async function readJson(req) {
+  const raw = (await readBody(req)).toString('utf8')
   return raw ? JSON.parse(raw) : {}
 }
 
 function nextStepForPatch(token, body) {
+  const session = state.sessions[token]
+  if (session) {
+    if (body.step === 'consent' && !body.data?.granted) {
+      const sensitiveIndex = session.steps.findIndex(item => item.stepKey === 'experiences')
+      const fallback = session.steps.find((item, index) => index > sensitiveIndex && item.stepKey !== 'experiences')
+      return fallback?.stepKey ?? 'completed'
+    }
+    const index = session.steps.findIndex(item => item.stepKey === body.step)
+    return session.steps[index + 1]?.stepKey ?? 'completed'
+  }
+
   if (body.step === 'professions') return 'consent'
   if (token === 'catering-consent-token' && body.step === 'consent' && !body.data?.granted) {
     return 'catering_characteristics'
@@ -251,6 +371,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && url.pathname === '/__mock/reset') {
     state.requests = []
     state.sessions = {}
+    state.portfolioUploads = {}
     jsonResponse(res, 200, { ok: true })
     return
   }
@@ -307,13 +428,57 @@ const server = http.createServer(async (req, res) => {
     }
 
     const currentStep = nextStepForPatch(token, body)
-    if (token === 'full-flow-token') {
+    if (isSessionToken(token)) {
       const session = sessionForToken(token)
       session.data[body.step] = body.data
       session.currentStep = currentStep
     }
 
     jsonResponse(res, 200, { current_step: currentStep })
+    return
+  }
+
+  const portfolioMatch = url.pathname.match(/^\/api\/v1\/vendors\/onboarding\/([^/]+)\/portfolio$/)
+  if (req.method === 'POST' && portfolioMatch) {
+    const token = portfolioMatch[1]
+    await readBody(req)
+    const session = sessionForToken(token)
+    const uploads = state.portfolioUploads[token] ?? []
+    const isCover = uploads.length === 0
+    const image = {
+      id: `portfolio-${uploads.length + 1}`,
+      url: `https://example.test/portfolio-${uploads.length + 1}.jpg`,
+      is_cover: isCover,
+      sort_order: uploads.length,
+    }
+    const images = isCover
+      ? [{ ...image, is_cover: true }, ...uploads.map(item => ({ ...item, is_cover: false }))]
+      : [...uploads, image]
+    state.portfolioUploads[token] = images
+    session.data.portfolio = { images }
+    state.requests.push({
+      token,
+      method: req.method,
+      path: url.pathname,
+      body: { step: 'portfolio_upload', data: { image_id: image.id, is_cover: image.is_cover } },
+    })
+    jsonResponse(res, 200, { images })
+    return
+  }
+
+  const portfolioDeleteMatch = url.pathname.match(/^\/api\/v1\/vendors\/onboarding\/([^/]+)\/portfolio\/([^/]+)$/)
+  if (req.method === 'DELETE' && portfolioDeleteMatch) {
+    const [, token, imageId] = portfolioDeleteMatch
+    state.portfolioUploads[token] = (state.portfolioUploads[token] ?? []).filter(image => image.id !== imageId)
+    const session = sessionForToken(token)
+    session.data.portfolio = { images: state.portfolioUploads[token] }
+    state.requests.push({
+      token,
+      method: req.method,
+      path: url.pathname,
+      body: { step: 'portfolio_delete', data: { image_id: imageId } },
+    })
+    emptyResponse(res)
     return
   }
 

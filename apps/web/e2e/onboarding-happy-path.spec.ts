@@ -1,53 +1,31 @@
 import { expect, test } from '@playwright/test'
 import { getCapturedRequests, resetMockApi } from './helpers/mock-api'
+import {
+  acceptConsent,
+  completeCateringCharacteristics,
+  completeCredentials,
+  completeExperiences,
+  completeLegalInfo,
+  completeProfessions,
+  completeVenueCharacteristics,
+  completeZonesPricing,
+  confirmPrefilledPortfolio,
+  openOnboarding,
+} from './helpers/onboarding-flow'
 
 test.beforeEach(async ({ request }) => {
   await resetMockApi(request)
 })
 
 test('completes the freelance onboarding happy path', async ({ page, request }) => {
-  await page.goto('/onboarding/full-flow-token')
-  await page.getByRole('button', { name: /je découvre mon profil/i }).click()
-
-  await page.locator('span').filter({ hasText: 'Étape 1 — Professions' }).click()
-  await page.getByRole('button', { name: 'Photographe' }).click()
-  await page.getByRole('button', { name: /confirmer/i }).click()
-
-  await expect(page.getByText('Pour vous connecter aux bons couples')).toBeVisible()
-  await page.getByRole('button', { name: /j['’]accepte et je continue/i }).click()
-
-  await expect(page.getByRole('heading', { name: /Quels univers de mariage connaissez-vous bien/i })).toBeVisible()
-  await page.getByRole('button', { name: 'France' }).click()
-  await page.getByRole('button', { name: /continuer/i }).click()
-  await page.getByRole('button', { name: 'Laique' }).click()
-  await page.getByRole('button', { name: /confirmer/i }).click()
-
-  await expect(page.getByRole('heading', { name: /Où intervenez-vous et à quel budget/i })).toBeVisible()
-  await page.getByRole('button', { name: /sélectionner vos régions/i }).click()
-  await page.getByRole('button', { name: 'Ile-de-France' }).click()
-  await page.locator('input[type="number"]').nth(0).fill('1200')
-  await page.locator('input[type="number"]').nth(1).fill('2500')
-  await page.locator('select').selectOption('per_service')
-  await page.getByRole('button', { name: /confirmer/i }).click()
-
-  await expect(page.getByRole('heading', { name: /Votre identité, en toute confiance/i })).toBeVisible()
-  await page.getByPlaceholder('Ex : Atelier Lumière, Studio Mariage…').fill('Studio Lumiere')
-  await page.getByPlaceholder('Marie').fill('Marie')
-  await page.getByPlaceholder('Dupont').fill('Durand')
-  await page.getByPlaceholder('+33 6 00 00 00 00').fill('0612345678')
-  await page.getByPlaceholder('12 rue de la Paix').fill('12 rue de la Paix')
-  await page.getByPlaceholder('75001').fill('75001')
-  await page.getByPlaceholder('Paris').fill('Paris')
-  await page.getByPlaceholder('000 000 000 00000').fill('12345678901234')
-  await page.getByRole('button', { name: /confirmer/i }).click()
-
-  await expect(page.getByRole('heading', { name: /Votre espace vous attend/i })).toBeVisible()
-  await page.getByPlaceholder('votre@email.com').fill('marie@example.test')
-  await page.getByPlaceholder('8 caractères minimum').fill('Password!')
-  await page.getByPlaceholder('Répétez votre mot de passe').fill('Password!')
-  await page.getByRole('button', { name: /créer mon profil/i }).click()
-
-  await expect(page.getByRole('heading', { name: /Votre profil est en cours de validation/i })).toBeVisible()
+  await openOnboarding(page, 'full-flow-token')
+  await completeProfessions(page)
+  await acceptConsent(page)
+  await completeExperiences(page)
+  await completeZonesPricing(page)
+  await confirmPrefilledPortfolio(page)
+  await completeLegalInfo(page)
+  await completeCredentials(page)
 
   const requests = await getCapturedRequests(request)
   expect(requests.map(item => item.body.step)).toEqual([
@@ -110,5 +88,68 @@ test('completes the freelance onboarding happy path', async ({ page, request }) 
         },
       },
     }),
+  ])
+})
+
+test('completes the catering onboarding happy path', async ({ page, request }) => {
+  await openOnboarding(page, 'catering-full-flow-token')
+  await completeProfessions(page, 'Traiteur')
+  await acceptConsent(page)
+  await completeExperiences(page)
+  await completeCateringCharacteristics(page)
+  await completeZonesPricing(page)
+  await confirmPrefilledPortfolio(page)
+  await completeLegalInfo(page, 'Maison Saveurs')
+  await completeCredentials(page, 'traiteur@example.test')
+
+  const requests = await getCapturedRequests(request)
+  expect(requests.map(item => item.body.step)).toEqual([
+    'professions',
+    'consent',
+    'experiences',
+    'catering_characteristics',
+    'zones_pricing',
+    'legal_info',
+    'credentials',
+  ])
+})
+
+test('completes the venue onboarding happy path', async ({ page, request }) => {
+  await openOnboarding(page, 'venue-full-flow-token')
+  await completeProfessions(page, 'Lieu de reception')
+  await completeVenueCharacteristics(page)
+  await completeZonesPricing(page, 'lieu')
+  await confirmPrefilledPortfolio(page)
+  await completeLegalInfo(page, 'Domaine Wedly')
+  await completeCredentials(page, 'lieu@example.test')
+
+  const requests = await getCapturedRequests(request)
+  expect(requests.map(item => item.body.step)).toEqual([
+    'professions',
+    'venue_characteristics',
+    'zones_pricing',
+    'legal_info',
+    'credentials',
+  ])
+})
+
+test('completes the creator onboarding happy path', async ({ page, request }) => {
+  await openOnboarding(page, 'creator-full-flow-token')
+  await completeProfessions(page, 'Createur de robes')
+  await acceptConsent(page)
+  await completeExperiences(page)
+  await completeZonesPricing(page, 'createurs')
+  await confirmPrefilledPortfolio(page)
+  await completeLegalInfo(page, 'Atelier Couture')
+  await completeCredentials(page, 'createur@example.test')
+
+  const requests = await getCapturedRequests(request)
+  expect(requests.map(item => item.body.step)).toEqual([
+    'professions',
+    'consent',
+    'experiences',
+    'zones_pricing',
+    'legal_info',
+    'credentials',
   ])
 })
