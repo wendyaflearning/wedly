@@ -6,7 +6,7 @@ namespace App\Controller\Admin\Vendor;
 
 use App\Entity\User\User;
 use App\Repository\Vendor\VendorRepository;
-use App\Service\Vendor\AdminVendorDraftService;
+use App\Service\Vendor\AdminVendorInvitationService;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,7 +18,7 @@ final readonly class SendVendorInvitationAction
 {
     public function __construct(
         private VendorRepository $vendorRepository,
-        private AdminVendorDraftService $draftService,
+        private AdminVendorInvitationService $invitationService,
         private Security $security,
     ) {}
 
@@ -35,7 +35,7 @@ final readonly class SendVendorInvitationAction
         }
 
         try {
-            return new JsonResponse($this->draftService->sendInvitation($vendor, $adminUser));
+            return new JsonResponse($this->invitationService->send($vendor, $adminUser));
         } catch (\DomainException $exception) {
             return new JsonResponse(['error' => $exception->getMessage()], $exception->getCode());
         }
