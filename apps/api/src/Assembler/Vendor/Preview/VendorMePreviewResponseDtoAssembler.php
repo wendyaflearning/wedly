@@ -7,6 +7,7 @@ namespace App\Assembler\Vendor\Preview;
 use App\DTO\BookingBlocker\BookingBlockerResponseDto;
 use App\DTO\Vendor\Dashboard\PortfolioImageResponseDto;
 use App\DTO\Vendor\Preview\VendorMePreviewResponseDto;
+use App\Entity\BookingBlocker\BookingBlocker;
 use App\Entity\Region\Region;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
@@ -29,17 +30,19 @@ final readonly class VendorMePreviewResponseDtoAssembler
             id:              $vendor->getId()->toRfc4122(),
             brandName:       $vendor->getBrandName(),
             bio:             $vendor->getBio(),
-            description:     $vendor->getDescription(),
             vendorType:      $vendor->resolveVendorType()->value,
             services:        $vendor->resolveVendorServices(),
             styles:          array_map(fn(WeddingStyle $style) => $style->getSlug(), $vendor->getStyles()->toArray()),
             portfolioImages: array_map(fn(PortfolioImage $image) => new PortfolioImageResponseDto($image), $vendor->getPortfolioImages()->toArray()),
-            bookingBlockers: array_map(fn($blocker) => new BookingBlockerResponseDto($blocker), $bookingBlockers),
-            zones:           array_map(fn(Region $region) => $region->getId()->toRfc4122(), $vendor->getRegions()->toArray()),
+            bookingBlockers: array_map(fn(BookingBlocker $blocker) => new BookingBlockerResponseDto($blocker), $bookingBlockers),
+            zones:           array_map(fn(Region $region) => [
+                'id'   => $region->getId()->toRfc4122(),
+                'name' => $region->getName(),
+            ], $vendor->getRegions()->toArray()),
             priceMinCents:   $vendor->getPriceMinCents(),
             priceMaxCents:   $vendor->getPriceMaxCents(),
             priceType:       $vendor->getPriceType()->value,
-            completion:      $this->completionService->check($vendor),
+            completion:      $this->completionService->check($vendor, $bookingBlockers),
         );
     }
 }

@@ -9,7 +9,6 @@ final readonly class VendorMePreviewResponseDto
     public string  $id;
     public string  $brand_name;
     public ?string $bio;
-    public ?string $description;
     public string  $vendor_type;
     public array   $services;
     public array   $styles;
@@ -25,7 +24,6 @@ final readonly class VendorMePreviewResponseDto
         string  $id,
         string  $brandName,
         ?string $bio,
-        ?string $description,
         string  $vendorType,
         array   $services,
         array   $styles,
@@ -40,7 +38,6 @@ final readonly class VendorMePreviewResponseDto
         $this->id               = $id;
         $this->brand_name       = $brandName;
         $this->bio              = $bio;
-        $this->description      = $description;
         $this->vendor_type      = $vendorType;
         $this->services         = $services;
         $this->styles           = $styles;

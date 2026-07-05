@@ -18,17 +18,29 @@ final readonly class VendorProfileCompletionService
     ) {}
 
     /** @return array{bio: bool, styles: bool, portfolio: bool, disponibilites: bool, zone: bool, tarifs: bool} */
-    public function check(Vendor $vendor): array
+    public function check(Vendor $vendor, ?array $preloadedBookingBlockers = null): array
     {
         $zonesAndTarifsFilled = $this->zonesPricingStepHandler->isFilled($vendor);
+        $hasBookingBlockers   = $preloadedBookingBlockers !== null
+            ? count($preloadedBookingBlockers) > 0
+            : $this->vendorRepository->countBookingBlockersByVendor($vendor) > 0;
 
         return [
             'bio'            => $vendor->getBio() !== null && trim($vendor->getBio()) !== '',
             'styles'         => !$vendor->getStyles()->isEmpty(),
             'portfolio'      => $this->portfolioStepHandler->isFilled($vendor),
-            'disponibilites' => $this->vendorRepository->countBookingBlockersByVendor($vendor) > 0,
+            'disponibilites' => $hasBookingBlockers,
             'zone'           => $zonesAndTarifsFilled,
             'tarifs'         => $zonesAndTarifsFilled,
         ];
+    }
+
+    /** @return array{bio: bool, portfolio: bool, disponibilites: bool, zone: bool, tarifs: bool} */
+    public function checkForPublish(Vendor $vendor): array
+    {
+        $completion = $this->check($vendor);
+        unset($completion['styles']);
+
+        return $completion;
     }
 }

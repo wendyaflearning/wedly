@@ -30,7 +30,7 @@ final class GetVendorMePreviewAction extends AbstractController
         $vendor = $this->vendorRepository->findOneByUser($user);
 
         if ($vendor === null) {
-            return new JsonResponse(['error' => 'No vendor associated with this account.'], 403);
+            return new JsonResponse(['error' => 'No vendor associated with this account.'], 404);
         }
 
         return new JsonResponse($this->assembler->assemble($vendor));

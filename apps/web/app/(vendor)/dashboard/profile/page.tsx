@@ -170,7 +170,7 @@ export default async function ProfileHubPage({
             <div className="shrink-0 flex flex-col items-end gap-2 pb-1">
               <p className="font-manrope text-[12px] text-creme/50">{vendorTypeLabel}</p>
               <a
-                href="#"
+                href="/dashboard/profile/preview"
                 className="font-manrope text-[12px] font-semibold text-creme/70 hover:text-creme transition-colors whitespace-nowrap"
               >
                 Mon profil →
