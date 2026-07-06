@@ -3,3 +3,9 @@ framework:
         dsn: '%env(MAILER_DSN)%'
         envelope:
             sender: 'Wedly <contact@wedly-apps.com>'
+
+when@dev:
+    framework:
+        mailer:
+            envelope:
+                recipients: ['contact@wedly-apps.com']
