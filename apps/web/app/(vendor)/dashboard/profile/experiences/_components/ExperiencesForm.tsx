@@ -145,7 +145,7 @@ export default function ExperiencesForm({ vendorId }: { vendorId: string }) {
               Vous ne retrouvez pas votre confession ?{' '}
               <a href="mailto:contact@wedly.fr" className="text-accent hover:underline underline-offset-2">
                 <span className="md:hidden">Contactez-nous</span>
-                <span className="hidden md:inline">Contactez-nous : contact@wedly.fr</span>
+                <span className="hidden md:inline">Contactez-nous : contact@wedly-apps.com</span>
               </a>
             </span>
           </div>
