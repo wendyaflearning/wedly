@@ -141,6 +141,16 @@ final class AdminVendorReviewServiceTest extends TestCase
             ->reject($this->makeVendor(), ['unsupported'], null);
     }
 
+    public function test_reject_rejects_non_string_reason(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Invalid rejection reason.');
+        $this->expectExceptionCode(422);
+
+        $this->makeService($this->createStub(EventDispatcherInterface::class), 0)
+            ->reject($this->makeVendor(), [123], null);
+    }
+
     public function test_reject_allows_note_only_with_other_reason(): void
     {
         $this->expectException(\DomainException::class);
@@ -149,6 +159,16 @@ final class AdminVendorReviewServiceTest extends TestCase
 
         $this->makeService($this->createStub(EventDispatcherInterface::class), 0)
             ->reject($this->makeVendor(), [VendorRejectionReason::PortfolioQuality->value], 'Note sans autre.');
+    }
+
+    public function test_reject_normalizes_blank_note_to_null_when_other_reason_is_used(): void
+    {
+        $vendor = $this->makeVendor();
+
+        $this->makeService($this->createStub(EventDispatcherInterface::class))
+            ->reject($vendor, [VendorRejectionReason::Other->value], '   ');
+
+        self::assertNull($vendor->getRejectionNote());
     }
 
     private function makeService(EventDispatcherInterface $dispatcher, int $flushCount = 1): AdminVendorReviewService
