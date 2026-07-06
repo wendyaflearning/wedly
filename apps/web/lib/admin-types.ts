@@ -86,8 +86,8 @@ export type AdminVendorDraft = {
   }
   zonesPricing: {
     regions: string[]
-    priceMin: number
-    priceMax: number
+    priceMin: number | null
+    priceMax: number | null
     priceType: string
     city: string | null
   }

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, Copy, Save, Send } from 'lucide-react'
+import { Check, Copy, Save, Send, Trash2 } from 'lucide-react'
 import type {
   AdminVendorDraft,
   AdminVendorInvitationSendResponse,
@@ -166,6 +166,7 @@ export function AdminVendorDraftForm({
   const [form, setForm] = useState<DraftFormState>(() => initialState(draft))
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [sendResult, setSendResult] = useState<AdminVendorInvitationSendResponse | null>(null)
@@ -315,6 +316,28 @@ export function AdminVendorDraftForm({
     router.refresh()
   }
 
+  async function deleteDraft() {
+    if (!vendorId || deleting) return
+    const confirmed = window.confirm('Supprimer ce brouillon ?')
+    if (!confirmed) return
+
+    setDeleting(true)
+    setError(null)
+    setNotice(null)
+
+    const response = await fetch(`/api/admin/vendors/${vendorId}/draft`, { method: 'DELETE' })
+    setDeleting(false)
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      setError(typeof data.error === 'string' ? data.error : 'La suppression du brouillon a échoué.')
+      return
+    }
+
+    router.push('/admin/prestataires?view=drafts&toast=draft-deleted')
+    router.refresh()
+  }
+
   async function copyInvitationUrl() {
     if (!sendResult?.invitationUrl) return
     await navigator.clipboard.writeText(sendResult.invitationUrl)
@@ -338,23 +361,34 @@ export function AdminVendorDraftForm({
             <Link href="/admin/prestataires" className="inline-flex h-10 items-center rounded-md border border-[#d8c9ba] px-4 text-sm font-semibold text-texte no-underline">
               Retour
             </Link>
-            {!hasPendingInvitation && (
+              {!hasPendingInvitation && (
+                <button
+                  type="button"
+                  onClick={() => void saveDraft()}
+                  disabled={saving || sending || deleting}
+                  className="inline-flex h-10 items-center gap-2 rounded-md border border-bordeaux/20 px-4 text-sm font-semibold text-bordeaux disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <Save size={16} aria-hidden="true" />
+                  {saving ? 'Sauvegarde...' : 'Enregistrer le brouillon'}
+                </button>
+              )}
+              {vendorId && !hasPendingInvitation && (
+                <button
+                  type="button"
+                  onClick={() => void deleteDraft()}
+                  disabled={saving || sending || deleting}
+                  className="inline-flex h-10 items-center gap-2 rounded-md border border-danger/20 px-4 text-sm font-semibold text-danger disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                  {deleting ? 'Suppression...' : 'Supprimer'}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => void saveDraft()}
-                disabled={saving || sending}
-                className="inline-flex h-10 items-center gap-2 rounded-md border border-bordeaux/20 px-4 text-sm font-semibold text-bordeaux disabled:cursor-not-allowed disabled:opacity-45"
+                onClick={() => void sendInvitation()}
+                disabled={!canSend || saving || sending || deleting}
+                className="inline-flex h-10 items-center gap-2 rounded-md bg-highlight px-4 text-sm font-semibold text-creme disabled:cursor-not-allowed disabled:opacity-45"
               >
-                <Save size={16} aria-hidden="true" />
-                {saving ? 'Sauvegarde...' : 'Enregistrer le brouillon'}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => void sendInvitation()}
-              disabled={!canSend || saving || sending}
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-highlight px-4 text-sm font-semibold text-creme disabled:cursor-not-allowed disabled:opacity-45"
-            >
               <Send size={16} aria-hidden="true" />
               {sending ? 'Envoi...' : hasPendingInvitation ? "Renvoyer l'invitation" : "Envoyer l'invitation"}
             </button>

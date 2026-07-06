@@ -51,7 +51,8 @@ Couverture attendue :
 
 Statut : `active`
 
-L'invitation d'un prestataire exige les données coeur suivantes :
+Un brouillon prestataire admin peut être sauvegardé même si les données coeur
+sont absentes. L'invitation d'un prestataire exige les données coeur suivantes :
 
 - prénom utilisateur
 - email utilisateur
@@ -62,19 +63,27 @@ L'invitation d'un prestataire exige les données coeur suivantes :
 
 Implémentation actuelle :
 
-- `AdminVendorDraftService::assertVendorReadyForInvitation()`
-- `AdminVendorDraftService::assertRequiredFields()` pour la création initiale
+- `AdminVendorDraftService::create()` initialise les champs techniques non
+nullables avec des valeurs internes neutres
+- `AdminVendorInvitationService::assertVendorReadyForInvitation()`
+- `AdminVendorDraftService::delete()` refuse la suppression d'un brouillon dès
+qu'une invitation existe
 
 Contrat attendu :
 
-- données manquantes : exception domaine `422`
-- prix négatif ou `priceMin > priceMax` : exception domaine `422`
+- sauvegarde de brouillon incomplet : autorisée
+- données manquantes à l'invitation : exception domaine `422`
+- email interne de brouillon, email invalide, prix non renseigné, prix négatif
+ou `priceMin > priceMax` à l'invitation : exception domaine `422`
+- suppression d'un brouillon sans invitation : autorisée
+- suppression d'un brouillon avec invitation ou non `pending` : exception
+domaine `409`
 
 Risque de régression :
 
-- une validation plus faible peut envoyer des invitations inutilisables
-- une validation différente entre création, update et invitation peut créer des
-états incohérents
+- une validation trop faible à l'invitation peut envoyer des invitations
+inutilisables
+- une suppression trop large peut invalider un lien d'invitation déjà envoyé
 
 ## ADMIN-VENDOR-003 — Validation admin d'un prestataire
 

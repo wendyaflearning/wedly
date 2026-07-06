@@ -53,6 +53,66 @@ final class AdminVendorDraftServiceTest extends TestCase
         self::assertSame('Studio Camille', $response->identity['brandName']);
     }
 
+    public function test_create_empty_draft_is_accepted_with_masked_internal_values(): void
+    {
+        $entityManager = $this->makeEntityManager($this->makeServiceEntity(), $this->makeRegion());
+        $entityManager->expects($this->once())->method('beginTransaction');
+        $entityManager->expects($this->once())->method('commit');
+        $entityManager->expects($this->never())->method('rollback');
+        $entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->willReturnCallback(function (object $entity): void {
+                if ($entity instanceof User || $entity instanceof Vendor) {
+                    $this->setPrivateProperty($entity, 'id', new UuidV7());
+                }
+            });
+        $entityManager->expects($this->once())->method('flush');
+
+        $response = $this->makeDraftService($entityManager)
+            ->create(AdminVendorDraftRequestDto::fromArray([]));
+
+        self::assertSame('pending', $response->status);
+        self::assertSame('', $response->identity['firstname']);
+        self::assertSame('', $response->identity['email']);
+        self::assertSame('', $response->identity['brandName']);
+        self::assertNull($response->profession['serviceId']);
+        self::assertSame([], $response->zonesPricing['regions']);
+        self::assertNull($response->zonesPricing['priceMin']);
+        self::assertNull($response->zonesPricing['priceMax']);
+    }
+
+    public function test_update_can_clear_draft_core_fields(): void
+    {
+        $vendor = $this->makeReadyVendor();
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->never())->method('find');
+        $entityManager->expects($this->once())->method('flush');
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasUsedVendorInvitation')->willReturn(false);
+        $inviteTokenRepository->method('findLatestVendorInvitation')->willReturn(null);
+
+        $response = $this->makeDraftService($entityManager, $inviteTokenRepository)
+            ->update($vendor, AdminVendorDraftRequestDto::fromArray([
+                'firstname'  => '',
+                'email'      => '',
+                'brand_name' => '',
+                'service_id' => '',
+                'price_min'  => null,
+                'price_max'  => null,
+            ]));
+
+        self::assertSame('', $response->identity['firstname']);
+        self::assertSame('', $response->identity['email']);
+        self::assertSame('', $response->identity['brandName']);
+        self::assertNull($response->profession['serviceId']);
+        self::assertNull($response->zonesPricing['priceMin']);
+        self::assertNull($response->zonesPricing['priceMax']);
+        self::assertTrue($vendor->getServices()->isEmpty());
+        self::assertSame(-1, $vendor->getPriceMinCents());
+        self::assertSame(-1, $vendor->getPriceMaxCents());
+    }
+
     public function test_update_rejects_vendor_with_used_invitation(): void
     {
         $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
@@ -63,6 +123,51 @@ final class AdminVendorDraftServiceTest extends TestCase
 
         $this->makeDraftService(inviteTokenRepository: $inviteTokenRepository)
             ->update($this->makeReadyVendor(), $this->makeValidRequest());
+    }
+
+    public function test_delete_removes_pending_draft_without_invitation(): void
+    {
+        $vendor = $this->makeReadyVendor();
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->once())->method('beginTransaction');
+        $entityManager->expects($this->exactly(2))->method('remove');
+        $entityManager->expects($this->once())->method('flush');
+        $entityManager->expects($this->once())->method('commit');
+        $entityManager->expects($this->never())->method('rollback');
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasVendorInvitation')->willReturn(false);
+
+        $this->makeDraftService($entityManager, $inviteTokenRepository)->delete($vendor);
+    }
+
+    public function test_delete_rejects_draft_with_existing_invitation(): void
+    {
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->never())->method('beginTransaction');
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasVendorInvitation')->willReturn(true);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(409);
+        $this->expectExceptionMessage('Ce brouillon ne peut pas être supprimé.');
+
+        $this->makeDraftService($entityManager, $inviteTokenRepository)->delete($this->makeReadyVendor());
+    }
+
+    public function test_delete_rejects_non_pending_vendor(): void
+    {
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->never())->method('beginTransaction');
+
+        $vendor = $this->makeReadyVendor()->setStatus(VendorStatus::Active);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(409);
+        $this->expectExceptionMessage('Ce brouillon ne peut pas être supprimé.');
+
+        $this->makeDraftService($entityManager)->delete($vendor);
     }
 
     private function makeDraftService(

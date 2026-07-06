@@ -25,6 +25,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final readonly class AdminVendorDraftService
 {
+    public const DRAFT_EMAIL_DOMAIN = 'admin-draft.wedly.invalid';
+
     public function __construct(
         private EntityManagerInterface $em,
         private UserRepository $userRepository,
@@ -34,23 +36,26 @@ final readonly class AdminVendorDraftService
 
     public function create(AdminVendorDraftRequestDto $dto): AdminVendorDraftResponseDto
     {
-        $this->assertRequiredFields($dto);
         $this->assertEmailAvailable($dto->email);
 
         $this->em->beginTransaction();
         try {
             $user = new User();
-            $user->setFirstName($dto->firstname)
+            $user->setFirstName('')
                 ->setLastName($dto->lastName)
-                ->setEmail($dto->email)
+                ->setEmail($this->generateDraftEmail())
                 ->setRoles([Role::Vendor->value])
                 ->setPassword($this->passwordHasher->hashPassword($user, bin2hex(random_bytes(32))));
 
             $vendor = new Vendor();
             $vendor->setUser($user)
+                ->setBrandName('')
+                ->setPriceType(PriceType::PerService)
+                ->setPriceMinCents(-1)
+                ->setPriceMaxCents(-1)
                 ->setStatus(VendorStatus::Pending);
 
-            $this->applyDraft($vendor, $dto, requireCoreFields: true);
+            $this->applyDraft($vendor, $dto);
 
             $this->em->persist($user);
             $this->em->persist($vendor);
@@ -72,58 +77,74 @@ final readonly class AdminVendorDraftService
     public function update(Vendor $vendor, AdminVendorDraftRequestDto $dto): AdminVendorDraftResponseDto
     {
         $this->assertEditable($vendor);
-        if ($dto->email !== null && $dto->email !== $vendor->getUser()->getEmail()) {
+        if ($dto->emailProvided && $dto->email !== null && $dto->email !== $vendor->getUser()->getEmail()) {
             $this->assertEmailAvailable($dto->email);
         }
 
-        $this->applyDraft($vendor, $dto, requireCoreFields: false);
+        $this->applyDraft($vendor, $dto);
         $this->em->flush();
 
         return $this->get($vendor);
     }
 
-    private function applyDraft(Vendor $vendor, AdminVendorDraftRequestDto $dto, bool $requireCoreFields): void
+    public function delete(Vendor $vendor): void
     {
-        if ($requireCoreFields) {
-            $this->assertRequiredFields($dto);
-        }
+        $this->assertDeletable($vendor);
 
-        if ($dto->firstname !== null) {
-            $vendor->getUser()->setFirstName($dto->firstname);
+        $this->em->beginTransaction();
+        try {
+            $user = $vendor->getUser();
+            $this->em->remove($vendor);
+            $this->em->remove($user);
+            $this->em->flush();
+            $this->em->commit();
+        } catch (\Throwable $throwable) {
+            $this->em->rollback();
+            throw $throwable;
         }
-        if ($dto->lastName !== null) {
+    }
+
+    private function applyDraft(Vendor $vendor, AdminVendorDraftRequestDto $dto): void
+    {
+        if ($dto->firstnameProvided) {
+            $vendor->getUser()->setFirstName($dto->firstname ?? '');
+        }
+        if ($dto->lastNameProvided) {
             $vendor->getUser()->setLastName($dto->lastName);
         }
-        if ($dto->email !== null) {
-            $vendor->getUser()->setEmail($dto->email);
+        if ($dto->emailProvided) {
+            $vendor->getUser()->setEmail($dto->email ?? $this->generateDraftEmail());
         }
-        if ($dto->brandName !== null) {
-            $vendor->setBrandName($dto->brandName);
+        if ($dto->brandNameProvided) {
+            $vendor->setBrandName($dto->brandName ?? '');
         }
-        if ($dto->serviceId !== null) {
-            $service = $this->em->find(Service::class, $dto->serviceId);
-            if ($service === null) {
-                throw new \DomainException('Service not found.', 404);
-            }
+        if ($dto->serviceIdProvided) {
             $vendor->getServices()->clear();
-            $vendor->addService($service);
+            if ($dto->serviceId !== null) {
+                $service = $this->em->find(Service::class, $dto->serviceId);
+                if ($service === null) {
+                    throw new \DomainException('Service introuvable.', 404);
+                }
+                $vendor->addService($service);
+            }
         }
-        if ($dto->regions !== null) {
-            $vendor->syncZones($this->resolveEntities(Region::class, $dto->regions, 'Region'));
+        if ($dto->regionsProvided) {
+            $vendor->syncZones($this->resolveEntities(Region::class, $dto->regions ?? [], 'Région'));
         }
-        if ($dto->priceMin !== null) {
-            $vendor->setPriceMinCents($dto->priceMin);
+        if ($dto->priceMinProvided) {
+            $vendor->setPriceMinCents($dto->priceMin ?? -1);
         }
-        if ($dto->priceMax !== null) {
-            $vendor->setPriceMaxCents($dto->priceMax);
+        if ($dto->priceMaxProvided) {
+            $vendor->setPriceMaxCents($dto->priceMax ?? -1);
         }
-        if ($dto->priceType !== null) {
-            $priceType = PriceType::tryFrom($dto->priceType);
+        if ($dto->priceTypeProvided) {
+            $priceType = $dto->priceType === null ? PriceType::PerService : PriceType::tryFrom($dto->priceType);
             if ($priceType === null) {
-                throw new \DomainException('Invalid price type.', 422);
+                throw new \DomainException('Type de prix invalide.', 422);
             }
             $vendor->setPriceType($priceType);
         }
+        $this->assertDraftPriceRange($vendor);
 
         $this->applyExperiences($vendor, $dto->experiences);
         $this->applyLegalInfo($vendor, $dto->legalInfo);
@@ -173,7 +194,7 @@ final readonly class AdminVendorDraftService
         if (array_key_exists('siret', $legalInfo)) {
             $siret = $this->nullableString($legalInfo['siret']);
             if ($siret !== null && !preg_match('/^\d{14}$/', $siret)) {
-                throw new \DomainException('Invalid SIRET.', 422);
+                throw new \DomainException('SIRET invalide.', 422);
             }
             $vendor->setSiret($siret);
         }
@@ -195,7 +216,7 @@ final readonly class AdminVendorDraftService
         if (array_key_exists('venue_type', $data)) {
             $venueType = VenueType::tryFrom((string) $data['venue_type']);
             if ($venueType === null) {
-                throw new \DomainException('Invalid venue type.', 422);
+                throw new \DomainException('Type de lieu invalide.', 422);
             }
             $details->setVenueType($venueType);
         }
@@ -269,26 +290,26 @@ final readonly class AdminVendorDraftService
         }
     }
 
-    private function assertRequiredFields(AdminVendorDraftRequestDto $dto): void
+    private function assertDraftPriceRange(Vendor $vendor): void
     {
-        if ($dto->firstname === null || $dto->email === null || $dto->brandName === null || $dto->serviceId === null) {
-            throw new \DomainException('Missing required identity or profession fields.', 422);
-        }
-        if ($dto->regions === null || count($dto->regions) === 0 || $dto->priceMin === null || $dto->priceMax === null || $dto->priceType === null) {
-            throw new \DomainException('Missing required pricing fields.', 422);
-        }
-        if ($dto->priceMin < 0 || $dto->priceMax < 0 || $dto->priceMin > $dto->priceMax) {
-            throw new \DomainException('Invalid price range.', 422);
-        }
-        if (!filter_var($dto->email, FILTER_VALIDATE_EMAIL)) {
-            throw new \DomainException('Invalid email.', 422);
+        $priceMin = $vendor->getPriceMinCents();
+        $priceMax = $vendor->getPriceMaxCents();
+        if ($priceMin >= 0 && $priceMax >= 0 && $priceMin > $priceMax) {
+            throw new \DomainException('La fourchette de prix est invalide.', 422);
         }
     }
 
     private function assertEditable(Vendor $vendor): void
     {
         if ($this->inviteTokenRepository->hasUsedVendorInvitation($vendor)) {
-            throw new \DomainException('Invitation already used; vendor draft can no longer be edited.', 409);
+            throw new \DomainException('Invitation déjà utilisée ; le brouillon ne peut plus être modifié.', 409);
+        }
+    }
+
+    private function assertDeletable(Vendor $vendor): void
+    {
+        if ($vendor->getStatus() !== VendorStatus::Pending || $this->inviteTokenRepository->hasVendorInvitation($vendor)) {
+            throw new \DomainException('Ce brouillon ne peut pas être supprimé.', 409);
         }
     }
 
@@ -299,7 +320,7 @@ final readonly class AdminVendorDraftService
         }
 
         if ($this->userRepository->findOneBy(['email' => $email]) !== null) {
-            throw new \DomainException('Email already registered.', 409);
+            throw new \DomainException('Cet email est déjà utilisé.', 409);
         }
     }
 
@@ -309,12 +330,12 @@ final readonly class AdminVendorDraftService
         $entities = [];
         foreach ($ids as $id) {
             if (!is_string($id)) {
-                throw new \DomainException(sprintf('%s id must be a string.', $label), 422);
+                throw new \DomainException(sprintf("L’identifiant %s doit être une chaîne.", strtolower($label)), 422);
             }
 
             $entity = $this->em->find($className, $id);
             if ($entity === null) {
-                throw new \DomainException(sprintf('%s not found: %s.', $label, $id), 422);
+                throw new \DomainException(sprintf('%s introuvable : %s.', $label, $id), 422);
             }
             $entities[] = $entity;
         }
@@ -334,6 +355,16 @@ final readonly class AdminVendorDraftService
         }
 
         return is_numeric($value) ? (int) $value : null;
+    }
+
+    public static function isDraftEmail(string $email): bool
+    {
+        return str_ends_with($email, '@' . self::DRAFT_EMAIL_DOMAIN);
+    }
+
+    private function generateDraftEmail(): string
+    {
+        return sprintf('draft-%s@%s', bin2hex(random_bytes(16)), self::DRAFT_EMAIL_DOMAIN);
     }
 
 }

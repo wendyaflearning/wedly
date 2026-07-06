@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Eye } from 'lucide-react'
 import type { AdminVendorListItem } from '@/lib/admin-types'
+import { DraftDeleteButton } from '@/components/admin/DraftDeleteButton'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 
 function formatDate(value: string) {
@@ -58,13 +59,18 @@ export function AdminVendorTable({
                     <AdminStatusBadge status={item.status} label={item.statusLabel} />
                   </td>
                   <td className="px-6 py-5 text-gris group-hover:text-bordeaux">
-                    <Link
-                      href={href}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gris transition-colors hover:bg-bordeaux/5 hover:text-bordeaux"
-                      aria-label={`Ouvrir ${item.name}`}
-                    >
-                      <Eye size={18} aria-hidden="true" />
-                    </Link>
+                    <div className="flex items-center justify-end gap-1">
+                      <Link
+                        href={href}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gris transition-colors hover:bg-bordeaux/5 hover:text-bordeaux"
+                        aria-label={`Ouvrir ${item.name}`}
+                      >
+                        <Eye size={18} aria-hidden="true" />
+                      </Link>
+                      {hrefVariant === 'draft' && (
+                        <DraftDeleteButton vendorId={item.id} vendorName={item.name} />
+                      )}
+                    </div>
                   </td>
                 </tr>
               )

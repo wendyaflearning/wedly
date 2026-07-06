@@ -15,6 +15,7 @@ use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VendorType;
 use App\Repository\User\InviteTokenRepository;
+use App\Service\Vendor\AdminVendorDraftService;
 use App\Service\Vendor\AdminVendorInvitationService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -60,7 +61,7 @@ final class AdminVendorInvitationServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
-        $this->expectExceptionMessage('Invalid invitation scope.');
+        $this->expectExceptionMessage("Filtre d’invitation invalide.");
 
         $this->makeService(inviteTokenRepository: $repository)->list('all');
     }
@@ -143,6 +144,53 @@ final class AdminVendorInvitationServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
+        $this->expectExceptionMessage("Le service et au moins une région sont requis avant l’envoi.");
+
+        $this->makeService(mailer: $mailer)->send($vendor, new User());
+    }
+
+    public function test_send_rejects_draft_internal_email(): void
+    {
+        $vendor = $this->makeReadyVendor();
+        $vendor->getUser()->setEmail('draft-abc@' . AdminVendorDraftService::DRAFT_EMAIL_DOMAIN);
+
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->never())->method('send');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage("Les informations d’identité requises sont incomplètes.");
+
+        $this->makeService(mailer: $mailer)->send($vendor, new User());
+    }
+
+    public function test_send_rejects_missing_prices(): void
+    {
+        $vendor = $this->makeReadyVendor()
+            ->setPriceMinCents(-1)
+            ->setPriceMaxCents(-1);
+
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->never())->method('send');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('La fourchette de prix est invalide.');
+
+        $this->makeService(mailer: $mailer)->send($vendor, new User());
+    }
+
+    public function test_send_rejects_invalid_email(): void
+    {
+        $vendor = $this->makeReadyVendor();
+        $vendor->getUser()->setEmail('email-invalide');
+
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->never())->method('send');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage("Les informations d’identité requises sont incomplètes.");
 
         $this->makeService(mailer: $mailer)->send($vendor, new User());
     }

@@ -20,6 +20,15 @@ final readonly class AdminVendorDraftRequestDto
         public ?array $legalInfo,
         public ?array $venueCharacteristics,
         public ?array $cateringCharacteristics,
+        public bool $firstnameProvided = true,
+        public bool $lastNameProvided = true,
+        public bool $emailProvided = true,
+        public bool $brandNameProvided = true,
+        public bool $serviceIdProvided = true,
+        public bool $regionsProvided = true,
+        public bool $priceMinProvided = true,
+        public bool $priceMaxProvided = true,
+        public bool $priceTypeProvided = true,
     ) {}
 
     public static function fromArray(array $data): self
@@ -38,6 +47,15 @@ final readonly class AdminVendorDraftRequestDto
             legalInfo:               array_key_exists('legal_info', $data) ? $data['legal_info'] : null,
             venueCharacteristics:    array_key_exists('venue_characteristics', $data) ? $data['venue_characteristics'] : null,
             cateringCharacteristics: array_key_exists('catering_characteristics', $data) ? $data['catering_characteristics'] : null,
+            firstnameProvided:       array_key_exists('firstname', $data),
+            lastNameProvided:        array_key_exists('last_name', $data),
+            emailProvided:           array_key_exists('email', $data),
+            brandNameProvided:       array_key_exists('brand_name', $data),
+            serviceIdProvided:       array_key_exists('service_id', $data),
+            regionsProvided:         array_key_exists('regions', $data),
+            priceMinProvided:        array_key_exists('price_min', $data),
+            priceMaxProvided:        array_key_exists('price_max', $data),
+            priceTypeProvided:       array_key_exists('price_type', $data),
         );
     }
 

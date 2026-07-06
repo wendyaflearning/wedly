@@ -20,7 +20,7 @@ final readonly class GetCurrentAdminAction
     {
         $user = $this->security->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'Admin not found.'], 404);
+            return new JsonResponse(['error' => 'Administrateur introuvable.'], 404);
         }
 
         return new JsonResponse([

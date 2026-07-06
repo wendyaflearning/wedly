@@ -22,7 +22,7 @@ final readonly class ListVendorsAction
     {
         $status = VendorStatus::fromAdminFilter($request->query->get('status', VendorStatus::UnderReview->value));
         if ($status === false) {
-            return new JsonResponse(['error' => 'Invalid status filter.'], 422);
+            return new JsonResponse(['error' => 'Filtre de statut invalide.'], 422);
         }
 
         $vendors  = $this->vendorRepository->findForAdminReview($status);

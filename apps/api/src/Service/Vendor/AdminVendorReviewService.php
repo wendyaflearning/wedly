@@ -75,18 +75,18 @@ final readonly class AdminVendorReviewService
     private function resolveRejectionReasons(array $reasonValues): array
     {
         if ($reasonValues === []) {
-            throw new \DomainException('At least one rejection reason is required.', 422);
+            throw new \DomainException('Au moins une raison de refus est requise.', 422);
         }
 
         $reasons = [];
         foreach ($reasonValues as $reasonValue) {
             if (!is_string($reasonValue)) {
-                throw new \DomainException('Invalid rejection reason.', 422);
+                throw new \DomainException('Raison de refus invalide.', 422);
             }
 
             $reason = VendorRejectionReason::tryFrom($reasonValue);
             if ($reason === null) {
-                throw new \DomainException(sprintf('Unknown rejection reason: %s.', $reasonValue), 422);
+                throw new \DomainException(sprintf('Raison de refus inconnue : %s.', $reasonValue), 422);
             }
 
             $reasons[] = $reason;
@@ -104,7 +104,7 @@ final readonly class AdminVendorReviewService
         }
 
         if (!in_array(VendorRejectionReason::Other, $reasons, true) && $note !== null) {
-            throw new \DomainException('A note can only be provided with the "other" reason.', 422);
+            throw new \DomainException("Une note ne peut être fournie qu’avec la raison \"Autre\".", 422);
         }
 
         return $note;

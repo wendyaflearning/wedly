@@ -23,15 +23,16 @@ final readonly class AdminVendorListItemResponseDto
     public function __construct(Vendor $vendor)
     {
         $submittedAt = $vendor->getSubmittedForReviewAt() ?? $vendor->getUpdatedAt();
-        $vendorType  = $vendor->resolveVendorType();
+        $services    = $vendor->getServices()->toArray();
+        $vendorType  = $services === [] ? null : $vendor->resolveVendorType();
 
         $this->id              = $vendor->getId()->toRfc4122();
-        $this->name            = $vendor->getBrandName();
-        $this->vendorType      = $vendorType->value;
-        $this->vendorTypeLabel = self::vendorTypeLabel($vendorType);
+        $this->name            = trim($vendor->getBrandName()) === '' ? 'Brouillon sans nom' : $vendor->getBrandName();
+        $this->vendorType      = $vendorType?->value ?? 'unknown';
+        $this->vendorTypeLabel = $vendorType === null ? 'Non renseigné' : self::vendorTypeLabel($vendorType);
         $this->services        = array_map(
             fn(Service $service) => $service->getName(),
-            $vendor->getServices()->toArray()
+            $services
         );
         $this->submittedAt = $submittedAt->format(\DateTimeInterface::ATOM);
         $this->status      = $vendor->getStatus()->value;

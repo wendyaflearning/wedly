@@ -26,7 +26,7 @@ final readonly class RejectVendorAction
         $vendor = $this->vendorRepository->find($id);
 
         if ($vendor === null) {
-            return new JsonResponse(['error' => 'Vendor not found.'], 404);
+            return new JsonResponse(['error' => 'Prestataire introuvable.'], 404);
         }
 
         try {
@@ -35,6 +35,6 @@ final readonly class RejectVendorAction
             return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
         }
 
-        return new JsonResponse(['message' => 'Vendor rejected.', 'status' => 'rejected'], 200);
+        return new JsonResponse(['message' => 'Prestataire refusé.', 'status' => 'rejected'], 200);
     }
 }

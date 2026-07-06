@@ -89,6 +89,18 @@ class InviteTokenRepository extends ServiceEntityRepository
             ->getSingleScalarResult() > 0;
     }
 
+    public function hasVendorInvitation(Vendor $vendor): bool
+    {
+        return (int) $this->createQueryBuilder('inviteToken')
+            ->select('COUNT(inviteToken.id)')
+            ->andWhere('inviteToken.vendor = :vendor')
+            ->andWhere('inviteToken.persona = :persona')
+            ->setParameter('vendor', $vendor)
+            ->setParameter('persona', InviteTokenPersona::Vendor->value)
+            ->getQuery()
+            ->getSingleScalarResult() > 0;
+    }
+
     private function baseVendorInvitationQuery(): \Doctrine\ORM\QueryBuilder
     {
         return $this->createQueryBuilder('inviteToken')
