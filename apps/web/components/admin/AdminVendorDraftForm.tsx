@@ -328,7 +328,7 @@ export function AdminVendorDraftForm({
     const response = await fetch(`/api/admin/vendors/${vendorId}/draft`, { method: 'DELETE' })
     setDeleting(false)
 
-    if (!response.ok && response.status !== 204) {
+    if (!response.ok) {
       const data = await response.json().catch(() => ({}))
       setError(typeof data.error === 'string' ? data.error : 'La suppression du brouillon a échoué.')
       return

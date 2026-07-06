@@ -1,10 +1,7 @@
-'use client'
-
 import Link from 'next/link'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Eye, Trash2 } from 'lucide-react'
+import { Eye } from 'lucide-react'
 import type { AdminVendorListItem } from '@/lib/admin-types'
+import { DraftDeleteButton } from '@/components/admin/DraftDeleteButton'
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
 
 function formatDate(value: string) {
@@ -22,29 +19,8 @@ export function AdminVendorTable({
   items: AdminVendorListItem[]
   hrefVariant?: 'profile' | 'draft'
 }) {
-  const router = useRouter()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
   const getHref = (item: AdminVendorListItem) =>
     hrefVariant === 'draft' ? `/admin/vendors/${item.id}/edit` : `/admin/prestataires/${item.id}`
-
-  async function deleteDraft(item: AdminVendorListItem) {
-    if (deletingId !== null) return
-    const confirmed = window.confirm(`Supprimer le brouillon "${item.name}" ?`)
-    if (!confirmed) return
-
-    setDeletingId(item.id)
-    const response = await fetch(`/api/admin/vendors/${item.id}/draft`, { method: 'DELETE' })
-    setDeletingId(null)
-
-    if (!response.ok && response.status !== 204) {
-      const data = await response.json().catch(() => ({}))
-      window.alert(typeof data.error === 'string' ? data.error : 'La suppression du brouillon a échoué.')
-      return
-    }
-
-    router.push('/admin/prestataires?view=drafts&toast=draft-deleted')
-    router.refresh()
-  }
 
   return (
     <div className="overflow-hidden rounded-lg border border-bordeaux/10 bg-white shadow-sm">
@@ -92,15 +68,7 @@ export function AdminVendorTable({
                         <Eye size={18} aria-hidden="true" />
                       </Link>
                       {hrefVariant === 'draft' && (
-                        <button
-                          type="button"
-                          onClick={() => void deleteDraft(item)}
-                          disabled={deletingId === item.id}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-gris transition-colors hover:bg-danger-soft hover:text-danger disabled:cursor-not-allowed disabled:opacity-45"
-                          aria-label={`Supprimer ${item.name}`}
-                        >
-                          <Trash2 size={17} aria-hidden="true" />
-                        </button>
+                        <DraftDeleteButton vendorId={item.id} vendorName={item.name} />
                       )}
                     </div>
                   </td>

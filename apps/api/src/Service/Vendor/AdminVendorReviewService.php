@@ -104,7 +104,7 @@ final readonly class AdminVendorReviewService
         }
 
         if (!in_array(VendorRejectionReason::Other, $reasons, true) && $note !== null) {
-            throw new \DomainException('Une note ne peut être fournie qu’avec la raison "Autre".', 422);
+            throw new \DomainException("Une note ne peut être fournie qu’avec la raison \"Autre\".", 422);
         }
 
         return $note;

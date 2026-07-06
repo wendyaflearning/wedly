@@ -330,7 +330,7 @@ final readonly class AdminVendorDraftService
         $entities = [];
         foreach ($ids as $id) {
             if (!is_string($id)) {
-                throw new \DomainException(sprintf('L’identifiant %s doit être une chaîne.', strtolower($label)), 422);
+                throw new \DomainException(sprintf("L’identifiant %s doit être une chaîne.", strtolower($label)), 422);
             }
 
             $entity = $this->em->find($className, $id);
@@ -355,6 +355,11 @@ final readonly class AdminVendorDraftService
         }
 
         return is_numeric($value) ? (int) $value : null;
+    }
+
+    public static function isDraftEmail(string $email): bool
+    {
+        return str_ends_with($email, '@' . self::DRAFT_EMAIL_DOMAIN);
     }
 
     private function generateDraftEmail(): string

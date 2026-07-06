@@ -42,7 +42,7 @@ final readonly class AdminVendorDraftResponseDto
         $this->identity = [
             'firstname' => $vendor->getUser()->getFirstName(),
             'lastName'  => $vendor->getUser()->getLastName(),
-            'email'     => $this->isDraftEmail($vendor->getUser()->getEmail()) ? '' : $vendor->getUser()->getEmail(),
+            'email'     => AdminVendorDraftService::isDraftEmail($vendor->getUser()->getEmail()) ? '' : $vendor->getUser()->getEmail(),
             'brandName' => $vendor->getBrandName(),
         ];
         $this->profession = [
@@ -100,8 +100,4 @@ final readonly class AdminVendorDraftResponseDto
         ];
     }
 
-    private function isDraftEmail(string $email): bool
-    {
-        return str_ends_with($email, '@' . AdminVendorDraftService::DRAFT_EMAIL_DOMAIN);
-    }
 }

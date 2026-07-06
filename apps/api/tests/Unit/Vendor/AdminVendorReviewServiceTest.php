@@ -144,7 +144,7 @@ final class AdminVendorReviewServiceTest extends TestCase
     public function test_reject_allows_note_only_with_other_reason(): void
     {
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Une note ne peut être fournie qu’avec la raison "Autre".');
+        $this->expectExceptionMessage("Une note ne peut être fournie qu’avec la raison \"Autre\".");
         $this->expectExceptionCode(422);
 
         $this->makeService($this->createStub(EventDispatcherInterface::class), 0)
