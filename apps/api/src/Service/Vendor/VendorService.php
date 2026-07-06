@@ -30,17 +30,17 @@ final class VendorService
     public function createVendor(CreateVendorInputDto $dto, User $adminUser): VendorCreatedResponseDto
     {
         if ($this->userRepository->findOneBy(['email' => $dto->email]) !== null) {
-            throw new \DomainException('Email already registered.', 409);
+            throw new \DomainException('Cet email est déjà utilisé.', 409);
         }
 
         $service = $this->em->find(Service::class, $dto->service_id);
         if ($service === null) {
-            throw new \DomainException('Service not found.', 404);
+            throw new \DomainException('Service introuvable.', 404);
         }
 
         $regions = $this->em->getRepository(Region::class)->findBy(['id' => $dto->regions]);
         if (count($regions) !== count($dto->regions)) {
-            throw new \DomainException('One or more regions not found.', 422);
+            throw new \DomainException('Une ou plusieurs régions sont introuvables.', 422);
         }
 
         $this->em->beginTransaction();

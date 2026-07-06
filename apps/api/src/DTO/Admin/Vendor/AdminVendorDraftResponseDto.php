@@ -10,6 +10,7 @@ use App\Entity\Region\Region;
 use App\Entity\User\InviteToken;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
+use App\Service\Vendor\AdminVendorDraftService;
 
 final readonly class AdminVendorDraftResponseDto
 {
@@ -41,7 +42,7 @@ final readonly class AdminVendorDraftResponseDto
         $this->identity = [
             'firstname' => $vendor->getUser()->getFirstName(),
             'lastName'  => $vendor->getUser()->getLastName(),
-            'email'     => $vendor->getUser()->getEmail(),
+            'email'     => $this->isDraftEmail($vendor->getUser()->getEmail()) ? '' : $vendor->getUser()->getEmail(),
             'brandName' => $vendor->getBrandName(),
         ];
         $this->profession = [
@@ -59,8 +60,8 @@ final readonly class AdminVendorDraftResponseDto
             'regions' => $vendor->getRegions()
                 ->map(fn(Region $region) => $region->getId()->toRfc4122())
                 ->toArray(),
-            'priceMin'  => $vendor->getPriceMinCents(),
-            'priceMax'  => $vendor->getPriceMaxCents(),
+            'priceMin'  => $vendor->getPriceMinCents() < 0 ? null : $vendor->getPriceMinCents(),
+            'priceMax'  => $vendor->getPriceMaxCents() < 0 ? null : $vendor->getPriceMaxCents(),
             'priceType' => $vendor->getPriceType()->value,
             'city'      => $vendor->getCity(),
         ];
@@ -97,5 +98,10 @@ final readonly class AdminVendorDraftResponseDto
             'providesTableware'       => $cateringDetails->isProvidesTableware(),
             'providesFurniture'       => $cateringDetails->isProvidesFurniture(),
         ];
+    }
+
+    private function isDraftEmail(string $email): bool
+    {
+        return str_ends_with($email, '@' . AdminVendorDraftService::DRAFT_EMAIL_DOMAIN);
     }
 }

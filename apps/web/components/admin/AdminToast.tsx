@@ -6,6 +6,7 @@ import { CheckCircle2 } from 'lucide-react'
 const TOAST_MESSAGES: Record<string, string> = {
   validated: 'Profil validé',
   rejected: 'Profil refusé',
+  'draft-deleted': 'Brouillon supprimé',
 }
 
 export function AdminToast({ toast }: { toast?: string }) {

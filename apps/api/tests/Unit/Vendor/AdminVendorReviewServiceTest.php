@@ -124,7 +124,7 @@ final class AdminVendorReviewServiceTest extends TestCase
     public function test_reject_requires_at_least_one_reason(): void
     {
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('At least one rejection reason is required.');
+        $this->expectExceptionMessage('Au moins une raison de refus est requise.');
         $this->expectExceptionCode(422);
 
         $this->makeService($this->createStub(EventDispatcherInterface::class), 0)
@@ -134,7 +134,7 @@ final class AdminVendorReviewServiceTest extends TestCase
     public function test_reject_rejects_unknown_reason(): void
     {
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Unknown rejection reason: unsupported.');
+        $this->expectExceptionMessage('Raison de refus inconnue : unsupported.');
         $this->expectExceptionCode(422);
 
         $this->makeService($this->createStub(EventDispatcherInterface::class), 0)
@@ -144,7 +144,7 @@ final class AdminVendorReviewServiceTest extends TestCase
     public function test_reject_allows_note_only_with_other_reason(): void
     {
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('A note can only be provided with the "other" reason.');
+        $this->expectExceptionMessage('Une note ne peut être fournie qu’avec la raison "Autre".');
         $this->expectExceptionCode(422);
 
         $this->makeService($this->createStub(EventDispatcherInterface::class), 0)

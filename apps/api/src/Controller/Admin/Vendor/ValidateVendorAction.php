@@ -24,11 +24,11 @@ final readonly class ValidateVendorAction
         $vendor = $this->vendorRepository->find($id);
 
         if (null === $vendor) {
-            return new JsonResponse(['error' => 'Vendor not found.'], 404);
+            return new JsonResponse(['error' => 'Prestataire introuvable.'], 404);
         }
 
         $this->reviewService->validate($vendor);
 
-        return new JsonResponse(['message' => 'Vendor validated.', 'status' => 'active'], 200);
+        return new JsonResponse(['message' => 'Prestataire validé.', 'status' => 'active'], 200);
     }
 }

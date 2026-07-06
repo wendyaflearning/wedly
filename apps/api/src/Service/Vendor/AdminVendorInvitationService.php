@@ -10,6 +10,7 @@ use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
 use App\Enum\User\InviteTokenPersona;
 use App\Enum\User\InviteTokenStatus;
+use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\InviteTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -31,7 +32,7 @@ final readonly class AdminVendorInvitationService
     public function list(string $scope, ?\DateTimeImmutable $now = null): array
     {
         if (!in_array($scope, ['active', 'expired'], true)) {
-            throw new \DomainException('Invalid invitation scope.', 422);
+            throw new \DomainException('Filtre d’invitation invalide.', 422);
         }
 
         $now ??= new \DateTimeImmutable();
@@ -70,21 +71,35 @@ final readonly class AdminVendorInvitationService
     private function assertEditable(Vendor $vendor): void
     {
         if ($this->inviteTokenRepository->hasUsedVendorInvitation($vendor)) {
-            throw new \DomainException('Invitation already used; vendor draft can no longer be edited.', 409);
+            throw new \DomainException('Invitation déjà utilisée ; le brouillon ne peut plus être modifié.', 409);
         }
     }
 
     private function assertVendorReadyForInvitation(Vendor $vendor): void
     {
-        if ($vendor->getUser()->getFirstName() === '' || $vendor->getUser()->getEmail() === '' || $vendor->getBrandName() === '') {
-            throw new \DomainException('Missing required identity fields.', 422);
+        $email = $vendor->getUser()->getEmail();
+        if ($vendor->getStatus() !== VendorStatus::Pending) {
+            throw new \DomainException('Seul un brouillon en attente peut recevoir une invitation.', 422);
+        }
+        if (
+            trim($vendor->getUser()->getFirstName()) === ''
+            || trim($vendor->getBrandName()) === ''
+            || $this->isDraftEmail($email)
+            || !filter_var($email, FILTER_VALIDATE_EMAIL)
+        ) {
+            throw new \DomainException('Les informations d’identité requises sont incomplètes.', 422);
         }
         if ($vendor->getServices()->isEmpty() || $vendor->getRegions()->isEmpty()) {
-            throw new \DomainException('Missing required profession or region fields.', 422);
+            throw new \DomainException('Le service et au moins une région sont requis avant l’envoi.', 422);
         }
         if ($vendor->getPriceMinCents() < 0 || $vendor->getPriceMaxCents() < 0 || $vendor->getPriceMinCents() > $vendor->getPriceMaxCents()) {
-            throw new \DomainException('Invalid price range.', 422);
+            throw new \DomainException('La fourchette de prix est invalide.', 422);
         }
+    }
+
+    private function isDraftEmail(string $email): bool
+    {
+        return str_ends_with($email, '@' . AdminVendorDraftService::DRAFT_EMAIL_DOMAIN);
     }
 
     private function sendInvitationEmail(Vendor $vendor, InviteToken $inviteToken): bool

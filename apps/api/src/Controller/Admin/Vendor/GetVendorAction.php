@@ -21,7 +21,7 @@ final readonly class GetVendorAction
         $vendor = $this->vendorRepository->findAdminProfile($id);
 
         if ($vendor === null) {
-            return new JsonResponse(['error' => 'Vendor not found.'], 404);
+            return new JsonResponse(['error' => 'Prestataire introuvable.'], 404);
         }
 
         return new JsonResponse(new AdminVendorProfileResponseDto($vendor));
