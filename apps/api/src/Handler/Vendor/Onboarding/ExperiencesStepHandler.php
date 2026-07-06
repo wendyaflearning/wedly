@@ -8,10 +8,9 @@ use App\DTO\Vendor\Step\ExperiencesRequestDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Vendor;
-use App\Entity\Vendor\VendorConsent;
-use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
+use App\Repository\Vendor\VendorRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -19,6 +18,7 @@ readonly class ExperiencesStepHandler extends AbstractOnboardingStepHandler
 {
     public function __construct(
         private EntityManagerInterface $em,
+        private VendorRepository $vendorRepository,
         ValidatorInterface $validator,
     ) {
         parent::__construct($validator);
@@ -77,13 +77,8 @@ readonly class ExperiencesStepHandler extends AbstractOnboardingStepHandler
 
     public function isFilled(Vendor $vendor): bool
     {
-        $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
-            ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-            ['createdAt' => 'DESC'],
-        );
-
         // Consent refusé → étape auto-satisfaite pour ne pas bloquer assertAllStepsFilled()
-        if ($consent !== null && !$consent->isGranted()) {
+        if ($this->vendorRepository->findLatestMatchingConsent($vendor) === false) {
             return true;
         }
 

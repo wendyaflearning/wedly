@@ -34,6 +34,7 @@ export default async function VendorLayout({ children }: { children: React.React
   const allSectionsComplete = sections.general_info
     && sections.pricing_zone
     && sections.experiences
+    && sections.matching_consent
     && sections.bio
     && sections.portfolio
     && sections.booking_blocker

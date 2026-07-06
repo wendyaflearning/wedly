@@ -13,9 +13,15 @@ function resolveVendorTypeLabel(vendorType: string): string {
   return labels[vendorType] ?? vendorType
 }
 
-export default async function ProfileHubPage() {
+export default async function ProfileHubPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>
+}) {
   const dashboard = await fetchVendorDashboard()
   if (!dashboard) redirect('/login')
+
+  const { saved } = await searchParams
 
   const s = dashboard.sections_status
 
@@ -47,12 +53,28 @@ export default async function ProfileHubPage() {
       label: 'Vos expériences de mariage',
       href: '/dashboard/profile/experiences',
       completed: s.experiences,
-      subtitle: s.experiences
-        ? 'Expériences renseignées'
-        : 'Partagez les mariages marquants de votre parcours',
-      tip: s.experiences
+      disabled: dashboard.consent_granted === false,
+      subtitle: dashboard.consent_granted === false
+        ? 'Activez le matching culturel pour configurer cette section'
+        : s.experiences
+          ? 'Expériences renseignées'
+          : 'Partagez les mariages marquants de votre parcours',
+      tip: dashboard.consent_granted === false
         ? undefined
-        : 'C\'est ce qui fait vivre le Wedmatch — sans expériences renseignées, votre profil ne peut pas matcher avec les couples qui vous correspondent.',
+        : s.experiences
+          ? undefined
+          : 'Optionnel mais recommandé — renseigner vos expériences culturelles améliore la précision du matching. Sans elles, votre profil reste visible et éligible.',
+    },
+    {
+      key: 'matching_consent',
+      label: 'Confidentialité du matching',
+      href: '/dashboard/profile/matching-consent',
+      completed: s.matching_consent,
+      subtitle: dashboard.consent_granted === true
+        ? 'Matching culturel activé'
+        : dashboard.consent_granted === false
+          ? 'Matching culturel désactivé'
+          : 'À compléter',
     },
   ]
 
@@ -173,7 +195,7 @@ export default async function ProfileHubPage() {
         </p>
       </div>
 
-      <ProfileHubClient groups={groups} sidebar={<ProfileSidebar />} />
+      <ProfileHubClient groups={groups} sidebar={<ProfileSidebar />} savedKey={saved} />
     </div>
   )
 }

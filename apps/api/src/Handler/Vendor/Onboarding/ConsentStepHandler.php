@@ -43,9 +43,11 @@ readonly class ConsentStepHandler extends AbstractOnboardingStepHandler
         /** @var ConsentStepRequestDto $dto */
         $dto = $this->validate(ConsentStepRequestDto::fromArray($data));
 
+        // id (UuidV7) sert de tie-break déterministe si deux lignes partagent le même created_at à la seconde.
+        // TECH_DEBT: collision infra-seconde = risque accepté, pas de lock.
         $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
             ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-            ['createdAt' => 'DESC'],
+            ['createdAt' => 'DESC', 'id' => 'DESC'],
         );
 
         if ($consent !== null) {
@@ -60,7 +62,7 @@ readonly class ConsentStepHandler extends AbstractOnboardingStepHandler
     {
         return null !== $this->em->getRepository(VendorConsent::class)->findOneBy(
             ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-            ['createdAt' => 'DESC'],
+            ['createdAt' => 'DESC', 'id' => 'DESC'],
         );
     }
 
@@ -68,7 +70,7 @@ readonly class ConsentStepHandler extends AbstractOnboardingStepHandler
     {
         $consent = $this->em->getRepository(VendorConsent::class)->findOneBy(
             ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-            ['createdAt' => 'DESC'],
+            ['createdAt' => 'DESC', 'id' => 'DESC'],
         );
 
         if ($consent === null) {

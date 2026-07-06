@@ -20,14 +20,19 @@ final readonly class VendorDashboardResponseDtoAssembler
         $portfolioCount      = $this->vendorRepository->countPortfolioImagesByVendor($vendor);
         $bookingBlockerCount = $this->vendorRepository->countBookingBlockersByVendor($vendor);
 
+        $consentGranted = $this->vendorRepository->findLatestMatchingConsent($vendor);
+
         $sectionsStatus = [
-            'general_info'    => $vendor->getSiret() !== null,
-            'pricing_zone'    => !$vendor->getRegions()->isEmpty(),
-            'experiences'     => $vendor->resolveVendorType() === VendorType::Lieu
+            'general_info'      => $vendor->getSiret() !== null,
+            'pricing_zone'      => !$vendor->getRegions()->isEmpty(),
+            'experiences'       => $vendor->resolveVendorType() === VendorType::Lieu
+                || $consentGranted === false
                 || (!$vendor->getConfessions()->isEmpty() && !$vendor->getCultures()->isEmpty()),
-            'bio'             => $vendor->getBio() !== null && trim($vendor->getBio()) !== '',
-            'portfolio'       => $portfolioCount > 0,
-            'booking_blocker' => $bookingBlockerCount > 0,
+            'matching_consent'  => $consentGranted !== null
+                && ($consentGranted === false || !$vendor->getCultures()->isEmpty() || !$vendor->getConfessions()->isEmpty()),
+            'bio'               => $vendor->getBio() !== null && trim($vendor->getBio()) !== '',
+            'portfolio'         => $portfolioCount > 0,
+            'booking_blocker'   => $bookingBlockerCount > 0,
         ];
 
         return new VendorDashboardResponseDto(
@@ -39,6 +44,7 @@ final readonly class VendorDashboardResponseDtoAssembler
             createdAt:               $vendor->getCreatedAt(),
             vendorType:              $vendor->resolveVendorType()->value,
             sectionsStatus:          $sectionsStatus,
+            consentGranted:          $consentGranted,
             portfolioPhotosCount:    $portfolioCount,
             portfolioHasCover:       $this->vendorRepository->hasPortfolioCoverByVendor($vendor),
             bookingBlockersCount:    $bookingBlockerCount,

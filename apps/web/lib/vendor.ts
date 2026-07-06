@@ -12,10 +12,12 @@ export type VendorDashboard = {
   vendorType: string
   bio?: string | null
   vendorServices?: string[]
+  consent_granted: boolean | null
   sections_status: {
     general_info: boolean
     pricing_zone: boolean
     experiences: boolean
+    matching_consent: boolean
     bio: boolean
     portfolio: boolean
     booking_blocker: boolean
