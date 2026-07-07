@@ -28,7 +28,6 @@ final readonly class AdminVendorReviewService
         $alreadyActive = $vendor->getStatus() === VendorStatus::Active;
 
         $vendor->setStatus(VendorStatus::Active);
-        $vendor->setIsPublished(true);
         $vendor->setReviewedAt(new \DateTimeImmutable());
         $vendor->setRejectionReasons(null);
         $vendor->setRejectionNote(null);
