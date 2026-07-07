@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { VendorNav } from '@/components/vendor/VendorNav'
+import { VendorFeedbackWidget } from '@/components/vendor/VendorFeedbackWidget'
 import { fetchVendorDashboard } from '@/lib/vendor'
 
 function VendorAccessBlockedScreen({ status }: { status: 'pending' | 'under_review' | 'active' | 'rejected' }) {
@@ -55,6 +56,7 @@ export default async function VendorLayout({ children }: { children: React.React
         vendorStatus={vendorStatus}
       />
       {isActive ? <main className="pb-20 md:pb-0">{children}</main> : <VendorAccessBlockedScreen status={dashboard.status} />}
+      <VendorFeedbackWidget vendorId={dashboard.id} />
     </div>
   )
 }
