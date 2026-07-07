@@ -16,6 +16,7 @@ export function VendorFeedbackWidget({ vendorId }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const { toast, showToast } = useToast()
+  const textareaId = 'vendor-feedback-message'
 
   async function handleSubmit() {
     const nextError = validateVendorFeedbackMessage(message)
@@ -57,7 +58,7 @@ export function VendorFeedbackWidget({ vendorId }: Props) {
       <Toast toast={toast} />
 
       {isOpen ? (
-        <section className="fixed inset-x-4 bottom-24 z-50 rounded-[28px] border border-bordeaux/15 bg-creme p-5 shadow-[0_18px_60px_rgba(78,26,50,0.18)] md:inset-x-auto md:right-8 md:bottom-8 md:w-[420px]">
+        <section className="fixed inset-x-4 bottom-28 z-50 rounded-[28px] border border-bordeaux/15 bg-creme p-5 shadow-[0_18px_60px_rgba(78,26,50,0.18)] md:inset-x-auto md:right-8 md:bottom-8 md:w-[420px]">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-manrope text-[11px] font-semibold uppercase tracking-[0.18em] text-highlight">
@@ -81,11 +82,12 @@ export function VendorFeedbackWidget({ vendorId }: Props) {
             Envoyez votre retour directement à l’équipe Wedly depuis votre espace prestataire.
           </p>
 
-          <label className="mt-5 block">
+          <label htmlFor={textareaId} className="mt-5 block">
             <span className="mb-2 block font-manrope text-[12px] font-semibold uppercase tracking-[0.12em] text-bordeaux/70">
               Votre message
             </span>
             <textarea
+              id={textareaId}
               value={message}
               onChange={event => {
                 setMessage(event.target.value)
