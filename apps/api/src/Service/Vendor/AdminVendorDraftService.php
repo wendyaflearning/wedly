@@ -16,6 +16,7 @@ use App\Entity\Vendor\VendorCateringDetails;
 use App\Entity\Vendor\VendorVenueDetails;
 use App\Enum\User\Role;
 use App\Enum\Vendor\PriceType;
+use App\Enum\Vendor\VendorType;
 use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VenueType;
 use App\Repository\User\InviteTokenRepository;
@@ -150,6 +151,8 @@ final readonly class AdminVendorDraftService
         $this->applyLegalInfo($vendor, $dto->legalInfo);
         $this->applyVenueCharacteristics($vendor, $dto->venueCharacteristics);
         $this->applyCateringCharacteristics($vendor, $dto->cateringCharacteristics);
+
+        $this->assertCreatorSingleZone($vendor);
     }
 
     private function applyExperiences(Vendor $vendor, ?array $experiences): void
@@ -287,6 +290,16 @@ final readonly class AdminVendorDraftService
             if (array_key_exists($field, $data)) {
                 $details->{$setter}((bool) $data[$field]);
             }
+        }
+    }
+
+    private function assertCreatorSingleZone(Vendor $vendor): void
+    {
+        if ($vendor->resolveVendorType() === VendorType::Createurs && $vendor->getRegions()->count() > 1) {
+            throw new \DomainException(
+                'Un créateur possède un seul atelier et ne peut donc être rattaché qu\'à une seule localisation.',
+                422
+            );
         }
     }
 

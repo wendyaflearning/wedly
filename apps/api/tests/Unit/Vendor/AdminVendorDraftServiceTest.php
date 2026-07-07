@@ -113,6 +113,33 @@ final class AdminVendorDraftServiceTest extends TestCase
         self::assertSame(-1, $vendor->getPriceMaxCents());
     }
 
+    public function test_update_rejects_partial_patch_turning_multi_zone_vendor_into_creator(): void
+    {
+        $vendor = $this->makeReadyVendor();
+        $vendor->addRegion($this->makeRegion('Normandie', 'normandie'));
+
+        $creatorService = $this->makeServiceEntity(VendorType::Createurs, 'createurs', 'Créateurs');
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->once())
+            ->method('find')
+            ->with(Service::class, 'creator-service-id')
+            ->willReturn($creatorService);
+        $entityManager->expects($this->never())->method('flush');
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasUsedVendorInvitation')->willReturn(false);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Un créateur possède un seul atelier');
+
+        $this->makeDraftService($entityManager, $inviteTokenRepository)
+            ->update($vendor, AdminVendorDraftRequestDto::fromArray([
+                'service_id' => 'creator-service-id',
+            ]));
+    }
+
     public function test_update_rejects_vendor_with_used_invitation(): void
     {
         $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
@@ -229,21 +256,24 @@ final class AdminVendorDraftServiceTest extends TestCase
         return $vendor;
     }
 
-    private function makeServiceEntity(): Service
-    {
+    private function makeServiceEntity(
+        VendorType $category = VendorType::Freelance,
+        string $slug = 'photographe',
+        string $name = 'Photographe',
+    ): Service {
         $service = (new Service())
-            ->setName('Photographe')
-            ->setSlug('photographe')
+            ->setName($name)
+            ->setSlug($slug)
             ->setSortOrder(1)
-            ->setCategory(VendorType::Freelance);
+            ->setCategory($category);
         $this->setPrivateProperty($service, 'id', new UuidV7());
 
         return $service;
     }
 
-    private function makeRegion(): Region
+    private function makeRegion(string $name = 'Île-de-France', string $slug = 'ile-de-france'): Region
     {
-        $region = (new Region())->setName('Île-de-France')->setSlug('ile-de-france');
+        $region = (new Region())->setName($name)->setSlug($slug);
         $this->setPrivateProperty($region, 'id', new UuidV7());
 
         return $region;
