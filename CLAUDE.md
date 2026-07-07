@@ -120,3 +120,24 @@ Generate realistic French wedding data for fixtures. Examples:
 - Ne jamais cat un fichier entier sauf si explicitement demandé
 - Préférer grep pour localiser, puis lire uniquement la section pertinente
 - Pour les fichiers > 100 lignes, lire uniquement les méthodes/blocs concernés
+
+---
+
+## Memory vault — règles métier
+
+Après chaque implémentation de feature ou de fix, identifier les règles métier impliquées
+et les sauvegarder dans le memory vault (`~/.claude/projects/.../memory/`).
+
+**Ce qui doit être capturé :**
+- Toute contrainte métier non évidente (ex. : une zone unique par créateur, tarification
+  par zone, limite de catégories selon le plan)
+- Toute décision de modélisation dictée par le produit plutôt que par la technique
+- Toute règle de validation qui protège une invariant métier
+
+**Ce qui ne doit PAS être capturé :**
+- Les conventions techniques déjà dans ce fichier (DB conventions, stack, etc.)
+- Les détails d'implémentation (noms de classes, chemins de fichiers)
+- L'état en cours de tâche (utiliser les tasks pour ça)
+
+**Format attendu** : type `project`, avec une ligne **Why:** (la règle produit à l'origine)
+et une ligne **How to apply:** (comment en tenir compte dans les prochains changements).
