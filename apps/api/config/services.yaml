@@ -31,3 +31,8 @@ services:
         arguments:
             $client: '@pappers.client'
             $apiToken: '%env(PAPPERS_API_TOKEN)%'
+
+    App\Service\Vendor\VendorFeedbackService:
+        arguments:
+            $frontendUrl: '%env(FRONTEND_URL)%'
+            $slackWebhookUrl: '%env(SLACK_WEBHOOK)%'
