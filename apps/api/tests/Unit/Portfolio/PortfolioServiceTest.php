@@ -53,6 +53,31 @@ final class PortfolioServiceTest extends TestCase
 
     // --- uploadPhoto() ---
 
+    public function test_uploadPhoto_passes_optimization_options_to_cloudinary(): void
+    {
+        $vendor    = $this->createStub(Vendor::class);
+        $vendor->method('getId')->willReturn(\Symfony\Component\Uid\Uuid::fromString('01930000-0000-7000-8000-000000000001'));
+        $em        = $this->createStub(EntityManagerInterface::class);
+        $uploadApi = $this->createMock(UploadApi::class);
+        $uploadApi->expects($this->once())
+            ->method('upload')
+            ->with(
+                '/tmp/photo.jpg',
+                $this->callback(function (array $options): bool {
+                    return isset($options['folder'], $options['quality'], $options['fetch_format'], $options['width'], $options['crop'])
+                        && str_starts_with($options['folder'], 'wedly/vendors/')
+                        && $options['quality'] === 'auto:good'
+                        && $options['fetch_format'] === 'auto'
+                        && $options['width'] === 2500
+                        && $options['crop'] === 'limit';
+                }),
+            )
+            ->willReturn($this->makeCloudinaryResponse());
+
+        $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)
+            ->uploadPhoto($vendor, $this->makeFile(), 0);
+    }
+
     public function test_uploadPhoto_uses_provided_sort_order(): void
     {
         $vendor    = $this->createStub(Vendor::class);
