@@ -104,10 +104,31 @@ final readonly class AdminNotificationService
             'id' => $notification->getId()->toRfc4122(),
             'type' => $notification->getType()->value,
             'type_label' => $notification->getType()->label(),
-            'payload' => $notification->getPayload(),
+            'payload' => $this->normalizePayload($notification),
             'is_read' => $notification->isRead(),
             'read_at' => $notification->getReadAt()?->format(\DateTimeInterface::ATOM),
             'created_at' => $notification->getCreatedAt()->format(\DateTimeInterface::ATOM),
+        ];
+    }
+
+    private function normalizePayload(AdminNotification $notification): array
+    {
+        return match ($notification->getType()) {
+            AdminNotificationType::ProviderPendingReview => $this->normalizeProviderPendingReviewPayload($notification),
+        };
+    }
+
+    private function normalizeProviderPendingReviewPayload(AdminNotification $notification): array
+    {
+        $payload = $notification->getPayload();
+        $provider = $notification->getProvider();
+        $submittedAt = $provider->getSubmittedForReviewAt() ?? $notification->getCreatedAt();
+
+        return [
+            'provider_id' => $payload['provider_id'] ?? $provider->getId()->toRfc4122(),
+            'provider_name' => $payload['provider_name'] ?? $provider->getBrandName(),
+            'provider_category' => $payload['provider_category'] ?? AdminVendorListItemResponseDto::vendorTypeLabel($provider->resolveVendorType()),
+            'submitted_at' => $payload['submitted_at'] ?? $submittedAt->format(\DateTimeInterface::ATOM),
         ];
     }
 }

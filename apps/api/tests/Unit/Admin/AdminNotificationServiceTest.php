@@ -104,6 +104,84 @@ final class AdminNotificationServiceTest extends TestCase
         $service->markAsRead($notification, $reader);
     }
 
+    public function test_list_for_admin_normalizes_legacy_provider_pending_review_payload(): void
+    {
+        $admin = $this->makeAdmin('admin@example.fr');
+        $provider = $this->makeVendor();
+        $notification = (new AdminNotification())
+            ->setRecipient($admin)
+            ->setProvider($provider)
+            ->setType(AdminNotificationType::ProviderPendingReview)
+            ->setPayload([
+                'provider_id' => $provider->getId()->toRfc4122(),
+                'provider_name' => 'Luluriste',
+                'service_names' => ['Fleuriste'],
+            ]);
+
+        $this->setPrivateProperty($notification, 'id', new UuidV7());
+        $this->setPrivateProperty($notification, 'createdAt', new \DateTimeImmutable('2026-07-08T15:15:11+00:00'));
+        $this->setPrivateProperty($notification, 'updatedAt', new \DateTimeImmutable('2026-07-08T15:15:11+00:00'));
+
+        $repository = $this->createStub(AdminNotificationRepository::class);
+        $repository->method('findLatestForRecipient')->willReturn([$notification]);
+        $repository->method('countForRecipient')->willReturn(1);
+        $repository->method('countUnreadForRecipient')->willReturn(1);
+
+        $service = new AdminNotificationService(
+            $this->createStub(EntityManagerInterface::class),
+            $repository,
+            $this->createStub(UserRepository::class),
+        );
+
+        $response = $service->listForAdmin($admin, 1, 8);
+
+        self::assertSame('Luluriste', $response['items'][0]['payload']['provider_name']);
+        self::assertSame('Traiteur', $response['items'][0]['payload']['provider_category']);
+        self::assertSame('2026-07-08T10:00:00+00:00', $response['items'][0]['payload']['submitted_at']);
+        self::assertArrayNotHasKey('service_names', $response['items'][0]['payload']);
+    }
+
+    public function test_list_for_admin_preserves_complete_provider_pending_review_payload(): void
+    {
+        $admin = $this->makeAdmin('admin@example.fr');
+        $provider = $this->makeVendor();
+        $notification = (new AdminNotification())
+            ->setRecipient($admin)
+            ->setProvider($provider)
+            ->setType(AdminNotificationType::ProviderPendingReview)
+            ->setPayload([
+                'provider_id' => $provider->getId()->toRfc4122(),
+                'provider_name' => 'Studio Camille',
+                'provider_category' => 'Photographe',
+                'submitted_at' => '2026-07-08T09:00:00+00:00',
+                'recipient_role' => Role::Admin->value,
+            ]);
+
+        $this->setPrivateProperty($notification, 'id', new UuidV7());
+        $this->setPrivateProperty($notification, 'createdAt', new \DateTimeImmutable('2026-07-08T15:15:11+00:00'));
+        $this->setPrivateProperty($notification, 'updatedAt', new \DateTimeImmutable('2026-07-08T15:15:11+00:00'));
+
+        $repository = $this->createStub(AdminNotificationRepository::class);
+        $repository->method('findLatestForRecipient')->willReturn([$notification]);
+        $repository->method('countForRecipient')->willReturn(1);
+        $repository->method('countUnreadForRecipient')->willReturn(1);
+
+        $service = new AdminNotificationService(
+            $this->createStub(EntityManagerInterface::class),
+            $repository,
+            $this->createStub(UserRepository::class),
+        );
+
+        $response = $service->listForAdmin($admin, 1, 8);
+
+        self::assertSame([
+            'provider_id' => $provider->getId()->toRfc4122(),
+            'provider_name' => 'Studio Camille',
+            'provider_category' => 'Photographe',
+            'submitted_at' => '2026-07-08T09:00:00+00:00',
+        ], $response['items'][0]['payload']);
+    }
+
     private function makeAdmin(string $email): User
     {
         $user = (new User())
