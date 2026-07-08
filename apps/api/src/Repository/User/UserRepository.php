@@ -6,6 +6,7 @@ namespace App\Repository\User;
 
 use App\Entity\User\User;
 use App\Enum\User\Role;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -22,11 +23,15 @@ class UserRepository extends ServiceEntityRepository
     /** @return User[] */
     public function findAdmins(): array
     {
-        return $this->createQueryBuilder('user')
-            ->andWhere('user.roles LIKE :role')
-            ->setParameter('role', '%' . Role::Admin->value . '%')
-            ->orderBy('user.createdAt', 'ASC')
-            ->getQuery()
+        $entityManager = $this->getEntityManager();
+        $resultSetMapping = new ResultSetMappingBuilder($entityManager);
+        $resultSetMapping->addRootEntityFromClassMetadata(User::class, 'user');
+
+        return $entityManager->createNativeQuery(
+            'SELECT * FROM app_user WHERE CAST(roles AS TEXT) LIKE :role ORDER BY created_at ASC',
+            $resultSetMapping
+        )
+            ->setParameter('role', '%"' . Role::Admin->value . '"%')
             ->getResult();
     }
 }

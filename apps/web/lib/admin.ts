@@ -15,6 +15,12 @@ import type {
   RegionOption,
   ServiceOptionNode,
 } from '@/lib/admin-types'
+import {
+  type AdminNotificationApiListResponse,
+  type AdminNotificationUnreadCountApiResponse,
+  mapAdminNotificationListResponse,
+  mapAdminNotificationUnreadCountResponse,
+} from '@/lib/admin-notifications'
 
 type AdminFetchResult<T> =
   | { ok: true; data: T }
@@ -32,33 +38,6 @@ type AdminVendorFormOptions = {
   regions: RegionOption[]
   cultures: CultureOption[]
   confessions: ConfessionOption[]
-}
-
-type AdminNotificationApiItem = {
-  id: string
-  type: 'provider_pending_review'
-  type_label: string
-  is_read: boolean
-  read_at: string | null
-  created_at: string
-  payload: {
-    provider_id: string
-    provider_name: string
-    provider_category: string
-    submitted_at: string
-  }
-}
-
-type AdminNotificationApiListResponse = {
-  items: AdminNotificationApiItem[]
-  page: number
-  limit: number
-  total: number
-  unread_count: number
-}
-
-type AdminNotificationUnreadCountApiResponse = {
-  unread_count: number
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -157,26 +136,7 @@ export async function fetchAdminNotifications(limit = 8): Promise<AdminFetchResu
 
   return {
     ok: true,
-    data: {
-      items: result.data.items.map((item) => ({
-        id: item.id,
-        type: item.type,
-        typeLabel: item.type_label,
-        isRead: item.is_read,
-        readAt: item.read_at,
-        createdAt: item.created_at,
-        payload: {
-          providerId: item.payload.provider_id,
-          providerName: item.payload.provider_name,
-          providerCategory: item.payload.provider_category,
-          submittedAt: item.payload.submitted_at,
-        },
-      })),
-      page: result.data.page,
-      limit: result.data.limit,
-      total: result.data.total,
-      unreadCount: result.data.unread_count,
-    },
+    data: mapAdminNotificationListResponse(result.data),
   }
 }
 
@@ -191,9 +151,7 @@ export async function fetchAdminNotificationsUnreadCount(): Promise<AdminFetchRe
 
   return {
     ok: true,
-    data: {
-      unreadCount: result.data.unread_count,
-    },
+    data: mapAdminNotificationUnreadCountResponse(result.data),
   }
 }
 

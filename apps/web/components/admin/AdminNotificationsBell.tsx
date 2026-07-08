@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, Loader2 } from 'lucide-react'
+import { mapAdminNotificationListResponse, type AdminNotificationApiListResponse, type AdminNotificationUnreadCountApiResponse } from '@/lib/admin-notifications'
 import type { AdminNotificationItem } from '@/lib/admin-types'
 
 const POLL_INTERVAL_MS = 30_000
@@ -43,9 +44,11 @@ export function AdminNotificationsBell({
       return
     }
 
-    const data = (await response.json()) as { items: AdminNotificationItem[]; unread_count: number }
+    const data = mapAdminNotificationListResponse(
+      (await response.json()) as AdminNotificationApiListResponse
+    )
     setNotifications(data.items)
-    setUnreadCount(data.unread_count)
+    setUnreadCount(data.unreadCount)
     setLoading(false)
   }
 
@@ -55,7 +58,7 @@ export function AdminNotificationsBell({
       return
     }
 
-    const data = (await response.json()) as { unread_count: number }
+    const data = (await response.json()) as AdminNotificationUnreadCountApiResponse
     setUnreadCount(data.unread_count)
   }
 
