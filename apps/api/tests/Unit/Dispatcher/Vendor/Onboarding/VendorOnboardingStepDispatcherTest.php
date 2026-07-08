@@ -11,7 +11,9 @@ use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Event\StepperSubmittedEvent;
+use App\Event\VendorSubmittedForReviewEvent;
 use App\Handler\Vendor\Onboarding\StepHandlerInterface;
+use App\Repository\Vendor\VendorRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -41,9 +43,11 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             filled: true,
             stepData: ['siret' => '12345678901234']
         );
+        $vendorRepository = $this->createStub(VendorRepository::class);
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $vendorRepository,
             new OnboardingStepResolver(),
             $eventDispatcher,
             [
@@ -89,6 +93,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
     {
         $dispatcher = new VendorOnboardingStepDispatcher(
             $this->createStub(EntityManagerInterface::class),
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $this->createStub(EventDispatcherInterface::class),
             []
@@ -110,6 +115,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $this->createStub(EventDispatcherInterface::class),
             [
@@ -142,6 +148,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $eventDispatcher,
             [
@@ -180,17 +187,34 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->once())->method('flush');
 
+        $submittedEventSeen = false;
+        $reviewEventSeen = false;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects($this->once())
+        $eventDispatcher->expects($this->exactly(2))
             ->method('dispatch')
-            ->with($this->callback(function (StepperSubmittedEvent $event): bool {
-                return $event->firstName === 'Denis' && $event->email === 'denis@example.com';
-            }));
+            ->with($this->callback(function (object $event) use (&$submittedEventSeen, &$reviewEventSeen): bool {
+                if ($event instanceof VendorSubmittedForReviewEvent) {
+                    $reviewEventSeen = true;
+
+                    return true;
+                }
+
+                if ($event instanceof StepperSubmittedEvent) {
+                    $submittedEventSeen = true;
+
+                    return $event->firstName === 'Denis' && $event->email === 'denis@example.com';
+                }
+
+                return false;
+            }))
+            ->willReturnArgument(0);
 
         $credentialsHandler = new TestStepHandler(OnboardingStep::Credentials, filled: true);
+        $vendorRepository = $this->createStub(VendorRepository::class);
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $vendorRepository,
             new OnboardingStepResolver(),
             $eventDispatcher,
             [
@@ -224,6 +248,8 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $this->assertNull($response);
         $this->assertSame([['email' => 'denis@example.com']], $credentialsHandler->handledPayloads);
+        $this->assertTrue($submittedEventSeen);
+        $this->assertTrue($reviewEventSeen);
     }
 }
 

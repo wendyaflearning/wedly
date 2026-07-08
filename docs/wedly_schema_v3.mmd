@@ -23,6 +23,8 @@ erDiagram
     VENDOR ||--o{ INVITE_TOKEN : vendor
     COUPLE ||--o{ INVITE_TOKEN : couple
     USER ||--o{ PASSWORD_RESET_TOKEN : user
+    USER ||--o{ ADMIN_NOTIFICATION : recipient
+    VENDOR ||--o{ ADMIN_NOTIFICATION : provider
     VENDOR ||--o| VENDOR_VENUE_DETAILS : vendor
     VENDOR ||--o| VENDOR_CATERING_DETAILS : vendor
     VENDOR ||--o| VENDOR_ANIMATION_DETAILS : vendor
@@ -221,6 +223,17 @@ erDiagram
         string token
         string status
         datetime_immutable expires_at
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    ADMIN_NOTIFICATION {
+        uuid id
+        uuid recipient_id
+        uuid provider_id
+        string type
+        json payload
+        datetime_immutable read_at
         datetime_immutable created_at
         datetime_immutable updated_at
     }

@@ -10,6 +10,7 @@ use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Event\StepperSubmittedEvent;
+use App\Event\VendorSubmittedForReviewEvent;
 use App\Handler\Vendor\Onboarding\StepHandlerInterface;
 use App\Repository\Vendor\VendorRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
@@ -54,6 +55,7 @@ readonly class VendorOnboardingStepDispatcher
 
         if ($step === OnboardingStep::Credentials) {
             $user = $vendor->getUser();
+            $this->eventDispatcher->dispatch(new VendorSubmittedForReviewEvent($vendor));
             $this->eventDispatcher->dispatch(
                 new StepperSubmittedEvent($user->getFirstName(), $user->getEmail())
             );

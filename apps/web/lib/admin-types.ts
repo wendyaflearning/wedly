@@ -9,6 +9,33 @@ export type AdminSession = {
   roles: string[]
 }
 
+export type AdminNotificationItem = {
+  id: string
+  type: 'provider_pending_review'
+  typeLabel: string
+  isRead: boolean
+  readAt: string | null
+  createdAt: string
+  payload: {
+    providerId: string
+    providerName: string
+    providerCategory: string
+    submittedAt: string
+  }
+}
+
+export type AdminNotificationListResponse = {
+  items: AdminNotificationItem[]
+  page: number
+  limit: number
+  total: number
+  unreadCount: number
+}
+
+export type AdminNotificationUnreadCountResponse = {
+  unreadCount: number
+}
+
 export type RejectionReasonKey =
   | 'portfolio_quality'
   | 'legal_incomplete'

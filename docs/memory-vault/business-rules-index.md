@@ -32,6 +32,15 @@ dans les fichiers de règles.
 | `ADMIN-VENDOR-003` | Valider un prestataire active le vendor, publie son profil et active son user | `active` | `rules/admin-vendor-lifecycle.md` |
 | `ADMIN-VENDOR-004` | Rejeter un prestataire suspend son user, dépublie son profil et exige au moins une raison | `active` | `rules/admin-vendor-lifecycle.md` |
 
+## Admin notifications
+
+| ID | Règle | Statut | Fichier |
+|---|---|---|---|
+| `ADMIN-NOTIFICATION-001` | La soumission prestataire en `under_review` crée une notification in-app admin | `active` | `rules/admin-notifications.md` |
+| `ADMIN-NOTIFICATION-002` | Le doublon est bloqué tant qu'une notification admin équivalente reste non lue | `active` | `rules/admin-notifications.md` |
+| `ADMIN-NOTIFICATION-003` | Seuls les admins destinataires peuvent lire ou marquer lues leurs notifications | `active` | `rules/admin-notifications.md` |
+| `ADMIN-NOTIFICATION-004` | Le backoffice admin rafraîchit les notifications par polling | `active` | `rules/admin-notifications.md` |
+
 ## Invite tokens
 
 | ID | Règle | Statut | Fichier |
