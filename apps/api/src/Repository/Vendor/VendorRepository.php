@@ -149,6 +149,20 @@ class VendorRepository extends ServiceEntityRepository
         return $consent?->isGranted();
     }
 
+    /** @return BookingBlocker[] */
+    public function findBookingBlockersByVendor(Vendor $vendor): array
+    {
+        return $this->getEntityManager()
+            ->createQueryBuilder()
+            ->select('b')
+            ->from(BookingBlocker::class, 'b')
+            ->where('b.vendor = :vendor')
+            ->orderBy('b.startDate', 'ASC')
+            ->setParameter('vendor', $vendor)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findLatestBookingBlockerUpdatedAt(Vendor $vendor): ?\DateTimeImmutable
     {
         /** @var BookingBlocker|null $blocker */
