@@ -8,6 +8,7 @@ use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
 use App\Service\Vendor\VendorFeedbackService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -38,6 +39,7 @@ final class VendorFeedbackServiceTest extends TestCase
         $service = new VendorFeedbackService(
             $mailer,
             new MockHttpClient(),
+            $this->createStub(LoggerInterface::class),
             'https://app.wedly.test',
             '',
         );
@@ -61,6 +63,7 @@ final class VendorFeedbackServiceTest extends TestCase
         $service = new VendorFeedbackService(
             $mailer,
             $httpClient,
+            $this->createStub(LoggerInterface::class),
             'https://app.wedly.test',
             'https://hooks.slack.test/services/123',
         );
@@ -71,6 +74,44 @@ final class VendorFeedbackServiceTest extends TestCase
         self::assertSame('POST', $requests[0][0]);
         self::assertSame('https://hooks.slack.test/services/123', $requests[0][1]);
         self::assertStringContainsString('Message important', (string) ($requests[0][2]['body'] ?? ''));
+    }
+
+    public function test_it_does_not_fail_when_slack_notification_errors_after_email_send(): void
+    {
+        $vendor = $this->makeVendor();
+
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())->method('send');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('error')
+            ->with(
+                'Vendor feedback Slack notification failed.',
+                $this->callback(function (array $context): bool {
+                    self::assertSame('camille@example.fr', $context['vendor_email']);
+                    self::assertArrayHasKey('vendor_id', $context);
+                    self::assertArrayHasKey('exception', $context);
+
+                    return true;
+                })
+            );
+
+        $httpClient = new MockHttpClient([
+            new MockResponse('ko', ['http_code' => 500]),
+        ]);
+
+        $service = new VendorFeedbackService(
+            $mailer,
+            $httpClient,
+            $logger,
+            'https://app.wedly.test',
+            'https://hooks.slack.test/services/123',
+        );
+
+        $service->send($vendor, 'Message important', new \DateTimeImmutable('2026-07-07 10:30:00'));
+
+        self::assertTrue(true);
     }
 
     private function makeVendor(): Vendor

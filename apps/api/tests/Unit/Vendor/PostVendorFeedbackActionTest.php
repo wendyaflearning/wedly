@@ -11,6 +11,7 @@ use App\Entity\Vendor\Vendor;
 use App\Repository\Vendor\VendorRepository;
 use App\Service\Vendor\VendorFeedbackService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Uid\UuidV7;
@@ -98,6 +99,7 @@ final class PostVendorFeedbackActionTest extends TestCase
         return new VendorFeedbackService(
             $mailer ?? $this->createStub(MailerInterface::class),
             $this->createStub(HttpClientInterface::class),
+            $this->createStub(LoggerInterface::class),
             'https://app.wedly.test',
             '',
         );
