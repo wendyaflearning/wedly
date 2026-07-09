@@ -59,6 +59,7 @@ jobs:
           PAPPERS_API_TOKEN=${{ secrets.PAPPERS_API_TOKEN }}
           MAILER_DSN=${{ secrets.MAILER_DSN }}
           SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+          VENDOR_FEEDBACK_SLACK_WEBHOOK_URL=${{ secrets.VENDOR_FEEDBACK_SLACK_WEBHOOK_URL }}
           EOF"
 
       - name: Deploy on VPS
