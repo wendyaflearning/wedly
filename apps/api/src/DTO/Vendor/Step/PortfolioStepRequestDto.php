@@ -13,6 +13,7 @@ final readonly class PortfolioStepRequestDto implements DTOInterface
 {
     public function __construct(
         #[Assert\File(
+            maxSize: '20M',
             mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
             mimeTypesMessage: 'Seuls les formats JPG, PNG et WebP sont acceptés.',
         )]
@@ -21,6 +22,7 @@ final readonly class PortfolioStepRequestDto implements DTOInterface
         #[Assert\Count(min: 0, max: 9)]
         #[Assert\All([
             new Assert\File(
+                maxSize: '20M',
                 mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
                 mimeTypesMessage: 'Seuls les formats JPG, PNG et WebP sont acceptés.',
             ),

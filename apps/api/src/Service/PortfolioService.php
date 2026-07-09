@@ -80,7 +80,11 @@ class PortfolioService
     {
         try {
             return (array) $this->cloudinary->uploadApi()->upload($filePath, [
-                'folder' => 'wedly/vendors/' . $vendorId,
+                'folder'       => 'wedly/vendors/' . $vendorId,
+                'quality'      => 'auto:good',
+                'fetch_format' => 'auto',
+                'width'        => 2500,
+                'crop'         => 'limit',
             ]);
         } catch (\Throwable $e) {
             throw new DomainException(
