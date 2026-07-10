@@ -30,13 +30,19 @@ dans les fichiers de règles.
 | `ADMIN-VENDOR-001` | Un brouillon prestataire utilisé via invitation ne peut plus être édité | `active` | `rules/admin-vendor-lifecycle.md` |
 | `ADMIN-VENDOR-002` | Une invitation prestataire requiert les données coeur du brouillon | `active` | `rules/admin-vendor-lifecycle.md` |
 | `ADMIN-VENDOR-003` | Valider un prestataire active le vendor, publie son profil et active son user | `active` | `rules/admin-vendor-lifecycle.md` |
-| `ADMIN-VENDOR-004` | Rejeter un prestataire suspend son user, dépublie son profil et exige au moins une raison | `active` | `rules/admin-vendor-lifecycle.md` |
+| `ADMIN-VENDOR-004` | Rejeter un prestataire suspend son user, dépublie son profil et exige au moins une raison | `at-risk` | `rules/admin-vendor-lifecycle.md` |
+
+## Lifecycle references
+
+| ID | Règle | Statut | Fichier |
+|---|---|---|---|
+| `VENDOR-LIFECYCLE-REF-001` | Le cycle cible complet invitation → onboarding → validation → refus/resoumission est cartographié avec ses gaps d'implémentation | `active` | `rules/vendor-lifecycle-flow.md` |
 
 ## Invite tokens
 
 | ID | Règle | Statut | Fichier |
 |---|---|---|---|
-| `INVITE-TOKEN-001` | Seul un token `Pending` et non expiré peut être résolu | `active` | `rules/invite-tokens.md` |
+| `INVITE-TOKEN-001` | Seul un token `Pending` et non expiré peut être résolu | `at-risk` | `rules/invite-tokens.md` |
 | `INVITE-TOKEN-002` | Un token expiré est marqué `Expired` lors de sa résolution | `active` | `rules/invite-tokens.md` |
 | `INVITE-TOKEN-003` | Un token consommé passe à `Used` | `active` | `rules/invite-tokens.md` |
 
