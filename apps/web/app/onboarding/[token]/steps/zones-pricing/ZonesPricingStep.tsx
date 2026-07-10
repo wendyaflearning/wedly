@@ -34,9 +34,13 @@ export default function ZonesPricingStep({
   onNext: (nextStep: string) => void
   onNavigate: (stepKey: string) => void
 }) {
+  const isVenue   = vendorType === 'lieu'
+  const isCreator = vendorType === 'createurs'
+  const initialRegionIds = isCreator ? (initialData?.zones ?? []).slice(0, 1) : (initialData?.zones ?? [])
+  const hadCreatorRegionMismatch = isCreator && (initialData?.zones?.length ?? 0) > 1
   const [regions, setRegions]               = useState<RegionOption[]>([])
   const [regionsLoading, setRegionsLoading] = useState(true)
-  const [regionIds, setRegionIds]           = useState<string[]>(initialData?.zones ?? [])
+  const [regionIds, setRegionIds]           = useState<string[]>(initialRegionIds)
   const [priceMin, setPriceMin]             = useState<string>(initialData ? (initialData.price_min / 100).toString() : '')
   const [priceMax, setPriceMax]             = useState<string>(initialData ? (initialData.price_max / 100).toString() : '')
   const [priceType, setPriceType]           = useState<string | null>(initialData?.price_type ?? null)
@@ -50,7 +54,7 @@ export default function ZonesPricingStep({
   const [searchQuery, setSearchQuery]       = useState('')
   const dropdownRef                         = useRef<HTMLDivElement>(null)
 
-  const initRegionIds = (initialData?.zones ?? []).slice().sort().join(',')
+  const initRegionIds = initialRegionIds.slice().sort().join(',')
   const isDirty = !success && (
     [...regionIds].sort().join(',') !== initRegionIds ||
     priceMin    !== (initialData ? (initialData.price_min / 100).toString() : '') ||
@@ -69,6 +73,14 @@ export default function ZonesPricingStep({
   }, [])
 
   useEffect(() => {
+    if (!hadCreatorRegionMismatch) {
+      return
+    }
+
+    setError('Votre profil créateur contenait plusieurs régions. Wedly n’en conserve qu’une seule pour cette étape: vérifiez la région affichée puis confirmez.')
+  }, [hadCreatorRegionMismatch])
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
@@ -78,9 +90,6 @@ export default function ZonesPricingStep({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  const isVenue   = vendorType === 'lieu'
-  const isCreator = vendorType === 'createurs'
 
   const isValid =
     regionIds.length > 0 &&

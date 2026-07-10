@@ -113,31 +113,72 @@ final class AdminVendorDraftServiceTest extends TestCase
         self::assertSame(-1, $vendor->getPriceMaxCents());
     }
 
-    public function test_update_rejects_partial_patch_turning_multi_zone_vendor_into_creator(): void
+    public function test_update_keeps_only_one_region_for_creator_draft(): void
     {
-        $vendor = $this->makeReadyVendor();
-        $vendor->addRegion($this->makeRegion('Normandie', 'normandie'));
-
         $creatorService = $this->makeServiceEntity(VendorType::Createurs, 'createurs', 'Créateurs');
+        $firstRegion = $this->makeRegion('Ile-de-France');
+        $secondRegion = $this->makeRegion('Normandie');
 
-        $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->expects($this->once())
-            ->method('find')
-            ->with(Service::class, 'creator-service-id')
-            ->willReturn($creatorService);
-        $entityManager->expects($this->never())->method('flush');
+        $entityManager = $this->makeEntityManagerForMultipleRegions($creatorService, $firstRegion, $secondRegion);
+        $entityManager->expects($this->once())->method('flush');
 
-        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
-        $inviteTokenRepository->method('hasUsedVendorInvitation')->willReturn(false);
+        $vendor = $this->makeReadyVendor($creatorService, $firstRegion);
 
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionCode(422);
-        $this->expectExceptionMessage('Un créateur possède un seul atelier');
+        $response = $this->makeDraftService($entityManager)
+            ->update($vendor, new AdminVendorDraftRequestDto(
+                firstname: 'Camille',
+                lastName: 'Martin',
+                email: 'camille@example.fr',
+                brandName: 'Studio Camille',
+                serviceId: 'service-id',
+                regions: ['region-1', 'region-2'],
+                priceMin: 100000,
+                priceMax: 250000,
+                priceType: PriceType::PerService->value,
+                experiences: null,
+                legalInfo: null,
+                venueCharacteristics: null,
+                cateringCharacteristics: null,
+            ));
 
-        $this->makeDraftService($entityManager, $inviteTokenRepository)
-            ->update($vendor, AdminVendorDraftRequestDto::fromArray([
-                'service_id' => 'creator-service-id',
-            ]));
+        self::assertCount(1, $vendor->getRegions());
+        self::assertSame([$firstRegion], $vendor->getRegions()->toArray());
+        self::assertSame([$firstRegion->getId()->toRfc4122()], $response->zonesPricing['regions']);
+    }
+
+    public function test_update_clamps_existing_regions_when_switching_vendor_to_creator(): void
+    {
+        $creatorService = $this->makeServiceEntity(VendorType::Createurs, 'createurs', 'Créateurs');
+        $firstRegion = $this->makeRegion('Ile-de-France');
+        $secondRegion = $this->makeRegion('Normandie');
+
+        $entityManager = $this->makeEntityManager($creatorService, $firstRegion);
+        $entityManager->expects($this->once())->method('flush');
+
+        $vendor = $this->makeReadyVendor($this->makeServiceEntity(), $firstRegion);
+        $vendor->addRegion($secondRegion);
+
+        $response = $this->makeDraftService($entityManager)
+            ->update($vendor, new AdminVendorDraftRequestDto(
+                firstname: 'Camille',
+                lastName: 'Martin',
+                email: 'camille@example.fr',
+                brandName: 'Studio Camille',
+                serviceId: 'service-id',
+                regions: null,
+                priceMin: 100000,
+                priceMax: 250000,
+                priceType: PriceType::PerService->value,
+                experiences: null,
+                legalInfo: null,
+                venueCharacteristics: null,
+                cateringCharacteristics: null,
+                regionsProvided: false,
+            ));
+
+        self::assertCount(1, $vendor->getRegions());
+        self::assertSame([$firstRegion], $vendor->getRegions()->toArray());
+        self::assertSame([$firstRegion->getId()->toRfc4122()], $response->zonesPricing['regions']);
     }
 
     public function test_update_rejects_vendor_with_used_invitation(): void
@@ -234,7 +275,7 @@ final class AdminVendorDraftServiceTest extends TestCase
         );
     }
 
-    private function makeReadyVendor(): Vendor
+    private function makeReadyVendor(?Service $service = null, ?Region $region = null): Vendor
     {
         $user = (new User())
             ->setFirstName('Camille')
@@ -250,8 +291,8 @@ final class AdminVendorDraftServiceTest extends TestCase
             ->setPriceMinCents(100000)
             ->setPriceMaxCents(250000);
         $this->setPrivateProperty($vendor, 'id', new UuidV7());
-        $vendor->addService($this->makeServiceEntity());
-        $vendor->addRegion($this->makeRegion());
+        $vendor->addService($service ?? $this->makeServiceEntity());
+        $vendor->addRegion($region ?? $this->makeRegion());
 
         return $vendor;
     }
@@ -286,6 +327,27 @@ final class AdminVendorDraftServiceTest extends TestCase
             fn(string $className, string $id): ?object => match ($className) {
                 Service::class => $id === 'service-id' ? $service : null,
                 Region::class => $id === 'region-id' ? $region : null,
+                default => null,
+            }
+        );
+
+        return $entityManager;
+    }
+
+    private function makeEntityManagerForMultipleRegions(
+        Service $service,
+        Region $firstRegion,
+        Region $secondRegion,
+    ): EntityManagerInterface&\PHPUnit\Framework\MockObject\MockObject {
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('find')->willReturnCallback(
+            fn(string $className, string $id): ?object => match ($className) {
+                Service::class => $id === 'service-id' ? $service : null,
+                Region::class => match ($id) {
+                    'region-1' => $firstRegion,
+                    'region-2' => $secondRegion,
+                    default => null,
+                },
                 default => null,
             }
         );
