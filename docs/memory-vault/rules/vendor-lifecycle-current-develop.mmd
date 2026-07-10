@@ -1,0 +1,18 @@
+flowchart TD
+    A[Admin draft\nVendor pending\nUser pending\nAdmin view: Brouillons]
+    B[Invitation active\nInviteToken pending\nexpires_at = now + 30 days\nAdmin view: Invitations en attente]
+    C[Onboarding via invite link\nToken still pending\nResume allowed while token remains valid]
+    D[Invitation expired\nVisible in Expirees list]
+    E[Submitted for admin review\nVendor under_review\nUser under_review\nInviteToken used\nAdmin view: En attente]
+    F[Vendor validated\nVendor active\nUser active\nVendor dashboard accessible]
+    G[Vendor refused\nVendor rejected\nUser suspended\nVendor dashboard blocked]
+
+    A -->|Admin sends invitation| B
+    B -->|Vendor opens link| C
+    B -->|expires_at passed| D
+    C -->|Resume later| C
+    C -->|Credentials step completed| E
+    C -->|expires_at passed before completion| D
+    D -->|Admin sends invitation again| B
+    E -->|Admin validates| F
+    E -->|Admin rejects| G

@@ -27,57 +27,91 @@ Sources consolidées :
 - `apps/api/src/Enum/User/UserStatus.php`
 - `apps/api/src/Enum/Vendor/OnboardingStep.php`
 
-## Global flow
+## Schemas to review
 
-```mermaid
-stateDiagram-v2
-    [*] --> Draft : Admin creates vendor draft
-    Draft --> InvitationPending : Admin sends invitation\nInviteToken=pending
+Fichiers Mermaid versionnés :
 
-    InvitationPending --> InvitationExpired : 30 days elapsed\nand onboarding never started
-    InvitationExpired --> InvitationPending : Admin regenerates invitation\nnew token=pending
+- `rules/vendor-lifecycle-current-develop.mmd`
+- `rules/vendor-lifecycle-target.mmd`
 
-    InvitationPending --> OnboardingInProgress : Vendor opens onboarding\nand saves a first step
-    OnboardingInProgress --> OnboardingInProgress : Resume later via onboarding link\nwhile onboarding is incomplete
-
-    InvitationPending --> UnderReview : Vendor completes credentials step\nInviteToken=used
-    OnboardingInProgress --> UnderReview : Vendor completes credentials step\nInviteToken=used
-
-    UnderReview --> Active : Admin validates profile
-    UnderReview --> AdjustmentRequested : Admin refuses profile\ncorrections requested
-
-    AdjustmentRequested --> UnderReview : Vendor resubmits review\nPOST /api/v1/vendors/me/resubmit-review
-    Active --> [*]
-```
-
-## Refusal and resubmission zoom
+## Schema 1 — Current flow on `develop`
 
 ```mermaid
 flowchart TD
-    A[Admin refuses profile] --> B[Vendor receives adjustment email]
-    B --> C[Vendor lands on correction view only]
-    C --> D[Admin banner: Reajustement demande]
-    D --> E[Admin validate/refuse CTA hidden]
-    C --> F[Vendor edits requested sections]
-    F --> G[Vendor resubmits profile]
-    G --> H[Vendor returns to under_review]
-    H --> I[Admin banner: En reexamination]
-    I --> J[Admin validate/refuse CTA visible again]
-    I --> K[Modified sections highlighted]
+    A[Admin draft\nVendor pending\nUser pending\nAdmin view: Brouillons]
+    B[Invitation active\nInviteToken pending\nexpires_at = now + 30 days\nAdmin view: Invitations en attente]
+    C[Onboarding via invite link\nToken still pending\nResume allowed while token remains valid]
+    D[Invitation expired\nVisible in Expirees list]
+    E[Submitted for admin review\nVendor under_review\nUser under_review\nInviteToken used\nAdmin view: En attente]
+    F[Vendor validated\nVendor active\nUser active\nVendor dashboard accessible]
+    G[Vendor refused\nVendor rejected\nUser suspended\nVendor dashboard blocked]
+
+    A -->|Admin sends invitation| B
+    B -->|Vendor opens link| C
+    B -->|expires_at passed| D
+    C -->|Resume later| C
+    C -->|Credentials step completed| E
+    C -->|expires_at passed before completion| D
+    D -->|Admin sends invitation again| B
+    E -->|Admin validates| F
+    E -->|Admin rejects| G
 ```
+
+Points clefs du flux actuel :
+
+- l'onglet admin s'appelle encore `Invitations en attente`
+- un token `pending` expire dès que `expires_at` est dépassé, même si
+  l'onboarding avait déjà été commencé
+- le refus admin mène à `vendor.rejected` et il n'existe pas de boucle de
+  correction / resoumission dédiée dans `develop`
+
+## Schema 2 — Target flow from WED-22 + notes Granola
+
+```mermaid
+flowchart TD
+    A[Admin draft\nVendor pending\nUser pending\nAdmin view: Brouillons]
+    B[Invitation sent\nInviteToken pending\nAdmin view: Onboarding en cours]
+    C[Onboarding in progress\nonboarding_step tracks resume point\nLink remains reusable while onboarding is incomplete]
+    D[Invitation expired\nOnly if onboarding never started\nAdmin CTA: Regenerer le lien]
+    E[Waiting for admin validation\nVendor under_review\nUser under_review\nInviteToken used\nOnboarding link invalid\nAdmin view: En attente de validation]
+    F[Vendor validated\nVendor active\nUser active\nVendor dashboard accessible]
+    G[Adjustment requested\nTarget state: Vendor suspended\nUser suspended\nVendor sees correction view only]
+    H[Resubmitted for review\nVendor under_review\nAdmin banner: En reexamination\nModified sections highlighted]
+
+    A -->|Admin sends invitation| B
+    B -->|Vendor opens onboarding| C
+    B -->|30 days with no onboarding access| D
+    C -->|Resume later| C
+    C -->|Credentials step completed| E
+    D -->|Admin regenerates invitation| B
+    E -->|Admin validates| F
+    E -->|Admin refuses| G
+    G -->|Vendor corrects and resubmits| H
+    H -->|Admin validates| F
+    H -->|Admin refuses again| G
+```
+
+Points clefs du flux cible :
+
+- l'onglet admin `Invitations en attente` devient `Onboarding en cours`
+- l'onglet admin `En attente` devient `En attente de validation`
+- l'expiration à 30 jours ne s'applique que si le prestataire n'a jamais
+  commencé l'onboarding
+- le refus ouvre un vrai cycle de correction / resoumission au lieu de couper
+  le flux sur `rejected`
 
 ## Mirror table
 
-| Phase | Invite token | Vendor | User | `onboarding_step` | Admin view | Prestataire view |
-|---|---|---|---|---|---|---|
-| Draft before invitation | none | `pending` | `pending` | `null` | `Brouillons` | Aucun acces |
-| Invitation sent, never opened | `pending` | `pending` | `pending` | `null` | `Onboarding en cours` | Lien onboarding valide |
-| Onboarding started, not completed | `pending` | `pending` | `pending` | last completed step | `Onboarding en cours` | Reprise du stepper via lien |
-| Invitation expired before first access | `expired` | `pending` | `pending` | `null` | CTA de regeneration | Lien invalide |
-| Onboarding fully completed | `used` | `under_review` | `under_review` | `credentials` | `En attente de validation` | Ecran `Profil en attente de validation` |
-| Profile validated | `used` | `active` | `active` | `credentials` | `Valides` | Dashboard complet |
-| Corrections requested after refusal | target: `used` and no onboarding link reuse | target: `suspended` | `suspended` | `credentials` | Bandeau `Reajustement demande`, CTA masques | Vue correction, pas le dashboard |
-| Resubmitted after corrections | target: `used` | `under_review` | `under_review` or `suspended` to clarify | `credentials` | Bandeau `En reexamination`, CTA visibles, pastilles sur sections modifiees | Ecran post-resoumission sans CTA |
+| Phase | Current `develop` | Target after WED-22 / Granola |
+|---|---|---|
+| Draft before invitation | `vendor.pending`, `user.pending`, admin view `Brouillons` | inchangé |
+| Invitation sent, onboarding not started | token `pending`, admin view `Invitations en attente` | token `pending`, admin view `Onboarding en cours` |
+| Onboarding in progress | resume allowed while token stays `pending` and unexpired | resume allowed while onboarding incomplete via `onboarding_step` |
+| Expiry rule | any overdue `pending` token becomes unusable | only expires after 30 days if onboarding never started |
+| Onboarding completed | token `used`, `vendor.under_review`, `user.under_review`, admin view `En attente` | same statuses, but admin view renamed `En attente de validation` |
+| Validation | `vendor.active`, `user.active`, dashboard accessible | inchangé |
+| Refusal | `vendor.rejected`, `user.suspended`, blocked dashboard, no correction loop | `vendor.suspended` target, `user.suspended`, dedicated correction view |
+| Resubmission | no explicit flow in `develop` | `POST /api/v1/vendors/me/resubmit-review` returns vendor to `under_review` |
 
 ## Coverage vs implementation tickets
 

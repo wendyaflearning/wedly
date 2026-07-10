@@ -1,0 +1,21 @@
+flowchart TD
+    A[Admin draft\nVendor pending\nUser pending\nAdmin view: Brouillons]
+    B[Invitation sent\nInviteToken pending\nAdmin view: Onboarding en cours]
+    C[Onboarding in progress\nonboarding_step tracks resume point\nLink remains reusable while onboarding is incomplete]
+    D[Invitation expired\nOnly if onboarding never started\nAdmin CTA: Regenerer le lien]
+    E[Waiting for admin validation\nVendor under_review\nUser under_review\nInviteToken used\nOnboarding link invalid\nAdmin view: En attente de validation]
+    F[Vendor validated\nVendor active\nUser active\nVendor dashboard accessible]
+    G[Adjustment requested\nTarget state: Vendor suspended\nUser suspended\nVendor sees correction view only]
+    H[Resubmitted for review\nVendor under_review\nAdmin banner: En reexamination\nModified sections highlighted]
+
+    A -->|Admin sends invitation| B
+    B -->|Vendor opens onboarding| C
+    B -->|30 days with no onboarding access| D
+    C -->|Resume later| C
+    C -->|Credentials step completed| E
+    D -->|Admin regenerates invitation| B
+    E -->|Admin validates| F
+    E -->|Admin refuses| G
+    G -->|Vendor corrects and resubmits| H
+    H -->|Admin validates| F
+    H -->|Admin refuses again| G
