@@ -12,6 +12,7 @@ use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Event\StepperSubmittedEvent;
 use App\Handler\Vendor\Onboarding\StepHandlerInterface;
+use App\Repository\Vendor\VendorRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $eventDispatcher,
             [
@@ -89,6 +91,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
     {
         $dispatcher = new VendorOnboardingStepDispatcher(
             $this->createStub(EntityManagerInterface::class),
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $this->createStub(EventDispatcherInterface::class),
             []
@@ -110,6 +113,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $this->createStub(EventDispatcherInterface::class),
             [
@@ -142,6 +146,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $eventDispatcher,
             [
@@ -191,6 +196,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $eventDispatcher,
             [

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Vendor;
 
-use App\Controller\Vendor\PostVendorFeedbackAction;
+use App\Controller\Vendor\Feedback\PostVendorFeedbackAction;
 use App\DTO\Vendor\VendorFeedbackRequestDto;
 use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
