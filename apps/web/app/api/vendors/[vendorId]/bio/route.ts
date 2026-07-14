@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { upstreamError } from '@/lib/apiError'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
   const cookieStore = await cookies()
@@ -22,8 +23,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         cache: 'no-store',
       }
     )
-    const data = await res.json()
-    return NextResponse.json(data, { status: res.status })
+    if (!res.ok) return upstreamError(res)
+    return NextResponse.json(await res.json())
   } catch {
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })
   }

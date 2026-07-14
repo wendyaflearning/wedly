@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { upstreamError } from '@/lib/apiError'
 
 export async function GET(
   _req: NextRequest,
@@ -48,10 +49,7 @@ export async function PATCH(
         body: JSON.stringify(body),
       }
     )
-    if (!res.ok) {
-      const errorBody = await res.json().catch(() => null)
-      return NextResponse.json(errorBody ?? { error: 'upstream_error' }, { status: res.status })
-    }
+    if (!res.ok) return upstreamError(res)
     return NextResponse.json(await res.json())
   } catch {
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { upstreamError } from '@/lib/apiError'
 
 export async function GET() {
   const cookieStore = await cookies()
@@ -14,7 +15,7 @@ export async function GET() {
         cache: 'no-store',
       }
     )
-    if (!res.ok) return NextResponse.json({ error: 'upstream_error' }, { status: res.status })
+    if (!res.ok) return upstreamError(res)
     return NextResponse.json(await res.json())
   } catch {
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({ date_start, date_end }),
       }
     )
-    if (!res.ok) return NextResponse.json({ error: 'upstream_error' }, { status: res.status })
+    if (!res.ok) return upstreamError(res)
     return NextResponse.json(await res.json())
   } catch {
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })

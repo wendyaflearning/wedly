@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { upstreamError } from '@/lib/apiError'
 
 export async function DELETE(
   _request: NextRequest,
@@ -19,7 +20,7 @@ export async function DELETE(
         headers: { Cookie: `jwt_token=${token.value}` },
       }
     )
-    if (!res.ok) return NextResponse.json({ error: 'upstream_error' }, { status: res.status })
+    if (!res.ok) return upstreamError(res)
     return new NextResponse(null, { status: 204 })
   } catch {
     return NextResponse.json({ error: 'internal_error' }, { status: 500 })
