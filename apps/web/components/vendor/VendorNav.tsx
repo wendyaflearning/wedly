@@ -102,9 +102,6 @@ export function VendorNav({ vendorFirstName, vendorLastName, vendorEmail, vendor
 
         {/* Right: Help + Avatar */}
         <div className="flex items-center gap-5">
-          <div className="w-8 h-8 rounded-full border border-bordeaux/20 flex items-center justify-center font-cormorant italic text-base text-texte">
-            ?
-          </div>
           <AvatarMenu firstName={vendorFirstName} lastName={vendorLastName} email={vendorEmail} status={vendorStatus} />
         </div>
       </header>
