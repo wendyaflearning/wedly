@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Vendor;
+namespace App\Controller\Vendor\Feedback;
 
 use App\DTO\Vendor\VendorFeedbackRequestDto;
 use App\Entity\User\User;
