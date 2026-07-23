@@ -17,6 +17,23 @@ function Eyebrow({ children }: { children: ReactNode }) {
   );
 }
 
+function ComingSoonBadge() {
+  return (
+    <span
+      className="inline-flex items-center border border-texte/15 rounded-full uppercase text-gris"
+      style={{
+        fontFamily: "var(--font-manrope-var)",
+        fontWeight: 600,
+        fontSize: "9px",
+        letterSpacing: "0.18em",
+        padding: "6px 14px",
+      }}
+    >
+      Bientôt disponible
+    </span>
+  );
+}
+
 function Heading({ children, size = "md" }: { children: ReactNode; size?: "md" | "sm" }) {
   return (
     <p
@@ -95,6 +112,9 @@ function WedPlanPillar() {
           Ce n&apos;est pas une to-do list. C&apos;est votre mariage. Alors on en a fait un{" "}
           <em className="text-accent font-semibold">chemin</em> — clair, étape par étape.
         </Heading>
+        <div className="mt-5 md:mt-6">
+          <ComingSoonBadge />
+        </div>
       </div>
 
       {/* Stepper */}
@@ -141,6 +161,9 @@ function WedWalletPillar() {
         >
           On l&apos;a demandé au marché pour vous.
         </p>
+        <div className="mt-5 md:mt-6">
+          <ComingSoonBadge />
+        </div>
       </div>
     </div>
   );

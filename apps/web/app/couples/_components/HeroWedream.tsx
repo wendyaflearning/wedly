@@ -18,7 +18,7 @@ export default function HeroWedream() {
           className="text-creme uppercase m-0"
           style={{ fontFamily: "var(--font-manrope-var)", fontWeight: 500, fontSize: "11px", letterSpacing: "0.3em" }}
         >
-          Wedream
+          Wedly
         </p>
 
         <div className="flex flex-col items-center text-center gap-3.5 md:gap-4">
