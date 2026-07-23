@@ -24,7 +24,7 @@ class RegionFixtures extends Fixture
         'nouvelle-aquitaine'        => 'Nouvelle-Aquitaine',
         'occitanie'                 => 'Occitanie',
         'pays-de-la-loire'          => 'Pays de la Loire',
-        'provence-alpes-cote-dazur' => "Provence-Alpes-Côte d'Azur",
+        'provence-alpes-cote-d-azur' => "Provence-Alpes-Côte d'Azur",
         'guadeloupe'                => 'Guadeloupe',
         'martinique'                => 'Martinique',
         'guyane'                    => 'Guyane',
