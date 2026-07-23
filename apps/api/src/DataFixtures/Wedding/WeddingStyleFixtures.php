@@ -7,9 +7,7 @@ namespace App\DataFixtures\Wedding;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Plan\Plan;
-use App\Entity\Vendor\Service;
 use App\Entity\Wedding\WeddingStyle;
-use App\Enum\Vendor\VendorType;
 use App\Enum\Wedding\CultureType;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -21,7 +19,6 @@ class WeddingStyleFixtures extends Fixture
         $this->loadStyles($manager);
         $this->loadCultures($manager);
         $this->loadConfessions($manager);
-        $this->loadServices($manager);
         $this->loadPlans($manager);
 
         $manager->flush();
@@ -107,28 +104,6 @@ class WeddingStyleFixtures extends Fixture
             $confession = new Confession();
             $confession->setName($name)->setSlug($slug);
             $manager->persist($confession);
-        }
-    }
-
-    private function loadServices(ObjectManager $manager): void
-    {
-        $services = [
-            [1,  'Lieu de réception', 'lieu-de-reception', VendorType::Lieu],
-            [2,  'Traiteur',          'traiteur',          VendorType::Traiteur],
-            [3,  'Décoration',        'decoration',        VendorType::Freelance],
-            [4,  'Photographe',       'photographe',       VendorType::Freelance],
-            [5,  'Vidéaste',          'videaste',          VendorType::Freelance],
-            [6,  'Coiffeur',          'coiffeur',          VendorType::Freelance],
-            [7,  'Makeup artist',     'makeup-artist',     VendorType::Freelance],
-            [8,  'Coiffeuse & MUA',   'coiffeuse-et-mua',  VendorType::Freelance],
-            [9,  'Fleuriste',         'fleuriste',         VendorType::Freelance],
-            [10, 'DJ',                'dj',                VendorType::Freelance],
-        ];
-
-        foreach ($services as [$sortOrder, $name, $slug, $category]) {
-            $service = new Service();
-            $service->setName($name)->setSlug($slug)->setSortOrder($sortOrder)->setCategory($category);
-            $manager->persist($service);
         }
     }
 
