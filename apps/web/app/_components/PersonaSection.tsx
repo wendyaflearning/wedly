@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PersonaSection() {
   return (
     <>
@@ -65,8 +67,8 @@ export default function PersonaSection() {
 
           {/* CTA block */}
           <div className="relative flex flex-col gap-4">
-            <a
-              href="#"
+            <Link
+              href="/couples"
               className="inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-80"
               style={{
                 fontFamily: "var(--font-dm-sans-var)",
@@ -82,7 +84,7 @@ export default function PersonaSection() {
               }}
             >
               Commencer gratuitement <span>→</span>
-            </a>
+            </Link>
             <span
               style={{
                 fontFamily: "var(--font-cormorant-var)",
