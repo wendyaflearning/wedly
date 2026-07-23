@@ -20,15 +20,16 @@ function Eyebrow({ children }: { children: ReactNode }) {
 function ComingSoonBadge() {
   return (
     <span
-      className="inline-flex items-center border border-texte/15 rounded-full uppercase text-gris"
+      className="inline-flex items-center gap-2 bg-bordeaux text-creme uppercase rounded-full"
       style={{
         fontFamily: "var(--font-manrope-var)",
-        fontWeight: 600,
-        fontSize: "9px",
-        letterSpacing: "0.18em",
-        padding: "6px 14px",
+        fontWeight: 700,
+        fontSize: "10px",
+        letterSpacing: "0.16em",
+        padding: "8px 16px",
       }}
     >
+      <span className="w-1.5 h-1.5 rounded-full bg-creme" aria-hidden="true" />
       Bientôt disponible
     </span>
   );
