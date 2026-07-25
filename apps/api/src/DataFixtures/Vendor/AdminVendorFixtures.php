@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\DataFixtures\Vendor;
 
+use App\DataFixtures\Region\RegionFixtures;
+use App\DataFixtures\Vendor\ServiceFixtures;
+use App\DataFixtures\Wedding\WeddingStyleFixtures;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Region\Region;
@@ -21,11 +24,12 @@ use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VenueType;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use RuntimeException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-final class AdminVendorFixtures extends Fixture implements FixtureGroupInterface
+final class AdminVendorFixtures extends Fixture implements FixtureGroupInterface, DependentFixtureInterface
 {
     private const PASSWORD = 'vendor1234';
 
@@ -44,6 +48,15 @@ final class AdminVendorFixtures extends Fixture implements FixtureGroupInterface
     public static function getGroups(): array
     {
         return ['admin-vendors'];
+    }
+
+    public function getDependencies(): array
+    {
+        return [
+            ServiceFixtures::class,
+            RegionFixtures::class,
+            WeddingStyleFixtures::class,
+        ];
     }
 
     public function load(ObjectManager $manager): void
