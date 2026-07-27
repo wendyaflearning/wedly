@@ -137,7 +137,7 @@ class SeedTestVendorsCommand extends Command
                 $this->dispatcher->handle($vendor, $this->dto($step->value, $stepData));
             }
 
-            // Credentials last — triggers StepperSubmittedEvent (confirmation email)
+            // Credentials last — triggers VendorOnboardingSubmittedEvent (confirmation email)
             $this->dispatcher->handle($vendor, $this->dto('credentials', [
                 'password'              => self::TEST_PASSWORD,
                 'password_confirmation' => self::TEST_PASSWORD,

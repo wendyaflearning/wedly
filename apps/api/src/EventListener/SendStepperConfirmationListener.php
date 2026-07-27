@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventListener;
 
-use App\Event\StepperSubmittedEvent;
+use App\Event\VendorOnboardingSubmittedEvent;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -20,7 +20,7 @@ readonly class SendStepperConfirmationListener
         private string $frontendUrl,
     ) {}
 
-    public function __invoke(StepperSubmittedEvent $event): void
+    public function __invoke(VendorOnboardingSubmittedEvent $event): void
     {
         $email = (new TemplatedEmail())
             ->from(new Address('contact@wedly-apps.com', 'Wedly'))

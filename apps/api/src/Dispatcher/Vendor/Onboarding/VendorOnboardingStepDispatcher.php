@@ -8,8 +8,9 @@ use App\DTO\Vendor\VendorOnboardingStepRequestDto;
 use App\DTO\Vendor\VendorOnboardingStepResponseDto;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
+use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VendorType;
-use App\Event\StepperSubmittedEvent;
+use App\Event\VendorOnboardingSubmittedEvent;
 use App\Handler\Vendor\Onboarding\StepHandlerInterface;
 use App\Repository\Vendor\VendorRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
@@ -40,6 +41,9 @@ readonly class VendorOnboardingStepDispatcher
             $this->assertAllStepsFilled($vendor, $vendorType, $steps);
         }
 
+        // CredentialsStepHandler réinitialise le statut de rejet — capturer avant qu'il ne s'exécute.
+        $wasRejected = $step === OnboardingStep::Credentials && $vendor->getStatus() === VendorStatus::Rejected;
+
         $this->resolveHandler($step, $vendorType)->handle($vendor, $dto->data ?? []);
 
         $currentStep    = $vendor->getOnboardingStep();
@@ -54,9 +58,17 @@ readonly class VendorOnboardingStepDispatcher
 
         if ($step === OnboardingStep::Credentials) {
             $user = $vendor->getUser();
-            $this->eventDispatcher->dispatch(
-                new StepperSubmittedEvent($user->getFirstName(), $user->getEmail())
-            );
+            $this->eventDispatcher->dispatch(new VendorOnboardingSubmittedEvent(
+                vendorId:             $vendor->getId()->toRfc4122(),
+                firstName:            $user->getFirstName(),
+                lastName:             $user->getLastName() ?? '',
+                email:                $user->getEmail(),
+                brand:                $vendor->getBrandName(),
+                category:             $vendorType->value,
+                regions:              array_map(fn($region) => $region->getName(), $vendor->getRegions()->toArray()),
+                submittedForReviewAt: $vendor->getSubmittedForReviewAt(),
+                isFirstSubmission:    !$wasRejected,
+            ));
 
             return null;
         }
