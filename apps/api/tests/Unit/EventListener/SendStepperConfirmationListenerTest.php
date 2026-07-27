@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\EventListener;
 
-use App\Event\StepperSubmittedEvent;
+use App\Event\VendorOnboardingSubmittedEvent;
 use App\EventListener\SendStepperConfirmationListener;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -28,7 +28,17 @@ final class SendStepperConfirmationListenerTest extends TestCase
             }));
 
         (new SendStepperConfirmationListener($mailer, 'https://wedly.test'))(
-            new StepperSubmittedEvent('Sophie', 'sophie@example.fr')
+            new VendorOnboardingSubmittedEvent(
+                vendorId: '01960000-0000-7000-8000-000000000000',
+                firstName: 'Sophie',
+                lastName: 'Dupont',
+                email: 'sophie@example.fr',
+                brand: 'Sophie Fleurs',
+                category: 'freelance',
+                regions: ['Île-de-France'],
+                submittedForReviewAt: new \DateTimeImmutable(),
+                isFirstSubmission: true,
+            )
         );
     }
 }
