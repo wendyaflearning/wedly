@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Copy, Save, Send, Trash2 } from 'lucide-react'
@@ -178,6 +178,7 @@ export function AdminVendorDraftForm({
   const selectedCategory = selectedService?.category ?? 'freelance'
   const isVenue = selectedCategory === 'lieu'
   const isCatering = selectedCategory === 'traiteur'
+  const isCreator = selectedCategory === 'createurs'
 
   const priceMin = parseEuroToCents(form.priceMin)
   const priceMax = parseEuroToCents(form.priceMax)
@@ -192,6 +193,17 @@ export function AdminVendorDraftForm({
     priceMax >= priceMin &&
     form.priceType !== ''
 
+  useEffect(() => {
+    if (!isCreator || form.regionIds.length <= 1) {
+      return
+    }
+
+    setForm((current) => ({
+      ...current,
+      regionIds: current.regionIds.slice(0, 1),
+    }))
+  }, [form.regionIds, isCreator])
+
   function update<K extends keyof DraftFormState>(key: K, value: DraftFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
   }
@@ -202,6 +214,17 @@ export function AdminVendorDraftForm({
       [key]: current[key].includes(value)
         ? current[key].filter((item) => item !== value)
         : [...current[key], value],
+    }))
+  }
+
+  function toggleRegions(value: string) {
+    setForm((current) => ({
+      ...current,
+      regionIds: isCreator
+        ? (current.regionIds[0] === value ? [] : [value])
+        : (current.regionIds.includes(value)
+          ? current.regionIds.filter((item) => item !== value)
+          : [...current.regionIds, value]),
     }))
   }
 
@@ -459,11 +482,17 @@ export function AdminVendorDraftForm({
           <TextField label="Prix maximum (€) *" value={form.priceMax} onChange={(value) => update('priceMax', value)} inputMode="decimal" />
           <TextField label="Ville" value={form.legalCity} onChange={(value) => update('legalCity', value)} />
         </div>
+        {isCreator && (
+          <p className="mt-4 text-sm text-gris">
+            Un créateur ne peut être rattaché qu&apos;à une seule région d&apos;intervention.
+          </p>
+        )}
         <CheckboxGrid
           label="Régions *"
           items={regions}
           selectedIds={form.regionIds}
-          onToggle={(id) => toggleArray('regionIds', id)}
+          onToggle={toggleRegions}
+          singleSelect={isCreator}
         />
       </section>
 
@@ -595,11 +624,13 @@ function CheckboxGrid({
   items,
   selectedIds,
   onToggle,
+  singleSelect = false,
 }: {
   label: string
   items: Array<{ id: string; name: string }>
   selectedIds: string[]
   onToggle: (id: string) => void
+  singleSelect?: boolean
 }) {
   return (
     <fieldset className="mt-5 flex flex-col gap-3">
@@ -608,9 +639,10 @@ function CheckboxGrid({
         {items.map((item) => (
           <label key={item.id} className="flex items-center gap-2 text-sm text-texte">
             <input
-              type="checkbox"
+              type={singleSelect ? 'radio' : 'checkbox'}
               checked={selectedIds.includes(item.id)}
               onChange={() => onToggle(item.id)}
+              name={singleSelect ? label : undefined}
               className="h-4 w-4 accent-bordeaux"
             />
             <span>{item.name}</span>

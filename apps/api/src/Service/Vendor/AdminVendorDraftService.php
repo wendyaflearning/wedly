@@ -132,6 +132,7 @@ final readonly class AdminVendorDraftService
         if ($dto->regionsProvided) {
             $vendor->syncZones($this->resolveEntities(Region::class, $dto->regions ?? [], 'Région'));
         }
+        $this->enforceCreatorSingleRegion($vendor);
         if ($dto->priceMinProvided) {
             $vendor->setPriceMinCents($dto->priceMin ?? -1);
         }
@@ -153,6 +154,20 @@ final readonly class AdminVendorDraftService
         $this->applyCateringCharacteristics($vendor, $dto->cateringCharacteristics);
 
         $this->assertCreatorSingleZone($vendor);
+    }
+
+    private function enforceCreatorSingleRegion(Vendor $vendor): void
+    {
+        if ($vendor->resolveVendorType() !== VendorType::Createurs) {
+            return;
+        }
+
+        $regions = $vendor->getRegions()->toArray();
+        if (count($regions) <= 1) {
+            return;
+        }
+
+        $vendor->syncZones([$regions[0]]);
     }
 
     private function applyExperiences(Vendor $vendor, ?array $experiences): void
