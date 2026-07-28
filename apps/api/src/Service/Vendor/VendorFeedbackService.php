@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Service\Vendor;
 
 use App\Entity\Vendor\Vendor;
+use App\Integration\Slack\SlackWebhookClient;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class VendorFeedbackService
 {
@@ -17,10 +17,9 @@ final readonly class VendorFeedbackService
 
     public function __construct(
         private MailerInterface $mailer,
-        private HttpClientInterface $httpClient,
+        private SlackWebhookClient $slackClient,
         private LoggerInterface $logger,
         private string $frontendUrl,
-        private string $slackWebhookUrl,
     ) {}
 
     public function send(Vendor $vendor, string $message, ?\DateTimeImmutable $sentAt = null): void
@@ -44,23 +43,13 @@ final readonly class VendorFeedbackService
 
         $this->mailer->send($email);
 
-        if ($this->slackWebhookUrl !== '') {
-            $this->notifySlack($vendor, $message, $sentAt);
-        }
+        $this->notifySlack($vendor, $message, $sentAt);
     }
 
     private function notifySlack(Vendor $vendor, string $message, \DateTimeImmutable $sentAt): void
     {
         try {
-            $response = $this->httpClient->request('POST', $this->slackWebhookUrl, [
-                'json' => [
-                    'text' => $this->buildSlackMessage($vendor, $message, $sentAt),
-                ],
-            ]);
-
-            if ($response->getStatusCode() >= 400) {
-                throw new \RuntimeException('Slack notification failed.');
-            }
+            $this->slackClient->notify($this->buildSlackMessage($vendor, $message, $sentAt));
         } catch (\Throwable $exception) {
             $this->logger->error('Vendor feedback Slack notification failed.', [
                 'vendor_id' => (string) $vendor->getId(),

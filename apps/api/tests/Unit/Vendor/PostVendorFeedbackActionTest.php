@@ -8,6 +8,7 @@ use App\Controller\Vendor\Feedback\PostVendorFeedbackAction;
 use App\DTO\Vendor\VendorFeedbackRequestDto;
 use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
+use App\Integration\Slack\SlackWebhookClient;
 use App\Repository\Vendor\VendorRepository;
 use App\Service\Vendor\VendorFeedbackService;
 use PHPUnit\Framework\TestCase;
@@ -15,7 +16,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Uid\UuidV7;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class PostVendorFeedbackActionTest extends TestCase
 {
@@ -98,10 +98,9 @@ final class PostVendorFeedbackActionTest extends TestCase
     {
         return new VendorFeedbackService(
             $mailer ?? $this->createStub(MailerInterface::class),
-            $this->createStub(HttpClientInterface::class),
+            $this->createStub(SlackWebhookClient::class),
             $this->createStub(LoggerInterface::class),
             'https://app.wedly.test',
-            '',
         );
     }
 

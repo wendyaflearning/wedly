@@ -35,4 +35,3 @@ services:
     App\Service\Vendor\VendorFeedbackService:
         arguments:
             $frontendUrl: '%env(FRONTEND_URL)%'
-            $slackWebhookUrl: '%env(SLACK_WEBHOOK)%'
