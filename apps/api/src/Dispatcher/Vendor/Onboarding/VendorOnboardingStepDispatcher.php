@@ -15,6 +15,7 @@ use App\Handler\Vendor\Onboarding\StepHandlerInterface;
 use App\Repository\Vendor\VendorRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -27,6 +28,7 @@ readonly class VendorOnboardingStepDispatcher
         private EventDispatcherInterface $eventDispatcher,
         #[TaggedIterator('onboarding.step_handler')]
         private iterable $handlers,
+        private LoggerInterface $logger,
     ) {}
 
     public function handle(Vendor $vendor, VendorOnboardingStepRequestDto $dto): ?VendorOnboardingStepResponseDto
@@ -58,17 +60,27 @@ readonly class VendorOnboardingStepDispatcher
 
         if ($step === OnboardingStep::Credentials) {
             $user = $vendor->getUser();
-            $this->eventDispatcher->dispatch(new VendorOnboardingSubmittedEvent(
-                vendorId:             $vendor->getId()->toRfc4122(),
-                firstName:            $user->getFirstName(),
-                lastName:             $user->getLastName() ?? '',
-                email:                $user->getEmail(),
-                brand:                $vendor->getBrandName(),
-                category:             $vendorType->value,
-                regions:              array_map(fn($region) => $region->getName(), $vendor->getRegions()->toArray()),
-                submittedForReviewAt: $vendor->getSubmittedForReviewAt(),
-                isFirstSubmission:    !$wasRejected,
-            ));
+
+            try {
+                $this->eventDispatcher->dispatch(new VendorOnboardingSubmittedEvent(
+                    vendorId:             $vendor->getId()->toRfc4122(),
+                    firstName:            $user->getFirstName(),
+                    lastName:             $user->getLastName() ?? '',
+                    email:                $user->getEmail(),
+                    brand:                $vendor->getBrandName(),
+                    category:             $vendorType->value,
+                    regions:              array_map(fn($region) => $region->getName(), $vendor->getRegions()->toArray()),
+                    submittedForReviewAt: $vendor->getSubmittedForReviewAt(),
+                    isFirstSubmission:    !$wasRejected,
+                ));
+            } catch (\Throwable $exception) {
+                // Le flush() a déjà réussi : une exception d'un listener (email, futur Slack) ne doit pas
+                // faire échouer la requête HTTP du prestataire, seulement être remontée sur Sentry.
+                $this->logger->error('Échec d\'un listener sur VendorOnboardingSubmittedEvent', [
+                    'vendorId'  => $vendor->getId()->toRfc4122(),
+                    'exception' => $exception,
+                ]);
+            }
 
             return null;
         }
