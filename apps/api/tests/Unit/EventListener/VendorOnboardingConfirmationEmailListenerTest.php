@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Unit\EventListener;
 
 use App\Event\VendorOnboardingSubmittedEvent;
-use App\EventListener\SendStepperConfirmationListener;
+use App\EventListener\VendorOnboardingConfirmationEmailListener;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 
-final class SendStepperConfirmationListenerTest extends TestCase
+final class VendorOnboardingConfirmationEmailListenerTest extends TestCase
 {
     public function test_it_sends_confirmation_to_vendor_email(): void
     {
@@ -27,7 +27,7 @@ final class SendStepperConfirmationListenerTest extends TestCase
                 return true;
             }));
 
-        (new SendStepperConfirmationListener($mailer, 'https://wedly.test'))(
+        (new VendorOnboardingConfirmationEmailListener($mailer, 'https://wedly.test'))(
             new VendorOnboardingSubmittedEvent(
                 vendorId: '01960000-0000-7000-8000-000000000000',
                 firstName: 'Sophie',

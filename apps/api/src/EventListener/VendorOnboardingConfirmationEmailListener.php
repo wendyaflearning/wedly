@@ -12,7 +12,7 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 
 #[AsEventListener]
-readonly class SendStepperConfirmationListener
+readonly class VendorOnboardingConfirmationEmailListener
 {
     public function __construct(
         private MailerInterface $mailer,
