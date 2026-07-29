@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PersonaSection() {
   return (
     <>
@@ -43,8 +45,8 @@ export default function PersonaSection() {
                 color: "var(--color-creme)",
               }}
             >
-              Organisez votre mariage<br />
-              <em>comme vous l&apos;imaginez</em>
+              Organisez votre mariage,<br />
+              <em>l&apos;inspiration devient réalité.</em>
             </h2>
             <p
               style={{
@@ -56,7 +58,7 @@ export default function PersonaSection() {
                 maxWidth: "360px",
               }}
             >
-              Chaque détail pensé pour votre histoire. Planning, budget, prestataires, tout dans un seul espace dédié.
+              Une nouvelle histoire se dévoile doucement, pour vous aider à trouver vos prestataires en toute légèreté, et bientôt, planning, budget et organisation réunis en un seul espace, à votre image.
             </p>
           </div>
 
@@ -65,8 +67,8 @@ export default function PersonaSection() {
 
           {/* CTA block */}
           <div className="relative flex flex-col gap-4">
-            <a
-              href="#"
+            <Link
+              href="/wedding-fair"
               className="inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-80"
               style={{
                 fontFamily: "var(--font-dm-sans-var)",
@@ -81,8 +83,8 @@ export default function PersonaSection() {
                 textDecoration: "none",
               }}
             >
-              Commencer gratuitement <span>→</span>
-            </a>
+              Voir ce qui se prépare <span>→</span>
+            </Link>
             <span
               style={{
                 fontFamily: "var(--font-cormorant-var)",
@@ -91,7 +93,7 @@ export default function PersonaSection() {
                 color: "rgba(255,246,237,0.45)",
               }}
             >
-              Sans carte bancaire · Prêt en 5 min
+              Sans engagement · Quelques minutes suffisent
             </span>
           </div>
 
@@ -151,8 +153,8 @@ export default function PersonaSection() {
                 color: "var(--color-texte)",
               }}
             >
-              Soyez trouvés par les<br />
-              <em style={{ color: "var(--color-accent)" }}>bons couples</em>
+              Votre talent<br />
+              <em style={{ color: "var(--color-accent)" }}>mérite d&apos;être vu</em>
             </h2>
             <p
               style={{
@@ -164,7 +166,7 @@ export default function PersonaSection() {
                 maxWidth: "360px",
               }}
             >
-              Créez votre profil, montrez votre univers et recevez des demandes de couples qui vous correspondent vraiment.
+              Une nouvelle façon de vous faire découvrir se prépare, montrez votre univers, et laissez les couples qui vous ressemblent venir à vous.
             </p>
           </div>
 
@@ -173,8 +175,8 @@ export default function PersonaSection() {
 
           {/* CTA block */}
           <div className="relative flex flex-col gap-4">
-            <a
-              href="#"
+            <Link
+              href="/wedding-fair"
               className="inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
               style={{
                 fontFamily: "var(--font-dm-sans-var)",
@@ -189,8 +191,8 @@ export default function PersonaSection() {
                 textDecoration: "none",
               }}
             >
-              Rejoindre Wedly <span>→</span>
-            </a>
+              Voir ce qui se prépare <span>→</span>
+            </Link>
             <span
               style={{
                 fontFamily: "var(--font-cormorant-var)",
@@ -199,7 +201,7 @@ export default function PersonaSection() {
                 color: "rgba(41,26,16,0.5)",
               }}
             >
-              Gratuit · Visible dès validation
+              Gratuit · Quelques minutes suffisent
             </span>
           </div>
 
@@ -223,18 +225,20 @@ export default function PersonaSection() {
 
       {/* Footer */}
       <footer
-        className="bg-creme px-6 md:px-16 py-6 flex items-center justify-between"
+        className="bg-creme px-6 md:px-16 py-6 flex items-center justify-between gap-4 flex-wrap"
         style={{ borderTop: "1px solid rgba(158, 142, 133, 0.25)" }}
       >
-        <p
+        <span
           style={{
-            fontFamily: "var(--font-dm-sans-var)",
-            fontSize: "13px",
-            color: "rgba(41, 26, 16, 0.4)",
+            fontFamily: "var(--font-cormorant-var)",
+            fontStyle: "italic",
+            fontWeight: 300,
+            fontSize: "14px",
+            color: "var(--color-gris)",
           }}
         >
-          © <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>Wedly</em> 2026, <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>pensé en France, à deux.</em>
-        </p>
+          © Wedly 2026, pensé en France, à deux.
+        </span>
         <p
           style={{
             fontFamily: "var(--font-dm-sans-var)",
