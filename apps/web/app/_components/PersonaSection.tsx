@@ -56,7 +56,7 @@ export default function PersonaSection() {
                 maxWidth: "360px",
               }}
             >
-              Chaque détail pensé pour votre histoire. Planning, budget, prestataires — tout dans un seul espace dédié.
+              Chaque détail pensé pour votre histoire. Planning, budget, prestataires, tout dans un seul espace dédié.
             </p>
           </div>
 
@@ -233,7 +233,7 @@ export default function PersonaSection() {
             color: "rgba(41, 26, 16, 0.4)",
           }}
         >
-          © <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>Wedly</em> 2026 — <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>pensé en France, à deux.</em>
+          © <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>Wedly</em> 2026, <em style={{ fontFamily: "var(--font-cormorant-var)", fontStyle: "italic" }}>pensé en France, à deux.</em>
         </p>
         <p
           style={{

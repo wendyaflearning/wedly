@@ -1,80 +1,158 @@
 import type { ReactNode } from "react";
 
-interface StepProps {
+interface StepRowData {
   num: string;
   title: ReactNode;
   description: string;
   icon: ReactNode;
 }
 
-function Step({ num, title, description, icon }: StepProps) {
+const PersonIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}>
+    <circle cx="12" cy="8" r="3.6" />
+    <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" />
+  </svg>
+);
+
+const CalendarIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+  </svg>
+);
+
+const MatchIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}>
+    <circle cx="8.5" cy="8" r="3.2" />
+    <circle cx="16.5" cy="9" r="2.6" />
+    <path d="M3 20c0-3.3 2.5-5.8 5.5-5.8s5.5 2.5 5.5 5.8" />
+    <path d="M14 20c0-2.6 1.9-4.7 4.3-4.7" />
+  </svg>
+);
+
+const DocumentIcon = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" width={16} height={16}>
+    <rect x="4" y="4" width="14" height="16" rx="1.6" />
+    <path d="M7.5 8.5h7M7.5 12h7M7.5 15.5h4" />
+  </svg>
+);
+
+const coupleSteps: StepRowData[] = [
+  {
+    num: "Étape 01",
+    title: <>Parlez-nous de <em style={{ color: "var(--color-accent)" }}>votre histoire</em></>,
+    description: "Quelques questions sur votre style, votre budget et vos envies. On fait le reste.",
+    icon: PersonIcon,
+  },
+  {
+    num: "Étape 02",
+    title: <>Un planning <em style={{ color: "var(--color-accent)" }}>sur-mesure</em> vous attend</>,
+    description: "Votre espace mariage, votre budget, vos prestataires, tous au même endroit, pensés pour vous.",
+    icon: CalendarIcon,
+  },
+  {
+    num: "Étape 03",
+    title: <>Rencontrez les prestataires <em style={{ color: "var(--color-accent)" }}>faits pour vous</em></>,
+    description: "On sélectionne les prestataires qui correspondent à votre univers, votre budget et votre date, pas une liste générique.",
+    icon: MatchIcon,
+  },
+];
+
+const vendorSteps: StepRowData[] = [
+  {
+    num: "Étape 01",
+    title: <>Parlez-nous de <em style={{ color: "var(--color-accent)" }}>votre univers</em></>,
+    description: "Quelques infos sur votre activité, votre style et vos disponibilités. On s'occupe du reste.",
+    icon: PersonIcon,
+  },
+  {
+    num: "Étape 02",
+    title: <>Votre profil rencontre <em style={{ color: "var(--color-accent)" }}>les bons couples</em></>,
+    description: "Visible auprès de couples qui correspondent vraiment à votre positionnement, pas une liste générique.",
+    icon: MatchIcon,
+  },
+  {
+    num: "Étape 03",
+    title: <>Recevez des demandes <em style={{ color: "var(--color-accent)" }}>qualifiées</em></>,
+    description: "Des couples qui connaissent déjà votre budget et votre univers avant de vous écrire.",
+    icon: DocumentIcon,
+  },
+];
+
+function StepRow({ num, title, description, icon, iconColor, isLast }: StepRowData & { iconColor: string; isLast: boolean }) {
   return (
-    <div className="flex flex-col gap-4 md:gap-5">
-      {/* Icon + label: row on mobile (label beside icon), icon alone on desktop (label below separately) */}
-      <div className="flex items-center gap-4">
+    <div className="flex gap-4">
+      <div className="flex flex-col items-center shrink-0">
         <div
           aria-hidden="true"
-          className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full bg-creme relative"
-          style={{ border: "1px solid rgba(157, 79, 30, 0.45)", color: "var(--color-highlight)" }}
+          className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-creme"
+          style={{ border: "1px solid rgba(78, 26, 50, 0.18)", color: iconColor }}
         >
           {icon}
         </div>
-        {/* Label next to icon on mobile only */}
+        {!isLast && (
+          <div className="w-px flex-1 my-2" style={{ background: "rgba(78, 26, 50, 0.18)" }} />
+        )}
+      </div>
+
+      <div className={`flex flex-col gap-2 ${isLast ? "" : "pb-7"}`}>
         <span
-          className="md:hidden"
           style={{
             fontFamily: "var(--font-cormorant-var)",
             fontStyle: "italic",
             fontWeight: 400,
-            fontSize: "15px",
+            fontSize: "13px",
             color: "var(--color-gris)",
           }}
         >
           {num}
         </span>
+        <h3
+          style={{
+            fontFamily: "var(--font-cormorant-var)",
+            fontWeight: 300,
+            fontSize: "clamp(1.15rem, 1.6vw, 1.25rem)",
+            lineHeight: 1.3,
+            margin: 0,
+            color: "var(--color-texte)",
+          }}
+        >
+          {title}
+        </h3>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans-var)",
+            fontSize: "13.5px",
+            lineHeight: 1.55,
+            margin: 0,
+            color: "var(--color-gris)",
+          }}
+        >
+          {description}
+        </p>
       </div>
+    </div>
+  );
+}
 
-      {/* Step label — desktop only: below icon so connector line doesn't cross text */}
-      <span
-        className="hidden md:block"
+function StepColumn({ label, labelColor, steps, iconColor }: { label: string; labelColor: string; steps: StepRowData[]; iconColor: string }) {
+  return (
+    <div className="flex flex-col gap-7">
+      <div
         style={{
-          fontFamily: "var(--font-cormorant-var)",
-          fontStyle: "italic",
-          fontWeight: 400,
-          fontSize: "15px",
-          color: "var(--color-gris)",
+          fontFamily: "var(--font-manrope-var)",
+          fontWeight: 600,
+          fontSize: "11px",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          color: labelColor,
         }}
       >
-        {num}
-      </span>
-
-      {/* Heading */}
-      <h3
-        style={{
-          fontFamily: "var(--font-cormorant-var)",
-          fontWeight: 400,
-          fontSize: "clamp(1.6rem, 2.2vw, 1.85rem)",
-          lineHeight: 1.1,
-          margin: 0,
-          color: "var(--color-texte)",
-        }}
-      >
-        {title}
-      </h3>
-
-      {/* Description — indented on mobile to align under "Étape" label */}
-      <p
-        className="pl-[72px] md:pl-0"
-        style={{
-          fontFamily: "var(--font-dm-sans-var)",
-          fontSize: "15px",
-          lineHeight: 1.65,
-          margin: 0,
-          color: "rgba(41, 26, 16, 0.65)",
-        }}
-      >
-        {description}
-      </p>
+        {label}
+      </div>
+      {steps.map((step, i) => (
+        <StepRow key={step.num} {...step} iconColor={iconColor} isLast={i === steps.length - 1} />
+      ))}
     </div>
   );
 }
@@ -88,7 +166,7 @@ export default function HowSection() {
     >
 
       {/* Header */}
-      <div className="max-w-5xl mx-auto mb-10 md:mb-20">
+      <div className="max-w-5xl mx-auto mb-10 md:mb-20 text-center md:text-left">
         <p
           style={{
             fontFamily: "var(--font-dm-sans-var)",
@@ -102,7 +180,6 @@ export default function HowSection() {
           Comment ça marche
         </p>
         <h2
-          className="hidden md:block"
           style={{
             fontFamily: "var(--font-cormorant-var)",
             fontWeight: 300,
@@ -117,61 +194,24 @@ export default function HowSection() {
         </h2>
       </div>
 
-      {/* Steps */}
-      <div className="max-w-5xl mx-auto relative">
+      {/* Steps — two columns: couples / prestataires */}
+      <div className="max-w-5xl mx-auto flex flex-col md:grid md:grid-cols-2">
+        <div className="md:pr-14 md:border-r md:border-bordeaux/10 pb-10 md:pb-0">
+          <StepColumn
+            label="Pour les couples"
+            labelColor="var(--color-gris)"
+            steps={coupleSteps}
+            iconColor="var(--color-highlight)"
+          />
+        </div>
 
-        {/* Connector line (desktop only) */}
-        <div
-          className="hidden md:block absolute top-7 inset-x-0 h-px"
-          style={{ backgroundColor: "var(--color-accent)", opacity: 0.55 }}
-        />
-
-        <div className="flex flex-col md:grid md:grid-cols-3 md:gap-16">
-
-          <div className="py-8 md:py-0">
-            <Step
-              num="Étape 01"
-              title={<>Parlez-nous de <em style={{ color: "var(--color-accent)" }}>votre histoire</em></>}
-              description="Quelques questions sur votre style, votre budget et vos envies. On fait le reste."
-              icon={
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" width={22} height={22}>
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                </svg>
-              }
-            />
-          </div>
-
-          <div className="py-8 md:py-0 border-t border-gris/30 md:border-t-0">
-            <Step
-                num="Étape 02"
-                title={<>Un planning <em style={{ color: "var(--color-accent)" }}>sur-mesure</em> vous attend</>}
-                description="Votre espace mariage, votre budget, vos prestataires — tous au même endroit, pensés pour vous."
-                icon={
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" width={22} height={22}>
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" />
-                  </svg>
-                }
-              />
-          </div>
-
-          <div className="py-8 md:py-0 border-t border-gris/30 md:border-t-0">
-            <Step
-                num="Étape 03"
-                title={<>Rencontrez les prestataires <em style={{ color: "var(--color-accent)", fontStyle: "italic" }}>faits pour vous</em></>}
-                description="On sélectionne les prestataires qui correspondent à votre univers, votre budget et votre date — pas une liste générique."
-                icon={
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" width={22} height={22}>
-                    <circle cx="9" cy="7" r="3" />
-                    <circle cx="17" cy="8" r="3" />
-                    <path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6" />
-                    <path d="M17 14c2.5 0 5 1.5 5 4" />
-                  </svg>
-                }
-              />
-          </div>
-
+        <div className="md:pl-14 pt-10 md:pt-0 border-t border-gris/30 md:border-t-0">
+          <StepColumn
+            label="Pour les prestataires"
+            labelColor="var(--color-accent)"
+            steps={vendorSteps}
+            iconColor="var(--color-accent)"
+          />
         </div>
       </div>
 

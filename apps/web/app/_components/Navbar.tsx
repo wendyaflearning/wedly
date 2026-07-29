@@ -13,7 +13,7 @@ export default function Navbar() {
         className="relative w-full bg-creme px-6 py-4 md:px-10 md:py-8 flex items-center justify-between"
         style={{ borderBottom: "1px solid rgba(158, 142, 133, 0.25)" }}
       >
-        <Link href="/" className="shrink-0" aria-label="Wedly — accueil">
+        <Link href="/" className="shrink-0" aria-label="Wedly, accueil">
           <Image src="/logo.png" alt="Wedly" width={120} height={40} priority />
         </Link>
 
