@@ -6,12 +6,11 @@ namespace App\Tests\Unit\Vendor;
 
 use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
+use App\Integration\Slack\SlackWebhookClient;
 use App\Service\Vendor\VendorFeedbackService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Uid\UuidV7;
 
@@ -38,10 +37,9 @@ final class VendorFeedbackServiceTest extends TestCase
 
         $service = new VendorFeedbackService(
             $mailer,
-            new MockHttpClient(),
+            $this->createStub(SlackWebhookClient::class),
             $this->createStub(LoggerInterface::class),
             'https://app.wedly.test',
-            '',
         );
 
         $service->send($vendor, '  Bonjour Wedly  ', new \DateTimeImmutable('2026-07-07 10:30:00'));
@@ -53,27 +51,23 @@ final class VendorFeedbackServiceTest extends TestCase
         $mailer = $this->createMock(MailerInterface::class);
         $mailer->expects($this->once())->method('send');
 
-        $requests = [];
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$requests) {
-            $requests[] = [$method, $url, $options];
+        $slackClient = $this->createMock(SlackWebhookClient::class);
+        $slackClient->expects($this->once())
+            ->method('notify')
+            ->with($this->callback(function (string $message): bool {
+                self::assertStringContainsString('Message important', $message);
 
-            return new MockResponse('ok', ['http_code' => 200]);
-        });
+                return true;
+            }));
 
         $service = new VendorFeedbackService(
             $mailer,
-            $httpClient,
+            $slackClient,
             $this->createStub(LoggerInterface::class),
             'https://app.wedly.test',
-            'https://hooks.slack.test/services/123',
         );
 
         $service->send($vendor, 'Message important', new \DateTimeImmutable('2026-07-07 10:30:00'));
-
-        self::assertCount(1, $requests);
-        self::assertSame('POST', $requests[0][0]);
-        self::assertSame('https://hooks.slack.test/services/123', $requests[0][1]);
-        self::assertStringContainsString('Message important', (string) ($requests[0][2]['body'] ?? ''));
     }
 
     public function test_it_does_not_fail_when_slack_notification_errors_after_email_send(): void
@@ -97,16 +91,16 @@ final class VendorFeedbackServiceTest extends TestCase
                 })
             );
 
-        $httpClient = new MockHttpClient([
-            new MockResponse('ko', ['http_code' => 500]),
-        ]);
+        $slackClient = $this->createMock(SlackWebhookClient::class);
+        $slackClient->expects($this->once())
+            ->method('notify')
+            ->willThrowException(new \RuntimeException('Slack webhook returned status 500.'));
 
         $service = new VendorFeedbackService(
             $mailer,
-            $httpClient,
+            $slackClient,
             $logger,
             'https://app.wedly.test',
-            'https://hooks.slack.test/services/123',
         );
 
         $service->send($vendor, 'Message important', new \DateTimeImmutable('2026-07-07 10:30:00'));
