@@ -33,7 +33,7 @@ export default function PersonaSection() {
                 margin: 0,
               }}
             >
-              Pour les couples &amp; mariés
+              Pour les couples de futurs mariés
             </p>
             <h2
               style={{
