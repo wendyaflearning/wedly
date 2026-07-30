@@ -9,7 +9,9 @@ use App\Entity\Culture\Culture;
 use App\Entity\Region\Region;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Service;
+use App\Entity\Vendor\Specialty;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Wedding\WeddingStyle;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorRejectionReason;
 use App\Enum\Vendor\VendorStatus;
@@ -135,11 +137,25 @@ final readonly class AdminVendorProfileResponseDto
 
         return array_map(
             fn(PortfolioImage $image) => [
-                'id'      => $image->getId()->toRfc4122(),
-                'url'     => $image->getUrl(),
-                'isCover' => $image->isCover(),
+                'id'          => $image->getId()->toRfc4122(),
+                'url'         => $image->getUrl(),
+                'isCover'     => $image->isCover(),
+                'styles'      => $this->tags($image->getStyles()->toArray()),
+                'specialties' => $this->tags($image->getSpecialties()->toArray()),
             ],
             $images
+        );
+    }
+
+    private function tags(array $tags): array
+    {
+        return array_map(
+            fn(WeddingStyle|Specialty $tag) => [
+                'id'   => $tag->getId()->toRfc4122(),
+                'name' => $tag->getName(),
+                'slug' => $tag->getSlug(),
+            ],
+            $tags
         );
     }
 
