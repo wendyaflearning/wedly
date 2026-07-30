@@ -117,6 +117,33 @@ class PortfolioService
         return $styles;
     }
 
+    /**
+     * @param string[]|null $styleIds
+     * @param string[]|null $specialtyIds
+     */
+    public function updateTags(Vendor $vendor, PortfolioImage $image, ?array $styleIds, ?array $specialtyIds): void
+    {
+        if ($specialtyIds !== null) {
+            $specialties = $this->resolveSpecialtyTags($vendor, $specialtyIds);
+            foreach ($image->getSpecialties()->toArray() as $specialty) {
+                $image->removeSpecialty($specialty);
+            }
+            foreach ($specialties as $specialty) {
+                $image->addSpecialty($specialty);
+            }
+        }
+
+        if ($styleIds !== null) {
+            $styles = $this->resolveStyleTags($styleIds);
+            foreach ($image->getStyles()->toArray() as $style) {
+                $image->removeStyle($style);
+            }
+            foreach ($styles as $style) {
+                $image->addStyle($style);
+            }
+        }
+    }
+
     public function deletePhoto(PortfolioImage $image): ?string
     {
         $publicId = $image->getCloudinaryPublicId();
