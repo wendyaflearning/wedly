@@ -8,7 +8,7 @@ use App\Entity\Vendor\Specialty;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-final class SpecialtyRepository extends ServiceEntityRepository
+class SpecialtyRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
