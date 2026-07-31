@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin\Vendor\Portfolio;
 
 use App\DTO\Admin\Vendor\Portfolio\PatchVendorPortfolioTagsRequestDto;
-use App\Entity\Vendor\Specialty;
-use App\Entity\Wedding\WeddingStyle;
+use App\DTO\Vendor\Portfolio\PortfolioTagResponseDto;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Repository\Vendor\VendorRepository;
 use App\Service\PortfolioService;
@@ -56,20 +55,8 @@ final readonly class PatchVendorPortfolioTagsAction
             'id'          => $image->getId()->toRfc4122(),
             'url'         => $image->getUrl(),
             'isCover'     => $image->isCover(),
-            'styles'      => $this->tags($image->getStyles()->toArray()),
-            'specialties' => $this->tags($image->getSpecialties()->toArray()),
+            'styles'      => PortfolioTagResponseDto::fromTags($image->getStyles()->toArray()),
+            'specialties' => PortfolioTagResponseDto::fromTags($image->getSpecialties()->toArray()),
         ], 200);
-    }
-
-    private function tags(array $tags): array
-    {
-        return array_map(
-            fn(WeddingStyle|Specialty $tag) => [
-                'id'   => $tag->getId()->toRfc4122(),
-                'name' => $tag->getName(),
-                'slug' => $tag->getSlug(),
-            ],
-            $tags
-        );
     }
 }
