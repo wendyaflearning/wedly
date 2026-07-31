@@ -181,7 +181,6 @@ export type PortfolioImage = {
   id: string
   url: string
   isCover: boolean
-  sortOrder: number
   styles: TagOption[]
   specialties: TagOption[]
 }

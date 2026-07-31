@@ -16,6 +16,8 @@ export default async function NewAdminVendorPage() {
       regions={regions}
       cultures={cultures}
       confessions={confessions}
+      styleOptions={styles}
+      specialtyOptions={specialties}
     />
   )
 }

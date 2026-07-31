@@ -6,10 +6,12 @@ interface BottomSheetProps {
   isOpen: boolean
   onClose: () => void
   title?: string
+  header?: ReactNode
+  footer?: ReactNode
   children: ReactNode
 }
 
-export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetProps) {
+export function BottomSheet({ isOpen, onClose, title, header, footer, children }: BottomSheetProps) {
   const [dragY, setDragY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const touchStartY = useRef(0)
@@ -73,7 +75,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/40">
+    <div className="fixed inset-0 z-[60] bg-black/40 md:flex md:items-center md:justify-center">
       <div className="absolute inset-0" onClick={onClose} />
 
       <div
@@ -81,7 +83,7 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className="modal-enter fixed inset-x-0 bottom-0 z-10 bg-creme rounded-t-2xl flex flex-col"
+        className="modal-enter fixed inset-x-0 bottom-0 z-10 bg-creme rounded-t-2xl flex flex-col md:relative md:inset-auto md:max-w-[520px] md:mx-4 md:rounded-2xl"
         style={{
           maxHeight: '92vh',
           transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
@@ -94,7 +96,9 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
         </div>
 
         {/* Header optionnel */}
-        {title !== undefined && (
+        {header !== undefined ? (
+          <div className="shrink-0">{header}</div>
+        ) : title !== undefined ? (
           <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
             <span
               className="font-cormorant italic text-[22px] font-light text-texte"
@@ -109,12 +113,17 @@ export function BottomSheet({ isOpen, onClose, title, children }: BottomSheetPro
               ×
             </button>
           </div>
-        )}
+        ) : null}
 
         {/* Contenu scrollable */}
         <div className="flex-1 overflow-y-auto">
           {children}
         </div>
+
+        {/* Footer optionnel */}
+        {footer !== undefined && (
+          <div className="shrink-0">{footer}</div>
+        )}
       </div>
     </div>
   )
