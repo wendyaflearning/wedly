@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Entity\Wedding;
 
 use App\Doctrine\UuidV7Generator;
+use App\Repository\Wedding\WeddingStyleRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: WeddingStyleRepository::class)]
 #[ORM\Table(name: 'style')]
 #[ORM\HasLifecycleCallbacks]
 class WeddingStyle
