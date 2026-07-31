@@ -1,10 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
-import { Toast } from '@/components/ui/Toast'
-import { useToast } from '@/hooks/useToast'
 
 export type Section = {
   key: string
@@ -108,27 +105,15 @@ function SectionCard({ section }: { section: Section }) {
 interface ProfileHubClientProps {
   groups: SectionGroup[]
   sidebar: React.ReactNode
-  savedKey?: string
 }
 
-export default function ProfileHubClient({ groups, sidebar, savedKey }: ProfileHubClientProps) {
+export default function ProfileHubClient({ groups, sidebar }: ProfileHubClientProps) {
   const [activeTab, setActiveTab] = useState<SectionGroup['id']>('identite')
-  const { toast, showToast } = useToast()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (savedKey === 'matching-consent') {
-      showToast('success', 'Confidentialité du matching mise à jour ✓')
-      router.replace('/dashboard/profile')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedKey])
 
   const activeGroup = groups.find((g) => g.id === activeTab) ?? groups[0]
 
   return (
     <>
-      <Toast toast={toast} />
       {/* Mobile tabs */}
       <div className="md:hidden border-b border-bordeaux/[0.08]">
         <div className="flex">
