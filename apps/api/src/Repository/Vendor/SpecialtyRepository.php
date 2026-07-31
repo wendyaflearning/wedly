@@ -14,4 +14,16 @@ class SpecialtyRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Specialty::class);
     }
+
+    /** @return Specialty[] */
+    public function findAllOrderedBySortOrder(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->leftJoin('s.service', 'sv')
+            ->addSelect('sv')
+            ->andWhere('s.isActive = true')
+            ->orderBy('s.sortOrder', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
