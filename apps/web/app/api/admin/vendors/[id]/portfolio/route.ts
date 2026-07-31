@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ vendorId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { vendorId } = await params
+  const { id } = await params
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
   if (!apiUrl) {
     return Response.json({ error: 'Configuration API manquante.' }, { status: 500 })
@@ -13,7 +13,7 @@ export async function POST(
   const contentType = request.headers.get('content-type') ?? ''
   const body = await request.arrayBuffer()
 
-  const response = await fetch(`${apiUrl}/api/v1/admin/vendors/${vendorId}/portfolio`, {
+  const response = await fetch(`${apiUrl}/api/v1/admin/vendors/${id}/portfolio`, {
     method: 'POST',
     headers: {
       'content-type': contentType,
