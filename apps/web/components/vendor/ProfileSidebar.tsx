@@ -29,7 +29,6 @@ function buildGroups(
     { key: 'pricing_zone', label: 'Tarifs & Localisation', href: '/dashboard/profile/pricing-zone', completed: status.pricing_zone },
     { key: 'booking_blocker', label: 'Disponibilités', href: '/dashboard/profile/booking-blocker', completed: status.booking_blocker },
     { key: 'experiences', label: 'Vos expériences de mariage', href: '/dashboard/profile/experiences', completed: status.experiences },
-    { key: 'matching_consent', label: 'Confidentialité du matching', href: '/dashboard/profile/matching-consent', completed: status.matching_consent },
   ]
 
   if (vendorType === 'lieu') {
