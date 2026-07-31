@@ -39,6 +39,7 @@ security:
         - { path: ^/api/v1/onboarding/,          roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/services$,            roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/styles$,               roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/specialties$,          roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/confessions$,         roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/cultures$,            roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/regions$,                 roles: PUBLIC_ACCESS }
