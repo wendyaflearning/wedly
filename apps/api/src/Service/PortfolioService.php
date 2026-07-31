@@ -123,6 +123,13 @@ class PortfolioService
      */
     public function updateTags(Vendor $vendor, PortfolioImage $image, ?array $styleIds, ?array $specialtyIds): void
     {
+        if ($specialtyIds !== null && count($specialtyIds) === 0) {
+            throw new ValidationException([[
+                'field'   => 'specialtyIds',
+                'message' => 'Vous devez sélectionner au moins une spécialité.',
+            ]]);
+        }
+
         if ($specialtyIds !== null) {
             $specialties = $this->resolveSpecialtyTags($vendor, $specialtyIds);
             foreach ($image->getSpecialties()->toArray() as $specialty) {
