@@ -12,6 +12,8 @@ import type {
   CultureOption,
   RegionOption,
   ServiceOptionNode,
+  SpecialtyOption,
+  StyleOption,
 } from '@/lib/admin-types'
 
 type AdminFetchResult<T> =
@@ -30,6 +32,8 @@ type AdminVendorFormOptions = {
   regions: RegionOption[]
   cultures: CultureOption[]
   confessions: ConfessionOption[]
+  styles: StyleOption[]
+  specialties: SpecialtyOption[]
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -117,12 +121,14 @@ export async function fetchAdminVendorDraft(id: string): Promise<AdminFetchResul
 }
 
 export async function fetchAdminVendorFormOptions(): Promise<AdminVendorFormOptions> {
-  const [services, regions, cultures, confessions] = await Promise.all([
+  const [services, regions, cultures, confessions, styles, specialties] = await Promise.all([
     publicFetch<ServiceOptionNode>('/api/v1/services'),
     publicFetch<RegionOption>('/api/v1/regions'),
     publicFetch<CultureOption>('/api/v1/cultures'),
     publicFetch<ConfessionOption>('/api/v1/confessions'),
+    publicFetch<StyleOption>('/api/v1/styles'),
+    publicFetch<SpecialtyOption>('/api/v1/specialties'),
   ])
 
-  return { services, regions, cultures, confessions }
+  return { services, regions, cultures, confessions, styles, specialties }
 }

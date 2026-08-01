@@ -91,6 +91,7 @@ export type AdminVendorDraft = {
     priceType: string
     city: string | null
   }
+  portfolio: PortfolioImage[]
   legalInfo: {
     phone: string | null
     address: string | null
@@ -172,10 +173,16 @@ export type ServiceItem = NamedItem & {
   category: string
 }
 
+export type TagOption = { id: string; name: string; slug: string }
+export type StyleOption = TagOption
+export type SpecialtyOption = TagOption & { serviceId: string }
+
 export type PortfolioImage = {
   id: string
   url: string
   isCover: boolean
+  styles: TagOption[]
+  specialties: TagOption[]
 }
 
 export type AdminVendorProfile = {

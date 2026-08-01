@@ -12,7 +12,12 @@ import type {
   CultureOption,
   RegionOption,
   ServiceOptionNode,
+  SpecialtyOption,
+  StyleOption,
 } from '@/lib/admin-types'
+import { PortfolioGallery } from '@/components/profile/PortfolioGallery'
+import { PortfolioTaggingModal } from '@/components/portfolio/PortfolioTaggingModal'
+import { useAdminPortfolioUpload } from '@/hooks/useAdminPortfolioUpload'
 
 const PRICE_TYPES = [
   { value: 'per_service', label: 'Par prestation' },
@@ -154,12 +159,16 @@ export function AdminVendorDraftForm({
   regions,
   cultures,
   confessions,
+  styleOptions,
+  specialtyOptions,
 }: {
   draft?: AdminVendorDraft
   services: ServiceOptionNode[]
   regions: RegionOption[]
   cultures: CultureOption[]
   confessions: ConfessionOption[]
+  styleOptions: StyleOption[]
+  specialtyOptions: SpecialtyOption[]
 }) {
   const router = useRouter()
   const [vendorId, setVendorId] = useState(draft?.id ?? null)
@@ -173,7 +182,29 @@ export function AdminVendorDraftForm({
   const [copied, setCopied] = useState(false)
   const hasPendingInvitation = draft?.invitation?.status === 'pending' || sendResult !== null
 
+  const {
+    images: portfolioImages,
+    pendingUploads,
+    addFiles,
+    retryUpload,
+    deleteImage,
+    taggingQueue,
+    openTagging,
+    confirmTagging,
+    cancelTagging,
+  } = useAdminPortfolioUpload({
+    initialImages: draft?.portfolio ?? [],
+  })
+  const portfolioPendingUploads = useMemo(
+    () => pendingUploads.map((p) => ({ localId: p.localId, previewUrl: URL.createObjectURL(p.file), status: p.status })),
+    [pendingUploads]
+  )
+
   const serviceOptions = useMemo(() => flattenServices(services), [services])
+  const groupLabels = useMemo(
+    () => Object.fromEntries(serviceOptions.map((s) => [s.id, s.label])),
+    [serviceOptions]
+  )
   const selectedService = serviceOptions.find((service) => service.id === form.serviceId)
   const selectedCategory = selectedService?.category ?? 'freelance'
   const isVenue = selectedCategory === 'lieu'
@@ -256,7 +287,7 @@ export function AdminVendorDraftForm({
     }
   }
 
-  async function saveDraft(): Promise<string | null> {
+  async function saveDraft(options?: { navigate?: boolean }): Promise<string | null> {
     if (saving) return vendorId
 
     setSaving(true)
@@ -277,11 +308,14 @@ export function AdminVendorDraftForm({
     }
 
     const id = (data as AdminVendorDraft).id
+    const wasCreation = !vendorId
     setVendorId(id)
     setNotice('Brouillon enregistré.')
-    router.refresh()
-    if (!vendorId) {
-      router.replace(`/admin/vendors/${id}/edit`)
+    if (options?.navigate ?? true) {
+      router.refresh()
+      if (wasCreation) {
+        router.replace(`/admin/vendors/${id}/edit`)
+      }
     }
 
     return id
@@ -451,6 +485,53 @@ export function AdminVendorDraftForm({
           </SelectField>
         </div>
       </section>
+
+      <section className="rounded-lg border border-bordeaux/10 bg-white p-5 shadow-sm">
+        <h2 className="font-cormorant text-2xl font-semibold text-bordeaux">Portfolio</h2>
+        <div className="mt-5">
+          <PortfolioGallery
+            images={portfolioImages}
+            editable={{
+              onAddFiles: (files) => {
+                void addFiles(files, async () => {
+                  if (vendorId) return vendorId
+                  const id = await saveDraft({ navigate: false })
+                  if (id) window.history.replaceState(null, '', `/admin/vendors/${id}/edit`)
+                  return id
+                })
+              },
+              onDelete: (imageId) => {
+                // Une tuile existante implique que le brouillon existe déjà.
+                deleteImage(imageId, vendorId as string).catch(() => setError('La suppression de la photo a échoué.'))
+              },
+              onTileClick: (imageId) => openTagging(imageId),
+              pendingUploads: portfolioPendingUploads,
+              onRetry: (localId) => { void retryUpload(localId, vendorId as string) },
+            }}
+          />
+        </div>
+      </section>
+
+      {taggingQueue.length > 0 && (() => {
+        const activeId = taggingQueue[0]
+        const activeImage = portfolioImages.find((img) => img.id === activeId)
+        if (!activeImage) return null
+
+        return (
+          <PortfolioTaggingModal
+            photoUrl={activeImage.url}
+            styleOptions={styleOptions}
+            specialtyOptions={specialtyOptions}
+            allowedServiceId={form.serviceId || null}
+            groupLabels={groupLabels}
+            initialStyleIds={activeImage.styles.map((s) => s.id)}
+            initialSpecialtyIds={activeImage.specialties.map((s) => s.id)}
+            queueLabel={taggingQueue.length > 1 ? `${taggingQueue.length} photos à taguer` : undefined}
+            onConfirm={(styleIds, specialtyIds) => confirmTagging(activeId, vendorId as string, styleIds, specialtyIds)}
+            onCancel={() => cancelTagging(activeId, vendorId as string)}
+          />
+        )
+      })()}
 
       <section className="rounded-lg border border-bordeaux/10 bg-white p-5 shadow-sm">
         <h2 className="font-cormorant text-2xl font-semibold text-bordeaux">Zones et tarifs</h2>
