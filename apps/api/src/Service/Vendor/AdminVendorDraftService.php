@@ -12,6 +12,7 @@ use App\Entity\Region\Region;
 use App\Entity\User\User;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorAutoTaggedService;
 use App\Entity\Vendor\VendorCateringDetails;
 use App\Entity\Vendor\VendorVenueDetails;
 use App\Enum\User\Role;
@@ -21,6 +22,7 @@ use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VenueType;
 use App\Repository\User\InviteTokenRepository;
 use App\Repository\User\UserRepository;
+use App\Repository\Vendor\VendorAutoTaggedServiceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -32,6 +34,7 @@ final readonly class AdminVendorDraftService
         private EntityManagerInterface $em,
         private UserRepository $userRepository,
         private InviteTokenRepository $inviteTokenRepository,
+        private VendorAutoTaggedServiceRepository $vendorAutoTaggedServiceRepository,
         private UserPasswordHasherInterface $passwordHasher,
     ) {}
 
@@ -72,7 +75,16 @@ final readonly class AdminVendorDraftService
 
     public function get(Vendor $vendor): AdminVendorDraftResponseDto
     {
-        return new AdminVendorDraftResponseDto($vendor, $this->inviteTokenRepository->findLatestVendorInvitation($vendor));
+        $autoTaggedServiceIds = array_map(
+            static fn(VendorAutoTaggedService $entry): string => $entry->getService()->getId()->toRfc4122(),
+            $this->vendorAutoTaggedServiceRepository->findServicesByVendor($vendor),
+        );
+
+        return new AdminVendorDraftResponseDto(
+            $vendor,
+            $this->inviteTokenRepository->findLatestVendorInvitation($vendor),
+            $autoTaggedServiceIds,
+        );
     }
 
     public function update(Vendor $vendor, AdminVendorDraftRequestDto $dto): AdminVendorDraftResponseDto

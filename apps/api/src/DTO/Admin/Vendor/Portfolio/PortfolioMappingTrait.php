@@ -36,7 +36,7 @@ trait PortfolioMappingTrait
                 'name' => $tag->getName(),
                 'slug' => $tag->getSlug(),
             ],
-            $tags
+            array_values($tags)
         );
     }
 }
