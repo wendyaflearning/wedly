@@ -29,7 +29,7 @@ final readonly class PortfolioTagResponseDto
     {
         return array_map(
             fn(WeddingStyle|Specialty $tag) => new self($tag),
-            $tags
+            array_values($tags)
         );
     }
 }
