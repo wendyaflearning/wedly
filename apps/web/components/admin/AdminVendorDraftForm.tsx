@@ -209,6 +209,8 @@ export function AdminVendorDraftForm({
   const selectedCategory = selectedService?.category ?? 'freelance'
   const isVenue = selectedCategory === 'lieu'
   const isCatering = selectedCategory === 'traiteur'
+  const isServiceAutoTagged =
+    form.serviceId !== '' && (draft?.profession.autoTaggedServiceIds ?? []).includes(form.serviceId)
 
   const priceMin = parseEuroToCents(form.priceMin)
   const priceMax = parseEuroToCents(form.priceMax)
@@ -472,12 +474,19 @@ export function AdminVendorDraftForm({
       <section className="rounded-lg border border-bordeaux/10 bg-white p-5 shadow-sm">
         <h2 className="font-cormorant text-2xl font-semibold text-bordeaux">Profession</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <SelectField label="Service principal *" value={form.serviceId} onChange={(value) => update('serviceId', value)}>
-            <option value="">Sélectionner un service</option>
-            {serviceOptions.map((service) => (
-              <option key={service.id} value={service.id}>{service.label}</option>
-            ))}
-          </SelectField>
+          <div className="flex flex-col gap-2">
+            <SelectField label="Service principal *" value={form.serviceId} onChange={(value) => update('serviceId', value)}>
+              <option value="">Sélectionner un service</option>
+              {serviceOptions.map((service) => (
+                <option key={service.id} value={service.id}>{service.label}</option>
+              ))}
+            </SelectField>
+            {isServiceAutoTagged && (
+              <span className="inline-flex h-7 w-fit items-center rounded-md border border-dore/35 bg-dore/10 px-2.5 text-xs font-semibold text-accent">
+                Ajouté automatiquement
+              </span>
+            )}
+          </div>
           <SelectField label="Type de prix *" value={form.priceType} onChange={(value) => update('priceType', value)}>
             {PRICE_TYPES.map((priceType) => (
               <option key={priceType.value} value={priceType.value}>{priceType.label}</option>

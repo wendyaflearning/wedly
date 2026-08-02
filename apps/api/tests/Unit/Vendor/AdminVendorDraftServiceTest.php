@@ -10,11 +10,13 @@ use App\Entity\User\InviteToken;
 use App\Entity\User\User;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorAutoTaggedService;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VendorType;
 use App\Repository\User\InviteTokenRepository;
 use App\Repository\User\UserRepository;
+use App\Repository\Vendor\VendorAutoTaggedServiceRepository;
 use App\Service\Vendor\AdminVendorDraftService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -197,9 +199,35 @@ final class AdminVendorDraftServiceTest extends TestCase
         $this->makeDraftService($entityManager)->delete($vendor);
     }
 
+    public function test_get_returns_empty_auto_tagged_service_ids_by_default(): void
+    {
+        $vendor = $this->makeReadyVendor();
+
+        $response = $this->makeDraftService()->get($vendor);
+
+        self::assertSame([], $response->profession['autoTaggedServiceIds']);
+    }
+
+    public function test_get_returns_auto_tagged_service_ids_from_repository(): void
+    {
+        $vendor  = $this->makeReadyVendor();
+        $service = $this->makeServiceEntity(name: 'Fleuriste', slug: 'fleuriste');
+
+        $autoTaggedEntry = $this->createStub(VendorAutoTaggedService::class);
+        $autoTaggedEntry->method('getService')->willReturn($service);
+
+        $autoTaggedServiceRepository = $this->createStub(VendorAutoTaggedServiceRepository::class);
+        $autoTaggedServiceRepository->method('findServicesByVendor')->willReturn([$autoTaggedEntry]);
+
+        $response = $this->makeDraftService(vendorAutoTaggedServiceRepository: $autoTaggedServiceRepository)->get($vendor);
+
+        self::assertSame([$service->getId()->toRfc4122()], $response->profession['autoTaggedServiceIds']);
+    }
+
     private function makeDraftService(
         ?EntityManagerInterface $entityManager = null,
         ?InviteTokenRepository $inviteTokenRepository = null,
+        ?VendorAutoTaggedServiceRepository $vendorAutoTaggedServiceRepository = null,
     ): AdminVendorDraftService {
         $userRepository = $this->createStub(UserRepository::class);
         $userRepository->method('findOneBy')->willReturn(null);
@@ -207,10 +235,16 @@ final class AdminVendorDraftServiceTest extends TestCase
         $passwordHasher = $this->createStub(UserPasswordHasherInterface::class);
         $passwordHasher->method('hashPassword')->willReturn('hashed-password');
 
+        $autoTaggedServiceRepository = $vendorAutoTaggedServiceRepository ?? $this->createStub(VendorAutoTaggedServiceRepository::class);
+        if ($vendorAutoTaggedServiceRepository === null) {
+            $autoTaggedServiceRepository->method('findServicesByVendor')->willReturn([]);
+        }
+
         return new AdminVendorDraftService(
             $entityManager ?? $this->createStub(EntityManagerInterface::class),
             $userRepository,
             $inviteTokenRepository ?? $this->createStub(InviteTokenRepository::class),
+            $autoTaggedServiceRepository,
             $passwordHasher,
         );
     }

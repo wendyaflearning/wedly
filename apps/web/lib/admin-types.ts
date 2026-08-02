@@ -79,6 +79,7 @@ export type AdminVendorDraft = {
   }
   profession: {
     serviceId: string | null
+    autoTaggedServiceIds: string[]
   }
   experiences: {
     cultureIds: string[]

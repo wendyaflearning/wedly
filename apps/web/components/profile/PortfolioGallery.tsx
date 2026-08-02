@@ -37,44 +37,55 @@ export function PortfolioGallery({
   return (
     <>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {images.map((image, index) => (
-          <div
-            key={image.id}
-            className="relative aspect-[4/3] overflow-hidden rounded-lg border border-[#eaded2] bg-[#f7f3ee]"
-          >
-            <button
-              type="button"
-              onClick={() => {
-                if (editable) {
-                  editable.onTileClick(image.id)
-                } else {
-                  setActiveIndex(index)
-                }
-              }}
-              className="absolute inset-0"
+        {images.map((image, index) => {
+          const tagCount = image.styles.length + image.specialties.length
+
+          return (
+            <div
+              key={image.id}
+              className="relative aspect-[4/3] overflow-hidden rounded-lg border border-[#eaded2] bg-[#f7f3ee]"
             >
-              <Image src={image.url} alt="" fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
-              {image.isCover && (
-                <span className="absolute left-2 top-2 rounded-md bg-bordeaux px-2 py-1 text-xs font-semibold text-creme">
-                  Couverture
-                </span>
-              )}
-            </button>
-            {editable && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  editable.onDelete(image.id)
+                onClick={() => {
+                  if (editable) {
+                    editable.onTileClick(image.id)
+                  } else {
+                    setActiveIndex(index)
+                  }
                 }}
-                aria-label="Supprimer"
-                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-texte/60 text-creme hover:bg-texte/80"
+                className="absolute inset-0"
               >
-                <X size={14} aria-hidden="true" />
+                <Image src={image.url} alt="" fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" unoptimized />
+                {image.isCover && (
+                  <span className="absolute left-2 top-2 rounded-md bg-bordeaux px-2 py-1 text-xs font-semibold text-creme">
+                    Couverture
+                  </span>
+                )}
               </button>
-            )}
-          </div>
-        ))}
+              <div className="absolute right-2 top-2 flex items-center gap-1.5">
+                {tagCount > 0 && (
+                  <span className="inline-flex h-6 items-center rounded-md bg-texte/60 px-2 text-[11px] font-semibold text-creme">
+                    {tagCount} tag{tagCount > 1 ? 's' : ''}
+                  </span>
+                )}
+                {editable && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      editable.onDelete(image.id)
+                    }}
+                    aria-label="Supprimer"
+                    className="flex h-7 w-7 items-center justify-center rounded-full bg-texte/60 text-creme hover:bg-texte/80"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })}
 
         {editable && (
           <>
