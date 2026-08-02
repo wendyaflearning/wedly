@@ -8,6 +8,7 @@ use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Specialty;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorAutoTaggedService;
 use App\Entity\Wedding\WeddingStyle;
 use App\Exception\ValidationException;
 use App\Repository\Vendor\PortfolioImageRepository;
@@ -179,21 +180,41 @@ final class PortfolioServiceTest extends TestCase
             ->uploadPhoto($vendor, $this->makeFile(), 0, [], ['unknown']);
     }
 
-    public function test_uploadPhoto_throws_422_when_specialty_tag_outside_vendor_service_scope(): void
+    public function test_uploadPhoto_auto_associates_service_and_records_auto_tag_when_vendor_lacks_service(): void
     {
-        $this->expectException(ValidationException::class);
+        $vendorService = $this->createStub(Service::class);
+        $services      = new ArrayCollection();
 
-        $vendorService     = $this->createStub(Service::class);
-        $otherService      = $this->createStub(Service::class);
-        $vendor            = $this->createStub(Vendor::class);
-        $vendor->method('getServices')->willReturn(new ArrayCollection([$vendorService]));
+        $vendor = $this->createStub(Vendor::class);
+        $vendor->method('getServices')->willReturnCallback(static fn () => $services);
+        $vendor->method('addService')->willReturnCallback(static function (Service $service) use ($services, &$vendor) {
+            $services->add($service);
 
-        $specialty = $this->makeSpecialty($otherService);
+            return $vendor;
+        });
+
+        $specialty = $this->makeSpecialty($vendorService);
         $this->specialtyRepository->method('find')->willReturn($specialty);
-        $uploadApi = $this->createStub(UploadApi::class);
 
-        $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $uploadApi)
+        $persisted = [];
+        $em        = $this->createStub(EntityManagerInterface::class);
+        $em->method('persist')->willReturnCallback(static function (object $entity) use (&$persisted): void {
+            $persisted[] = $entity;
+        });
+
+        $uploadApi = $this->createStub(UploadApi::class);
+        $uploadApi->method('upload')->willReturn($this->makeCloudinaryResponse());
+
+        $image = $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)
             ->uploadPhoto($vendor, $this->makeFile(), 0, [], ['specialty-1']);
+
+        $this->assertTrue($services->contains($vendorService));
+        $this->assertTrue($image->getSpecialties()->contains($specialty));
+
+        $autoTags = array_values(array_filter($persisted, static fn ($entity) => $entity instanceof VendorAutoTaggedService));
+        $this->assertCount(1, $autoTags);
+        $this->assertSame($vendor, $autoTags[0]->getVendor());
+        $this->assertSame($vendorService, $autoTags[0]->getService());
     }
 
     public function test_uploadPhoto_throws_422_when_style_tag_does_not_exist(): void

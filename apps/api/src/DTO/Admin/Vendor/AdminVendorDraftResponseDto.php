@@ -29,7 +29,8 @@ final readonly class AdminVendorDraftResponseDto
     public ?array $venueCharacteristics;
     public ?array $cateringCharacteristics;
 
-    public function __construct(Vendor $vendor, ?InviteToken $inviteToken = null)
+    /** @param string[] $autoTaggedServiceIds */
+    public function __construct(Vendor $vendor, ?InviteToken $inviteToken = null, array $autoTaggedServiceIds = [])
     {
         $service = $vendor->getServices()->first();
         $venueDetails = $vendor->getVenueDetails();
@@ -50,7 +51,8 @@ final readonly class AdminVendorDraftResponseDto
             'brandName' => $vendor->getBrandName(),
         ];
         $this->profession = [
-            'serviceId' => $service instanceof Service ? $service->getId()->toRfc4122() : null,
+            'serviceId'            => $service instanceof Service ? $service->getId()->toRfc4122() : null,
+            'autoTaggedServiceIds' => $autoTaggedServiceIds,
         ];
         $this->experiences = [
             'cultureIds' => $vendor->getCultures()

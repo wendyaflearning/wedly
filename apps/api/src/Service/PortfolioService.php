@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Specialty;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorAutoTaggedService;
 use App\Entity\Wedding\WeddingStyle;
 use App\Exception\ValidationException;
 use App\Repository\Vendor\PortfolioImageRepository;
@@ -83,12 +84,19 @@ class PortfolioService
         $specialties = [];
         foreach ($specialtyTags as $tag) {
             $specialty = $this->specialtyRepository->find($tag);
-            if ($specialty === null || !$vendor->getServices()->contains($specialty->getService())) {
+            if ($specialty === null) {
                 throw new ValidationException([[
                     'field'   => 'specialtyTags',
                     'message' => sprintf('La spécialité "%s" est invalide ou ne correspond à aucun service de ce prestataire.', $tag),
                 ]]);
             }
+
+            $service = $specialty->getService();
+            if (!$vendor->getServices()->contains($service)) {
+                $vendor->addService($service);
+                $this->em->persist(new VendorAutoTaggedService($vendor, $service));
+            }
+
             $specialties[] = $specialty;
         }
 
