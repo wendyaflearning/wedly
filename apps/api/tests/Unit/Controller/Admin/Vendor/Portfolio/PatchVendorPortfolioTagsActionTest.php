@@ -7,9 +7,7 @@ namespace App\Tests\Unit\Controller\Admin\Vendor\Portfolio;
 use App\Controller\Admin\Vendor\Portfolio\PatchVendorPortfolioTagsAction;
 use App\DTO\Admin\Vendor\Portfolio\PatchVendorPortfolioTagsRequestDto;
 use App\Entity\Vendor\PortfolioImage;
-use App\Entity\Vendor\Specialty;
 use App\Entity\Vendor\Vendor;
-use App\Entity\Wedding\WeddingStyle;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Repository\Vendor\VendorRepository;
 use App\Service\PortfolioService;
@@ -72,25 +70,15 @@ final class PatchVendorPortfolioTagsActionTest extends TestCase
         );
     }
 
+    // TODO WED-100: cette action ne renvoie plus de styles/specialties depuis la suppression de
+    // portfolio_image_specialty/portfolio_image_style (WED-97) — à réintroduire via TagValue.
     public function test_invoke_calls_update_tags_flushes_then_returns_200_with_tags(): void
     {
         $vendor = $this->createStub(Vendor::class);
 
-        $style = $this->createStub(WeddingStyle::class);
-        $style->method('getId')->willReturn(Uuid::fromString('01930000-0000-7000-8000-000000000010'));
-        $style->method('getName')->willReturn('Bohème');
-        $style->method('getSlug')->willReturn('boheme');
-
-        $specialty = $this->createStub(Specialty::class);
-        $specialty->method('getId')->willReturn(Uuid::fromString('01930000-0000-7000-8000-000000000020'));
-        $specialty->method('getName')->willReturn('Mariage laïc');
-        $specialty->method('getSlug')->willReturn('mariage-laic');
-
         $image = (new PortfolioImage())
             ->setUrl('https://res.cloudinary.com/img.jpg')
             ->setIsCover(false);
-        $image->addStyle($style);
-        $image->addSpecialty($specialty);
 
         $imageId = Uuid::fromString('01930000-0000-7000-8000-000000000001');
         $imageReflection = new \ReflectionProperty(PortfolioImage::class, 'id');
@@ -132,15 +120,11 @@ final class PatchVendorPortfolioTagsActionTest extends TestCase
         $this->assertSame(['updateTags', 'flush'], $calls);
         $this->assertSame(
             [
-                'id'      => $imageId->toRfc4122(),
-                'url'     => 'https://res.cloudinary.com/img.jpg',
-                'isCover' => false,
-                'styles' => [
-                    ['id' => '01930000-0000-7000-8000-000000000010', 'name' => 'Bohème', 'slug' => 'boheme'],
-                ],
-                'specialties' => [
-                    ['id' => '01930000-0000-7000-8000-000000000020', 'name' => 'Mariage laïc', 'slug' => 'mariage-laic'],
-                ],
+                'id'          => $imageId->toRfc4122(),
+                'url'         => 'https://res.cloudinary.com/img.jpg',
+                'isCover'     => false,
+                'styles'      => [],
+                'specialties' => [],
             ],
             json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
         );

@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\DTO\Admin\Vendor\Portfolio;
 
 use App\Entity\Vendor\PortfolioImage;
-use App\Entity\Vendor\Specialty;
 use App\Entity\Vendor\Vendor;
-use App\Entity\Wedding\WeddingStyle;
 
 trait PortfolioMappingTrait
 {
@@ -21,22 +19,11 @@ trait PortfolioMappingTrait
                 'id'          => $image->getId()->toRfc4122(),
                 'url'         => $image->getUrl(),
                 'isCover'     => $image->isCover(),
-                'styles'      => $this->tags($image->getStyles()->toArray()),
-                'specialties' => $this->tags($image->getSpecialties()->toArray()),
+                // TODO WED-97: styles/specialties retirés avec portfolio_image_style/specialty ; remplacer par les tags (TagValue) dans WED-100
+                'styles'      => [],
+                'specialties' => [],
             ],
             $images
-        );
-    }
-
-    private function tags(array $tags): array
-    {
-        return array_map(
-            fn(WeddingStyle|Specialty $tag) => [
-                'id'   => $tag->getId()->toRfc4122(),
-                'name' => $tag->getName(),
-                'slug' => $tag->getSlug(),
-            ],
-            array_values($tags)
         );
     }
 }
