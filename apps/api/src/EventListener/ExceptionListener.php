@@ -36,6 +36,11 @@ class ExceptionListener
         if ($exception instanceof HttpExceptionInterface && $exception->getStatusCode() === 422) {
             $message = explode("\n", $exception->getMessage())[0] ?: 'Données invalides.';
             $event->setResponse(new JsonResponse(['error' => $message], 422));
+            return;
+        }
+
+        if ($exception instanceof \DomainException) {
+            $event->setResponse(new JsonResponse(['error' => $exception->getMessage()], $exception->getCode()));
         }
     }
 }
