@@ -8,12 +8,11 @@ use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
-use App\Entity\Vendor\VendorConsent;
-use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\VendorType;
 use App\Enum\Wedding\CultureType;
 use App\Handler\Vendor\Onboarding\ExperiencesStepHandler;
+use App\Repository\Vendor\VendorRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\TestCase;
@@ -163,21 +162,23 @@ final class ExperiencesStepHandlerTest extends TestCase
     public function test_is_filled_returns_true_when_sensitive_data_consent_is_refused(): void
     {
         $vendor = new Vendor();
-        $consent = new VendorConsent($vendor, ConsentType::SensitiveData, false);
 
-        $repository = $this->createMock(EntityRepository::class);
-        $repository->expects($this->once())
-            ->method('findOneBy')
-            ->with(
-                ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-                ['createdAt' => 'DESC']
-            )
-            ->willReturn($consent);
+        $vendorRepository = $this->createMock(VendorRepository::class);
+        $vendorRepository->expects($this->once())
+            ->method('findLatestMatchingConsent')
+            ->with($vendor)
+            ->willReturn(false);
 
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects($this->once())->method('getRepository')->with(VendorConsent::class)->willReturn($repository);
+        $validator = $this->createStub(ValidatorInterface::class);
+        $validator->method('validate')->willReturn(new ConstraintViolationList());
 
-        $this->assertTrue($this->makeHandler($em)->isFilled($vendor));
+        $handler = new ExperiencesStepHandler(
+            $this->createStub(EntityManagerInterface::class),
+            $vendorRepository,
+            $validator,
+        );
+
+        $this->assertTrue($handler->isFilled($vendor));
     }
 
     private function makeHandler(EntityManagerInterface $em): ExperiencesStepHandler
@@ -185,7 +186,7 @@ final class ExperiencesStepHandlerTest extends TestCase
         $validator = $this->createStub(ValidatorInterface::class);
         $validator->method('validate')->willReturn(new ConstraintViolationList());
 
-        return new ExperiencesStepHandler($em, $validator);
+        return new ExperiencesStepHandler($em, $this->createStub(VendorRepository::class), $validator);
     }
 
     private function service(string $slug, VendorType $category): Service

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
+use App\Entity\Vendor\Specialty;
 use App\Entity\Wedding\WeddingStyle;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Trait\TimestampableTrait;
@@ -50,9 +51,18 @@ class PortfolioImage
     )]
     private Collection $styles;
 
+    #[ORM\ManyToMany(targetEntity: Specialty::class)]
+    #[ORM\JoinTable(
+        name: 'portfolio_image_specialty',
+        joinColumns: [new ORM\JoinColumn(name: 'portfolio_image_id', referencedColumnName: 'id')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'specialty_id', referencedColumnName: 'id')],
+    )]
+    private Collection $specialties;
+
     public function __construct()
     {
         $this->styles = new ArrayCollection();
+        $this->specialties = new ArrayCollection();
     }
 
     public function getId(): UuidV7
@@ -137,6 +147,27 @@ class PortfolioImage
     public function removeStyle(WeddingStyle $style): static
     {
         $this->styles->removeElement($style);
+
+        return $this;
+    }
+
+    public function getSpecialties(): Collection
+    {
+        return $this->specialties;
+    }
+
+    public function addSpecialty(Specialty $specialty): static
+    {
+        if (!$this->specialties->contains($specialty)) {
+            $this->specialties->add($specialty);
+        }
+
+        return $this;
+    }
+
+    public function removeSpecialty(Specialty $specialty): static
+    {
+        $this->specialties->removeElement($specialty);
 
         return $this;
     }

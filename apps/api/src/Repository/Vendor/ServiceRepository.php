@@ -30,4 +30,12 @@ final class ServiceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findMaxSortOrder(): ?int
+    {
+        return $this->createQueryBuilder('s')
+            ->select('MAX(s.sortOrder)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

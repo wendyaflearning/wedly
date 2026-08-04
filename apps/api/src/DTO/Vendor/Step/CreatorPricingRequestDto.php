@@ -24,7 +24,11 @@ final readonly class CreatorPricingRequestDto implements DTOInterface
         public ?string $priceType,
 
         #[Assert\NotNull]
-        #[Assert\Count(min: 1, max: 1)]
+        #[Assert\Count(
+            min: 1,
+            max: 1,
+            exactMessage: 'Un créateur possède un seul atelier et ne peut donc être rattaché qu\'à une seule localisation.',
+        )]
         public ?array $zones,
 
         #[Assert\NotNull]

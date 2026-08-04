@@ -6,17 +6,21 @@ namespace App\Tests\Unit\Dispatcher\Vendor\Onboarding;
 
 use App\Dispatcher\Vendor\Onboarding\VendorOnboardingStepDispatcher;
 use App\DTO\Vendor\VendorOnboardingStepRequestDto;
+use App\Entity\Region\Region;
 use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\OnboardingStep;
+use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VendorType;
-use App\Event\StepperSubmittedEvent;
-use App\Event\VendorSubmittedForReviewEvent;
+use App\Event\VendorOnboardingSubmittedEvent;
 use App\Handler\Vendor\Onboarding\StepHandlerInterface;
 use App\Repository\Vendor\VendorRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Uid\UuidV7;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class VendorOnboardingStepDispatcherTest extends TestCase
@@ -47,7 +51,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
-            $vendorRepository,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $eventDispatcher,
             [
@@ -57,7 +61,8 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
                 $zonesPricingHandler,
                 $portfolioHandler,
                 $legalInfoHandler,
-            ]
+            ],
+            $this->createStub(LoggerInterface::class),
         );
 
         $vendor = $this->createMock(Vendor::class);
@@ -96,7 +101,8 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $this->createStub(EventDispatcherInterface::class),
-            []
+            [],
+            $this->createStub(LoggerInterface::class),
         );
 
         $vendor = $this->createStub(Vendor::class);
@@ -120,7 +126,8 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             [
                 new TestStepHandler(OnboardingStep::Professions, filled: true, vendorType: VendorType::Lieu),
-            ]
+            ],
+            $this->createStub(LoggerInterface::class),
         );
 
         $vendor = $this->createStub(Vendor::class);
@@ -159,7 +166,8 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
                 new TestStepHandler(OnboardingStep::Portfolio, filled: true),
                 new TestStepHandler(OnboardingStep::LegalInfo, filled: true),
                 $credentialsHandler,
-            ]
+            ],
+            $this->createStub(LoggerInterface::class),
         );
 
         $vendor = $this->createStub(Vendor::class);
@@ -192,29 +200,24 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects($this->exactly(2))
             ->method('dispatch')
-            ->with($this->callback(function (object $event) use (&$submittedEventSeen, &$reviewEventSeen): bool {
-                if ($event instanceof VendorSubmittedForReviewEvent) {
-                    $reviewEventSeen = true;
-
-                    return true;
-                }
-
-                if ($event instanceof StepperSubmittedEvent) {
-                    $submittedEventSeen = true;
-
-                    return $event->firstName === 'Denis' && $event->email === 'denis@example.com';
-                }
-
-                return false;
-            }))
-            ->willReturnArgument(0);
+            ->with($this->callback(function (VendorOnboardingSubmittedEvent $event): bool {
+                return $event->firstName === 'Denis'
+                    && $event->email === 'denis@example.com'
+                    && $event->brand === 'Studio Denis'
+                    && $event->category === VendorType::Freelance->value
+                    && $event->regions === ['Île-de-France']
+                    && $event->isFirstSubmission === true;
+            }));
 
         $credentialsHandler = new TestStepHandler(OnboardingStep::Credentials, filled: true);
         $vendorRepository = $this->createStub(VendorRepository::class);
 
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('error');
+
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
-            $vendorRepository,
+            $this->createStub(VendorRepository::class),
             new OnboardingStepResolver(),
             $eventDispatcher,
             [
@@ -225,17 +228,27 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
                 new TestStepHandler(OnboardingStep::Portfolio, filled: true),
                 new TestStepHandler(OnboardingStep::LegalInfo, filled: true),
                 $credentialsHandler,
-            ]
+            ],
+            $logger,
         );
 
         $user = $this->createStub(User::class);
         $user->method('getFirstName')->willReturn('Denis');
+        $user->method('getLastName')->willReturn('Martin');
         $user->method('getEmail')->willReturn('denis@example.com');
+
+        $region = $this->createStub(Region::class);
+        $region->method('getName')->willReturn('Île-de-France');
 
         $vendor = $this->createMock(Vendor::class);
         $vendor->method('resolveVendorType')->willReturn(VendorType::Freelance);
         $vendor->method('getOnboardingStep')->willReturn(OnboardingStep::LegalInfo);
         $vendor->method('getUser')->willReturn($user);
+        $vendor->method('getStatus')->willReturn(VendorStatus::UnderReview);
+        $vendor->method('getId')->willReturn(new UuidV7());
+        $vendor->method('getBrandName')->willReturn('Studio Denis');
+        $vendor->method('getRegions')->willReturn(new ArrayCollection([$region]));
+        $vendor->method('getSubmittedForReviewAt')->willReturn(new \DateTimeImmutable());
         $vendor->expects($this->once())->method('setOnboardingStep')->with(OnboardingStep::Credentials);
 
         $response = $dispatcher->handle(
@@ -250,6 +263,77 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
         $this->assertSame([['email' => 'denis@example.com']], $credentialsHandler->handledPayloads);
         $this->assertTrue($submittedEventSeen);
         $this->assertTrue($reviewEventSeen);
+    }
+
+    public function test_handle_credentials_logs_and_does_not_rethrow_when_a_listener_throws(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('flush');
+
+        $listenerException = new \RuntimeException('Template Twig introuvable');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects($this->once())->method('dispatch')->willThrowException($listenerException);
+
+        $credentialsHandler = new TestStepHandler(OnboardingStep::Credentials, filled: true);
+
+        $vendorId = new UuidV7();
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('error')
+            ->with(
+                $this->isString(),
+                $this->callback(function (array $context) use ($vendorId, $listenerException): bool {
+                    return $context['vendorId'] === $vendorId->toRfc4122()
+                        && $context['exception'] === $listenerException;
+                })
+            );
+
+        $dispatcher = new VendorOnboardingStepDispatcher(
+            $em,
+            $this->createStub(VendorRepository::class),
+            new OnboardingStepResolver(),
+            $eventDispatcher,
+            [
+                new TestStepHandler(OnboardingStep::Professions, filled: true),
+                new TestStepHandler(OnboardingStep::Consent, filled: true),
+                new TestStepHandler(OnboardingStep::Experiences, filled: true),
+                new TestStepHandler(OnboardingStep::ZonesPricing, filled: true),
+                new TestStepHandler(OnboardingStep::Portfolio, filled: true),
+                new TestStepHandler(OnboardingStep::LegalInfo, filled: true),
+                $credentialsHandler,
+            ],
+            $logger,
+        );
+
+        $user = $this->createStub(User::class);
+        $user->method('getFirstName')->willReturn('Denis');
+        $user->method('getLastName')->willReturn('Martin');
+        $user->method('getEmail')->willReturn('denis@example.com');
+
+        $region = $this->createStub(Region::class);
+        $region->method('getName')->willReturn('Île-de-France');
+
+        $vendor = $this->createStub(Vendor::class);
+        $vendor->method('resolveVendorType')->willReturn(VendorType::Freelance);
+        $vendor->method('getOnboardingStep')->willReturn(OnboardingStep::LegalInfo);
+        $vendor->method('getUser')->willReturn($user);
+        $vendor->method('getStatus')->willReturn(VendorStatus::UnderReview);
+        $vendor->method('getId')->willReturn($vendorId);
+        $vendor->method('getBrandName')->willReturn('Studio Denis');
+        $vendor->method('getRegions')->willReturn(new ArrayCollection([$region]));
+        $vendor->method('getSubmittedForReviewAt')->willReturn(new \DateTimeImmutable());
+
+        $response = $dispatcher->handle(
+            $vendor,
+            new VendorOnboardingStepRequestDto(
+                step: OnboardingStep::Credentials->value,
+                data: ['email' => 'denis@example.com']
+            )
+        );
+
+        $this->assertNull($response);
     }
 }
 

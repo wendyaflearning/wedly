@@ -88,7 +88,7 @@ final class ConsentStepHandlerTest extends TestCase
             ->method('findOneBy')
             ->with(
                 ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-                ['createdAt' => 'DESC']
+                ['createdAt' => 'DESC', 'id' => 'DESC']
             )
             ->willReturn($consent);
 
@@ -127,7 +127,7 @@ final class ConsentStepHandlerTest extends TestCase
             ->method('findOneBy')
             ->with(
                 ['vendor' => $vendor, 'consentType' => ConsentType::SensitiveData],
-                ['createdAt' => 'DESC']
+                ['createdAt' => 'DESC', 'id' => 'DESC']
             )
             ->willReturn($consent);
 

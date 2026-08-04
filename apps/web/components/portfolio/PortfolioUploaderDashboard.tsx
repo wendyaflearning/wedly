@@ -84,7 +84,7 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
               <em style={{ color: 'var(--color-accent)' }}>ou cliquez pour parcourir.</em>
             </p>
             <p style={{ fontFamily: 'var(--font-manrope-var, Manrope, system-ui, sans-serif)', fontSize: 12, color: 'rgba(255,246,237,0.5)', marginTop: 12 }}>
-              {maxPhotos} photos max · JPG, PNG, HEIC · 12 Mo max par fichier · compression auto côté navigateur.
+              {maxPhotos} photos max · JPG, PNG, WebP · 20 Mo max par fichier · compression auto côté navigateur.
             </p>
           </div>
           <button

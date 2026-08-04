@@ -92,7 +92,7 @@ export default function HeroSection() {
               marginBottom: "1.5rem",
             }}
           >
-            Wedplan · WedWallet · WedMatch
+            Inspiration · Expérience · Qualité
           </p>
 
           {/* H1 */}
@@ -126,7 +126,7 @@ export default function HeroSection() {
               ...revealStyle(120),
             }}
           >
-            Planning, budget et prestataires choisis pour votre style, votre univers, vos envies. Tout est pensé autour de vous.
+            Ici commence une histoire pensée pour vous : planning, budget et rencontres, autour de votre univers, que vous cherchiez le bon prestataire, ou soyez celui qu&apos;on cherche.
           </p>
 
           {/* Mobile CTA — single full-width button */}

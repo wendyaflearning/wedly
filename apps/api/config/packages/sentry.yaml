@@ -5,6 +5,7 @@ when@prod:
             ignore_exceptions:
                 - 'Symfony\Component\ErrorHandler\Error\FatalError'
                 - 'Symfony\Component\Debug\Exception\FatalErrorException'
+                - 'App\Exception\ValidationException'
         register_error_listener: false
         register_error_handler: false
 

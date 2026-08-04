@@ -29,7 +29,6 @@ function buildGroups(
     { key: 'pricing_zone', label: 'Tarifs & Localisation', href: '/dashboard/profile/pricing-zone', completed: status.pricing_zone },
     { key: 'booking_blocker', label: 'Disponibilités', href: '/dashboard/profile/booking-blocker', completed: status.booking_blocker },
     { key: 'experiences', label: 'Vos expériences de mariage', href: '/dashboard/profile/experiences', completed: status.experiences },
-    { key: 'matching_consent', label: 'Confidentialité du matching', href: '/dashboard/profile/matching-consent', completed: status.matching_consent },
   ]
 
   if (vendorType === 'lieu') {
@@ -109,6 +108,18 @@ export default async function ProfileSidebar() {
           ))}
         </div>
       ))}
+      <div className="mt-8 pt-6 border-t border-bordeaux/[0.08]">
+        <Link
+          href="/dashboard/profile/preview"
+          className="flex items-center gap-2 font-manrope text-[12px] font-semibold text-accent hover:text-accent/80 transition-colors"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          Aperçu de mon profil
+        </Link>
+      </div>
     </nav>
   )
 }

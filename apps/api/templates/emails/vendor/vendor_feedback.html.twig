@@ -1,0 +1,44 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Nouveau feedback prestataire{% endblock %}
+
+{% block extra_styles %}
+    .meta-label { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; color: #4E1A32; margin: 0 0 8px 0; }
+    .meta-value { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.7; color: #9D4F1E; margin: 0 0 18px 0; }
+    .message-box { background-color: rgba(78,26,50,0.04); border-left: 3px solid #4E1A32; padding: 18px 20px; margin: 0 0 24px 0; }
+    .message-text { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.8; color: #9D4F1E; margin: 0; white-space: pre-wrap; }
+    .cta-link { font-family: Arial, Helvetica, sans-serif; color: #9D4F1E; font-size: 14px; text-decoration: underline; }
+{% endblock %}
+
+{% block body %}
+              <p class="greeting">Nouveau <span class="greeting-italic">message prestataire</span></p>
+
+              <p class="text">
+                Un prestataire a envoyé un feedback depuis son espace Wedly.
+              </p>
+
+              <hr class="separator">
+
+              <p class="meta-label">Prestataire</p>
+              <p class="meta-value">{{ vendorName }}{% if vendorBrandName %} · {{ vendorBrandName }}{% endif %}</p>
+
+              <p class="meta-label">Email</p>
+              <p class="meta-value">{{ vendorEmail }}</p>
+
+              <p class="meta-label">Envoyé le</p>
+              <p class="meta-value">{{ sentAt|date('d/m/Y à H:i') }}</p>
+
+              <p class="meta-label">Lien admin</p>
+              <p class="meta-value"><a href="{{ adminUrl }}" class="cta-link">{{ adminUrl }}</a></p>
+
+              <p class="meta-label">Message</p>
+              <div class="message-box">
+                <p class="message-text">{{ message }}</p>
+              </div>
+
+              <p class="text">
+                Pensez à vérifier la fiche admin du prestataire si un suivi est nécessaire.
+              </p>
+{% endblock %}
+
+{% block footer_text %}Vous recevez cet email car un prestataire a contacté l’équipe Wedly depuis son espace.{% endblock %}

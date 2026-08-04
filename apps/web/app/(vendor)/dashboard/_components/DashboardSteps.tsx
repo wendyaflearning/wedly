@@ -39,7 +39,7 @@ const STEPS = [
     icon: <CheckCircleIcon />,
     title: 'Vérifiez et publiez votre profil',
     description: 'Dernier coup d\'œil, puis vous apparaissez en Wedmatch.',
-    href: null,
+    href: '/dashboard/profile/preview',
   },
 ]
 

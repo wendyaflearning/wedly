@@ -15,7 +15,8 @@ export async function patchOnboardingStep(
   }
   if (!res.ok) {
     const json = await res.json().catch(() => ({}))
-    throw new Error((json as { error?: string }).error ?? 'Une erreur est survenue.')
+    const data = json as { error?: string; errors?: Array<{ field: string; message: string }> }
+    throw new Error(data.error ?? data.errors?.[0]?.message ?? 'Une erreur est survenue.')
   }
   return res.json()
 }

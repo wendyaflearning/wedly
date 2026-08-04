@@ -10,11 +10,13 @@ use App\Entity\User\InviteToken;
 use App\Entity\User\User;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
+use App\Entity\Vendor\VendorAutoTaggedService;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VendorType;
 use App\Repository\User\InviteTokenRepository;
 use App\Repository\User\UserRepository;
+use App\Repository\Vendor\VendorAutoTaggedServiceRepository;
 use App\Service\Vendor\AdminVendorDraftService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -113,6 +115,33 @@ final class AdminVendorDraftServiceTest extends TestCase
         self::assertSame(-1, $vendor->getPriceMaxCents());
     }
 
+    public function test_update_rejects_partial_patch_turning_multi_zone_vendor_into_creator(): void
+    {
+        $vendor = $this->makeReadyVendor();
+        $vendor->addRegion($this->makeRegion('Normandie', 'normandie'));
+
+        $creatorService = $this->makeServiceEntity(VendorType::Createurs, 'createurs', 'Créateurs');
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->once())
+            ->method('find')
+            ->with(Service::class, 'creator-service-id')
+            ->willReturn($creatorService);
+        $entityManager->expects($this->never())->method('flush');
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasUsedVendorInvitation')->willReturn(false);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Un créateur possède un seul atelier');
+
+        $this->makeDraftService($entityManager, $inviteTokenRepository)
+            ->update($vendor, AdminVendorDraftRequestDto::fromArray([
+                'service_id' => 'creator-service-id',
+            ]));
+    }
+
     public function test_update_rejects_vendor_with_used_invitation(): void
     {
         $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
@@ -170,9 +199,35 @@ final class AdminVendorDraftServiceTest extends TestCase
         $this->makeDraftService($entityManager)->delete($vendor);
     }
 
+    public function test_get_returns_empty_auto_tagged_service_ids_by_default(): void
+    {
+        $vendor = $this->makeReadyVendor();
+
+        $response = $this->makeDraftService()->get($vendor);
+
+        self::assertSame([], $response->profession['autoTaggedServiceIds']);
+    }
+
+    public function test_get_returns_auto_tagged_service_ids_from_repository(): void
+    {
+        $vendor  = $this->makeReadyVendor();
+        $service = $this->makeServiceEntity(name: 'Fleuriste', slug: 'fleuriste');
+
+        $autoTaggedEntry = $this->createStub(VendorAutoTaggedService::class);
+        $autoTaggedEntry->method('getService')->willReturn($service);
+
+        $autoTaggedServiceRepository = $this->createStub(VendorAutoTaggedServiceRepository::class);
+        $autoTaggedServiceRepository->method('findServicesByVendor')->willReturn([$autoTaggedEntry]);
+
+        $response = $this->makeDraftService(vendorAutoTaggedServiceRepository: $autoTaggedServiceRepository)->get($vendor);
+
+        self::assertSame([$service->getId()->toRfc4122()], $response->profession['autoTaggedServiceIds']);
+    }
+
     private function makeDraftService(
         ?EntityManagerInterface $entityManager = null,
         ?InviteTokenRepository $inviteTokenRepository = null,
+        ?VendorAutoTaggedServiceRepository $vendorAutoTaggedServiceRepository = null,
     ): AdminVendorDraftService {
         $userRepository = $this->createStub(UserRepository::class);
         $userRepository->method('findOneBy')->willReturn(null);
@@ -180,10 +235,16 @@ final class AdminVendorDraftServiceTest extends TestCase
         $passwordHasher = $this->createStub(UserPasswordHasherInterface::class);
         $passwordHasher->method('hashPassword')->willReturn('hashed-password');
 
+        $autoTaggedServiceRepository = $vendorAutoTaggedServiceRepository ?? $this->createStub(VendorAutoTaggedServiceRepository::class);
+        if ($vendorAutoTaggedServiceRepository === null) {
+            $autoTaggedServiceRepository->method('findServicesByVendor')->willReturn([]);
+        }
+
         return new AdminVendorDraftService(
             $entityManager ?? $this->createStub(EntityManagerInterface::class),
             $userRepository,
             $inviteTokenRepository ?? $this->createStub(InviteTokenRepository::class),
+            $autoTaggedServiceRepository,
             $passwordHasher,
         );
     }
@@ -229,21 +290,24 @@ final class AdminVendorDraftServiceTest extends TestCase
         return $vendor;
     }
 
-    private function makeServiceEntity(): Service
-    {
+    private function makeServiceEntity(
+        VendorType $category = VendorType::Freelance,
+        string $slug = 'photographe',
+        string $name = 'Photographe',
+    ): Service {
         $service = (new Service())
-            ->setName('Photographe')
-            ->setSlug('photographe')
+            ->setName($name)
+            ->setSlug($slug)
             ->setSortOrder(1)
-            ->setCategory(VendorType::Freelance);
+            ->setCategory($category);
         $this->setPrivateProperty($service, 'id', new UuidV7());
 
         return $service;
     }
 
-    private function makeRegion(): Region
+    private function makeRegion(string $name = 'Île-de-France', string $slug = 'ile-de-france'): Region
     {
-        $region = (new Region())->setName('Île-de-France')->setSlug('ile-de-france');
+        $region = (new Region())->setName($name)->setSlug($slug);
         $this->setPrivateProperty($region, 'id', new UuidV7());
 
         return $region;

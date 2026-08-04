@@ -107,13 +107,15 @@ class VendorRepository extends ServiceEntityRepository
     public function findAdminProfile(string $id): ?Vendor
     {
         return $this->createQueryBuilder('vendor')
-            ->addSelect('user', 'service', 'culture', 'confession', 'region', 'portfolio', 'venueDetails', 'cateringDetails')
+            ->addSelect('user', 'service', 'culture', 'confession', 'region', 'portfolio', 'portfolioStyle', 'portfolioSpecialty', 'venueDetails', 'cateringDetails')
             ->leftJoin('vendor.user', 'user')
             ->leftJoin('vendor.services', 'service')
             ->leftJoin('vendor.cultures', 'culture')
             ->leftJoin('vendor.confessions', 'confession')
             ->leftJoin('vendor.regions', 'region')
             ->leftJoin('vendor.portfolioImages', 'portfolio')
+            ->leftJoin('portfolio.styles', 'portfolioStyle')
+            ->leftJoin('portfolio.specialties', 'portfolioSpecialty')
             ->leftJoin('vendor.venueDetails', 'venueDetails')
             ->leftJoin('vendor.cateringDetails', 'cateringDetails')
             ->andWhere('vendor.id = :id')
@@ -147,6 +149,20 @@ class VendorRepository extends ServiceEntityRepository
             );
 
         return $consent?->isGranted();
+    }
+
+    /** @return BookingBlocker[] */
+    public function findBookingBlockersByVendor(Vendor $vendor): array
+    {
+        return $this->getEntityManager()
+            ->createQueryBuilder()
+            ->select('b')
+            ->from(BookingBlocker::class, 'b')
+            ->where('b.vendor = :vendor')
+            ->orderBy('b.startDate', 'ASC')
+            ->setParameter('vendor', $vendor)
+            ->getQuery()
+            ->getResult();
     }
 
     public function findLatestBookingBlockerUpdatedAt(Vendor $vendor): ?\DateTimeImmutable

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\DTO\Admin\Vendor;
 
+use App\DTO\Admin\Vendor\Portfolio\PortfolioMappingTrait;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Region\Region;
-use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\PriceType;
@@ -17,6 +17,8 @@ use App\Enum\Vendor\VendorType;
 
 final readonly class AdminVendorProfileResponseDto
 {
+    use PortfolioMappingTrait;
+
     public string $id;
     public string $status;
     public string $statusLabel;
@@ -125,21 +127,6 @@ final readonly class AdminVendorProfileResponseDto
                 'slug' => $region->getSlug(),
             ],
             $vendor->getRegions()->toArray()
-        );
-    }
-
-    private function portfolio(Vendor $vendor): array
-    {
-        $images = $vendor->getPortfolioImages()->toArray();
-        usort($images, fn(PortfolioImage $a, PortfolioImage $b) => $a->getSortOrder() <=> $b->getSortOrder());
-
-        return array_map(
-            fn(PortfolioImage $image) => [
-                'id'      => $image->getId()->toRfc4122(),
-                'url'     => $image->getUrl(),
-                'isCover' => $image->isCover(),
-            ],
-            $images
         );
     }
 

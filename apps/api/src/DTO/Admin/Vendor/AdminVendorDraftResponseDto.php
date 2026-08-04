@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Admin\Vendor;
 
+use App\DTO\Admin\Vendor\Portfolio\PortfolioMappingTrait;
 use App\Entity\Confession\Confession;
 use App\Entity\Culture\Culture;
 use App\Entity\Region\Region;
@@ -14,6 +15,8 @@ use App\Service\Vendor\AdminVendorDraftService;
 
 final readonly class AdminVendorDraftResponseDto
 {
+    use PortfolioMappingTrait;
+
     public string $id;
     public string $status;
     public ?array $invitation;
@@ -21,11 +24,13 @@ final readonly class AdminVendorDraftResponseDto
     public array $profession;
     public array $experiences;
     public array $zonesPricing;
+    public array $portfolio;
     public array $legalInfo;
     public ?array $venueCharacteristics;
     public ?array $cateringCharacteristics;
 
-    public function __construct(Vendor $vendor, ?InviteToken $inviteToken = null)
+    /** @param string[] $autoTaggedServiceIds */
+    public function __construct(Vendor $vendor, ?InviteToken $inviteToken = null, array $autoTaggedServiceIds = [])
     {
         $service = $vendor->getServices()->first();
         $venueDetails = $vendor->getVenueDetails();
@@ -46,7 +51,8 @@ final readonly class AdminVendorDraftResponseDto
             'brandName' => $vendor->getBrandName(),
         ];
         $this->profession = [
-            'serviceId' => $service instanceof Service ? $service->getId()->toRfc4122() : null,
+            'serviceId'            => $service instanceof Service ? $service->getId()->toRfc4122() : null,
+            'autoTaggedServiceIds' => $autoTaggedServiceIds,
         ];
         $this->experiences = [
             'cultureIds' => $vendor->getCultures()
@@ -65,6 +71,7 @@ final readonly class AdminVendorDraftResponseDto
             'priceType' => $vendor->getPriceType()->value,
             'city'      => $vendor->getCity(),
         ];
+        $this->portfolio = $this->portfolio($vendor);
         $this->legalInfo = [
             'phone'   => $vendor->getPhone(),
             'address' => $vendor->getAddress(),

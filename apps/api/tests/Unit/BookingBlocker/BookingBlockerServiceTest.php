@@ -34,8 +34,8 @@ final class BookingBlockerServiceTest extends TestCase
     public function test_create_persists_and_returns_blocker_when_no_overlap(): void
     {
         $vendor = $this->createStub(Vendor::class);
-        $start  = new \DateTimeImmutable('2026-07-15');
-        $end    = new \DateTimeImmutable('2026-07-20');
+        $start  = (new \DateTimeImmutable('today'))->modify('+7 days');
+        $end    = $start->modify('+5 days');
 
         $this->repository->method('findOverlapping')->willReturn([]);
 
@@ -61,7 +61,8 @@ final class BookingBlockerServiceTest extends TestCase
         $this->expectExceptionCode(422);
         $this->expectExceptionMessage('La date de début doit être antérieure ou égale à la date de fin.');
 
-        $this->makeService()->create($vendor, new \DateTimeImmutable('2026-07-20'), new \DateTimeImmutable('2026-07-15'));
+        $today = new \DateTimeImmutable('today');
+        $this->makeService()->create($vendor, $today->modify('+10 days'), $today->modify('+5 days'));
     }
 
     public function test_create_throws_domain_exception_when_start_is_in_the_past(): void
@@ -89,7 +90,8 @@ final class BookingBlockerServiceTest extends TestCase
         $this->expectExceptionCode(422);
         $this->expectExceptionMessage('La date de fin ne peut pas dépasser 12 mois à partir d\'aujourd\'hui.');
 
-        $this->makeService()->create($vendor, new \DateTimeImmutable('2026-07-15'), new \DateTimeImmutable('2028-01-01'));
+        $today = new \DateTimeImmutable('today');
+        $this->makeService()->create($vendor, $today->modify('+7 days'), $today->modify('+13 months'));
     }
 
     public function test_create_throws_domain_exception_when_overlap_exists(): void
@@ -105,7 +107,8 @@ final class BookingBlockerServiceTest extends TestCase
         $this->expectExceptionCode(422);
         $this->expectExceptionMessage('Ce bloc chevauche une indisponibilité existante.');
 
-        $this->makeService()->create($vendor, new \DateTimeImmutable('2026-07-15'), new \DateTimeImmutable('2026-07-20'));
+        $start = (new \DateTimeImmutable('today'))->modify('+7 days');
+        $this->makeService()->create($vendor, $start, $start->modify('+5 days'));
     }
 
     // --- delete() ---

@@ -13,15 +13,9 @@ function resolveVendorTypeLabel(vendorType: string): string {
   return labels[vendorType] ?? vendorType
 }
 
-export default async function ProfileHubPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ saved?: string }>
-}) {
+export default async function ProfileHubPage() {
   const dashboard = await fetchVendorDashboard()
   if (!dashboard) redirect('/login')
-
-  const { saved } = await searchParams
 
   const s = dashboard.sections_status
 
@@ -53,28 +47,12 @@ export default async function ProfileHubPage({
       label: 'Vos expériences de mariage',
       href: '/dashboard/profile/experiences',
       completed: s.experiences,
-      disabled: dashboard.consent_granted === false,
-      subtitle: dashboard.consent_granted === false
-        ? 'Activez le matching culturel pour configurer cette section'
-        : s.experiences
-          ? 'Expériences renseignées'
-          : 'Partagez les mariages marquants de votre parcours',
-      tip: dashboard.consent_granted === false
+      subtitle: s.experiences
+        ? 'Expériences renseignées'
+        : 'Partagez les mariages marquants de votre parcours',
+      tip: s.experiences
         ? undefined
-        : s.experiences
-          ? undefined
-          : 'Optionnel mais recommandé — renseigner vos expériences culturelles améliore la précision du matching. Sans elles, votre profil reste visible et éligible.',
-    },
-    {
-      key: 'matching_consent',
-      label: 'Confidentialité du matching',
-      href: '/dashboard/profile/matching-consent',
-      completed: s.matching_consent,
-      subtitle: dashboard.consent_granted === true
-        ? 'Matching culturel activé'
-        : dashboard.consent_granted === false
-          ? 'Matching culturel désactivé'
-          : 'À compléter',
+        : 'Optionnel mais recommandé — renseigner vos expériences culturelles améliore la précision du matching. Sans elles, votre profil reste visible et éligible.',
     },
   ]
 
@@ -170,7 +148,7 @@ export default async function ProfileHubPage({
             <div className="shrink-0 flex flex-col items-end gap-2 pb-1">
               <p className="font-manrope text-[12px] text-creme/50">{vendorTypeLabel}</p>
               <a
-                href="#"
+                href="/dashboard/profile/preview"
                 className="font-manrope text-[12px] font-semibold text-creme/70 hover:text-creme transition-colors whitespace-nowrap"
               >
                 Mon profil →
@@ -195,7 +173,7 @@ export default async function ProfileHubPage({
         </p>
       </div>
 
-      <ProfileHubClient groups={groups} sidebar={<ProfileSidebar />} savedKey={saved} />
+      <ProfileHubClient groups={groups} sidebar={<ProfileSidebar />} />
     </div>
   )
 }
