@@ -18,7 +18,12 @@ final readonly class GetServiceTagTypesAction
         private TagTypeRepository $tagTypeRepository,
     ) {}
 
-    #[Route('/api/v1/services/{serviceId}/tag-types', name: 'api_service_tag_types_list', methods: ['GET'])]
+    #[Route(
+        '/api/v1/services/{serviceId}/tag-types',
+        name: 'api_service_tag_types_list',
+        requirements: ['serviceId' => '[0-9a-fA-F-]{36}'],
+        methods: ['GET'],
+    )]
     public function __invoke(string $serviceId): JsonResponse
     {
         if ($this->serviceRepository->find($serviceId) === null) {
