@@ -14,4 +14,20 @@ class TagTypeRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, TagType::class);
     }
+
+    /** @return TagType[] */
+    public function findActiveByServiceIdWithValues(string $serviceId): array
+    {
+        return $this->createQueryBuilder('t')
+            ->leftJoin('t.tagValues', 'v')
+            ->addSelect('v')
+            ->where('t.service = :serviceId')
+            ->andWhere('t.isActive = true')
+            ->andWhere('v.id IS NULL OR v.isActive = true')
+            ->setParameter('serviceId', $serviceId)
+            ->orderBy('t.label', 'ASC')
+            ->addOrderBy('v.label', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
