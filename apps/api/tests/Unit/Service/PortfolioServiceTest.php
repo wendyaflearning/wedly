@@ -2,17 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit\Portfolio;
+namespace App\Tests\Unit\Service;
 
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\Specialty;
+use App\Entity\Vendor\TagType;
+use App\Entity\Vendor\TagValue;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorAutoTaggedService;
 use App\Entity\Wedding\WeddingStyle;
 use App\Exception\ValidationException;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Repository\Vendor\SpecialtyRepository;
+use App\Repository\Vendor\TagValueRepository;
 use App\Service\PortfolioService;
 use Cloudinary\Api\ApiResponse;
 use Cloudinary\Api\Upload\UploadApi;
@@ -24,16 +27,20 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV7;
 
 final class PortfolioServiceTest extends TestCase
 {
     private PortfolioImageRepository&Stub $repository;
     private SpecialtyRepository&Stub $specialtyRepository;
+    private TagValueRepository&Stub $tagValueRepository;
 
     protected function setUp(): void
     {
         $this->repository          = $this->createStub(PortfolioImageRepository::class);
         $this->specialtyRepository = $this->createStub(SpecialtyRepository::class);
+        $this->tagValueRepository  = $this->createStub(TagValueRepository::class);
     }
 
     private function makeService(
@@ -44,7 +51,7 @@ final class PortfolioServiceTest extends TestCase
         $cloudinary = $this->createStub(Cloudinary::class);
         $cloudinary->method('uploadApi')->willReturn($uploadApi);
 
-        return new PortfolioService($cloudinary, $em, $this->repository, $logger, $this->specialtyRepository);
+        return new PortfolioService($cloudinary, $em, $this->repository, $logger, $this->specialtyRepository, $this->tagValueRepository);
     }
 
     private function makeSpecialty(Service $service): Specialty&Stub
@@ -66,6 +73,38 @@ final class PortfolioServiceTest extends TestCase
     private function makeCloudinaryResponse(string $url = 'https://res.cloudinary.com/img.jpg', string $publicId = 'wedly/img1'): ApiResponse
     {
         return new ApiResponse(['secure_url' => $url, 'public_id' => $publicId], []);
+    }
+
+    private function makeTagType(bool $isPrimary = false, ?int $maxSelections = null, string $label = 'Type de lieu'): TagType
+    {
+        $tagType = (new TagType())
+            ->setLabel($label)
+            ->setIsPrimary($isPrimary)
+            ->setMaxSelections($maxSelections)
+            ->setIsActive(true);
+
+        $this->setEntityId($tagType, Uuid::v7());
+
+        return $tagType;
+    }
+
+    private function makeTagValue(TagType $tagType, bool $isActive = true, string $label = 'Domaine'): TagValue
+    {
+        $tagValue = (new TagValue())
+            ->setTagType($tagType)
+            ->setLabel($label)
+            ->setIsActive($isActive);
+
+        $this->setEntityId($tagValue, Uuid::v7());
+
+        return $tagValue;
+    }
+
+    private function setEntityId(object $entity, UuidV7 $id): void
+    {
+        $property = new \ReflectionProperty($entity::class, 'id');
+        $property->setAccessible(true);
+        $property->setValue($entity, $id);
     }
 
     // --- uploadPhoto() ---
@@ -231,6 +270,165 @@ final class PortfolioServiceTest extends TestCase
 
         $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)
             ->uploadPhoto($vendor, $this->makeFile(), 0, ['unknown'], []);
+    }
+
+    // --- updatePortfolioTags() ---
+
+    public function test_updatePortfolioTags_sets_tags_and_stays_hidden_when_no_primary_tag_type_selected(): void
+    {
+        $tagType   = $this->makeTagType(isPrimary: false);
+        $tagValue1 = $this->makeTagValue($tagType, label: 'Domaine');
+        $tagValue2 = $this->makeTagValue($tagType, label: 'Château');
+
+        $this->tagValueRepository = $this->createStub(TagValueRepository::class);
+        $this->tagValueRepository->method('find')->willReturnMap([
+            [(string) $tagValue1->getId(), $tagValue1],
+            [(string) $tagValue2->getId(), $tagValue2],
+        ]);
+
+        $image = new PortfolioImage();
+
+        $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(UploadApi::class))
+            ->updatePortfolioTags($image, [(string) $tagValue1->getId(), (string) $tagValue2->getId()]);
+
+        $this->assertCount(2, $image->getTags());
+        $this->assertTrue($image->getTags()->contains($tagValue1));
+        $this->assertTrue($image->getTags()->contains($tagValue2));
+        $this->assertFalse($image->isVisibleInWedream());
+    }
+
+    public function test_updatePortfolioTags_marks_image_visible_when_a_primary_tag_type_value_is_selected(): void
+    {
+        $primaryTagType  = $this->makeTagType(isPrimary: true);
+        $primaryTagValue = $this->makeTagValue($primaryTagType);
+
+        $this->tagValueRepository = $this->createStub(TagValueRepository::class);
+        $this->tagValueRepository->method('find')->willReturn($primaryTagValue);
+
+        $image = new PortfolioImage();
+
+        $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(UploadApi::class))
+            ->updatePortfolioTags($image, [(string) $primaryTagValue->getId()]);
+
+        $this->assertTrue($image->getTags()->contains($primaryTagValue));
+        $this->assertTrue($image->isVisibleInWedream());
+    }
+
+    public function test_updatePortfolioTags_throws_when_tag_value_id_is_unknown(): void
+    {
+        $this->tagValueRepository = $this->createStub(TagValueRepository::class);
+        $this->tagValueRepository->method('find')->willReturn(null);
+
+        $image       = new PortfolioImage();
+        $existingTag = $this->makeTagValue($this->makeTagType());
+        $image->addTag($existingTag);
+
+        try {
+            $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(UploadApi::class))
+                ->updatePortfolioTags($image, ['unknown-id']);
+            $this->fail('Expected ValidationException was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertSame('tagValueIds', $e->getViolations()[0]['field']);
+        }
+
+        $this->assertCount(1, $image->getTags());
+        $this->assertTrue($image->getTags()->contains($existingTag));
+        $this->assertFalse($image->isVisibleInWedream());
+    }
+
+    public function test_updatePortfolioTags_throws_when_tag_value_is_inactive(): void
+    {
+        $tagType          = $this->makeTagType();
+        $inactiveTagValue = $this->makeTagValue($tagType, isActive: false);
+
+        $this->tagValueRepository = $this->createStub(TagValueRepository::class);
+        $this->tagValueRepository->method('find')->willReturn($inactiveTagValue);
+
+        $image       = new PortfolioImage();
+        $existingTag = $this->makeTagValue($this->makeTagType());
+        $image->addTag($existingTag);
+
+        try {
+            $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(UploadApi::class))
+                ->updatePortfolioTags($image, [(string) $inactiveTagValue->getId()]);
+            $this->fail('Expected ValidationException was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertSame('tagValueIds', $e->getViolations()[0]['field']);
+        }
+
+        $this->assertCount(1, $image->getTags());
+        $this->assertTrue($image->getTags()->contains($existingTag));
+    }
+
+    public function test_updatePortfolioTags_throws_when_max_selections_exceeded_for_a_tag_type(): void
+    {
+        $tagType   = $this->makeTagType(isPrimary: false, maxSelections: 1, label: 'Formation');
+        $tagValue1 = $this->makeTagValue($tagType, label: 'Soliste');
+        $tagValue2 = $this->makeTagValue($tagType, label: 'Duo');
+
+        $this->tagValueRepository = $this->createStub(TagValueRepository::class);
+        $this->tagValueRepository->method('find')->willReturnMap([
+            [(string) $tagValue1->getId(), $tagValue1],
+            [(string) $tagValue2->getId(), $tagValue2],
+        ]);
+
+        $image       = new PortfolioImage();
+        $existingTag = $this->makeTagValue($this->makeTagType());
+        $image->addTag($existingTag);
+
+        try {
+            $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(UploadApi::class))
+                ->updatePortfolioTags(
+                    $image,
+                    [(string) $tagValue1->getId(), (string) $tagValue2->getId()],
+                );
+            $this->fail('Expected ValidationException was not thrown.');
+        } catch (ValidationException $e) {
+            $violation = $e->getViolations()[0];
+            $this->assertSame('tagValueIds', $violation['field']);
+            $this->assertStringContainsString('Formation', $violation['message']);
+            $this->assertStringContainsString('1', $violation['message']);
+        }
+
+        $this->assertCount(1, $image->getTags());
+        $this->assertTrue($image->getTags()->contains($existingTag));
+    }
+
+    public function test_updatePortfolioTags_deduplicates_repeated_tag_value_ids(): void
+    {
+        $tagValue = $this->makeTagValue($this->makeTagType());
+
+        $this->tagValueRepository = $this->createMock(TagValueRepository::class);
+        $this->tagValueRepository->expects($this->once())
+            ->method('find')
+            ->with((string) $tagValue->getId())
+            ->willReturn($tagValue);
+
+        $image = new PortfolioImage();
+
+        $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(UploadApi::class))
+            ->updatePortfolioTags($image, [(string) $tagValue->getId(), (string) $tagValue->getId()]);
+
+        $this->assertCount(1, $image->getTags());
+        $this->assertTrue($image->getTags()->contains($tagValue));
+    }
+
+    public function test_updatePortfolioTags_clears_tags_and_hides_from_wedream_when_ids_empty(): void
+    {
+        $existingTag = $this->makeTagValue($this->makeTagType(isPrimary: true));
+
+        $image = new PortfolioImage();
+        $image->addTag($existingTag);
+        $image->setVisibleInWedream(true);
+
+        $this->tagValueRepository = $this->createMock(TagValueRepository::class);
+        $this->tagValueRepository->expects($this->never())->method('find');
+
+        $this->makeService($this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(UploadApi::class))
+            ->updatePortfolioTags($image, []);
+
+        $this->assertCount(0, $image->getTags());
+        $this->assertFalse($image->isVisibleInWedream());
     }
 
     // --- deletePhoto() ---

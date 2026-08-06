@@ -6,12 +6,15 @@ namespace App\Service;
 
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Specialty;
+use App\Entity\Vendor\TagType;
+use App\Entity\Vendor\TagValue;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Vendor\VendorAutoTaggedService;
 use App\Entity\Wedding\WeddingStyle;
 use App\Exception\ValidationException;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Repository\Vendor\SpecialtyRepository;
+use App\Repository\Vendor\TagValueRepository;
 use Cloudinary\Cloudinary;
 use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
@@ -28,6 +31,7 @@ class PortfolioService
         private readonly PortfolioImageRepository $portfolioImageRepository,
         private readonly LoggerInterface $logger,
         private readonly SpecialtyRepository $specialtyRepository,
+        private readonly TagValueRepository $tagValueRepository,
     ) {}
 
     public function uploadPhoto(
@@ -122,28 +126,91 @@ class PortfolioService
     }
 
     /**
-     * @param string[]|null $styleIds
-     * @param string[]|null $specialtyIds
+     * @param string[] $tagValueIds
      */
-    public function updateTags(Vendor $vendor, PortfolioImage $image, ?array $styleIds, ?array $specialtyIds): void
+    public function updatePortfolioTags(PortfolioImage $image, array $tagValueIds): void
     {
-        if ($specialtyIds !== null && count($specialtyIds) === 0) {
-            throw new ValidationException([[
-                'field'   => 'specialtyIds',
-                'message' => 'Vous devez sélectionner au moins une spécialité.',
-            ]]);
+        $tagValues = $this->resolveTagValues(array_unique($tagValueIds));
+
+        $this->assertMaxSelectionsRespected($tagValues);
+
+        $image->getTags()->clear();
+        foreach ($tagValues as $tagValue) {
+            $image->addTag($tagValue);
         }
 
-        // TODO WED-100: $image ne porte plus de relation styles/specialties depuis la suppression de
-        // portfolio_image_specialty/portfolio_image_style (WED-97) — cette méthode ne tague plus la photo
-        // tant que le mapping vers TagValue n'est pas implémenté. Validation conservée en attendant.
-        if ($specialtyIds !== null) {
-            $this->resolveSpecialtyTags($vendor, $specialtyIds);
+        $image->setVisibleInWedream($this->hasPrimaryTagValue($tagValues));
+    }
+
+    /**
+     * @param string[] $tagValueIds
+     *
+     * @return TagValue[]
+     */
+    private function resolveTagValues(array $tagValueIds): array
+    {
+        $tagValues = [];
+        foreach ($tagValueIds as $tagValueId) {
+            $tagValue = $this->tagValueRepository->find($tagValueId);
+            if ($tagValue === null || !$tagValue->isActive()) {
+                throw new ValidationException([[
+                    'field'   => 'tagValueIds',
+                    'message' => sprintf('La valeur de tag "%s" est invalide ou inactive.', $tagValueId),
+                ]]);
+            }
+
+            $tagValues[] = $tagValue;
         }
 
-        if ($styleIds !== null) {
-            $this->resolveStyleTags($styleIds);
+        return $tagValues;
+    }
+
+    /**
+     * @param TagValue[] $tagValues
+     */
+    private function assertMaxSelectionsRespected(array $tagValues): void
+    {
+        $tagTypesById  = [];
+        $countByTagType = [];
+
+        foreach ($tagValues as $tagValue) {
+            $tagType   = $tagValue->getTagType();
+            $tagTypeId = (string) $tagType->getId();
+
+            $tagTypesById[$tagTypeId]   ??= $tagType;
+            $countByTagType[$tagTypeId] = ($countByTagType[$tagTypeId] ?? 0) + 1;
         }
+
+        foreach ($countByTagType as $tagTypeId => $count) {
+            /** @var TagType $tagType */
+            $tagType       = $tagTypesById[$tagTypeId];
+            $maxSelections = $tagType->getMaxSelections();
+
+            if ($maxSelections !== null && $count > $maxSelections) {
+                throw new ValidationException([[
+                    'field'   => 'tagValueIds',
+                    'message' => sprintf(
+                        'Vous ne pouvez pas sélectionner plus de %d valeur(s) pour "%s".',
+                        $maxSelections,
+                        $tagType->getLabel(),
+                    ),
+                ]]);
+            }
+        }
+    }
+
+    /**
+     * @param TagValue[] $tagValues
+     */
+    private function hasPrimaryTagValue(array $tagValues): bool
+    {
+        foreach ($tagValues as $tagValue) {
+            if ($tagValue->getTagType()->isPrimary()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function deletePhoto(PortfolioImage $image): ?string
