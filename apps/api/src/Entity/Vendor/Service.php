@@ -45,9 +45,13 @@ class Service
     #[ORM\OneToMany(targetEntity: Service::class, mappedBy: 'parent')]
     private Collection $children;
 
+    #[ORM\OneToMany(targetEntity: TagType::class, mappedBy: 'service')]
+    private Collection $tagTypes;
+
     public function __construct()
     {
         $this->children = new ArrayCollection();
+        $this->tagTypes = new ArrayCollection();
     }
 
     public function getId(): UuidV7
@@ -137,5 +141,10 @@ class Service
         }
 
         return $this;
+    }
+
+    public function getTagTypes(): Collection
+    {
+        return $this->tagTypes;
     }
 }

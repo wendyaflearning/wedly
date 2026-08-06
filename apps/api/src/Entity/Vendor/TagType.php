@@ -25,7 +25,7 @@ class TagType
     #[ORM\CustomIdGenerator(class: UuidV7Generator::class)]
     private UuidV7 $id;
 
-    #[ORM\ManyToOne(targetEntity: Service::class)]
+    #[ORM\ManyToOne(targetEntity: Service::class, inversedBy: 'tagTypes')]
     #[ORM\JoinColumn(name: 'service_id', referencedColumnName: 'id', nullable: false)]
     private Service $service;
 
