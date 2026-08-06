@@ -107,15 +107,13 @@ class VendorRepository extends ServiceEntityRepository
     public function findAdminProfile(string $id): ?Vendor
     {
         return $this->createQueryBuilder('vendor')
-            ->addSelect('user', 'service', 'culture', 'confession', 'region', 'portfolio', 'portfolioStyle', 'portfolioSpecialty', 'venueDetails', 'cateringDetails')
+            ->addSelect('user', 'service', 'culture', 'confession', 'region', 'portfolio', 'venueDetails', 'cateringDetails')
             ->leftJoin('vendor.user', 'user')
             ->leftJoin('vendor.services', 'service')
             ->leftJoin('vendor.cultures', 'culture')
             ->leftJoin('vendor.confessions', 'confession')
             ->leftJoin('vendor.regions', 'region')
             ->leftJoin('vendor.portfolioImages', 'portfolio')
-            ->leftJoin('portfolio.styles', 'portfolioStyle')
-            ->leftJoin('portfolio.specialties', 'portfolioSpecialty')
             ->leftJoin('vendor.venueDetails', 'venueDetails')
             ->leftJoin('vendor.cateringDetails', 'cateringDetails')
             ->andWhere('vendor.id = :id')
