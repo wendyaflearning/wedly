@@ -37,8 +37,9 @@ class PortfolioService
         array $styleTags = [],
         array $specialtyTags = [],
     ): PortfolioImage {
-        $specialties = $this->resolveSpecialtyTags($vendor, $specialtyTags);
-        $styles      = $this->resolveStyleTags($styleTags);
+        // Résolution conservée pour la validation + l'auto-tagging du service vendeur (VendorAutoTaggedService).
+        $this->resolveSpecialtyTags($vendor, $specialtyTags);
+        $this->resolveStyleTags($styleTags);
 
         $result = $this->cloudinaryUpload($file->getPathname(), (string) $vendor->getId());
 
@@ -54,13 +55,8 @@ class PortfolioService
             ->setIsCover(false)
             ->setSortOrder($resolvedSortOrder);
 
-        foreach ($specialties as $specialty) {
-            $image->addSpecialty($specialty);
-        }
-
-        foreach ($styles as $style) {
-            $image->addStyle($style);
-        }
+        // TODO WED-100: $specialties/$styles ne sont plus attachées à $image depuis la suppression de
+        // portfolio_image_specialty/portfolio_image_style (WED-97) — à remplacer par un mapping vers TagValue.
 
         $this->em->persist($image);
 
@@ -138,24 +134,15 @@ class PortfolioService
             ]]);
         }
 
+        // TODO WED-100: $image ne porte plus de relation styles/specialties depuis la suppression de
+        // portfolio_image_specialty/portfolio_image_style (WED-97) — cette méthode ne tague plus la photo
+        // tant que le mapping vers TagValue n'est pas implémenté. Validation conservée en attendant.
         if ($specialtyIds !== null) {
-            $specialties = $this->resolveSpecialtyTags($vendor, $specialtyIds);
-            foreach ($image->getSpecialties()->toArray() as $specialty) {
-                $image->removeSpecialty($specialty);
-            }
-            foreach ($specialties as $specialty) {
-                $image->addSpecialty($specialty);
-            }
+            $this->resolveSpecialtyTags($vendor, $specialtyIds);
         }
 
         if ($styleIds !== null) {
-            $styles = $this->resolveStyleTags($styleIds);
-            foreach ($image->getStyles()->toArray() as $style) {
-                $image->removeStyle($style);
-            }
-            foreach ($styles as $style) {
-                $image->addStyle($style);
-            }
+            $this->resolveStyleTags($styleIds);
         }
     }
 

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Entity\Vendor;
 
 use App\Doctrine\UuidV7Generator;
-use App\Entity\Vendor\Specialty;
-use App\Entity\Wedding\WeddingStyle;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -43,26 +41,17 @@ class PortfolioImage
     #[ORM\Column(name: 'is_cover', type: 'boolean', options: ['default' => false])]
     private bool $isCover = false;
 
-    #[ORM\ManyToMany(targetEntity: WeddingStyle::class)]
+    #[ORM\ManyToMany(targetEntity: TagValue::class)]
     #[ORM\JoinTable(
-        name: 'portfolio_image_style',
-        joinColumns: [new ORM\JoinColumn(name: 'portfolio_image_id', referencedColumnName: 'id')],
-        inverseJoinColumns: [new ORM\JoinColumn(name: 'style_id', referencedColumnName: 'id')],
+        name: 'portfolio_image_tag',
+        joinColumns: [new ORM\JoinColumn(name: 'portfolio_image_id', referencedColumnName: 'id', onDelete: 'CASCADE')],
+        inverseJoinColumns: [new ORM\JoinColumn(name: 'tag_value_id', referencedColumnName: 'id')],
     )]
-    private Collection $styles;
-
-    #[ORM\ManyToMany(targetEntity: Specialty::class)]
-    #[ORM\JoinTable(
-        name: 'portfolio_image_specialty',
-        joinColumns: [new ORM\JoinColumn(name: 'portfolio_image_id', referencedColumnName: 'id')],
-        inverseJoinColumns: [new ORM\JoinColumn(name: 'specialty_id', referencedColumnName: 'id')],
-    )]
-    private Collection $specialties;
+    private Collection $tags;
 
     public function __construct()
     {
-        $this->styles = new ArrayCollection();
-        $this->specialties = new ArrayCollection();
+        $this->tags = new ArrayCollection();
     }
 
     public function getId(): UuidV7
@@ -130,44 +119,23 @@ class PortfolioImage
         return $this;
     }
 
-    public function getStyles(): Collection
+    public function getTags(): Collection
     {
-        return $this->styles;
+        return $this->tags;
     }
 
-    public function addStyle(WeddingStyle $style): static
+    public function addTag(TagValue $tag): static
     {
-        if (!$this->styles->contains($style)) {
-            $this->styles->add($style);
+        if (!$this->tags->contains($tag)) {
+            $this->tags->add($tag);
         }
 
         return $this;
     }
 
-    public function removeStyle(WeddingStyle $style): static
+    public function removeTag(TagValue $tag): static
     {
-        $this->styles->removeElement($style);
-
-        return $this;
-    }
-
-    public function getSpecialties(): Collection
-    {
-        return $this->specialties;
-    }
-
-    public function addSpecialty(Specialty $specialty): static
-    {
-        if (!$this->specialties->contains($specialty)) {
-            $this->specialties->add($specialty);
-        }
-
-        return $this;
-    }
-
-    public function removeSpecialty(Specialty $specialty): static
-    {
-        $this->specialties->removeElement($specialty);
+        $this->tags->removeElement($tag);
 
         return $this;
     }

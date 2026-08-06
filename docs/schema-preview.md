@@ -24,7 +24,7 @@ erDiagram
     SERVICE ||--o{ SERVICE : parent
     VENDOR ||--o{ OFFER : vendor
     VENDOR ||--o{ PORTFOLIO_IMAGE : vendor
-    PORTFOLIO_IMAGE }o--o{ "STYLE" : styles
+    PORTFOLIO_IMAGE }o--o{ TAG_VALUE : tags
     VENDOR ||--o{ BOOKING_BLOCKER : vendor
     COUPLE ||--o{ SUBSCRIPTION : couple
     PLAN ||--o{ SUBSCRIPTION : plan
@@ -38,6 +38,12 @@ erDiagram
     VENDOR ||--o| VENDOR_ANIMATION_DETAILS : vendor
     VENDOR ||--o| VENDOR_CREATOR_DETAILS : vendor
     VENDOR_CREATOR_DETAILS }o--o{ CREATOR_VALUE : creator_values
+    SERVICE ||--o{ SPECIALTY : service
+    SERVICE ||--o{ TAG_TYPE : service
+    TAG_TYPE ||--o{ TAG_VALUE : tag_type
+    VENDOR ||--o{ VENDOR_AUTO_TAGGED_SERVICE : vendor
+    SERVICE ||--o{ VENDOR_AUTO_TAGGED_SERVICE : service
+    VENDOR ||--o{ VENDOR_CONSENT : vendor
 
     USER {
         uuid id
@@ -73,6 +79,10 @@ erDiagram
         string onboarding_step
         text bio
         boolean is_published
+        datetime_immutable submitted_for_review_at
+        datetime_immutable reviewed_at
+        json rejection_reasons
+        text rejection_note
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -282,6 +292,55 @@ erDiagram
         uuid id
         string name
         string slug
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    SPECIALTY {
+        uuid id
+        uuid service_id
+        string name
+        string slug
+        text description
+        int sort_order
+        boolean is_active
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    TAG_TYPE {
+        uuid id
+        uuid service_id
+        string label
+        boolean is_primary
+        int max_selections
+        boolean is_active
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    TAG_VALUE {
+        uuid id
+        uuid tag_type_id
+        string label
+        boolean is_active
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    VENDOR_AUTO_TAGGED_SERVICE {
+        uuid id
+        uuid vendor_id
+        uuid service_id
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    VENDOR_CONSENT {
+        uuid id
+        uuid vendor_id
+        string consent_type
+        boolean granted
         datetime_immutable created_at
         datetime_immutable updated_at
     }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller\Admin\Vendor\Portfolio;
 
 use App\DTO\Admin\Vendor\Portfolio\PatchVendorPortfolioTagsRequestDto;
-use App\DTO\Vendor\Portfolio\PortfolioTagResponseDto;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Repository\Vendor\VendorRepository;
 use App\Service\PortfolioService;
@@ -51,12 +50,13 @@ final readonly class PatchVendorPortfolioTagsAction
         $this->portfolioService->updateTags($vendor, $image, $dto->styleIds, $dto->specialtyIds);
         $this->em->flush();
 
+        // TODO WED-100: styles/specialties retirés avec portfolio_image_style/specialty (WED-97) ; remplacer par les tags (TagValue)
         return new JsonResponse([
             'id'          => $image->getId()->toRfc4122(),
             'url'         => $image->getUrl(),
             'isCover'     => $image->isCover(),
-            'styles'      => PortfolioTagResponseDto::fromTags($image->getStyles()->toArray()),
-            'specialties' => PortfolioTagResponseDto::fromTags($image->getSpecialties()->toArray()),
+            'styles'      => [],
+            'specialties' => [],
         ], 200);
     }
 }
