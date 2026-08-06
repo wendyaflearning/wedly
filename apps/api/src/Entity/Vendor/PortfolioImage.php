@@ -41,6 +41,9 @@ class PortfolioImage
     #[ORM\Column(name: 'is_cover', type: 'boolean', options: ['default' => false])]
     private bool $isCover = false;
 
+    #[ORM\Column(name: 'is_visible_in_wedream', type: 'boolean', options: ['default' => false])]
+    private bool $isVisibleInWedream = false;
+
     #[ORM\ManyToMany(targetEntity: TagValue::class)]
     #[ORM\JoinTable(
         name: 'portfolio_image_tag',
@@ -115,6 +118,18 @@ class PortfolioImage
     public function setIsCover(bool $isCover): static
     {
         $this->isCover = $isCover;
+
+        return $this;
+    }
+
+    public function isVisibleInWedream(): bool
+    {
+        return $this->isVisibleInWedream;
+    }
+
+    public function setVisibleInWedream(bool $visible): static
+    {
+        $this->isVisibleInWedream = $visible;
 
         return $this;
     }

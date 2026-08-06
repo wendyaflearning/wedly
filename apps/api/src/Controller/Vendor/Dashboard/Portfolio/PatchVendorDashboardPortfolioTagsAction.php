@@ -2,42 +2,48 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Admin\Vendor\Portfolio;
+namespace App\Controller\Vendor\Dashboard\Portfolio;
 
 use App\DTO\Service\TagValueResponseDto;
 use App\DTO\Vendor\Portfolio\PatchPortfolioTagsRequestDto;
+use App\Entity\User\User;
 use App\Entity\Vendor\TagValue;
 use App\Repository\Vendor\PortfolioImageRepository;
-use App\Repository\Vendor\VendorRepository;
 use App\Service\PortfolioService;
+use App\Service\Vendor\VendorOwnershipResolver;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[IsGranted('ROLE_ADMIN')]
+#[IsGranted('ROLE_VENDOR')]
 #[Route(
-    '/api/v1/admin/vendors/{vendorId}/portfolio/{imageId}/tags',
-    name: 'api_admin_vendor_portfolio_tags_patch',
-    requirements: ['vendorId' => '[0-9a-fA-F-]{36}', 'imageId' => '[0-9a-fA-F-]{36}'],
+    '/api/v1/vendors/{id}/portfolio/{imageId}/tags',
+    name: 'api_vendor_dashboard_portfolio_tags_patch',
+    requirements: ['id' => '[0-9a-fA-F-]{36}', 'imageId' => '[0-9a-fA-F-]{36}'],
     methods: ['PATCH'],
 )]
-final readonly class PatchVendorPortfolioTagsAction
+final class PatchVendorDashboardPortfolioTagsAction extends AbstractController
 {
     public function __construct(
-        private VendorRepository $vendorRepository,
-        private PortfolioImageRepository $portfolioImageRepository,
-        private PortfolioService $portfolioService,
-        private EntityManagerInterface $em,
+        private readonly Security $security,
+        private readonly VendorOwnershipResolver $vendorOwnershipResolver,
+        private readonly PortfolioImageRepository $portfolioImageRepository,
+        private readonly PortfolioService $portfolioService,
+        private readonly EntityManagerInterface $em,
     ) {}
 
-    public function __invoke(string $vendorId, string $imageId, #[MapRequestPayload] PatchPortfolioTagsRequestDto $dto): JsonResponse
+    public function __invoke(string $id, string $imageId, #[MapRequestPayload] PatchPortfolioTagsRequestDto $dto): JsonResponse
     {
-        $vendor = $this->vendorRepository->find($vendorId);
+        /** @var User $user */
+        $user   = $this->security->getUser();
+        $vendor = $this->vendorOwnershipResolver->resolve($user);
 
-        if (null === $vendor) {
-            return new JsonResponse(['error' => 'Prestataire introuvable.'], 404);
+        if ($vendor->getId()->toRfc4122() !== $id) {
+            return new JsonResponse(['error' => 'Accès interdit.'], 403);
         }
 
         $image = $this->portfolioImageRepository->findOneBy([
@@ -45,7 +51,7 @@ final readonly class PatchVendorPortfolioTagsAction
             'vendor' => $vendor,
         ]);
 
-        if (null === $image) {
+        if ($image === null) {
             return new JsonResponse(['error' => 'Image introuvable.'], 404);
         }
 

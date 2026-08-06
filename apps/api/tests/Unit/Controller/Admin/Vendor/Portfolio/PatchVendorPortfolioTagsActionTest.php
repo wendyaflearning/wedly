@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Controller\Admin\Vendor\Portfolio;
 
 use App\Controller\Admin\Vendor\Portfolio\PatchVendorPortfolioTagsAction;
-use App\DTO\Admin\Vendor\Portfolio\PatchVendorPortfolioTagsRequestDto;
+use App\DTO\Vendor\Portfolio\PatchPortfolioTagsRequestDto;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
 use App\Repository\Vendor\PortfolioImageRepository;
@@ -26,13 +26,13 @@ final class PatchVendorPortfolioTagsActionTest extends TestCase
         $portfolioImageRepository->expects($this->never())->method('findOneBy');
 
         $portfolioService = $this->createMock(PortfolioService::class);
-        $portfolioService->expects($this->never())->method('updateTags');
+        $portfolioService->expects($this->never())->method('updatePortfolioTags');
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->never())->method('flush');
 
         $response = (new PatchVendorPortfolioTagsAction($vendorRepository, $portfolioImageRepository, $portfolioService, $em))
-            ->__invoke('missing-id', 'image-id', new PatchVendorPortfolioTagsRequestDto());
+            ->__invoke('missing-id', 'image-id', new PatchPortfolioTagsRequestDto());
 
         $this->assertSame(404, $response->getStatusCode());
         $this->assertSame(
@@ -55,13 +55,13 @@ final class PatchVendorPortfolioTagsActionTest extends TestCase
             ->willReturn(null);
 
         $portfolioService = $this->createMock(PortfolioService::class);
-        $portfolioService->expects($this->never())->method('updateTags');
+        $portfolioService->expects($this->never())->method('updatePortfolioTags');
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->never())->method('flush');
 
         $response = (new PatchVendorPortfolioTagsAction($vendorRepository, $portfolioImageRepository, $portfolioService, $em))
-            ->__invoke('vendor-id', 'image-id', new PatchVendorPortfolioTagsRequestDto());
+            ->__invoke('vendor-id', 'image-id', new PatchPortfolioTagsRequestDto());
 
         $this->assertSame(404, $response->getStatusCode());
         $this->assertSame(
@@ -70,9 +70,7 @@ final class PatchVendorPortfolioTagsActionTest extends TestCase
         );
     }
 
-    // TODO WED-100: cette action ne renvoie plus de styles/specialties depuis la suppression de
-    // portfolio_image_specialty/portfolio_image_style (WED-97) — à réintroduire via TagValue.
-    public function test_invoke_calls_update_tags_flushes_then_returns_200_with_tags(): void
+    public function test_invoke_calls_update_portfolio_tags_flushes_then_returns_200_with_tags(): void
     {
         $vendor = $this->createStub(Vendor::class);
 
@@ -94,16 +92,16 @@ final class PatchVendorPortfolioTagsActionTest extends TestCase
             ->with(['id' => 'image-id', 'vendor' => $vendor])
             ->willReturn($image);
 
-        $dto = new PatchVendorPortfolioTagsRequestDto(styleIds: ['style-1'], specialtyIds: ['specialty-1']);
+        $dto = new PatchPortfolioTagsRequestDto(tagValueIds: ['tag-value-1']);
 
         $calls = [];
 
         $portfolioService = $this->createMock(PortfolioService::class);
         $portfolioService->expects($this->once())
-            ->method('updateTags')
-            ->with($vendor, $image, $dto->styleIds, $dto->specialtyIds)
+            ->method('updatePortfolioTags')
+            ->with($image, $dto->tagValueIds)
             ->willReturnCallback(function () use (&$calls): void {
-                $calls[] = 'updateTags';
+                $calls[] = 'updatePortfolioTags';
             });
 
         $em = $this->createMock(EntityManagerInterface::class);
@@ -117,14 +115,14 @@ final class PatchVendorPortfolioTagsActionTest extends TestCase
             ->__invoke('vendor-id', 'image-id', $dto);
 
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame(['updateTags', 'flush'], $calls);
+        $this->assertSame(['updatePortfolioTags', 'flush'], $calls);
         $this->assertSame(
             [
-                'id'          => $imageId->toRfc4122(),
-                'url'         => 'https://res.cloudinary.com/img.jpg',
-                'isCover'     => false,
-                'styles'      => [],
-                'specialties' => [],
+                'id'                 => $imageId->toRfc4122(),
+                'url'                => 'https://res.cloudinary.com/img.jpg',
+                'isCover'            => false,
+                'isVisibleInWedream' => false,
+                'tags'               => [],
             ],
             json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
         );
