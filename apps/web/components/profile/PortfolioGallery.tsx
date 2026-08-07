@@ -38,7 +38,7 @@ export function PortfolioGallery({
     <>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {images.map((image, index) => {
-          const tagCount = image.styles.length + image.specialties.length
+          const tagCount = image.tags.length
 
           return (
             <div

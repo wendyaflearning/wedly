@@ -12,12 +12,11 @@ import type {
   CultureOption,
   RegionOption,
   ServiceOptionNode,
-  SpecialtyOption,
-  StyleOption,
 } from '@/lib/admin-types'
 import { PortfolioGallery } from '@/components/profile/PortfolioGallery'
 import { PortfolioTaggingModal } from '@/components/portfolio/PortfolioTaggingModal'
 import { useAdminPortfolioUpload } from '@/hooks/useAdminPortfolioUpload'
+import { useServiceTagTypes } from '@/hooks/useServiceTagTypes'
 
 const PRICE_TYPES = [
   { value: 'per_service', label: 'Par prestation' },
@@ -159,16 +158,12 @@ export function AdminVendorDraftForm({
   regions,
   cultures,
   confessions,
-  styleOptions,
-  specialtyOptions,
 }: {
   draft?: AdminVendorDraft
   services: ServiceOptionNode[]
   regions: RegionOption[]
   cultures: CultureOption[]
   confessions: ConfessionOption[]
-  styleOptions: StyleOption[]
-  specialtyOptions: SpecialtyOption[]
 }) {
   const router = useRouter()
   const [vendorId, setVendorId] = useState(draft?.id ?? null)
@@ -192,19 +187,21 @@ export function AdminVendorDraftForm({
     openTagging,
     confirmTagging,
     cancelTagging,
+    completedCount,
   } = useAdminPortfolioUpload({
     initialImages: draft?.portfolio ?? [],
   })
+  const { tagTypes, loading: tagTypesLoading, error: tagTypesFetchError } =
+    useServiceTagTypes(form.serviceId || null)
+  const tagTypesError = form.serviceId === ''
+    ? "Sélectionnez d'abord un métier pour pouvoir tagger les photos."
+    : tagTypesFetchError
   const portfolioPendingUploads = useMemo(
     () => pendingUploads.map((p) => ({ localId: p.localId, previewUrl: URL.createObjectURL(p.file), status: p.status })),
     [pendingUploads]
   )
 
   const serviceOptions = useMemo(() => flattenServices(services), [services])
-  const groupLabels = useMemo(
-    () => Object.fromEntries(serviceOptions.map((s) => [s.id, s.label])),
-    [serviceOptions]
-  )
   const selectedService = serviceOptions.find((service) => service.id === form.serviceId)
   const selectedCategory = selectedService?.category ?? 'freelance'
   const isVenue = selectedCategory === 'lieu'
@@ -528,15 +525,16 @@ export function AdminVendorDraftForm({
 
         return (
           <PortfolioTaggingModal
+            key={activeId}
             photoUrl={activeImage.url}
-            styleOptions={styleOptions}
-            specialtyOptions={specialtyOptions}
-            allowedServiceId={form.serviceId || null}
-            groupLabels={groupLabels}
-            initialStyleIds={activeImage.styles.map((s) => s.id)}
-            initialSpecialtyIds={activeImage.specialties.map((s) => s.id)}
-            queueLabel={taggingQueue.length > 1 ? `${taggingQueue.length} photos à taguer` : undefined}
-            onConfirm={(styleIds, specialtyIds) => confirmTagging(activeId, vendorId as string, styleIds, specialtyIds)}
+            serviceLabel={selectedService?.label ?? 'métier non défini'}
+            tagTypes={tagTypes}
+            tagTypesLoading={tagTypesLoading}
+            tagTypesError={tagTypesError}
+            initialTagValueIds={activeImage.tags.map((t) => t.id)}
+            queuePosition={completedCount + 1}
+            queueTotal={completedCount + taggingQueue.length}
+            onConfirm={(tagValueIds) => confirmTagging(activeId, vendorId as string, tagValueIds)}
             onCancel={() => cancelTagging(activeId, vendorId as string)}
           />
         )

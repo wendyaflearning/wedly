@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\DTO\Admin\Vendor\Portfolio;
 
+use App\DTO\Service\TagValueResponseDto;
 use App\Entity\Vendor\PortfolioImage;
+use App\Entity\Vendor\TagValue;
 use App\Entity\Vendor\Vendor;
 
 trait PortfolioMappingTrait
@@ -16,12 +18,13 @@ trait PortfolioMappingTrait
 
         return array_map(
             fn(PortfolioImage $image) => [
-                'id'          => $image->getId()->toRfc4122(),
-                'url'         => $image->getUrl(),
-                'isCover'     => $image->isCover(),
-                // TODO WED-97: styles/specialties retirés avec portfolio_image_style/specialty ; remplacer par les tags (TagValue) dans WED-100
-                'styles'      => [],
-                'specialties' => [],
+                'id'      => $image->getId()->toRfc4122(),
+                'url'     => $image->getUrl(),
+                'isCover' => $image->isCover(),
+                'tags'    => array_map(
+                    fn(TagValue $tag) => TagValueResponseDto::fromEntity($tag),
+                    $image->getTags()->toArray(),
+                ),
             ],
             $images
         );

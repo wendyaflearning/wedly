@@ -25,8 +25,6 @@ export default async function EditAdminVendorPage({
       regions={formOptions.regions}
       cultures={formOptions.cultures}
       confessions={formOptions.confessions}
-      styleOptions={formOptions.styles}
-      specialtyOptions={formOptions.specialties}
     />
   )
 }
