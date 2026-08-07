@@ -1,3 +1,5 @@
+import type { TagValueOption } from '@/lib/portfolio-tags'
+
 export type AdminVendorStatus = 'pending' | 'under_review' | 'active' | 'rejected'
 export type AdminVendorFilter = Exclude<AdminVendorStatus, 'pending'> | 'all'
 export type AdminVendorInvitationScope = 'active' | 'expired'
@@ -182,8 +184,8 @@ export type PortfolioImage = {
   id: string
   url: string
   isCover: boolean
-  styles: TagOption[]
-  specialties: TagOption[]
+  tags: TagValueOption[]
+  isVisibleInWedream: boolean
 }
 
 export type AdminVendorProfile = {

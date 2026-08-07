@@ -3,7 +3,7 @@ import { AdminVendorDraftForm } from '@/components/admin/AdminVendorDraftForm'
 import { fetchAdminVendorFormOptions } from '@/lib/admin'
 
 export default async function NewAdminVendorPage() {
-  const { services, regions, cultures, confessions, styles, specialties } =
+  const { services, regions, cultures, confessions } =
     await fetchAdminVendorFormOptions()
 
   if (services.length === 0 || regions.length === 0) {
@@ -16,8 +16,6 @@ export default async function NewAdminVendorPage() {
       regions={regions}
       cultures={cultures}
       confessions={confessions}
-      styleOptions={styles}
-      specialtyOptions={specialties}
     />
   )
 }

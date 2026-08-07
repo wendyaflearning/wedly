@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useState } from 'react'
-import type { PortfolioImage, TagOption } from '@/lib/admin-types'
+import type { PortfolioImage } from '@/lib/admin-types'
+import type { TagValueOption } from '@/lib/portfolio-tags'
 import { compressPortfolioImage } from '@/lib/compressPortfolioImage'
 
 export type PendingUpload = {
@@ -21,8 +22,9 @@ export interface UseAdminPortfolioUploadReturn {
   deleteImage: (imageId: string, vendorId: string) => Promise<void>
   taggingQueue: string[]
   openTagging: (imageId: string) => void
-  confirmTagging: (imageId: string, vendorId: string, styleIds: string[], specialtyIds: string[]) => Promise<void>
+  confirmTagging: (imageId: string, vendorId: string, tagValueIds: string[]) => Promise<void>
   cancelTagging: (imageId: string, vendorId: string) => Promise<void>
+  completedCount: number
 }
 
 export function useAdminPortfolioUpload({
@@ -31,6 +33,7 @@ export function useAdminPortfolioUpload({
   const [images, setImages] = useState<PortfolioImage[]>(initialImages)
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([])
   const [taggingQueue, setTaggingQueue] = useState<string[]>([])
+  const [completedCount, setCompletedCount] = useState(0)
 
   const uploadOne = useCallback(async (localId: string, file: File, vendorId: string) => {
     setPendingUploads(prev => prev.map(p => (p.localId === localId ? { ...p, status: 'uploading' } : p)))
@@ -52,8 +55,11 @@ export function useAdminPortfolioUpload({
 
       const data = (await response.json()) as { id: string; url: string }
 
-      setImages(prev => [...prev, { id: data.id, url: data.url, isCover: false, styles: [], specialties: [] }])
-      setTaggingQueue(prev => [...prev, data.id])
+      setImages(prev => [...prev, { id: data.id, url: data.url, isCover: false, tags: [], isVisibleInWedream: false }])
+      setTaggingQueue(prev => {
+        if (prev.length === 0) setCompletedCount(0)
+        return [...prev, data.id]
+      })
       setPendingUploads(prev => prev.filter(p => p.localId !== localId))
     } catch {
       setPendingUploads(prev => prev.map(p => (p.localId === localId ? { ...p, status: 'error' } : p)))
@@ -110,18 +116,18 @@ export function useAdminPortfolioUpload({
     // une tuile existante pendant qu'une queue est déjà active, donc la queue est
     // toujours vide quand openTagging est appelé depuis un clic utilisateur.
     setTaggingQueue([imageId])
+    setCompletedCount(0)
   }, [])
 
   const confirmTagging = useCallback(async (
     imageId: string,
     vendorId: string,
-    styleIds: string[],
-    specialtyIds: string[],
+    tagValueIds: string[],
   ) => {
     const response = await fetch(`/api/admin/vendors/${vendorId}/portfolio/${imageId}/tags`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ styleIds, specialtyIds }),
+      body: JSON.stringify({ tagValueIds }),
     })
 
     if (!response.ok) {
@@ -129,18 +135,19 @@ export function useAdminPortfolioUpload({
       throw new Error(typeof data.error === 'string' ? data.error : 'La mise à jour des tags a échoué.')
     }
 
-    const data = (await response.json()) as { id: string; styles: TagOption[]; specialties: TagOption[] }
+    const data = (await response.json()) as { id: string; tags: TagValueOption[]; isVisibleInWedream: boolean }
 
     setImages(prev => prev.map(img => (
-      img.id === imageId ? { ...img, styles: data.styles, specialties: data.specialties } : img
+      img.id === imageId ? { ...img, tags: data.tags, isVisibleInWedream: data.isVisibleInWedream } : img
     )))
     setTaggingQueue(prev => prev.filter(id => id !== imageId))
+    setCompletedCount(c => c + 1)
   }, [])
 
   const cancelTagging = useCallback(async (imageId: string, vendorId: string) => {
     const image = images.find(img => img.id === imageId)
 
-    if (image && image.specialties.length === 0) {
+    if (image && image.tags.length === 0) {
       await deleteImage(imageId, vendorId)
     }
 
@@ -157,5 +164,6 @@ export function useAdminPortfolioUpload({
     openTagging,
     confirmTagging,
     cancelTagging,
+    completedCount,
   }
 }

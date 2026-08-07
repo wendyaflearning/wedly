@@ -37,11 +37,11 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                 ],
             ],
             'optional' => [
-                'Univers / ambiance' => [
+                'Univers' => [
                     'Champêtre', 'Chic', 'Contemporain', 'Historique', 'Intimiste',
                     'Bohème', 'Élégant', 'Prestige', 'Insolite', 'Romantique',
                 ],
-                "Caractéristiques d'usage" => [
+                'Caractéristiques du lieu' => [
                     'Avec hébergement', 'En extérieur', 'En intérieur', 'Jardin', 'Terrasse',
                     'Piscine', 'Vue dégagée', 'Piste de danse', 'Espace cérémonie',
                     'Espace cocktail', 'Espace dîner', 'Parking', 'Accès PMR', 'Privatisation totale', 'Traiteur inclus'
@@ -50,25 +50,28 @@ class SeedPortfolioTagTaxonomyCommand extends Command
         ],
         'traiteur' => [
             'primary' => [
-                'label' => 'Type de prestation',
+                'label' => 'Type de prestation proposée',
                 'values' => [
                     'Cocktail', 'Buffet', 'Repas assis', 'Brunch', 'Food truck',
                     'Animation culinaire', 'Dessert / wedding cake',
                 ],
             ],
             'optional' => [
-                'Spécialité / cuisine' => [
+                'Type de cuisine' => [
                     'Française', 'Italienne', 'Asiatique', 'Africaine', 'Méditerranéenne',
-                    'Végétarienne', 'Vegan', 'Halal', 'Sans gluten',
+                    'Libanaise / Orientale', 'Antillaise / Créole', 'Indienne',
                 ],
-                'Format / service' => [
+                'Régimes alimentaires' => [
+                    'Végétarienne', 'Vegan', 'Halal', 'Casher', 'Sans gluten', 'Sans lactose',
+                ],
+                'Mode de service' => [
                     'Service à table', 'Buffet libre', 'Cocktail dînatoire', 'Live cooking',
                     'Stand', 'Food station', 'Show cooking',
                 ],
-                'Moment' => [
+                'Moments servis' => [
                     "Vin d'honneur", 'Cocktail', 'Dîner', 'Brunch', 'Dessert', 'After party',
                 ],
-                'Univers / style' => [
+                'Style culinaire' => [
                     'Gastronomique', 'Convivial', 'Premium', 'Familial', 'Festif',
                     'Raffiné', 'Street food', 'Traditionnel',
                 ],
@@ -83,21 +86,27 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                 ],
             ],
             'optional' => [
-                'Univers / rendu émotionnel' => [
+                'Rendu émotionnel' => [
                     'Spontané', 'Poétique', 'Élégant', 'Intime', 'Festif', 'Premium', 'Romantique', 'Authentique',
                 ],
-                'Format' => [
-                    'Séance couple', 'Journée complète', 'Demi-journée', 'Cérémonie', 'Cocktail',
-                    'After day', "Shooting à l'étranger", 'Studio', 'Extérieur',
+                'Durée & lieu' => [
+                    'Journée complète', 'Demi-journée', 'Studio', 'Extérieur', "Shooting à l'étranger",
                 ],
-                'Spécialités' => [
-                    'Drone', 'Argentique', 'Retouche fine', 'Album', 'Vidéo complémentaire si mixte', 'Polaroid',
+                'Moments couverts' => [
+                    'Préparatifs des mariés', 'Mairie', 'Cérémonie', 'Séance couple',
+                    'Cocktail', 'Photos de groupe', 'Soirée',
+                ],
+                'Techniques' => [
+                    'Drone', 'Argentique', 'Polaroid',
+                ],
+                'Prestations complémentaires' => [
+                    'Retouche fine', 'Album', 'Vidéo (si offre mixte photo + vidéo)',
                 ],
             ],
         ],
         'maquillage' => [
             'primary' => [
-                'label' => 'Type de prestation',
+                'label' => 'Type de prestation proposée',
                 'values' => [
                     'Maquillage mariée', 'Maquillage invitée', 'Essai maquillage', 'Maquillage jour J', 'Accompagnement journée',
                 ],
@@ -109,10 +118,13 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                 'Univers / rendu' => [
                     'Lumineux', 'Élégant', 'Discret', 'Moderne', 'Romantique', 'Longue tenue', 'Waterproof',
                 ],
-                'Format' => [
-                    'À domicile', 'Sur lieu', 'Studio', 'Salon', 'Déplacement', 'Équipe', 'Prestation express', 'Accompagnement complet',
+                'Lieu de prestation' => [
+                    'À domicile', 'Sur lieu', 'Studio', 'Salon', 'Déplacement',
                 ],
-                'Spécialités' => [
+                'Formule' => [
+                    'Équipe', 'Prestation express', 'Accompagnement complet',
+                ],
+                'Expertises' => [
                     'Peau foncée', 'Peaux matures', 'Peaux sensibles', 'Teint impeccable',
                     'Mise en valeur naturelle', 'Glow de mariée', 'Faux cils', 'Correction teint',
                 ],
@@ -151,11 +163,11 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                 'Ambiance / énergie' => [
                     'Chic', 'Festive', 'Élégante', 'Sobre', 'Dynamique', 'Premium', 'Conviviale', 'Très dansante',
                 ],
-                'Format' => [
+                'Prestations incluses' => [
                     'DJ seul', 'DJ + animation micro', 'DJ + matériel son', 'DJ + lumière',
                     'DJ + coordination soirée', 'Présence du début à la fin',
                 ],
-                'Spécialités' => [
+                'Savoir-faire & animations' => [
                     'Transitions fluides', 'Mix sur mesure', 'Ouverture de bal', 'Blind test',
                     'Mix multiculturel', 'Gestion des temps forts', 'Animation bilingue',
                 ],
@@ -163,7 +175,7 @@ class SeedPortfolioTagTaxonomyCommand extends Command
         ],
         'creatrice-robe-de-mariee' => [
             'primary' => [
-                'label' => 'Type de prestation',
+                'label' => 'Type de prestation proposée',
                 'values' => [
                     'Robe de mariée', 'Robe civile', 'Seconde robe', 'Sur-mesure', 'Collection', 'Retouches', 'Accessoires',
                 ],
@@ -178,7 +190,7 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                 'Matières / finitions' => [
                     'Dentelle', 'Tulle', 'Satin', 'Crêpe', 'Broderies', 'Perles', 'Transparence', 'Effet seconde peau',
                 ],
-                'Expérience' => [
+                'Accompagnement' => [
                     'Atelier', 'Sur rendez-vous', 'Accompagnement personnalisé', 'Essayages privés',
                     'Création sur mesure', 'Retouches incluses',
                 ],
@@ -245,7 +257,7 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                 'Matières' => [
                     'Laine froide', 'Lin', 'Coton', 'Velours', 'Tweed', 'Mélange léger',
                 ],
-                'Expérience / service' => [
+                'Accompagnement' => [
                     'Rendez-vous privé', 'Sur mesure', 'Essayage à domicile', 'Retouches incluses',
                     'Conseil morphologie', 'Accompagnement accessoirisation',
                 ],
@@ -268,10 +280,10 @@ class SeedPortfolioTagTaxonomyCommand extends Command
 
         $tagTypesCreated = 0;
         $tagTypesUpdated = 0;
-        $tagTypesDeactivated = 0;
+        $tagTypesDeleted = 0;
         $tagValuesCreated = 0;
         $tagValuesUpdated = 0;
-        $tagValuesDeactivated = 0;
+        $tagValuesDeleted = 0;
 
         foreach (self::TAXONOMY as $serviceSlug => $definition) {
             $service = $this->serviceRepository->findOneBy(['slug' => $serviceSlug]);
@@ -301,9 +313,18 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                 ];
             }
 
-            // Index existing TagType for this service by slug of their label
+            // Index existing optional TagType for this service by slug of their label. The primary
+            // TagType is tracked separately: a DB constraint (UNIQ_TAG_TYPE_SERVICE_PRIMARY) allows
+            // only one is_primary=true row per service regardless of is_active, so it must be matched
+            // by that flag and updated in place — matching it by label slug like the optional entries
+            // would try to insert a second primary row whenever the primary label changes.
             $existingTagTypes = [];
+            $existingPrimaryTagType = null;
             foreach ($service->getTagTypes() as $tagType) {
+                if ($tagType->isPrimary()) {
+                    $existingPrimaryTagType = $tagType;
+                    continue;
+                }
                 $existingTagTypes[$this->toSlug($tagType->getLabel())] = $tagType;
             }
 
@@ -326,8 +347,10 @@ class SeedPortfolioTagTaxonomyCommand extends Command
 
                 $catalogTagTypeSlugs[$slug] = $label;
 
-                if (isset($existingTagTypes[$slug])) {
-                    $tagType = $existingTagTypes[$slug];
+                $matchedTagType = $tagTypeDef['isPrimary'] ? $existingPrimaryTagType : ($existingTagTypes[$slug] ?? null);
+
+                if ($matchedTagType !== null) {
+                    $tagType = $matchedTagType;
                     $tagType->setLabel($label)
                         ->setIsPrimary($tagTypeDef['isPrimary'])
                         ->setMaxSelections($tagTypeDef['maxSelections'])
@@ -385,20 +408,29 @@ class SeedPortfolioTagTaxonomyCommand extends Command
                     }
                 }
 
-                // Deactivate TagValue present in DB but absent from catalog for this TagType
+                // Delete TagValue present in DB but absent from catalog for this TagType. No vendor
+                // uses this feature in production yet, so a hard delete keeps the taxonomy table
+                // clean instead of accumulating dead rows behind is_active=false. If a TagValue is
+                // ever actually referenced by a portfolio_image_tag row, the FK constraint aborts
+                // the flush rather than silently orphaning real vendor data.
                 foreach ($existingTagValues as $valueSlug => $tagValue) {
                     if (!isset($catalogTagValueSlugs[$valueSlug])) {
-                        $tagValue->setIsActive(false);
-                        ++$tagValuesDeactivated;
+                        $this->em->remove($tagValue);
+                        ++$tagValuesDeleted;
                     }
                 }
             }
 
-            // Deactivate TagType present in DB but absent from catalog for this service
+            // Delete TagType (and its remaining TagValue rows) present in DB but absent from
+            // catalog for this service — same hard-delete rationale as above.
             foreach ($existingTagTypes as $slug => $tagType) {
                 if (!isset($catalogTagTypeSlugs[$slug])) {
-                    $tagType->setIsActive(false);
-                    ++$tagTypesDeactivated;
+                    foreach ($tagType->getTagValues() as $tagValue) {
+                        $this->em->remove($tagValue);
+                        ++$tagValuesDeleted;
+                    }
+                    $this->em->remove($tagType);
+                    ++$tagTypesDeleted;
                 }
             }
         }
@@ -406,13 +438,13 @@ class SeedPortfolioTagTaxonomyCommand extends Command
         $this->em->flush();
 
         $io->success(sprintf(
-            'Done. TagType — Created: %d | Updated: %d | Deactivated: %d. TagValue — Created: %d | Updated: %d | Deactivated: %d',
+            'Done. TagType — Created: %d | Updated: %d | Deleted: %d. TagValue — Created: %d | Updated: %d | Deleted: %d',
             $tagTypesCreated,
             $tagTypesUpdated,
-            $tagTypesDeactivated,
+            $tagTypesDeleted,
             $tagValuesCreated,
             $tagValuesUpdated,
-            $tagValuesDeactivated,
+            $tagValuesDeleted,
         ));
 
         return Command::SUCCESS;
