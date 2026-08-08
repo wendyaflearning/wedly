@@ -1,0 +1,60 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'apps/api/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          context: apps/api
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/wedly-api:staging
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519_github_actions
+          chmod 600 ~/.ssh/id_ed25519_github_actions
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync docker-compose.staging.yml to VPS
+        run: |
+          scp -i ~/.ssh/id_ed25519_github_actions \
+            apps/api/docker/docker-compose.staging.yml \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/root/staging/docker-compose.yml
+
+      - name: Write .env on VPS (staging)
+        run: |
+          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF
+          DATABASE_URL_STAGING=${{ secrets.DATABASE_URL_STAGING }}
+          POSTGRES_PASSWORD_STAGING=${{ secrets.POSTGRES_PASSWORD_STAGING }}
+          JWT_PASSPHRASE_STAGING=${{ secrets.JWT_PASSPHRASE_STAGING }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          MAILER_DSN=${{ secrets.MAILER_DSN }}
+          SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+          SLACK_WEBHOOK=${{ secrets.SLACK_WEBHOOK }}
+          VENDOR_FEEDBACK_SLACK_WEBHOOK_URL=${{ secrets.VENDOR_FEEDBACK_SLACK_WEBHOOK_URL }}
+          PAPPERS_API_TOKEN=${{ secrets.PAPPERS_API_TOKEN }}
+          EOF
+
+      - name: Deploy on VPS (staging)
+        run: |
+          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+            cd /root/staging && \
+            docker compose -p wedly-staging pull symfony-staging && \
+            docker compose -p wedly-staging run --rm symfony-staging php bin/console doctrine:migrations:migrate --no-interaction && \
+            docker compose -p wedly-staging run --rm symfony-staging php bin/console cache:clear --env=staging && \
+            docker compose -p wedly-staging up -d symfony-staging postgres-staging"
