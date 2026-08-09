@@ -49,13 +49,18 @@ jobs:
 
       - name: Sync docker-compose.staging.yml to VPS
         run: |
-          scp -i ~/.ssh/id_ed25519_github_actions \
-            apps/api/docker/docker-compose.staging.yml \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/root/staging/docker-compose.yml
+          for i in 1 2 3; do
+            scp -i ~/.ssh/id_ed25519_github_actions \
+              apps/api/docker/docker-compose.staging.yml \
+              ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/root/staging/docker-compose.yml && break
+            echo "Tentative $i échouée, nouvel essai dans 10s..."
+            sleep 10
+          done
 
       - name: Write .env on VPS (staging)
         run: |
-          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF
+          for i in 1 2 3; do
+          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF && break
           DATABASE_URL_STAGING=${{ secrets.DATABASE_URL_STAGING }}
           POSTGRES_PASSWORD_STAGING=${{ secrets.POSTGRES_PASSWORD_STAGING }}
           JWT_PASSPHRASE_STAGING=${{ secrets.JWT_PASSPHRASE_STAGING }}
@@ -67,14 +72,21 @@ jobs:
           VENDOR_FEEDBACK_SLACK_WEBHOOK_URL=${{ secrets.VENDOR_FEEDBACK_SLACK_WEBHOOK_URL }}
           PAPPERS_API_TOKEN=${{ secrets.PAPPERS_API_TOKEN }}
           EOF
+          echo "Tentative $i échouée, nouvel essai dans 10s..."
+          sleep 10
+          done
 
       - name: Deploy on VPS (staging)
         run: |
-          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
-            cd /root/staging && \
-            docker compose -p wedly-staging pull symfony-staging && \
-            docker compose -p wedly-staging up -d postgres-staging && \
-            sleep 5 && \
-            docker compose -p wedly-staging run --rm symfony-staging php bin/console doctrine:migrations:migrate --no-interaction && \
-            docker compose -p wedly-staging run --rm symfony-staging php bin/console cache:clear --env=staging && \
-            docker compose -p wedly-staging up -d symfony-staging"
+          for i in 1 2 3; do
+            ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+              cd /root/staging && \
+              docker compose -p wedly-staging pull symfony-staging && \
+              docker compose -p wedly-staging up -d postgres-staging && \
+              sleep 5 && \
+              docker compose -p wedly-staging run --rm symfony-staging php bin/console doctrine:migrations:migrate --no-interaction && \
+              docker compose -p wedly-staging run --rm symfony-staging php bin/console cache:clear --env=staging && \
+              docker compose -p wedly-staging up -d symfony-staging" && break
+            echo "Tentative $i échouée, nouvel essai dans 10s..."
+            sleep 10
+          done
