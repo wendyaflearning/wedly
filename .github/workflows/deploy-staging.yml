@@ -38,16 +38,21 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_ed25519_github_actions
           chmod 600 ~/.ssh/id_ed25519_github_actions
+          cat >> ~/.ssh/known_hosts << 'KNOWNHOSTS'
+          |1|VvfoFmsRmdyb/BNxXD7ZpjkC6bk=|UVkbvo4+eZblje2SQlMn0yLTNNY= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGIGVQ+57CNAbDiqcC4TrL6jJIi+9WiCaYqRtjvQ0Exx
+          |1|34Zi+wsx6d7uOAn9q71wSO51yww=|H0tauFL9z80YLUgutalZay+4nkY= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCpVboM0/G17q0RcR5Gfq8VMjAmc52JyeMJjUTWyRN3iLQAGwb5527a+enticVljQcYGc8aAwdM5OQPRUGXfNEiP8GZ8YEvgCslLBrgzwTSpKiHPgO1xVkTrAfe0g9IFVX70wh3nlnYeBqE1cWm1g26lrluuPU7zWdaJgx1xflMrWFLBnHqQ3d3EXyA4SJ21bZCMHe+EJx+xoScB7zfvYxt9+5orlrMvtC248nbDfZZ/xi8EYqd6JttjjNZjeIkeTUz7NNo2IOCNlgqXSjOkch7JqlybXlrow3gXB3MQMvQwsRc1JHF2W+aYGvMbwBaC4DJyBcaJnlKdKAGmPqKGaardSembl3mYoK+/Y9RJwgjORMDTpWGRGouummL5VVEdO9Jl940e4yHsyw9BP/tq/SYUZyvLjep4M6crS7WHGyAfENmAqcfZpnx9fkhEggStYZzAjqUQQ/ejgYdHiZI720VZXeRJ1w6H/iyPE2+40uyLT+cnKl6J2/PH2tvvAb+p5s=
+          |1|iSLKEfCif/rs/TJPBI3/g8ufKrs=|coQGQL6Zf8ZkD5hQ+R1CVrk+ZzM= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPACbwiiFvUXhxuJQuABFopZ2G9fjnDubCQumBfKwFnxMiOQ9+NaNeX3o7MweRMJRfkshGH9/LXbfj3tr5TyWzU=
+          KNOWNHOSTS
 
       - name: Sync docker-compose.staging.yml to VPS
         run: |
-          scp -i ~/.ssh/id_ed25519_github_actions -o StrictHostKeyChecking=no \
+          scp -i ~/.ssh/id_ed25519_github_actions \
             apps/api/docker/docker-compose.staging.yml \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/root/staging/docker-compose.yml
 
       - name: Write .env on VPS (staging)
         run: |
-          ssh -i ~/.ssh/id_ed25519_github_actions -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF
+          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF
           DATABASE_URL_STAGING=${{ secrets.DATABASE_URL_STAGING }}
           POSTGRES_PASSWORD_STAGING=${{ secrets.POSTGRES_PASSWORD_STAGING }}
           JWT_PASSPHRASE_STAGING=${{ secrets.JWT_PASSPHRASE_STAGING }}
@@ -62,7 +67,7 @@ jobs:
 
       - name: Deploy on VPS (staging)
         run: |
-          ssh -i ~/.ssh/id_ed25519_github_actions -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
             cd /root/staging && \
             docker compose -p wedly-staging pull symfony-staging && \
             docker compose -p wedly-staging up -d postgres-staging && \
