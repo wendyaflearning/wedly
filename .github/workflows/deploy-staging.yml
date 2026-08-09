@@ -66,6 +66,8 @@ jobs:
           ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
             cd /root/staging && \
             docker compose -p wedly-staging pull symfony-staging && \
+            docker compose -p wedly-staging up -d postgres-staging && \
+            sleep 5 && \
             docker compose -p wedly-staging run --rm symfony-staging php bin/console doctrine:migrations:migrate --no-interaction && \
             docker compose -p wedly-staging run --rm symfony-staging php bin/console cache:clear --env=staging && \
-            docker compose -p wedly-staging up -d symfony-staging postgres-staging"
+            docker compose -p wedly-staging up -d symfony-staging"
