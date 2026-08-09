@@ -38,17 +38,16 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_ed25519_github_actions
           chmod 600 ~/.ssh/id_ed25519_github_actions
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Sync docker-compose.staging.yml to VPS
         run: |
-          scp -i ~/.ssh/id_ed25519_github_actions \
+          scp -i ~/.ssh/id_ed25519_github_actions -o StrictHostKeyChecking=no \
             apps/api/docker/docker-compose.staging.yml \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/root/staging/docker-compose.yml
 
       - name: Write .env on VPS (staging)
         run: |
-          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF
+          ssh -i ~/.ssh/id_ed25519_github_actions -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF
           DATABASE_URL_STAGING=${{ secrets.DATABASE_URL_STAGING }}
           POSTGRES_PASSWORD_STAGING=${{ secrets.POSTGRES_PASSWORD_STAGING }}
           JWT_PASSPHRASE_STAGING=${{ secrets.JWT_PASSPHRASE_STAGING }}
@@ -63,7 +62,7 @@ jobs:
 
       - name: Deploy on VPS (staging)
         run: |
-          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+          ssh -i ~/.ssh/id_ed25519_github_actions -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
             cd /root/staging && \
             docker compose -p wedly-staging pull symfony-staging && \
             docker compose -p wedly-staging up -d postgres-staging && \
