@@ -1,0 +1,45 @@
+services:
+  symfony-staging:
+    image: ghcr.io/wendyaflearning/wedly-api:staging
+    environment:
+      - APP_ENV=staging
+      - DATABASE_URL=${DATABASE_URL_STAGING}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
+      - JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+      - JWT_PASSPHRASE=${JWT_PASSPHRASE_STAGING}
+      - MAILER_DSN=${MAILER_DSN} 
+      - SENTRY_DSN=${SENTRY_DSN}
+      - SLACK_WEBHOOK=${SLACK_WEBHOOK}
+      - VENDOR_FEEDBACK_SLACK_WEBHOOK_URL=${VENDOR_FEEDBACK_SLACK_WEBHOOK_URL}
+      - SLACK_MESSAGE_PREFIX=🧪 [STAGING]
+      - PAPPERS_API_TOKEN=${PAPPERS_API_TOKEN}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-api.rule=Host(`staging-api.wedly-apps.com`)"
+      - "traefik.http.routers.staging-api.entrypoints=websecure"
+      - "traefik.http.routers.staging-api.tls.certresolver=letsencrypt"
+    networks:
+      - traefik-public
+      - staging-internal
+
+  postgres-staging:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=wedly_staging
+      - POSTGRES_USER=wedly
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_STAGING}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    networks:
+      - staging-internal
+
+networks:
+  traefik-public:
+    external: true
+    name: root_default 
+  staging-internal:
+
+volumes:
+  postgres_staging_data:
