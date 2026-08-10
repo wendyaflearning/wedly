@@ -25,6 +25,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 #[AsCommand(
     name: 'app:vendor:seed-test',
@@ -149,9 +150,15 @@ class SeedTestVendorsCommand extends Command
         } catch (\Throwable $e) {
             $this->em->rollback();
             $this->em->clear();
-            $io->warning(sprintf('[%s] %s', $profile['email'], $e->getMessage()));
 
-            return ['erreur', substr($e->getMessage(), 0, 80)];
+            $detail = $e->getMessage();
+            if ($e instanceof ValidationFailedException) {
+                $detail = (string) $e->getViolations();
+            }
+
+            $io->warning(sprintf('[%s] %s', $profile['email'], $detail));
+
+            return ['erreur', substr($detail, 0, 80)];
         }
     }
 
