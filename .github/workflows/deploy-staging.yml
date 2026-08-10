@@ -40,6 +40,18 @@ jobs:
           72.60.84.168 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPACbwiiFvUXhxuJQuABFopZ2G9fjnDubCQumBfKwFnxMiOQ9+NaNeX3o7MweRMJRfkshGH9/LXbfj3tr5TyWzU=
           KNOWNHOSTS
 
+      - name: Generate & deploy JWT keypair (staging)
+        run: |
+          mkdir -p /tmp/jwt
+          openssl genpkey -out /tmp/jwt/private.pem -aes256 -algorithm rsa \
+            -pkeyopt rsa_keygen_bits:4096 -pass pass:"${{ secrets.JWT_PASSPHRASE_STAGING }}"
+          openssl pkey -in /tmp/jwt/private.pem -passin pass:"${{ secrets.JWT_PASSPHRASE_STAGING }}" \
+            -out /tmp/jwt/public.pem -pubout
+          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p /root/staging/config/jwt"
+          scp -i ~/.ssh/id_ed25519_github_actions /tmp/jwt/private.pem /tmp/jwt/public.pem \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/root/staging/config/jwt/
+
       - name: Sync docker-compose.staging.yml to VPS
         run: |
           for i in 1 2 3; do
@@ -55,7 +67,7 @@ jobs:
           for i in 1 2 3; do
           ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF && break
           DATABASE_URL_STAGING=${{ secrets.DATABASE_URL_STAGING }}
-          APP_DEBUG=1
+          APP_DEBUG=0
           POSTGRES_PASSWORD_STAGING=${{ secrets.POSTGRES_PASSWORD_STAGING }}
           JWT_PASSPHRASE_STAGING=${{ secrets.JWT_PASSPHRASE_STAGING }}
           CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
@@ -67,6 +79,7 @@ jobs:
           PAPPERS_API_TOKEN=${{ secrets.PAPPERS_API_TOKEN }}
           APP_SECRET=${{ secrets.APP_SECRET }}
           CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CORS_ALLOW_ORIGIN='^https://staging\.wedly-apps\.com$'
           EOF
           echo "Tentative $i échouée, nouvel essai dans 10s..."
           sleep 10
