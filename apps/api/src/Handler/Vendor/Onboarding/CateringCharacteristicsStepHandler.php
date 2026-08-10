@@ -69,6 +69,7 @@ readonly class CateringCharacteristicsStepHandler extends AbstractOnboardingStep
         if ($isNew) {
             $details = new VendorCateringDetails();
             $details->setVendor($vendor);
+            $vendor->setCateringDetails($details);
         }
 
         if ($dto->coversMin !== null) {

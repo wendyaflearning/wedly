@@ -50,6 +50,7 @@ readonly class VenueCharacteristicsStepHandler extends AbstractOnboardingStepHan
             }
             $details = new VendorVenueDetails();
             $details->setVendor($vendor);
+            $vendor->setVenueDetails($details);
         }
 
         if ($dto->venueType !== null) {
