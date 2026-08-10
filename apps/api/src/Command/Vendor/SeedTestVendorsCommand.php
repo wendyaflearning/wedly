@@ -119,7 +119,7 @@ class SeedTestVendorsCommand extends Command
             $this->em->flush();
 
             $this->dispatcher->handle($vendor, $this->dto('professions', [
-                'serviceIds' => [$profile['service_id']],
+                'service_ids' => [$profile['service_id']],
             ]));
 
             $steps = $this->stepResolver->getOnboardingSteps($vendor->resolveVendorType());
