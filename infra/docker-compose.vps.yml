@@ -54,46 +54,6 @@ services:
       - n8n_data:/home/node/.n8n
       - /local-files:/files
 
-  evolution-api:
-    image: atendai/evolution-api:v1.7.4
-    restart: always
-    ports:
-      - "127.0.0.1:8080:8080"
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.evolution.rule=Host(`evolution.${DOMAIN_NAME}`)
-      - traefik.http.routers.evolution.tls=true
-      - traefik.http.routers.evolution.entrypoints=web,websecure
-      - traefik.http.routers.evolution.tls.certresolver=mytlschallenge
-      - traefik.http.services.evolution.loadbalancer.server.port=8080
-    environment:
-      - SERVER_URL=https://evolution.${DOMAIN_NAME}
-      - AUTHENTICATION_API_KEY=&AMfUxcM5XxQ9amrC274
-      - DATABASE_ENABLED=false
-      - REDIS_ENABLED=false
-      - CONFIG_SESSION_PHONE_VERSION=2.3000.1029193574
-      - CONFIG_SESSION_PHONE_NAME=Chrome
-      - CONFIG_SESSION_PHONE_CLIENT=Evolution API
-    volumes:
-      - evolution_data:/evolution/instances
-
-  waha:
-    image: devlikeapro/waha
-    restart: always
-    ports:
-      - "3000:3000"
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.waha.rule=Host(`waha.${DOMAIN_NAME}`)
-      - traefik.http.routers.waha.tls=true
-      - traefik.http.routers.waha.entrypoints=web,websecure
-      - traefik.http.routers.waha.tls.certresolver=mytlschallenge
-      - traefik.http.services.waha.loadbalancer.server.port=3000
-    environment:
-      - WHATSAPP_API_KEY=3JqCPredou7zFdg6y
-    volumes:
-      - waha_data:/app/.sessions
-
   symfony:
     image: ghcr.io/wendyaflearning/wedly-api:latest
     restart: always
@@ -129,6 +89,4 @@ volumes:
     external: true
   n8n_data:
     external: true
-  evolution_data:
-  waha_data:
   db_data:
