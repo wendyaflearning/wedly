@@ -23,16 +23,6 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/wedly-api:staging
 
-      - name: Debug secrets (temporary)
-        run: |
-          echo "VPS_HOST length: ${#VPS_HOST}"
-          echo "VPS_USER length: ${#VPS_USER}"
-          echo "SSH_PRIVATE_KEY length: ${#SSH_PRIVATE_KEY}"
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
