@@ -22,6 +22,8 @@ jobs:
           context: apps/api
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/wedly-api:staging
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Set up SSH
         run: |
