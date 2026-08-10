@@ -96,6 +96,8 @@ jobs:
               docker compose -p wedly-staging up -d postgres-staging && \
               sleep 5 && \
               docker compose -p wedly-staging run --rm symfony-staging php bin/console doctrine:migrations:migrate --no-interaction && \
+              docker compose -p wedly-staging run --rm symfony-staging php bin/console app:seed-specialties --no-interaction && \
+              docker compose -p wedly-staging run --rm symfony-staging php bin/console app:seed:portfolio-tags --no-interaction && \
               docker compose -p wedly-staging run --rm symfony-staging php bin/console cache:clear --env=staging && \
               docker compose -p wedly-staging up -d symfony-staging" && break
             echo "Tentative $i échouée, nouvel essai dans 10s..."
