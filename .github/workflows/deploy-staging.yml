@@ -55,6 +55,7 @@ jobs:
           for i in 1 2 3; do
           ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cat > /root/staging/.env" << EOF && break
           DATABASE_URL_STAGING=${{ secrets.DATABASE_URL_STAGING }}
+          APP_DEBUG=1
           POSTGRES_PASSWORD_STAGING=${{ secrets.POSTGRES_PASSWORD_STAGING }}
           JWT_PASSPHRASE_STAGING=${{ secrets.JWT_PASSPHRASE_STAGING }}
           CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
