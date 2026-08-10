@@ -3,6 +3,8 @@ services:
     image: ghcr.io/wendyaflearning/wedly-api:staging
     environment:
       - APP_ENV=staging
+      - APP_SECRET=${APP_SECRET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - DATABASE_URL=${DATABASE_URL_STAGING}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}

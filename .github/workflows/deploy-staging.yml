@@ -64,6 +64,8 @@ jobs:
           SLACK_WEBHOOK=${{ secrets.SLACK_WEBHOOK }}
           VENDOR_FEEDBACK_SLACK_WEBHOOK_URL=${{ secrets.VENDOR_FEEDBACK_SLACK_WEBHOOK_URL }}
           PAPPERS_API_TOKEN=${{ secrets.PAPPERS_API_TOKEN }}
+          APP_SECRET=${{ secrets.APP_SECRET }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
           EOF
           echo "Tentative $i échouée, nouvel essai dans 10s..."
           sleep 10
