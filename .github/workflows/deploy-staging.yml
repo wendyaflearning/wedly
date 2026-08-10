@@ -51,6 +51,8 @@ jobs:
             "mkdir -p /root/staging/config/jwt"
           scp -i ~/.ssh/id_ed25519_github_actions /tmp/jwt/private.pem /tmp/jwt/public.pem \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/root/staging/config/jwt/
+          ssh -i ~/.ssh/id_ed25519_github_actions ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "chmod 644 /root/staging/config/jwt/private.pem /root/staging/config/jwt/public.pem"
 
       - name: Sync docker-compose.staging.yml to VPS
         run: |
