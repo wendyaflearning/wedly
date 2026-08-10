@@ -16,7 +16,9 @@ use App\Enum\Vendor\VendorStatus;
 use App\Exception\ValidationException;
 use App\Repository\Confession\ConfessionRepository;
 use App\Repository\Culture\CultureRepository;
+use App\Repository\Region\RegionRepository;
 use App\Repository\User\UserRepository;
+use App\Repository\Vendor\ServiceRepository;
 use App\Resolver\Vendor\OnboardingStepResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -43,6 +45,8 @@ class SeedTestVendorsCommand extends Command
         private readonly CultureRepository $cultureRepository,
         private readonly ConfessionRepository $confessionRepository,
         private readonly OnboardingStepResolver $stepResolver,
+        private readonly ServiceRepository $serviceRepository,
+        private readonly RegionRepository $regionRepository,
     ) {
         parent::__construct();
     }
@@ -119,7 +123,7 @@ class SeedTestVendorsCommand extends Command
             $this->em->flush();
 
             $this->dispatcher->handle($vendor, $this->dto('professions', [
-                'service_ids' => [$profile['service_id']],
+                'service_ids' => [$this->resolveServiceId($profile['service_slug'])],
             ]));
 
             $steps = $this->stepResolver->getOnboardingSteps($vendor->resolveVendorType());
@@ -135,6 +139,10 @@ class SeedTestVendorsCommand extends Command
                 }
 
                 $stepData = $profile['steps'][$step->value] ?? [];
+                if ($step === OnboardingStep::ZonesPricing && isset($stepData['zones'])) {
+                    $stepData['zones'] = $this->resolveRegionIds($stepData['zones']);
+                }
+
                 $this->dispatcher->handle($vendor, $this->dto($step->value, $stepData));
             }
 
@@ -193,7 +201,33 @@ class SeedTestVendorsCommand extends Command
         return new VendorOnboardingStepRequestDto($step, $data);
     }
 
-    /** @return array<int, array{email: string, first_name: string, brand_name: string, service_id: string, steps: array<string, array>}> */
+    private function resolveServiceId(string $slug): string
+    {
+        $service = $this->serviceRepository->findOneBy(['slug' => $slug]);
+        if ($service === null) {
+            throw new \RuntimeException(sprintf('Service introuvable pour le slug "%s"', $slug));
+        }
+
+        return $service->getId()->toRfc4122();
+    }
+
+    /**
+     * @param string[] $slugs
+     * @return string[]
+     */
+    private function resolveRegionIds(array $slugs): array
+    {
+        return array_map(function (string $slug): string {
+            $region = $this->regionRepository->findOneBy(['slug' => $slug]);
+            if ($region === null) {
+                throw new \RuntimeException(sprintf('Région introuvable pour le slug "%s"', $slug));
+            }
+
+            return $region->getId()->toRfc4122();
+        }, $slugs);
+    }
+
+    /** @return array<int, array{email: string, first_name: string, brand_name: string, service_slug: string, steps: array<string, array>}> */
     private function buildProfiles(array $experiencesData): array
     {
         return [
@@ -201,7 +235,7 @@ class SeedTestVendorsCommand extends Command
                 'email'      => 'contact+vendor-lieu-camille@wedly-apps.com',
                 'first_name' => 'Camille',
                 'brand_name' => 'Domaine Test',
-                'service_id' => '019da0ec-d800-7001-8001-000000000007',
+                'service_slug' => 'lieu-de-reception',
                 'steps'      => [
                     'venue_characteristics' => [
                         'venue_type'               => 'domaine',
@@ -220,7 +254,7 @@ class SeedTestVendorsCommand extends Command
                         'price_min'               => 300000,
                         'price_max'               => 800000,
                         'price_type'              => 'per_service',
-                        'zones'                   => ['019da0ec-d800-7002-8002-000000000009'],
+                        'zones'                   => ['auvergne-rhone-alpes'],
                         'city'                    => 'Lyon',
                         'nearest_city'            => 'Lyon',
                         'distance_to_city_minutes' => 20,
@@ -241,7 +275,7 @@ class SeedTestVendorsCommand extends Command
                 'email'      => 'contact+vendor-photographe-lucas@wedly-apps.com',
                 'first_name' => 'Lucas',
                 'brand_name' => 'Lucas Photographie',
-                'service_id' => '019da0ec-d800-7001-8001-000000000001',
+                'service_slug' => 'photographe',
                 'steps'      => [
                     'consent'       => ['granted' => true],
                     'experiences'   => $experiencesData,
@@ -249,7 +283,7 @@ class SeedTestVendorsCommand extends Command
                         'price_min'  => 80000,
                         'price_max'  => 250000,
                         'price_type' => 'per_service',
-                        'zones'      => ['019da0ec-d800-7002-8002-000000000006'],
+                        'zones'      => ['ile-de-france'],
                     ],
                     'legal_info' => [
                         'brand_name' => 'Lucas Photographie',
@@ -267,7 +301,7 @@ class SeedTestVendorsCommand extends Command
                 'email'      => 'contact+vendor-traiteur-sophie@wedly-apps.com',
                 'first_name' => 'Sophie',
                 'brand_name' => 'Saveurs & Co Test',
-                'service_id' => '019da0ec-d800-7001-8001-000000000004',
+                'service_slug' => 'traiteur',
                 'steps'      => [
                     'consent'     => ['granted' => true],
                     'experiences' => $experiencesData,
@@ -289,8 +323,8 @@ class SeedTestVendorsCommand extends Command
                         'price_max'  => 15000,
                         'price_type' => 'per_service',
                         'zones'      => [
-                            '019da0ec-d800-7002-8002-00000000000c',
-                            '019da0ec-d800-7002-8002-000000000008',
+                            'ile-de-france',
+                            'hauts-de-france',
                         ],
                     ],
                     'legal_info' => [
@@ -309,7 +343,7 @@ class SeedTestVendorsCommand extends Command
                 'email'      => 'contact+vendor-createur-angelique@wedly-apps.com',
                 'first_name' => 'Angélique',
                 'brand_name' => 'Atelier de lutel',
-                'service_id' => '019da0ec-d800-7007-8007-000000000001',
+                'service_slug' => 'creatrice-robe-de-mariee',
                 'steps'      => [
                     'consent'       => ['granted' => true],
                     'experiences'   => $experiencesData,
@@ -317,7 +351,7 @@ class SeedTestVendorsCommand extends Command
                         'price_min'  => 20000,
                         'price_max'  => 60000,
                         'price_type' => 'per_service',
-                        'zones'      => ['019da0ec-d800-7002-8002-000000000009'],
+                        'zones'      => ['ile-de-france'],
                         'city'       => 'Paris',
                     ],
                     'legal_info' => [
@@ -336,7 +370,7 @@ class SeedTestVendorsCommand extends Command
                 'email'      => 'contact+vendor-animateur-marie@wedly-apps.com',
                 'first_name' => 'Marie',
                 'brand_name' => 'Marie Live Sketch',
-                'service_id' => '019da0ec-d800-7006-8006-00000000000b',
+                'service_slug' => 'live-sketching',
                 'steps'      => [
                     'consent'       => ['granted' => true],
                     'experiences'   => $experiencesData,
@@ -344,7 +378,7 @@ class SeedTestVendorsCommand extends Command
                         'price_min'  => 30000,
                         'price_max'  => 90000,
                         'price_type' => 'per_service',
-                        'zones'      => ['019da0ec-d800-7002-8002-000000000008'],
+                        'zones'      => ['ile-de-france'],
                     ],
                     'legal_info' => [
                         'brand_name' => 'Marie Live Sketch',
