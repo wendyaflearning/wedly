@@ -13,6 +13,7 @@ use App\Enum\User\Role;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorStatus;
+use App\Exception\ValidationException;
 use App\Repository\Confession\ConfessionRepository;
 use App\Repository\Culture\CultureRepository;
 use App\Repository\User\UserRepository;
@@ -25,7 +26,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 #[AsCommand(
     name: 'app:vendor:seed-test',
@@ -152,8 +152,11 @@ class SeedTestVendorsCommand extends Command
             $this->em->clear();
 
             $detail = $e->getMessage();
-            if ($e instanceof ValidationFailedException) {
-                $detail = (string) $e->getViolations();
+            if ($e instanceof ValidationException) {
+                $detail = implode('; ', array_map(
+                    static fn (array $v): string => sprintf('%s: %s', $v['field'], $v['message']),
+                    $e->getViolations(),
+                ));
             }
 
             $io->warning(sprintf('[%s] %s', $profile['email'], $detail));
