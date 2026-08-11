@@ -19,7 +19,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class PatchVendorDashboardPortfolioTagsActionTest extends TestCase
 {
-    public function test_invoke_returns_404_when_image_not_found_or_out_of_scope(): void
+    public function test_invoke_returns_404_when_image_not_found(): void
     {
         $vendorId = Uuid::fromString('01930000-0000-7000-8000-000000000001');
         $vendor   = $this->createStub(Vendor::class);
@@ -46,7 +46,49 @@ final class PatchVendorDashboardPortfolioTagsActionTest extends TestCase
         $em->expects($this->never())->method('flush');
 
         $response = (new PatchVendorDashboardPortfolioTagsAction($security, $vendorOwnershipResolver, $portfolioImageRepository, $portfolioService, $em))
-            ->__invoke($vendorId->toRfc4122(), 'image-id', new PatchPortfolioTagsRequestDto());
+            ->__invoke('image-id', new PatchPortfolioTagsRequestDto());
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame(
+            ['error' => 'Image introuvable.'],
+            json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    public function test_invoke_returns_404_when_image_belongs_to_another_vendor(): void
+    {
+        $vendorAId = Uuid::fromString('01930000-0000-7000-8000-000000000001');
+        $vendorA   = $this->createStub(Vendor::class);
+        $vendorA->method('getId')->willReturn($vendorAId);
+
+        // $vendorB owns the requested photo but is never the vendor resolved from the JWT below —
+        // the repository query is scoped to $vendorA, so it must miss and return null regardless.
+        $vendorBId = Uuid::fromString('01930000-0000-7000-8000-000000000099');
+        $vendorB   = $this->createStub(Vendor::class);
+        $vendorB->method('getId')->willReturn($vendorBId);
+
+        $user = $this->createStub(User::class);
+
+        $security = $this->createMock(Security::class);
+        $security->expects($this->once())->method('getUser')->willReturn($user);
+
+        $vendorOwnershipResolver = $this->createMock(VendorOwnershipResolver::class);
+        $vendorOwnershipResolver->expects($this->once())->method('resolve')->with($user)->willReturn($vendorA);
+
+        $portfolioImageRepository = $this->createMock(PortfolioImageRepository::class);
+        $portfolioImageRepository->expects($this->once())
+            ->method('findOneBy')
+            ->with(['id' => 'image-id', 'vendor' => $vendorA])
+            ->willReturn(null);
+
+        $portfolioService = $this->createMock(PortfolioService::class);
+        $portfolioService->expects($this->never())->method('updatePortfolioTags');
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->never())->method('flush');
+
+        $response = (new PatchVendorDashboardPortfolioTagsAction($security, $vendorOwnershipResolver, $portfolioImageRepository, $portfolioService, $em))
+            ->__invoke('image-id', new PatchPortfolioTagsRequestDto());
 
         $this->assertSame(404, $response->getStatusCode());
         $this->assertSame(
@@ -104,7 +146,7 @@ final class PatchVendorDashboardPortfolioTagsActionTest extends TestCase
             });
 
         $response = (new PatchVendorDashboardPortfolioTagsAction($security, $vendorOwnershipResolver, $portfolioImageRepository, $portfolioService, $em))
-            ->__invoke($vendorId->toRfc4122(), 'image-id', $dto);
+            ->__invoke('image-id', $dto);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(['updatePortfolioTags', 'flush'], $calls);
@@ -116,41 +158,6 @@ final class PatchVendorDashboardPortfolioTagsActionTest extends TestCase
                 'isVisibleInWedream' => false,
                 'tags'               => [],
             ],
-            json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
-        );
-    }
-
-    public function test_invoke_returns_403_when_id_does_not_match_resolved_vendor(): void
-    {
-        $resolvedVendorId = Uuid::fromString('01930000-0000-7000-8000-000000000001');
-        $vendor            = $this->createStub(Vendor::class);
-        $vendor->method('getId')->willReturn($resolvedVendorId);
-
-        $user = $this->createStub(User::class);
-
-        $security = $this->createMock(Security::class);
-        $security->expects($this->once())->method('getUser')->willReturn($user);
-
-        $vendorOwnershipResolver = $this->createMock(VendorOwnershipResolver::class);
-        $vendorOwnershipResolver->expects($this->once())->method('resolve')->with($user)->willReturn($vendor);
-
-        $portfolioImageRepository = $this->createMock(PortfolioImageRepository::class);
-        $portfolioImageRepository->expects($this->never())->method('findOneBy');
-
-        $portfolioService = $this->createMock(PortfolioService::class);
-        $portfolioService->expects($this->never())->method('updatePortfolioTags');
-
-        $em = $this->createMock(EntityManagerInterface::class);
-        $em->expects($this->never())->method('flush');
-
-        $otherVendorId = Uuid::fromString('01930000-0000-7000-8000-000000000099');
-
-        $response = (new PatchVendorDashboardPortfolioTagsAction($security, $vendorOwnershipResolver, $portfolioImageRepository, $portfolioService, $em))
-            ->__invoke($otherVendorId->toRfc4122(), 'image-id', new PatchPortfolioTagsRequestDto());
-
-        $this->assertSame(403, $response->getStatusCode());
-        $this->assertSame(
-            ['error' => 'Accès interdit.'],
             json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
         );
     }
