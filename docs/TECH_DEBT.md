@@ -21,3 +21,10 @@ Registre des raccourcis assumés en connaissance de cause, avec le seuil qui dé
 - **Contexte** : `PatchVendorDashboardPortfolioTagsAction` a été corrigé le 2026-08-11 pour utiliser `/me` (voir WED-103). Le même refactor n'a pas été appliqué à ses 4 voisines (`Get`/`Post`/`Delete`/`Cover`) car elles ont des consommateurs front live et sortent du scope de ce ticket.
 - **Seuil de déclenchement** : à réappliquer la prochaine fois que ces 4 actions sont retouchées pour une autre raison.
 - **Remède** : même refactor que Tags — route `/me`, suppression de la comparaison manuelle `{id}`, retrait de `extends AbstractController`.
+
+## PortfolioPageClient — tagTypes résolus via le premier service du vendor (vendorServices[0])
+
+- **Dette** : un vendor multi-services (freelance avec plusieurs métiers) ne peut taguer ses photos que selon la taxonomie de son premier service déclaré (`vendorServices[0]`) — pas de sélection de métier dans l'écran de tagging du dashboard.
+- **Contexte** : simplification MVP actée pour WED-103 (tagging portfolio côté prestataire). La majorité des vendors n'ont qu'un seul service ; gérer le multi-service en V1 aurait ajouté une étape de sélection de métier non prévue dans le ticket.
+- **Seuil de déclenchement** : retours terrain de vendors multi-services bloqués sur le tagging d'un second métier.
+- **Remède** : ajouter un sélecteur de service dans l'écran de tagging du dashboard, ou reprendre `vendorServices` en entier au lieu du seul premier élément.

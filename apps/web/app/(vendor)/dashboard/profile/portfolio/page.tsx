@@ -25,7 +25,7 @@ export default async function PortfolioPage() {
         <div className="flex-1 min-w-0 pb-20">
           <ProfileMobileNav />
           <div className="px-5 md:px-0 pt-8">
-            <PortfolioPageClient initialPhotos={photos} vendorId={dashboard.id} />
+            <PortfolioPageClient initialPhotos={photos} vendorId={dashboard.id} vendorServices={dashboard.vendorServices ?? []} />
           </div>
         </div>
       </div>
