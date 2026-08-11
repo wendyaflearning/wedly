@@ -14,15 +14,17 @@ final readonly class PortfolioImageResponseDto
     public string $url;
     public bool   $is_cover;
     public int    $sort_order;
+    public bool   $isVisibleInWedream;
     public array  $tags;
 
     public function __construct(PortfolioImage $image)
     {
-        $this->id         = $image->getId()->toRfc4122();
-        $this->url        = $image->getUrl();
-        $this->is_cover   = $image->isCover();
-        $this->sort_order = $image->getSortOrder();
-        $this->tags       = array_values(array_map(
+        $this->id                 = $image->getId()->toRfc4122();
+        $this->url                = $image->getUrl();
+        $this->is_cover           = $image->isCover();
+        $this->sort_order         = $image->getSortOrder();
+        $this->isVisibleInWedream = $image->isVisibleInWedream();
+        $this->tags               = array_values(array_map(
             static fn(TagValue $tag) => TagValueResponseDto::fromEntity($tag),
             $image->getTags()->toArray(),
         ));

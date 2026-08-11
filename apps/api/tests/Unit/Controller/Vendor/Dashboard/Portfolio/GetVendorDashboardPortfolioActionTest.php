@@ -70,6 +70,7 @@ final class GetVendorDashboardPortfolioActionTest extends TestCase
             ->setUrl('https://res.cloudinary.com/tagged.jpg')
             ->setIsCover(true)
             ->setSortOrder(0)
+            ->setVisibleInWedream(true)
             ->addTag($tagValue);
         $taggedImageIdProperty = new \ReflectionProperty(PortfolioImage::class, 'id');
         $taggedImageIdProperty->setAccessible(true);
@@ -79,7 +80,8 @@ final class GetVendorDashboardPortfolioActionTest extends TestCase
         $untaggedImage   = (new PortfolioImage())
             ->setUrl('https://res.cloudinary.com/untagged.jpg')
             ->setIsCover(false)
-            ->setSortOrder(1);
+            ->setSortOrder(1)
+            ->setVisibleInWedream(false);
         $untaggedImageIdProperty = new \ReflectionProperty(PortfolioImage::class, 'id');
         $untaggedImageIdProperty->setAccessible(true);
         $untaggedImageIdProperty->setValue($untaggedImage, $untaggedImageId);
@@ -97,20 +99,22 @@ final class GetVendorDashboardPortfolioActionTest extends TestCase
         $this->assertSame(
             [
                 [
-                    'id'         => $taggedImageId->toRfc4122(),
-                    'url'        => 'https://res.cloudinary.com/tagged.jpg',
-                    'is_cover'   => true,
-                    'sort_order' => 0,
-                    'tags'       => [
+                    'id'                 => $taggedImageId->toRfc4122(),
+                    'url'                => 'https://res.cloudinary.com/tagged.jpg',
+                    'is_cover'           => true,
+                    'sort_order'         => 0,
+                    'isVisibleInWedream' => true,
+                    'tags'               => [
                         ['id' => $tagValueId->toRfc4122(), 'label' => 'Bohème'],
                     ],
                 ],
                 [
-                    'id'         => $untaggedImageId->toRfc4122(),
-                    'url'        => 'https://res.cloudinary.com/untagged.jpg',
-                    'is_cover'   => false,
-                    'sort_order' => 1,
-                    'tags'       => [],
+                    'id'                 => $untaggedImageId->toRfc4122(),
+                    'url'                => 'https://res.cloudinary.com/untagged.jpg',
+                    'is_cover'           => false,
+                    'sort_order'         => 1,
+                    'isVisibleInWedream' => false,
+                    'tags'               => [],
                 ],
             ],
             json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
