@@ -99,22 +99,22 @@ final class GetVendorDashboardPortfolioActionTest extends TestCase
         $this->assertSame(
             [
                 [
-                    'id'                 => $taggedImageId->toRfc4122(),
-                    'url'                => 'https://res.cloudinary.com/tagged.jpg',
-                    'is_cover'           => true,
-                    'sort_order'         => 0,
-                    'isVisibleInWedream' => true,
-                    'tags'               => [
+                    'id'                    => $taggedImageId->toRfc4122(),
+                    'url'                   => 'https://res.cloudinary.com/tagged.jpg',
+                    'is_cover'              => true,
+                    'sort_order'            => 0,
+                    'is_visible_in_wedream' => true,
+                    'tags'                  => [
                         ['id' => $tagValueId->toRfc4122(), 'label' => 'Bohème'],
                     ],
                 ],
                 [
-                    'id'                 => $untaggedImageId->toRfc4122(),
-                    'url'                => 'https://res.cloudinary.com/untagged.jpg',
-                    'is_cover'           => false,
-                    'sort_order'         => 1,
-                    'isVisibleInWedream' => false,
-                    'tags'               => [],
+                    'id'                    => $untaggedImageId->toRfc4122(),
+                    'url'                   => 'https://res.cloudinary.com/untagged.jpg',
+                    'is_cover'              => false,
+                    'sort_order'            => 1,
+                    'is_visible_in_wedream' => false,
+                    'tags'                  => [],
                 ],
             ],
             json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
