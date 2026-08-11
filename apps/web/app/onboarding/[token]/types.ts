@@ -77,6 +77,8 @@ export interface PortfolioImage {
   url: string
   is_cover: boolean
   sort_order: number
+  is_visible_in_wedream: boolean
+  tags: { id: string; label: string }[]
 }
 
 export interface PortfolioData {
