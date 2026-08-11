@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\DTO\Vendor\Dashboard;
 
+use App\DTO\Service\TagValueResponseDto;
 use App\Entity\Vendor\PortfolioImage;
+use App\Entity\Vendor\TagValue;
 
 final readonly class PortfolioImageResponseDto
 {
@@ -12,18 +14,19 @@ final readonly class PortfolioImageResponseDto
     public string $url;
     public bool   $is_cover;
     public int    $sort_order;
+    public bool   $is_visible_in_wedream;
     public array  $tags;
 
     public function __construct(PortfolioImage $image)
     {
-        $this->id         = $image->getId()->toRfc4122();
-        $this->url        = $image->getUrl();
-        $this->is_cover   = $image->isCover();
-        $this->sort_order = $image->getSortOrder();
-        // TODO WED-97: styles/specialties retirés avec portfolio_image_style/specialty ; remplacer par les tags (TagValue) dans WED-100
-        $this->tags       = [
-            'styles'      => [],
-            'specialties' => [],
-        ];
+        $this->id                    = $image->getId()->toRfc4122();
+        $this->url                   = $image->getUrl();
+        $this->is_cover              = $image->isCover();
+        $this->sort_order            = $image->getSortOrder();
+        $this->is_visible_in_wedream = $image->isVisibleInWedream();
+        $this->tags                  = array_values(array_map(
+            static fn(TagValue $tag) => TagValueResponseDto::fromEntity($tag),
+            $image->getTags()->toArray(),
+        ));
     }
 }
