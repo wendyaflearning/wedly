@@ -40,4 +40,20 @@ class TagTypeRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Retourne le TagType is_primary=true et is_active=true d'un service, s'il existe.
+     * Utilisé pour la contrainte CA4 (un seul axe principal actif par service).
+     */
+    public function findOneActivePrimaryByService(string $serviceId): ?TagType
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.service = :serviceId')
+            ->andWhere('t.isPrimary = true')
+            ->andWhere('t.isActive = true')
+            ->setParameter('serviceId', $serviceId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

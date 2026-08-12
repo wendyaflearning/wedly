@@ -9,15 +9,11 @@ async function getAuthCookie() {
   return token ? `jwt_token=${token.value}` : null
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ vendorId: string }> }
-) {
-  const { vendorId } = await params
+export async function GET() {
   const cookieHeader = await getAuthCookie()
   if (!cookieHeader) return Response.json({ error: 'Non authentifié.' }, { status: 401 })
 
-  const res = await fetch(`${API}/api/v1/vendors/${vendorId}/portfolio`, {
+  const res = await fetch(`${API}/api/v1/vendors/me/portfolio`, {
     headers: { Cookie: cookieHeader },
     cache: 'no-store',
   })
@@ -30,18 +26,14 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ vendorId: string }> }
-) {
-  const { vendorId } = await params
+export async function POST(request: NextRequest) {
   const cookieHeader = await getAuthCookie()
   if (!cookieHeader) return Response.json({ error: 'Non authentifié.' }, { status: 401 })
 
   const contentType = request.headers.get('content-type') ?? ''
   const body = await request.arrayBuffer()
 
-  const res = await fetch(`${API}/api/v1/vendors/${vendorId}/portfolio`, {
+  const res = await fetch(`${API}/api/v1/vendors/me/portfolio`, {
     method: 'POST',
     headers: { 'content-type': contentType, Cookie: cookieHeader },
     body,
