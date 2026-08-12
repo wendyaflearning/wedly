@@ -40,6 +40,14 @@ dans les fichiers de règles.
 | `INVITE-TOKEN-002` | Un token expiré est marqué `Expired` lors de sa résolution | `active` | `rules/invite-tokens.md` |
 | `INVITE-TOKEN-003` | Un token consommé passe à `Used` | `active` | `rules/invite-tokens.md` |
 
+## Couple onboarding
+
+| ID | Règle | Statut | Fichier |
+|---|---|---|---|
+| `COUPLE-ONBOARDING-001` | Rien n'est persisté avant l'écran final du parcours de création de compte couple | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-002` | L'avancement de l'organisation du mariage (`PlanningStage`) est distinct de l'état du compte (`CoupleStatus`) | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-003` | `NULL` sur `Wedding.zone`/`ambiance`/`ceremonyType` signifie « non renseigné », jamais de valeur par défaut | `active` | `rules/couple-onboarding.md` |
+
 ## Data and schema
 
 | ID | Règle | Statut | Fichier |
@@ -53,5 +61,5 @@ dans les fichiers de règles.
 ## À ajouter lors des prochains tickets
 
 - règles WedMatch dès que le matching est implémenté
-- règles couple, wedding et subscription au moment de leur implémentation réelle
+- règles subscription au moment de leur implémentation réelle
 - règles frontend de navigation, formulaires et permissions quand les parcours seront stabilisés
