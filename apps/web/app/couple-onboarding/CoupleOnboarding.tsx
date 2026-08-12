@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import ProgressIndicator from './ProgressIndicator'
+import { getContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
   budgetRangeForCents,
@@ -70,8 +71,20 @@ function Calendar({ value, onChange }: { value?: string; onChange: (value: strin
   )
 }
 
-export default function CoupleOnboarding() {
-  const [screen, setScreen] = useState<1 | 2>(1)
+interface CoupleOnboardingProps {
+  /**
+   * The parent 7-step flow owns screens 3–7. Stage A only emits its complete,
+   * in-memory data at the boundary so the next stage can continue without an API call.
+   */
+  onStageComplete?: (data: CoupleOnboardingData) => void
+}
+
+function emitStageAComplete(data: CoupleOnboardingData) {
+  window.dispatchEvent(new CustomEvent('wedly:couple-onboarding-stage-a-complete', { detail: data }))
+}
+
+export default function CoupleOnboarding({ onStageComplete = emitStageAComplete }: CoupleOnboardingProps) {
+  const [screen, setScreen] = useState<CoupleOnboardingScreen>(1)
   const [data, setData] = useState<CoupleOnboardingData>({})
   const [hydrated, setHydrated] = useState(false)
 
@@ -90,6 +103,17 @@ export default function CoupleOnboarding() {
 
   function update<K extends keyof CoupleOnboardingData>(key: K, value: CoupleOnboardingData[K]) {
     setData((current) => ({ ...current, [key]: value }))
+  }
+
+  function continueOnboarding() {
+    const action = getContinueAction(screen, data)
+
+    if (action.type === 'show_wedding_profile') {
+      setScreen(2)
+      return
+    }
+
+    onStageComplete(action.data)
   }
 
   const name = data.firstName?.trim()
@@ -146,7 +170,7 @@ export default function CoupleOnboarding() {
         )}
 
         <footer className="mt-10 flex justify-center pb-2">
-          <button type="button" onClick={() => setScreen(2)} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux">
+          <button type="button" onClick={continueOnboarding} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux">
             CONTINUER <ChevronRight size={18} aria-hidden="true" />
           </button>
         </footer>
