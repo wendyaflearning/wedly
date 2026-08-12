@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers'
 import type {
+  AdminNotificationListResponse,
+  AdminNotificationUnreadCountResponse,
   AdminSession,
   AdminVendorDraft,
   AdminVendorDraftListResponse,
@@ -15,6 +17,12 @@ import type {
   SpecialtyOption,
   StyleOption,
 } from '@/lib/admin-types'
+import {
+  type AdminNotificationApiListResponse,
+  type AdminNotificationUnreadCountApiResponse,
+  mapAdminNotificationListResponse,
+  mapAdminNotificationUnreadCountResponse,
+} from '@/lib/admin-notifications'
 
 type AdminFetchResult<T> =
   | { ok: true; data: T }
@@ -118,6 +126,37 @@ export async function fetchAdminVendorDrafts(): Promise<AdminFetchResult<AdminVe
 
 export async function fetchAdminVendorDraft(id: string): Promise<AdminFetchResult<AdminVendorDraft>> {
   return parseResult(await adminFetch(`/api/v1/admin/vendors/${id}/draft`))
+}
+
+export async function fetchAdminNotifications(limit = 8): Promise<AdminFetchResult<AdminNotificationListResponse>> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  const result = await parseResult<AdminNotificationApiListResponse>(
+    await adminFetch(`/api/v1/admin/notifications?${params.toString()}`)
+  )
+
+  if (!result.ok) {
+    return result
+  }
+
+  return {
+    ok: true,
+    data: mapAdminNotificationListResponse(result.data),
+  }
+}
+
+export async function fetchAdminNotificationsUnreadCount(): Promise<AdminFetchResult<AdminNotificationUnreadCountResponse>> {
+  const result = await parseResult<AdminNotificationUnreadCountApiResponse>(
+    await adminFetch('/api/v1/admin/notifications/unread-count')
+  )
+
+  if (!result.ok) {
+    return result
+  }
+
+  return {
+    ok: true,
+    data: mapAdminNotificationUnreadCountResponse(result.data),
+  }
 }
 
 export async function fetchAdminVendorFormOptions(): Promise<AdminVendorFormOptions> {

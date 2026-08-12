@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { LogOut, User } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { fetchAdminVendors, fetchCurrentAdmin } from '@/lib/admin'
+import { AdminNotificationsBell } from '@/components/admin/AdminNotificationsBell'
+import { fetchAdminNotifications, fetchAdminNotificationsUnreadCount, fetchAdminVendors, fetchCurrentAdmin } from '@/lib/admin'
 
 type SidebarItem = {
   label: string
@@ -74,9 +75,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const admin = await fetchCurrentAdmin()
   if (!admin) redirect('/login')
 
-  const pendingVendors = await fetchAdminVendors('under_review')
+  const [pendingVendors, notificationsResult, unreadNotificationsResult] = await Promise.all([
+    fetchAdminVendors('under_review'),
+    fetchAdminNotifications(8),
+    fetchAdminNotificationsUnreadCount(),
+  ])
   const pendingCount = pendingVendors.ok ? pendingVendors.data.totalFiltered : 0
   const displayName = [admin.firstName, admin.lastName].filter(Boolean).join(' ')
+  const initialNotifications = notificationsResult.ok ? notificationsResult.data.items : []
+  const initialUnreadCount = unreadNotificationsResult.ok ? unreadNotificationsResult.data.unreadCount : 0
 
   const primaryItems = PRIMARY_ITEMS.map((item) =>
     item.href === '/admin/prestataires' ? { ...item, count: pendingCount } : item
@@ -122,6 +129,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
 
       <main className="min-h-screen px-5 py-8 lg:col-start-2 lg:px-16 lg:py-14 xl:px-20">
+        <div className="mb-6 flex justify-end">
+          <AdminNotificationsBell
+            initialNotifications={initialNotifications}
+            initialUnreadCount={initialUnreadCount}
+          />
+        </div>
         {children}
       </main>
     </div>

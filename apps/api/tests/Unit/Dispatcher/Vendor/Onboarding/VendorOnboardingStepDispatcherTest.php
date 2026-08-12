@@ -47,6 +47,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             filled: true,
             stepData: ['siret' => '12345678901234']
         );
+        $vendorRepository = $this->createStub(VendorRepository::class);
 
         $dispatcher = new VendorOnboardingStepDispatcher(
             $em,
@@ -194,8 +195,10 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->once())->method('flush');
 
+        $submittedEventSeen = false;
+        $reviewEventSeen = false;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects($this->once())
+        $eventDispatcher->expects($this->exactly(2))
             ->method('dispatch')
             ->with($this->callback(function (VendorOnboardingSubmittedEvent $event): bool {
                 return $event->firstName === 'Denis'
@@ -207,6 +210,7 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
             }));
 
         $credentialsHandler = new TestStepHandler(OnboardingStep::Credentials, filled: true);
+        $vendorRepository = $this->createStub(VendorRepository::class);
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->never())->method('error');
@@ -257,6 +261,8 @@ final class VendorOnboardingStepDispatcherTest extends TestCase
 
         $this->assertNull($response);
         $this->assertSame([['email' => 'denis@example.com']], $credentialsHandler->handledPayloads);
+        $this->assertTrue($submittedEventSeen);
+        $this->assertTrue($reviewEventSeen);
     }
 
     public function test_handle_credentials_logs_and_does_not_rethrow_when_a_listener_throws(): void
