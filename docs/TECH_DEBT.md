@@ -15,13 +15,6 @@ Registre des raccourcis assumés en connaissance de cause, avec le seuil qui dé
 - **Consigne** : ne **jamais** appliquer ce DROP proposé par `schema:validate` ou par un `migrations:diff` sur cette table — c'est un garde-fou métier volontaire, pas une erreur de mapping.
 - **Statut** : dette assumée, pas de remboursement prévu — limitation native de Doctrine ORM (pas d'index partiel), pas un raccourci qu'on compte combler.
 
-## PatchVendorDashboardPortfolio{Get,Post,Delete,Cover}Action — pattern {id} au lieu de /me
-
-- **Dette** : ces 4 actions utilisent encore le pattern `{id}` dans l'URL + comparaison manuelle au vendor résolu depuis le JWT, au lieu de `/me` (convention : vendor routes = `/me` depuis le JWT).
-- **Contexte** : `PatchVendorDashboardPortfolioTagsAction` a été corrigé le 2026-08-11 pour utiliser `/me` (voir WED-103). Le même refactor n'a pas été appliqué à ses 4 voisines (`Get`/`Post`/`Delete`/`Cover`) car elles ont des consommateurs front live et sortent du scope de ce ticket.
-- **Seuil de déclenchement** : à réappliquer la prochaine fois que ces 4 actions sont retouchées pour une autre raison.
-- **Remède** : même refactor que Tags — route `/me`, suppression de la comparaison manuelle `{id}`, retrait de `extends AbstractController`.
-
 ## PortfolioPageClient — tagTypes résolus via le premier service du vendor (vendorServices[0])
 
 - **Dette** : un vendor multi-services (freelance avec plusieurs métiers) ne peut taguer ses photos que selon la taxonomie de son premier service déclaré (`vendorServices[0]`) — pas de sélection de métier dans l'écran de tagging du dashboard.

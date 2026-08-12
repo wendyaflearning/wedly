@@ -9,7 +9,7 @@ export default async function PortfolioPage() {
   const dashboard = await fetchVendorDashboard()
   if (!dashboard) redirect('/login')
 
-  const photos = await fetchVendorPortfolio(dashboard.id)
+  const photos = await fetchVendorPortfolio()
 
   return (
     <div className="bg-creme min-h-screen">

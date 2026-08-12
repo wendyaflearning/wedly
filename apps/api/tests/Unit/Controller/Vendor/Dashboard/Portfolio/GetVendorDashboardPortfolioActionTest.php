@@ -17,35 +17,6 @@ use Symfony\Component\Uid\Uuid;
 
 final class GetVendorDashboardPortfolioActionTest extends TestCase
 {
-    public function test_invoke_returns_403_when_id_does_not_match_resolved_vendor(): void
-    {
-        $resolvedVendorId = Uuid::fromString('01930000-0000-7000-8000-000000000001');
-        $vendor           = $this->createStub(Vendor::class);
-        $vendor->method('getId')->willReturn($resolvedVendorId);
-
-        $user = $this->createStub(User::class);
-
-        $security = $this->createMock(Security::class);
-        $security->expects($this->once())->method('getUser')->willReturn($user);
-
-        $vendorOwnershipResolver = $this->createMock(VendorOwnershipResolver::class);
-        $vendorOwnershipResolver->expects($this->once())->method('resolve')->with($user)->willReturn($vendor);
-
-        $portfolioImageRepository = $this->createMock(PortfolioImageRepository::class);
-        $portfolioImageRepository->expects($this->never())->method('findByVendor');
-
-        $otherVendorId = Uuid::fromString('01930000-0000-7000-8000-000000000099');
-
-        $response = (new GetVendorDashboardPortfolioAction($security, $vendorOwnershipResolver, $portfolioImageRepository))
-            ->__invoke($otherVendorId->toRfc4122());
-
-        $this->assertSame(403, $response->getStatusCode());
-        $this->assertSame(
-            ['error' => 'Accès interdit.'],
-            json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR),
-        );
-    }
-
     public function test_invoke_returns_200_with_flat_tags_array_per_image(): void
     {
         $vendorId = Uuid::fromString('01930000-0000-7000-8000-000000000001');
@@ -93,7 +64,7 @@ final class GetVendorDashboardPortfolioActionTest extends TestCase
             ->willReturn([$taggedImage, $untaggedImage]);
 
         $response = (new GetVendorDashboardPortfolioAction($security, $vendorOwnershipResolver, $portfolioImageRepository))
-            ->__invoke($vendorId->toRfc4122());
+            ->__invoke();
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(
