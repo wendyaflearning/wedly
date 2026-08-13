@@ -92,14 +92,14 @@ export const fetchVendorPreview = cache(async (): Promise<VendorPreview | null> 
   }
 })
 
-export async function fetchVendorPortfolio(vendorId: string): Promise<PortfolioImage[]> {
+export async function fetchVendorPortfolio(): Promise<PortfolioImage[]> {
   const cookieStore = await cookies()
   const token = cookieStore.get('jwt_token')
   if (!token) return []
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/${vendorId}/portfolio`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/vendors/me/portfolio`,
       {
         headers: { Cookie: `jwt_token=${token.value}` },
         cache: 'no-store',
