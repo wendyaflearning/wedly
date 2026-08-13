@@ -42,6 +42,28 @@ class TagTypeRepository extends ServiceEntityRepository
     }
 
     /**
+     * Retourne TOUS les TagType d'un service (actifs et inactifs), avec TOUTES leurs
+     * TagValue imbriquées (actives et inactives, fetch-join, pas de N+1).
+     *
+     * Réservée aux contextes admin ayant besoin de la collection complète
+     * (cf. docblock de findActiveByServiceIdWithValues() pour la version filtrée).
+     *
+     * @return TagType[]
+     */
+    public function findAllByServiceIdWithValues(string $serviceId): array
+    {
+        return $this->createQueryBuilder('t')
+            ->leftJoin('t.tagValues', 'v')
+            ->addSelect('v')
+            ->where('t.service = :serviceId')
+            ->setParameter('serviceId', $serviceId)
+            ->orderBy('t.label', 'ASC')
+            ->addOrderBy('v.label', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Retourne le TagType is_primary=true et is_active=true d'un service, s'il existe.
      * Utilisé pour la contrainte CA4 (un seul axe principal actif par service).
      */
