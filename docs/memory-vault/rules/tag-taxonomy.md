@@ -10,10 +10,13 @@ Code principal :
 
 - `apps/api/src/Service/Vendor/AdminTagTypeService.php`
 - `apps/api/src/Repository/Vendor/TagTypeRepository.php`
+- `apps/api/src/Service/Vendor/AdminTagValueService.php`
+- `apps/api/src/Repository/Vendor/TagValueRepository.php`
 
 Tests existants :
 
 - `apps/api/tests/Unit/Vendor/AdminTagTypeServiceTest.php`
+- `apps/api/tests/Unit/Vendor/AdminTagValueServiceTest.php`
 
 ## TAG-TAXONOMY-001 — Une seule catégorie principale active par métier
 
@@ -77,3 +80,90 @@ enfants non touchés
 Couverture attendue :
 
 - `AdminTagTypeServiceTest::test_deactivate_is_idempotent_and_does_not_touch_tag_values`
+
+## TAG-TAXONOMY-003 — Unicité du label par catégorie, insensible à la casse
+
+Statut : `active`
+
+Un `TagValue` ne peut être créé ou renommé avec un `label` qui existe
+déjà (à la casse près) pour le même `tagTypeId`, actif ou inactif.
+
+Raison produit :
+
+- éviter les doublons visuellement identiques dans le moodboard
+(ex : "Rustique" et "rustique")
+
+Implémentation actuelle :
+
+- `AdminTagValueService::create()` / `update()`
+- `TagValueRepository::findOneByLabelAndTagType()` — comparaison
+`LOWER()`, exclut l'id courant en édition
+
+Contrat attendu :
+
+- tentative de création/édition en conflit : exception domaine `409`,
+message "Ce tag existe déjà pour cette catégorie."
+
+Couverture attendue :
+
+- `AdminTagValueServiceTest::test_create_throws_409_when_label_already_exists_for_tag_type`
+- `AdminTagValueServiceTest::test_create_throws_409_when_label_differs_only_by_case`
+- `AdminTagValueServiceTest::test_update_throws_409_when_label_collides_with_another_tag_value`
+- `AdminTagValueServiceTest::test_update_throws_409_when_label_differs_only_by_case_from_another_value`
+- `AdminTagValueServiceTest::test_update_with_same_label_as_self_does_not_throw`
+
+## TAG-TAXONOMY-004 — Un TagValue ne peut être créé sous une catégorie inactive
+
+Statut : `active`
+
+La création d'un `TagValue` échoue si le `TagType` parent n'existe pas
+ou n'est pas actif.
+
+Raison produit :
+
+- empêcher d'enrichir une catégorie qu'un admin a volontairement
+désactivée
+
+Implémentation actuelle :
+
+- `AdminTagValueService::create()`
+
+Contrat attendu :
+
+- `TagType` introuvable ou inactif : exception domaine `404`, message
+"Catégorie de tag introuvable."
+
+Couverture attendue :
+
+- `AdminTagValueServiceTest::test_create_throws_404_when_tag_type_not_found`
+- `AdminTagValueServiceTest::test_create_throws_404_when_tag_type_inactive`
+
+## TAG-TAXONOMY-005 — Désactivation sans cascade sur portfolio_image_tag
+
+Statut : `active`
+
+Désactiver un `TagValue` passe `is_active` à `false` (soft delete),
+idempotent. Les photos déjà taguées avec ce `TagValue` conservent
+l'association en base (`portfolio_image_tag` n'est jamais touché).
+
+Raison produit :
+
+- préserver l'historique de tagging existant sur les photos déjà
+publiées
+
+Implémentation actuelle :
+
+- `AdminTagValueService::deactivate()`
+
+Contrat attendu :
+
+- désactivation d'un TagValue déjà inactif : idempotent, 200, aucune
+écriture supplémentaire
+- désactivation d'un TagValue actif : `is_active=false`,
+`portfolio_image_tag` non touché
+
+Couverture attendue :
+
+- `AdminTagValueServiceTest::test_deactivate_is_idempotent`
+- Vérification manuelle Insomnia : photo déjà taguée garde le tag
+après désactivation
