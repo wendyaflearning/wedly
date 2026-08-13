@@ -8,8 +8,10 @@ use App\DTO\Admin\Vendor\TagType\CreateTagTypeRequestDto;
 use App\DTO\Admin\Vendor\TagType\UpdateTagTypeRequestDto;
 use App\Entity\Vendor\Service;
 use App\Entity\Vendor\TagType;
+use App\Entity\Vendor\TagValue;
 use App\Repository\Vendor\TagTypeRepository;
 use App\Service\Vendor\AdminTagTypeService;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV7;
@@ -138,6 +140,72 @@ final class AdminTagTypeServiceTest extends TestCase
 
         // Deuxième appel : idempotent, aucun flush supplémentaire attendu (mock configuré pour exactement 1).
         $service->deactivate('tag-type-id');
+    }
+
+    public function test_list_with_values_returns_all_tag_types_active_and_inactive(): void
+    {
+        $service = $this->makeService();
+
+        $activeTagType = $this->makeTagType($service, isPrimary: true);
+        $this->addTagValues($activeTagType, [
+            $this->makeTagValue($activeTagType, label: 'Valeur active', isActive: true),
+            $this->makeTagValue($activeTagType, label: 'Valeur inactive', isActive: false),
+        ]);
+
+        $inactiveTagType = $this->makeTagType($service, isPrimary: false);
+        $inactiveTagType->setIsActive(false);
+        $this->addTagValues($inactiveTagType, [
+            $this->makeTagValue($inactiveTagType, label: 'Autre valeur', isActive: true),
+        ]);
+
+        $tagTypeRepository = $this->createMock(TagTypeRepository::class);
+        $tagTypeRepository->expects($this->once())
+            ->method('findAllByServiceIdWithValues')
+            ->with('service-id')
+            ->willReturn([$activeTagType, $inactiveTagType]);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('find')->with(Service::class, 'service-id')->willReturn($service);
+
+        $result = (new AdminTagTypeService($em, $tagTypeRepository))->listWithValues('service-id');
+
+        self::assertCount(2, $result);
+        self::assertSame($activeTagType, $result[0]);
+        self::assertTrue($result[0]->isActive());
+        self::assertCount(2, $result[0]->getTagValues());
+        self::assertSame($inactiveTagType, $result[1]);
+        self::assertFalse($result[1]->isActive());
+        self::assertCount(1, $result[1]->getTagValues());
+    }
+
+    public function test_list_with_values_throws_404_when_service_not_found(): void
+    {
+        $tagTypeRepository = $this->createMock(TagTypeRepository::class);
+        $tagTypeRepository->expects($this->never())->method('findAllByServiceIdWithValues');
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('find')->willReturn(null);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(404);
+
+        (new AdminTagTypeService($em, $tagTypeRepository))->listWithValues('missing-service');
+    }
+
+    private function addTagValues(TagType $tagType, array $tagValues): void
+    {
+        $this->setPrivateProperty($tagType, 'tagValues', new ArrayCollection($tagValues));
+    }
+
+    private function makeTagValue(TagType $tagType, string $label, bool $isActive): TagValue
+    {
+        $tagValue = (new TagValue())
+            ->setTagType($tagType)
+            ->setLabel($label)
+            ->setIsActive($isActive);
+        $this->setPrivateProperty($tagValue, 'id', new UuidV7());
+
+        return $tagValue;
     }
 
     private function makeService(): Service
