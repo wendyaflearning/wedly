@@ -237,6 +237,41 @@ final class AdminTagValueServiceTest extends TestCase
         $service->deactivate('tag-value-id');
     }
 
+    public function test_activate_reactivates_inactive_tag_value(): void
+    {
+        $tagValue = $this->makeTagValue($this->makeTagType());
+        $tagValue->setIsActive(false);
+        self::assertFalse($tagValue->isActive());
+
+        $tagValueRepository = $this->createStub(TagValueRepository::class);
+        $tagValueRepository->method('find')->willReturn($tagValue);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('flush');
+
+        $service = new AdminTagValueService($em, $tagValueRepository);
+
+        $result = $service->activate('tag-value-id');
+        self::assertTrue($result->isActive());
+    }
+
+    public function test_activate_is_idempotent(): void
+    {
+        $tagValue = $this->makeTagValue($this->makeTagType());
+        self::assertTrue($tagValue->isActive());
+
+        $tagValueRepository = $this->createStub(TagValueRepository::class);
+        $tagValueRepository->method('find')->willReturn($tagValue);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->never())->method('flush');
+
+        $service = new AdminTagValueService($em, $tagValueRepository);
+
+        $result = $service->activate('tag-value-id');
+        self::assertTrue($result->isActive());
+    }
+
     public function test_deactivate_throws_404_when_not_found(): void
     {
         $tagValueRepository = $this->createStub(TagValueRepository::class);

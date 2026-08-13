@@ -77,10 +77,30 @@ final readonly class AdminTagTypeService
     {
         $tagType = $this->getOrFail($id);
 
+        if ($tagType->isPrimary()) {
+            throw new \DomainException(
+                'Cette catégorie est la catégorie principale de ce métier et ne peut pas être désactivée.',
+                422,
+            );
+        }
+
         // Idempotent : un TagType déjà inactif ne déclenche pas d'erreur ni d'écriture.
         // Les TagValue enfants ne sont volontairement pas désactivés en cascade (hors scope US2).
         if ($tagType->isActive()) {
             $tagType->setIsActive(false);
+            $this->em->flush();
+        }
+
+        return $tagType;
+    }
+
+    public function activate(string $id): TagType
+    {
+        $tagType = $this->getOrFail($id);
+
+        // Idempotent : un TagType déjà actif ne déclenche pas d'erreur ni d'écriture.
+        if (!$tagType->isActive()) {
+            $tagType->setIsActive(true);
             $this->em->flush();
         }
 

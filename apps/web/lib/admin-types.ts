@@ -275,3 +275,44 @@ export type AdminVendorProfile = {
     note: string | null
   } | null
 }
+
+export type AdminTagValue = {
+  id: string
+  tagTypeId: string
+  label: string
+  isActive: boolean
+}
+
+export type AdminTagType = {
+  id: string
+  serviceId: string
+  label: string
+  isPrimary: boolean
+  maxSelections: number | null
+  isActive: boolean
+}
+
+export type AdminTagTypeWithValues = AdminTagType & {
+  tagValues: AdminTagValue[]
+}
+
+export type CreateTagTypePayload = {
+  serviceId: string
+  label: string
+  isPrimary: boolean
+  maxSelections: number | null
+}
+
+export type UpdateTagTypePayload = {
+  label?: string
+  maxSelections?: number
+}
+
+export type CreateTagValuePayload = {
+  tagTypeId: string
+  label: string
+}
+
+export type UpdateTagValuePayload = {
+  label?: string
+}

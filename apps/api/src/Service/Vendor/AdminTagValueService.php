@@ -72,6 +72,19 @@ final readonly class AdminTagValueService
         return $tagValue;
     }
 
+    public function activate(string $id): TagValue
+    {
+        $tagValue = $this->getOrFail($id);
+
+        // Idempotent : une TagValue déjà active ne déclenche pas d'erreur ni d'écriture.
+        if (!$tagValue->isActive()) {
+            $tagValue->setIsActive(true);
+            $this->em->flush();
+        }
+
+        return $tagValue;
+    }
+
     private function getOrFail(string $id): TagValue
     {
         $tagValue = $this->tagValueRepository->find($id);
