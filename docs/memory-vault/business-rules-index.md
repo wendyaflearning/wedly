@@ -56,6 +56,9 @@ dans les fichiers de règles.
 | ------------------ | -------------------------------------------------------- | -------- | ----------------------- |
 | `TAG-TAXONOMY-001` | Une seule catégorie principale active par métier         | `active` | `rules/tag-taxonomy.md` |
 | `TAG-TAXONOMY-002` | Désactivation sans cascade, jamais de suppression réelle | `active` | `rules/tag-taxonomy.md` |
+| `TAG-TAXONOMY-003` | Unicité du label par catégorie, insensible à la casse | `active` | `rules/tag-taxonomy.md` |
+| `TAG-TAXONOMY-004` | Un TagValue ne peut être créé sous une catégorie inactive | `active` | `rules/tag-taxonomy.md` |
+| `TAG-TAXONOMY-005` | Désactivation sans cascade sur portfolio_image_tag | `active` | `rules/tag-taxonomy.md` |
 
 ## À ajouter lors des prochains tickets
 
