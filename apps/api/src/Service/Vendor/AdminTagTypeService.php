@@ -61,6 +61,18 @@ final readonly class AdminTagTypeService
         return $tagType;
     }
 
+    /**
+     * @return TagType[]
+     */
+    public function listWithValues(string $serviceId): array
+    {
+        if ($this->em->find(Service::class, $serviceId) === null) {
+            throw new \DomainException('Service introuvable.', 404);
+        }
+
+        return $this->tagTypeRepository->findAllByServiceIdWithValues($serviceId);
+    }
+
     public function deactivate(string $id): TagType
     {
         $tagType = $this->getOrFail($id);
