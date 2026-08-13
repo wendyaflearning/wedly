@@ -21,3 +21,47 @@ Registre des raccourcis assumés en connaissance de cause, avec le seuil qui dé
 - **Contexte** : simplification MVP actée pour WED-103 (tagging portfolio côté prestataire). La majorité des vendors n'ont qu'un seul service ; gérer le multi-service en V1 aurait ajouté une étape de sélection de métier non prévue dans le ticket.
 - **Seuil de déclenchement** : retours terrain de vendors multi-services bloqués sur le tagging d'un second métier.
 - **Remède** : ajouter un sélecteur de service dans l'écran de tagging du dashboard, ou reprendre `vendorServices` en entier au lieu du seul premier élément.
+
+## flush() dans le Controller au lieu du Service (pré-ADR-006)
+
+- **Dette** : 20 Actions flushent directement (`$this->em->flush()`
+ou `$this->entityManager->flush()`) au lieu de déléguer au service
+métier, en violation de la règle actée dans ADR-006 (flush() = 
+responsabilité du service, jamais du controller).
+- **Contexte** : deux sous-cas, sévérité différente.
+   1. Legacy `extends AbstractController`, logique métier inline sans
+    service dédié — le flush est un symptôme d'un problème plus
+    large (pas de couche service du tout), pas juste un flush mal
+    placé.
+   2. Single Action Controller récent qui délègue déjà la logique à
+    un service, mais garde le flush à l'extérieur — ici le fix est
+    mineur (déplacer une ligne).
+- **Seuil de déclenchement** : au prochain refactor ou bug touchant
+un de ces fichiers — pas de remboursement proactif planifié, dette
+corrigée au fil de l'eau.
+- **Remède** : déplacer `flush()` dans le service correspondant (ou
+créer un service dédié pour le cas 1 si absent).
+- **Fichiers concernés — cas 1, legacy AbstractController, pas de
+service dédié** :
+   - apps/api/src/Controller/Vendor/Consent/PostVendorConsentAction.php
+   - apps/api/src/Controller/Vendor/MatchingConsent/PostVendorMatchingConsentAction.php
+   - apps/api/src/Controller/Vendor/Onboarding/DeleteVendorOnboardingPortfolioAction.php
+   - apps/api/src/Controller/Vendor/Settings/PatchVendorPasswordAction.php
+   - apps/api/src/Controller/Vendor/Settings/PatchVendorSettingsAction.php
+   - apps/api/src/Controller/Vendor/CateringCharacteristics/PatchVendorCateringCharacteristicsAction.php
+   - apps/api/src/Controller/Vendor/VenueCharacteristics/PatchVendorVenueCharacteristicsAction.php
+   - apps/api/src/Controller/Vendor/Experiences/PatchVendorExperiencesAction.php
+   - apps/api/src/Controller/Vendor/LegalInfo/PatchVendorLegalInfoAction.php
+   - apps/api/src/Controller/Vendor/Dashboard/Portfolio/PatchVendorDashboardPortfolioCoverAction.php
+   - apps/api/src/Controller/Vendor/Dashboard/Portfolio/PostVendorDashboardPortfolioAction.php
+   - apps/api/src/Controller/Vendor/Dashboard/Portfolio/DeleteVendorDashboardPortfolioAction.php
+   - apps/api/src/Controller/Vendor/PricingZone/PatchVendorPricingZoneAction.php
+   - apps/api/src/Controller/Vendor/PatchBioAction.php
+   - apps/api/src/Controller/Admin/Vendor/Portfolio/PatchVendorPortfolioTagsAction.php
+   - apps/api/src/Controller/Admin/Vendor/Portfolio/DeleteVendorPortfolioAction.php
+   - apps/api/src/Controller/Admin/Vendor/Portfolio/PostUploadVendorPortfolioAction.php
+   - apps/api/src/Controller/Auth/PostResetPasswordAction.php
+   - apps/api/src/Controller/Auth/PostForgotPasswordAction.php
+- **Fichiers concernés — cas 2, service déjà présent, flush juste mal
+placé** :
+   - apps/api/src/Controller/Vendor/Dashboard/Portfolio/PatchVendorDashboardPortfolioTagsAction.php
