@@ -142,6 +142,67 @@ final class AdminTagTypeServiceTest extends TestCase
         $service->deactivate('tag-type-id');
     }
 
+    public function test_deactivate_throws_422_when_tag_type_is_primary(): void
+    {
+        $tagType = $this->makeTagType($this->makeService(), isPrimary: true);
+
+        $tagTypeRepository = $this->createStub(TagTypeRepository::class);
+        $tagTypeRepository->method('find')->willReturn($tagType);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->never())->method('flush');
+
+        $service = new AdminTagTypeService($em, $tagTypeRepository);
+
+        try {
+            $service->deactivate('tag-type-id');
+            self::fail('Expected DomainException');
+        } catch (\DomainException $exception) {
+            self::assertSame(422, $exception->getCode());
+            self::assertSame(
+                'Cette catégorie est la catégorie principale de ce métier et ne peut pas être désactivée.',
+                $exception->getMessage(),
+            );
+        }
+
+        self::assertTrue($tagType->isActive());
+    }
+
+    public function test_activate_reactivates_inactive_tag_type(): void
+    {
+        $tagType = $this->makeTagType($this->makeService(), isPrimary: false);
+        $tagType->setIsActive(false);
+        self::assertFalse($tagType->isActive());
+
+        $tagTypeRepository = $this->createStub(TagTypeRepository::class);
+        $tagTypeRepository->method('find')->willReturn($tagType);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('flush');
+
+        $service = new AdminTagTypeService($em, $tagTypeRepository);
+
+        $result = $service->activate('tag-type-id');
+        self::assertTrue($result->isActive());
+    }
+
+    public function test_activate_is_idempotent(): void
+    {
+        $tagType = $this->makeTagType($this->makeService(), isPrimary: false);
+        self::assertTrue($tagType->isActive());
+
+        $tagTypeRepository = $this->createStub(TagTypeRepository::class);
+        $tagTypeRepository->method('find')->willReturn($tagType);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->never())->method('flush');
+
+        $service = new AdminTagTypeService($em, $tagTypeRepository);
+
+        $result = $service->activate('tag-type-id');
+        self::assertTrue($result->isActive());
+    }
+
     public function test_list_with_values_returns_all_tag_types_active_and_inactive(): void
     {
         $service = $this->makeService();
