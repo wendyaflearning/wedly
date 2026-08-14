@@ -1,73 +1,25 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { LogOut, User } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { LogOut, Tags, User } from 'lucide-react'
 import { fetchAdminVendors, fetchCurrentAdmin } from '@/lib/admin'
+import { AdminSidebarNav, type SidebarItem } from '@/components/admin/AdminSidebarNav'
 
-type SidebarItem = {
-  label: string
-  icon: LucideIcon
-  href?: string
-  active?: boolean
-  count?: number
-}
+const ICON_PROPS = { size: 19, strokeWidth: 2, 'aria-hidden': true } as const
 
-const PRIMARY_ITEMS: SidebarItem[] = [
-  { label: 'Prestataires', icon: User, href: '/admin/prestataires', active: true },
+const PRINCIPAL_ITEMS: SidebarItem[] = [
+  { label: 'Prestataires', icon: <User {...ICON_PROPS} />, href: '/admin/prestataires' },
+]
+
+const CONFIGURATION_ITEMS: SidebarItem[] = [
+  {
+    label: 'Wedream',
+    children: [{ label: 'Tags & Catégories', icon: <Tags {...ICON_PROPS} />, href: '/admin/taxonomie' }],
+  },
 ]
 
 function getInitials(firstName: string, lastName: string | null): string {
   const names = [firstName, lastName].filter(Boolean) as string[]
   return names.map((name) => name[0]).join('').slice(0, 2).toUpperCase()
-}
-
-function SidebarNavItem({ item }: { item: SidebarItem }) {
-  const Icon = item.icon
-  const className = [
-    'flex h-[50px] items-center gap-4 px-6 text-[15px] font-semibold no-underline transition-colors',
-    item.active
-      ? 'bg-creme/12 text-creme'
-      : 'text-creme/55 hover:bg-creme/8 hover:text-creme',
-  ].join(' ')
-
-  const content = (
-    <>
-      <Icon size={19} strokeWidth={2} aria-hidden="true" />
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      {typeof item.count === 'number' && item.count > 0 ? (
-        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-highlight px-2 text-xs font-bold text-creme">
-          {item.count}
-        </span>
-      ) : null}
-    </>
-  )
-
-  if (item.href) {
-    return (
-      <Link href={item.href} className={className}>
-        {content}
-      </Link>
-    )
-  }
-
-  return (
-    <div className={className} aria-disabled="true">
-      {content}
-    </div>
-  )
-}
-
-function SidebarSection({ title, items }: { title: string; items: SidebarItem[] }) {
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="px-6 text-xs font-bold uppercase text-creme/35">{title}</h2>
-      <nav className="flex flex-col">
-        {items.map((item) => (
-          <SidebarNavItem key={item.label} item={item} />
-        ))}
-      </nav>
-    </section>
-  )
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -78,7 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const pendingCount = pendingVendors.ok ? pendingVendors.data.totalFiltered : 0
   const displayName = [admin.firstName, admin.lastName].filter(Boolean).join(' ')
 
-  const primaryItems = PRIMARY_ITEMS.map((item) =>
+  const principalItems = PRINCIPAL_ITEMS.map((item) =>
     item.href === '/admin/prestataires' ? { ...item, count: pendingCount } : item
   )
 
@@ -93,7 +45,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
 
         <div className="flex flex-1 flex-col gap-10 py-12">
-          <SidebarSection title="Principal" items={primaryItems} />
+          <AdminSidebarNav
+            sections={[
+              { title: 'Principal', items: principalItems },
+              { title: 'Configuration', items: CONFIGURATION_ITEMS },
+            ]}
+          />
         </div>
 
         <a
