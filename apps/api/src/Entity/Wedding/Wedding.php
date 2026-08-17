@@ -29,7 +29,7 @@ class Wedding
     #[ORM\CustomIdGenerator(class: UuidV7Generator::class)]
     private UuidV7 $id;
 
-    #[ORM\Column(name: 'date', type: 'date')]
+    #[ORM\Column(name: 'date', type: 'date_immutable')]
     private \DateTimeImmutable $date;
 
     #[ORM\Column(name: 'budget_cents', type: 'integer')]
