@@ -138,12 +138,9 @@ positionné
 - reconvertir la valeur d'un curseur en `undefined` (le `0` invités doit rester
 un `0`, pas une absence de valeur)
 
+Le curseur invités démarre à `10` invités. Cette valeur de départ reste
+modifiable par le couple avec les graduations du curseur.
+
 Couverture attendue :
 
 - `apps/web/lib/couple-onboarding-store.test.ts` (`withSliderDefaults`)
-
-Dette connue :
-
-- la valeur de montage du curseur invités est `0`, la borne basse du contrôle et
-non une taille de mariage plausible. Une valeur de départ produit reste à
-trancher (`TODO(WED-106)` dans `apps/web/lib/couple-onboarding-store.ts`).

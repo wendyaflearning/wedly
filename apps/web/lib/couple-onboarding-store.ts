@@ -40,9 +40,7 @@ export const DEFAULT_BUDGET_CENTS = BUDGET_RANGES[0].cents
 export const GUEST_COUNT_MIN = 0
 export const GUEST_COUNT_MAX = 300
 export const GUEST_COUNT_STEP = 10
-// TODO(WED-106): 0 invités is the slider's own lower bound, not a plausible wedding
-// size. Replace it with a product-chosen starting value once Wendy arbitrates.
-export const DEFAULT_GUEST_COUNT = GUEST_COUNT_MIN
+export const DEFAULT_GUEST_COUNT = 10
 
 export function budgetRangeForCents(budgetCents: number): string {
   return BUDGET_RANGES.find((range) => range.cents === budgetCents)?.label ?? BUDGET_RANGES[0].label

@@ -55,6 +55,10 @@ describe('couple onboarding store', () => {
     })
   })
 
+  it('starts the guest slider at 10 guests', () => {
+    expect(DEFAULT_GUEST_COUNT).toBe(10)
+  })
+
   it('never overwrites slider values restored from a previous session', () => {
     expect(withSliderDefaults({ budgetCents: 3_500_000, guestCount: 120 })).toEqual({
       budgetCents: 3_500_000,
