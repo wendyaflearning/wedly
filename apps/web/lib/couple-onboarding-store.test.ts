@@ -7,6 +7,7 @@ import {
   COUPLE_ONBOARDING_TTL_MS,
   DEFAULT_BUDGET_CENTS,
   DEFAULT_GUEST_COUNT,
+  GUEST_COUNT_MIN,
   loadCoupleOnboarding,
   saveCoupleOnboarding,
   withSliderDefaults,
@@ -57,6 +58,7 @@ describe('couple onboarding store', () => {
 
   it('starts the guest slider at 10 guests', () => {
     expect(DEFAULT_GUEST_COUNT).toBe(10)
+    expect(GUEST_COUNT_MIN).toBe(10)
   })
 
   it('never overwrites slider values restored from a previous session', () => {
@@ -66,8 +68,8 @@ describe('couple onboarding store', () => {
     })
   })
 
-  it('keeps a guest count of 0 instead of falling back to the default', () => {
-    expect(withSliderDefaults({ guestCount: 0 }).guestCount).toBe(0)
+  it('normalizes a persisted guest count below 10 to the minimum', () => {
+    expect(withSliderDefaults({ guestCount: 0 }).guestCount).toBe(GUEST_COUNT_MIN)
   })
 
   it('resolves the budget slider position and label from the stored cents', () => {

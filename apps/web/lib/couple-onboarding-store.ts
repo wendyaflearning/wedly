@@ -37,7 +37,7 @@ export const BUDGET_RANGES = [
  * the control cannot actually represent.
  */
 export const DEFAULT_BUDGET_CENTS = BUDGET_RANGES[0].cents
-export const GUEST_COUNT_MIN = 0
+export const GUEST_COUNT_MIN = 10
 export const GUEST_COUNT_MAX = 300
 export const GUEST_COUNT_STEP = 10
 export const DEFAULT_GUEST_COUNT = 10
@@ -54,13 +54,13 @@ export function budgetIndexForCents(budgetCents: number): number {
 
 /**
  * Both sliders must carry a usable value even when the couple never drags them,
- * without overwriting a value restored from a previous session.
+ * while restoring older values only when they remain valid for the control.
  */
 export function withSliderDefaults(data: CoupleOnboardingData): CoupleOnboardingData {
   return {
     ...data,
     budgetCents: data.budgetCents ?? DEFAULT_BUDGET_CENTS,
-    guestCount: data.guestCount ?? DEFAULT_GUEST_COUNT,
+    guestCount: Math.max(data.guestCount ?? DEFAULT_GUEST_COUNT, GUEST_COUNT_MIN),
   }
 }
 

@@ -135,11 +135,11 @@ Interdit :
 
 - afficher un libellé de type « Choisissez une fourchette » sur un curseur déjà
 positionné
-- reconvertir la valeur d'un curseur en `undefined` (le `0` invités doit rester
-un `0`, pas une absence de valeur)
+- reconvertir la valeur d'un curseur en `undefined`
 
-Le curseur invités démarre à `10` invités. Cette valeur de départ reste
-modifiable par le couple avec les graduations du curseur.
+Le curseur invités démarre à `10` invités, qui est aussi sa borne minimale.
+Toute valeur persistée inférieure à `10` est ramenée à cette borne afin qu'un
+ancien état local ne puisse pas réintroduire `0` invité.
 
 Couverture attendue :
 
