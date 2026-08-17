@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canGoToPreviousMonth, isSelectableWeddingDate, startOfDay } from './calendar'
+import { canGoToPreviousMonth, isSelectableWeddingDate, selectableWeddingYears, setCalendarMonth, startOfDay } from './calendar'
 
 describe('couple onboarding calendar', () => {
   const today = new Date(2026, 7, 17, 14, 30)
@@ -24,5 +24,13 @@ describe('couple onboarding calendar', () => {
 
   it('strips the time component so comparisons stay day-based', () => {
     expect(startOfDay(today)).toEqual(new Date(2026, 7, 17))
+  })
+
+  it('lets the calendar jump directly to a selected month and year', () => {
+    expect(setCalendarMonth(2028, 4)).toEqual(new Date(2028, 4, 1))
+  })
+
+  it('offers wedding years from the current year onward', () => {
+    expect(selectableWeddingYears(today, 2)).toEqual([2026, 2027, 2028])
   })
 })

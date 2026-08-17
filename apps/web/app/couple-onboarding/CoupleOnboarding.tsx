@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import ProgressIndicator from './ProgressIndicator'
-import { canGoToPreviousMonth, isSelectableWeddingDate, startOfDay } from './calendar'
+import { canGoToPreviousMonth, isSelectableWeddingDate, selectableWeddingYears, setCalendarMonth, startOfDay } from './calendar'
 import { getContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
@@ -28,8 +28,12 @@ const PLANNING_STAGES: Array<{ value: PlanningStage; label: string }> = [
 ]
 
 const formatter = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' })
+const monthOptionsFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long' })
 const weekdayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+const monthOptions = Array.from({ length: 12 }, (_, month) => ({
+  value: month,
+  label: monthOptionsFormatter.format(new Date(2026, month, 1)),
+}))
 
 function toDateInputValue(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -57,6 +61,15 @@ function Calendar({
     const dayCount = new Date(year, month + 1, 0).getDate()
     return Array.from({ length: firstDay - 1 + dayCount }, (_, index) => index < firstDay - 1 ? null : index - firstDay + 2)
   }, [visibleMonth])
+  const years = useMemo(() => selectableWeddingYears(today), [today])
+
+  function updateVisibleMonth(month: number) {
+    setVisibleMonth((current) => setCalendarMonth(current.getFullYear(), month))
+  }
+
+  function updateVisibleYear(year: number) {
+    setVisibleMonth((current) => setCalendarMonth(year, current.getMonth()))
+  }
 
   return (
     <section aria-label="Date du mariage" className="w-full max-w-sm">
@@ -64,7 +77,16 @@ function Calendar({
         <button type="button" disabled={!canGoToPreviousMonth(visibleMonth, today)} className="rounded-full p-1 text-bordeaux hover:bg-bordeaux/10 disabled:cursor-not-allowed disabled:text-gris disabled:hover:bg-transparent" aria-label="Mois précédent" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
           <ChevronLeft size={17} />
         </button>
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-bordeaux">{monthFormatter.format(visibleMonth)}</p>
+        <div className="flex items-center gap-1">
+          <label className="sr-only" htmlFor="wedding-month">Mois du mariage</label>
+          <select id="wedding-month" aria-label="Mois du mariage" value={visibleMonth.getMonth()} onChange={(event) => updateVisibleMonth(Number(event.target.value))} className="cursor-pointer rounded-md bg-transparent px-1 py-1 text-xs font-bold uppercase tracking-[0.12em] text-bordeaux outline-none focus-visible:ring-2 focus-visible:ring-bordeaux">
+            {monthOptions.map((month) => <option key={month.value} value={month.value}>{month.label}</option>)}
+          </select>
+          <label className="sr-only" htmlFor="wedding-year">Année du mariage</label>
+          <select id="wedding-year" aria-label="Année du mariage" value={visibleMonth.getFullYear()} onChange={(event) => updateVisibleYear(Number(event.target.value))} className="cursor-pointer rounded-md bg-transparent px-1 py-1 text-xs font-bold uppercase tracking-[0.12em] text-bordeaux outline-none focus-visible:ring-2 focus-visible:ring-bordeaux">
+            {years.map((year) => <option key={year} value={year}>{year}</option>)}
+          </select>
+        </div>
         <button type="button" className="rounded-full p-1 text-bordeaux hover:bg-bordeaux/10" aria-label="Mois suivant" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1))}>
           <ChevronRight size={17} />
         </button>

@@ -6,6 +6,15 @@ export function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
+/** Keeps month navigation on the first day to avoid date-overflow surprises. */
+export function setCalendarMonth(year: number, month: number): Date {
+  return new Date(year, month, 1)
+}
+
+export function selectableWeddingYears(today: Date, yearsAhead = 10): number[] {
+  return Array.from({ length: yearsAhead + 1 }, (_, index) => today.getFullYear() + index)
+}
+
 /**
  * A wedding date can only be today or later, so past days stay visible but
  * unselectable rather than disappearing from the grid.
