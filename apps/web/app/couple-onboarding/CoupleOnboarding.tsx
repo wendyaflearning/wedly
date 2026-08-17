@@ -6,11 +6,18 @@ import ProgressIndicator from './ProgressIndicator'
 import { getContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
+  budgetIndexForCents,
   budgetRangeForCents,
   type CoupleOnboardingData,
+  DEFAULT_BUDGET_CENTS,
+  DEFAULT_GUEST_COUNT,
+  GUEST_COUNT_MAX,
+  GUEST_COUNT_MIN,
+  GUEST_COUNT_STEP,
   type PlanningStage,
   loadCoupleOnboarding,
   saveCoupleOnboarding,
+  withSliderDefaults,
 } from '@/lib/couple-onboarding-store'
 
 const PLANNING_STAGES: Array<{ value: PlanningStage; label: string }> = [
@@ -90,7 +97,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
-      setData(loadCoupleOnboarding(sessionStorage))
+      setData(withSliderDefaults(loadCoupleOnboarding(sessionStorage)))
       setHydrated(true)
     }, 0)
 
@@ -106,7 +113,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
   }
 
   function continueOnboarding() {
-    const action = getContinueAction(screen, data)
+    const action = getContinueAction(screen, withSliderDefaults(data))
 
     if (action.type === 'show_wedding_profile') {
       setScreen(2)
@@ -117,7 +124,8 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
   }
 
   const name = data.firstName?.trim()
-  const selectedBudgetIndex = Math.max(0, BUDGET_RANGES.findIndex((range) => range.cents === data.budgetCents))
+  const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
+  const guestCount = data.guestCount ?? DEFAULT_GUEST_COUNT
   const dateLabel = data.weddingDate ? formatter.format(dateFromValue(data.weddingDate)!) : 'Choisissez une date'
 
   return (
@@ -156,14 +164,14 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
               </label>
               <div className="border-bordeaux/15 lg:border-l lg:pl-6">
                 <label htmlFor="budget" className="text-sm font-medium">Quel budget imaginez-vous pour l&apos;ensemble du mariage&nbsp;?</label>
-                <p className="mt-4 font-cormorant text-xl text-accent">{budgetRangeForCents(data.budgetCents) ?? 'Choisissez une fourchette'}</p>
-                <input id="budget" type="range" min="0" max={BUDGET_RANGES.length - 1} step="1" value={selectedBudgetIndex} onChange={(event) => update('budgetCents', BUDGET_RANGES[Number(event.target.value)].cents)} className="mt-3 w-full accent-accent" aria-label="Fourchette de budget" />
+                <p className="mt-4 font-cormorant text-xl font-semibold text-accent">{budgetRangeForCents(budgetCents)}</p>
+                <input id="budget" type="range" min="0" max={BUDGET_RANGES.length - 1} step="1" value={budgetIndexForCents(budgetCents)} onChange={(event) => update('budgetCents', BUDGET_RANGES[Number(event.target.value)].cents)} className="mt-3 w-full accent-accent" aria-label="Fourchette de budget" aria-valuetext={budgetRangeForCents(budgetCents)} />
                 <p className="mt-3 text-xs italic text-gris">Pas encore sûrs ? Vous pourrez ajuster plus tard.</p>
               </div>
               <div className="border-bordeaux/15 lg:border-l lg:pl-6">
                 <label htmlFor="guests" className="text-sm font-medium">Environ combien d&apos;invités&nbsp;?</label>
-                <p className="mt-4 font-cormorant text-xl text-accent">{data.guestCount ? `${data.guestCount} invités` : 'Choisissez un nombre'}</p>
-                <input id="guests" type="range" min="0" max="300" step="10" value={data.guestCount ?? 0} onChange={(event) => update('guestCount', Number(event.target.value) || undefined)} className="mt-3 w-full accent-accent" aria-label="Nombre d’invités" />
+                <p className="mt-4 font-cormorant text-xl font-semibold text-accent">{guestCount} invités</p>
+                <input id="guests" type="range" min={GUEST_COUNT_MIN} max={GUEST_COUNT_MAX} step={GUEST_COUNT_STEP} value={guestCount} onChange={(event) => update('guestCount', Number(event.target.value))} className="mt-3 w-full accent-accent" aria-label="Nombre d’invités" />
               </div>
             </div>
           </section>
