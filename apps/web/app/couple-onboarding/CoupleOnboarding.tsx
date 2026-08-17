@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import ProgressIndicator from './ProgressIndicator'
+import { canGoToPreviousMonth, isSelectableWeddingDate, startOfDay } from './calendar'
 import { getContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
@@ -38,9 +39,17 @@ function dateFromValue(value?: string) {
   return value ? new Date(`${value}T12:00:00`) : undefined
 }
 
-function Calendar({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+function Calendar({
+  value,
+  onChange,
+  today,
+}: {
+  value?: string
+  onChange: (value: string) => void
+  today: Date
+}) {
   const selectedDate = dateFromValue(value)
-  const [visibleMonth, setVisibleMonth] = useState(() => selectedDate ?? new Date())
+  const [visibleMonth, setVisibleMonth] = useState(() => selectedDate ?? today)
   const days = useMemo(() => {
     const year = visibleMonth.getFullYear()
     const month = visibleMonth.getMonth()
@@ -52,7 +61,7 @@ function Calendar({ value, onChange }: { value?: string; onChange: (value: strin
   return (
     <section aria-label="Date du mariage" className="w-full max-w-sm">
       <div className="mb-3 flex items-center justify-between">
-        <button type="button" className="rounded-full p-1 text-bordeaux hover:bg-bordeaux/10" aria-label="Mois précédent" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
+        <button type="button" disabled={!canGoToPreviousMonth(visibleMonth, today)} className="rounded-full p-1 text-bordeaux hover:bg-bordeaux/10 disabled:cursor-not-allowed disabled:text-gris disabled:hover:bg-transparent" aria-label="Mois précédent" onClick={() => setVisibleMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
           <ChevronLeft size={17} />
         </button>
         <p className="text-xs font-bold uppercase tracking-[0.12em] text-bordeaux">{monthFormatter.format(visibleMonth)}</p>
@@ -67,8 +76,9 @@ function Calendar({ value, onChange }: { value?: string; onChange: (value: strin
           const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day)
           const dateValue = toDateInputValue(date)
           const isSelected = value === dateValue
+          const isSelectable = isSelectableWeddingDate(date, today)
           return (
-            <button key={dateValue} type="button" aria-pressed={isSelected} onClick={() => onChange(dateValue)} className={`mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full transition ${isSelected ? 'bg-bordeaux font-semibold text-creme' : 'hover:bg-bordeaux/10'}`}>
+            <button key={dateValue} type="button" disabled={!isSelectable} aria-pressed={isSelected} onClick={() => onChange(dateValue)} className={`mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full transition ${isSelected ? 'bg-bordeaux font-semibold text-creme' : isSelectable ? 'hover:bg-bordeaux/10' : 'cursor-not-allowed text-gris/50'}`}>
               {day}
             </button>
           )
@@ -94,6 +104,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
   const [screen, setScreen] = useState<CoupleOnboardingScreen>(1)
   const [data, setData] = useState<CoupleOnboardingData>({})
   const [hydrated, setHydrated] = useState(false)
+  const [today] = useState(() => startOfDay(new Date()))
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
@@ -155,7 +166,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
             </h1>
             <div className="mx-auto mt-8 grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_1fr_1fr_1fr] lg:items-end lg:gap-6">
               <div className="flex flex-col items-center border-bordeaux/15 lg:border-r lg:pr-6">
-                <Calendar value={data.weddingDate} onChange={(value) => update('weddingDate', value)} />
+                <Calendar value={data.weddingDate} onChange={(value) => update('weddingDate', value)} today={today} />
                 <p className="mt-2 font-cormorant text-xl italic text-accent">{dateLabel}</p>
               </div>
               <label className="flex flex-col gap-3 text-sm font-medium">
