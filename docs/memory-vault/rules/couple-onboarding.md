@@ -88,3 +88,62 @@ Couverture attendue :
 Implémentation actuelle :
 
 - `apps/api/migrations/Version20260812072133.php`
+
+## COUPLE-ONBOARDING-004 — La date de mariage ne peut pas être dans le passé
+
+Statut : `active`
+
+La date saisie à l'écran 2 est une date de mariage à venir : la borne minimum
+est le jour courant. Les jours antérieurs restent visibles dans le calendrier
+mais ne sont pas sélectionnables, et la navigation vers un mois entièrement
+passé est bloquée.
+
+Raison :
+
+- une date passée n'a aucun sens métier pour un mariage à organiser et
+polluerait le matching Wedmatch ainsi que les relances.
+
+Interdit :
+
+- masquer les jours passés (l'utilisateur perd le repère du mois)
+- se contenter d'une validation à la soumission : la contrainte est portée par
+la saisie elle-même
+
+Couverture attendue :
+
+- `apps/web/app/couple-onboarding/calendar.test.ts`
+
+## COUPLE-ONBOARDING-005 — `budgetCents` et `guestCount` portent toujours une valeur
+
+Statut : `active`
+
+Les deux curseurs de l'écran 2 (budget, nombre d'invités) exposent dès le
+premier rendu la graduation sur laquelle ils sont réellement positionnés, et
+cette valeur est transmise à l'étape suivante même si le couple n'a jamais
+touché le curseur.
+
+Raison :
+
+- `Wedding.budget_cents` et `Wedding.guest_count` sont `NOT NULL` : contrairement
+à `zone`/`ambiance`/`ceremonyType` (voir `COUPLE-ONBOARDING-003`), l'absence de
+valeur n'est pas représentable en base.
+- un `<input type="range">` occupe toujours une graduation réelle : afficher un
+libellé « non renseigné » décrivait un état que le contrôle ne peut pas avoir,
+et rendait la première graduation inatteignable au clic direct.
+
+Interdit :
+
+- afficher un libellé de type « Choisissez une fourchette » sur un curseur déjà
+positionné
+- reconvertir la valeur d'un curseur en `undefined` (le `0` invités doit rester
+un `0`, pas une absence de valeur)
+
+Couverture attendue :
+
+- `apps/web/lib/couple-onboarding-store.test.ts` (`withSliderDefaults`)
+
+Dette connue :
+
+- la valeur de montage du curseur invités est `0`, la borne basse du contrôle et
+non une taille de mariage plausible. Une valeur de départ produit reste à
+trancher (`TODO(WED-106)` dans `apps/web/lib/couple-onboarding-store.ts`).
