@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Reveal from "./Reveal";
 import TypeReveal from "./TypeReveal";
 
@@ -170,9 +171,8 @@ export default function WedreamConcept() {
               </p>
             </Reveal>
             <Reveal delayMs={260} className="w-full md:w-auto">
-              {/* Cible réelle = catalogue prestataires Wedream, hors scope WED-56 */}
-              <a
-                href="#"
+              <Link
+                href="/wedream-vendors"
                 className="inline-flex items-center justify-center gap-2 md:gap-2.5 w-full md:w-auto rounded-full whitespace-nowrap transition-transform hover:-translate-y-px px-4 py-4 md:px-[38px] md:py-[17px] tracking-[0.1em] md:tracking-[0.17em] text-[11px] md:text-xs"
                 style={{
                   fontFamily: "var(--font-manrope-var)",
@@ -186,7 +186,7 @@ export default function WedreamConcept() {
               >
                 Choisir mon prestataire
                 <span aria-hidden="true">→</span>
-              </a>
+              </Link>
             </Reveal>
           </div>
         </div>
