@@ -7,10 +7,6 @@ export type CategoryBubble = {
   size: "lg" | "sm";
 };
 
-// Duotone filter shared by every image on this screen — reproduit le filtre SVG
-// feColorMatrix/feComponentTransfer de la maquette Claude Design (traitement "Teinté").
-export const DUOTONE_FILTER = "url(#wd-duotone) contrast(1.05) saturate(1.05)";
-
 // Ordre = disposition de la maquette v4 (variante "Rangées de 3", par défaut) :
 // 1 rangée de 2 grandes bulles, 2 rangées de 3 petites bulles, 1 bulle finale isolée.
 export const CATEGORY_BUBBLES: CategoryBubble[] = [

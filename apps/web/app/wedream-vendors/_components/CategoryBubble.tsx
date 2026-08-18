@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { DUOTONE_FILTER } from "./categories";
 
 interface CategoryBubbleProps {
   href: string;
@@ -11,48 +10,41 @@ interface CategoryBubbleProps {
 }
 
 export default function CategoryBubble({ href, label, tagline, imageUrl, imageAlt, size }: CategoryBubbleProps) {
-  const circleSize = size === "lg" ? "clamp(200px, 17vw, 260px)" : "clamp(128px, 10vw, 168px)";
-  const nameFontSize = size === "lg" ? "clamp(24px, 2vw, 30px)" : "clamp(17px, 1.4vw, 20px)";
+  const circleClass =
+    size === "lg"
+      ? "w-[200px] h-[200px] md:w-[clamp(200px,17vw,260px)] md:h-[clamp(200px,17vw,260px)]"
+      : "w-[128px] h-[128px] md:w-[clamp(128px,10vw,168px)] md:h-[clamp(128px,10vw,168px)]";
+  const nameClass =
+    size === "lg"
+      ? "text-[26px] italic md:text-[clamp(24px,2vw,30px)]"
+      : "text-[17px] not-italic md:text-[clamp(17px,1.4vw,20px)]";
 
   return (
     // Écran 2 (sous-taxonomie par métier, maquette "Wedream Page Spécialités.dc.html")
     // hors scope WED-57 v4 — lien laissé en ancre en attendant ce futur ticket.
     <a href={href} className="group flex flex-col items-center text-center gap-4 no-underline">
       <div
-        className="relative rounded-full overflow-hidden transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5"
-        style={{ width: circleSize, height: circleSize, backgroundColor: "#EDE1D3" }}
+        className={`relative rounded-full overflow-hidden transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5 ${circleClass}`}
+        style={{ backgroundColor: "#EDE1D3" }}
       >
         <Image
           src={imageUrl}
           alt={imageAlt}
           fill
-          className="object-cover"
-          style={{ filter: DUOTONE_FILTER }}
+          className="object-cover grayscale md:grayscale-0"
           sizes={size === "lg" ? "260px" : "168px"}
         />
       </div>
       <div>
         <h3
-          className="text-bordeaux m-0"
-          style={{
-            fontFamily: "var(--font-cormorant-var)",
-            fontWeight: 300,
-            fontStyle: size === "lg" ? "italic" : "normal",
-            fontSize: nameFontSize,
-            letterSpacing: "-0.01em",
-          }}
+          className={`text-bordeaux m-0 ${nameClass}`}
+          style={{ fontFamily: "var(--font-cormorant-var)", fontWeight: 300, letterSpacing: "-0.01em" }}
         >
           {label}
         </h3>
         <p
-          className="text-gris m-0 mx-auto"
-          style={{
-            fontFamily: "var(--font-manrope-var)",
-            fontSize: "12px",
-            lineHeight: 1.45,
-            marginTop: "6px",
-            maxWidth: "190px",
-          }}
+          className="text-gris m-0 mx-auto mt-1 max-w-[170px] md:mt-1.5 md:max-w-[190px]"
+          style={{ fontFamily: "var(--font-manrope-var)", fontSize: "12px", lineHeight: 1.45 }}
         >
           {tagline}
         </p>
