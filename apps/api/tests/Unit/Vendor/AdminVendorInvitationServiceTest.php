@@ -19,6 +19,8 @@ use App\Service\Vendor\AdminVendorDraftService;
 use App\Service\Vendor\AdminVendorInvitationService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Uid\UuidV7;
@@ -106,6 +108,32 @@ final class AdminVendorInvitationServiceTest extends TestCase
         self::assertStringContainsString('/onboarding/', $response->invitationUrl);
     }
 
+    public function test_send_logs_and_continues_when_mailer_fails(): void
+    {
+        $vendor = $this->makeReadyVendor();
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasUsedVendorInvitation')->willReturn(false);
+        $inviteTokenRepository->method('findActiveVendorInvitation')->willReturn(null);
+
+        $mailer = $this->createStub(MailerInterface::class);
+        $mailer->method('send')->willThrowException(new \RuntimeException('Resend API error.'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('error')
+            ->with(
+                'Vendor invitation email failed to send.',
+                $this->callback(fn(array $context): bool => $context['vendorId'] === $vendor->getId()->toRfc4122()
+                    && $context['exception'] instanceof \RuntimeException)
+            );
+
+        $response = $this->makeService($inviteTokenRepository, mailer: $mailer, logger: $logger)
+            ->send($vendor, new User());
+
+        self::assertFalse($response->emailSent);
+    }
+
     public function test_send_reuses_existing_active_token(): void
     {
         $vendor = $this->makeReadyVendor();
@@ -164,11 +192,30 @@ final class AdminVendorInvitationServiceTest extends TestCase
         $this->makeService(mailer: $mailer)->send($vendor, new User());
     }
 
-    public function test_send_rejects_missing_prices(): void
+    public function test_send_succeeds_with_missing_prices(): void
     {
         $vendor = $this->makeReadyVendor()
             ->setPriceMinCents(-1)
             ->setPriceMaxCents(-1);
+
+        $inviteTokenRepository = $this->createStub(InviteTokenRepository::class);
+        $inviteTokenRepository->method('hasUsedVendorInvitation')->willReturn(false);
+        $inviteTokenRepository->method('findActiveVendorInvitation')->willReturn(null);
+
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects($this->once())->method('send');
+
+        $response = $this->makeService($inviteTokenRepository, mailer: $mailer)
+            ->send($vendor, new User());
+
+        self::assertTrue($response->emailSent);
+    }
+
+    public function test_send_rejects_invalid_price_range(): void
+    {
+        $vendor = $this->makeReadyVendor()
+            ->setPriceMinCents(500)
+            ->setPriceMaxCents(100);
 
         $mailer = $this->createMock(MailerInterface::class);
         $mailer->expects($this->never())->method('send');
@@ -199,11 +246,13 @@ final class AdminVendorInvitationServiceTest extends TestCase
         ?InviteTokenRepository $inviteTokenRepository = null,
         ?EntityManagerInterface $entityManager = null,
         ?MailerInterface $mailer = null,
+        ?LoggerInterface $logger = null,
     ): AdminVendorInvitationService {
         return new AdminVendorInvitationService(
             $inviteTokenRepository ?? $this->createStub(InviteTokenRepository::class),
             $entityManager ?? $this->createStub(EntityManagerInterface::class),
             $mailer ?? $this->createStub(MailerInterface::class),
+            $logger ?? new NullLogger(),
             'https://app.wedly.test',
         );
     }

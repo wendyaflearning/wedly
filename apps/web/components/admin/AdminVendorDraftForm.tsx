@@ -211,15 +211,14 @@ export function AdminVendorDraftForm({
 
   const priceMin = parseEuroToCents(form.priceMin)
   const priceMax = parseEuroToCents(form.priceMax)
+  const priceRangeValid = priceMin === null || priceMax === null || priceMax >= priceMin
   const canSend =
     form.firstname.trim() !== '' &&
     form.email.trim() !== '' &&
     form.brandName.trim() !== '' &&
     form.serviceId !== '' &&
     form.regionIds.length > 0 &&
-    priceMin !== null &&
-    priceMax !== null &&
-    priceMax >= priceMin &&
+    priceRangeValid &&
     form.priceType !== ''
 
   function update<K extends keyof DraftFormState>(key: K, value: DraftFormState[K]) {
@@ -429,7 +428,9 @@ export function AdminVendorDraftForm({
         </div>
         {!canSend && (
           <p className="mt-3 text-sm text-gris">
-            L’envoi sera disponible après prénom, email, nom de marque, service, régions et prix valides.
+            {priceRangeValid
+              ? 'L’envoi sera disponible après prénom, email, nom de marque, service et régions renseignés.'
+              : 'Le prix minimum ne peut pas dépasser le prix maximum.'}
           </p>
         )}
         {notice && <p className="mt-3 rounded-md bg-success-soft px-3 py-2 text-sm font-semibold text-success">{notice}</p>}
@@ -543,8 +544,8 @@ export function AdminVendorDraftForm({
       <section className="rounded-lg border border-bordeaux/10 bg-white p-5 shadow-sm">
         <h2 className="font-cormorant text-2xl font-semibold text-bordeaux">Zones et tarifs</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <TextField label="Prix minimum (€) *" value={form.priceMin} onChange={(value) => update('priceMin', value)} inputMode="decimal" />
-          <TextField label="Prix maximum (€) *" value={form.priceMax} onChange={(value) => update('priceMax', value)} inputMode="decimal" />
+          <TextField label="Prix minimum (€)" value={form.priceMin} onChange={(value) => update('priceMin', value)} inputMode="decimal" />
+          <TextField label="Prix maximum (€)" value={form.priceMax} onChange={(value) => update('priceMax', value)} inputMode="decimal" />
           <TextField label="Ville" value={form.legalCity} onChange={(value) => update('legalCity', value)} />
         </div>
         <CheckboxGrid

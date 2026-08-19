@@ -29,14 +29,12 @@ final readonly class CreateVendorInputDto
         #[Assert\All([new Assert\Uuid()])]
         public array $regions,
 
-        #[Assert\NotBlank]
-        #[Assert\PositiveOrZero]
-        public int $price_min,
-
-        #[Assert\NotBlank]
-        #[Assert\PositiveOrZero]
-        public int $price_max,
-
         public PriceType $price_type,
+
+        #[Assert\PositiveOrZero]
+        public ?int $price_min = null,
+
+        #[Assert\PositiveOrZero]
+        public ?int $price_max = null,
     ) {}
 }
