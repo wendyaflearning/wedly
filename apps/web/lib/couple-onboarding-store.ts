@@ -23,33 +23,40 @@ interface StorageLike {
   removeItem(key: string): void
 }
 
+/**
+ * Brackets and their order come from the Claude Design source, which is the
+ * reference for this flow. Each one is stored as its integer-cent median, and
+ * the two open-ended brackets keep the established 5 000 € offset.
+ */
 export const BUDGET_RANGES = [
   { label: 'Moins de 10 000 €', cents: 750_000 },
   { label: '10 000 – 20 000 €', cents: 1_500_000 },
   { label: '20 000 – 30 000 €', cents: 2_500_000 },
-  { label: '30 000 – 40 000 €', cents: 3_500_000 },
-  { label: 'Plus de 40 000 €', cents: 4_500_000 },
+  { label: '30 000 – 50 000 €', cents: 4_000_000 },
+  { label: 'Plus de 50 000 €', cents: 5_500_000 },
 ] as const
 
 /**
  * A range input always sits on a real graduation from its first render, so the
  * screen exposes that graduation as the current value instead of an empty state
- * the control cannot actually represent.
+ * the control cannot actually represent. Both starting points are the ones the
+ * design source opens on.
  */
-export const DEFAULT_BUDGET_CENTS = BUDGET_RANGES[0].cents
-export const GUEST_COUNT_MIN = 10
+export const DEFAULT_BUDGET_INDEX = 2
+export const DEFAULT_BUDGET_CENTS = BUDGET_RANGES[DEFAULT_BUDGET_INDEX].cents
+export const GUEST_COUNT_MIN = 20
 export const GUEST_COUNT_MAX = 300
 export const GUEST_COUNT_STEP = 10
-export const DEFAULT_GUEST_COUNT = 10
+export const DEFAULT_GUEST_COUNT = 100
 
 export function budgetRangeForCents(budgetCents: number): string {
-  return BUDGET_RANGES.find((range) => range.cents === budgetCents)?.label ?? BUDGET_RANGES[0].label
+  return BUDGET_RANGES.find((range) => range.cents === budgetCents)?.label ?? BUDGET_RANGES[DEFAULT_BUDGET_INDEX].label
 }
 
 export function budgetIndexForCents(budgetCents: number): number {
   const index = BUDGET_RANGES.findIndex((range) => range.cents === budgetCents)
 
-  return index === -1 ? 0 : index
+  return index === -1 ? DEFAULT_BUDGET_INDEX : index
 }
 
 /**
@@ -57,11 +64,21 @@ export function budgetIndexForCents(budgetCents: number): number {
  * while restoring older values only when they remain valid for the control.
  */
 export function withSliderDefaults(data: CoupleOnboardingData): CoupleOnboardingData {
+  const restoredBudget = data.budgetCents
+
   return {
     ...data,
-    budgetCents: data.budgetCents ?? DEFAULT_BUDGET_CENTS,
+    // A bracket removed since the session started must not silently land on the
+    // cheapest one, so an unknown amount falls back to the opening bracket.
+    budgetCents: restoredBudget !== undefined && isKnownBudget(restoredBudget)
+      ? restoredBudget
+      : DEFAULT_BUDGET_CENTS,
     guestCount: Math.max(data.guestCount ?? DEFAULT_GUEST_COUNT, GUEST_COUNT_MIN),
   }
+}
+
+function isKnownBudget(budgetCents: number): boolean {
+  return BUDGET_RANGES.some((range) => range.cents === budgetCents)
 }
 
 export function loadCoupleOnboarding(

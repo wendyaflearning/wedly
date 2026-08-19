@@ -44,8 +44,10 @@ describe('couple onboarding store', () => {
     expect(storage.getItem(COUPLE_ONBOARDING_STORAGE_KEY)).toBeNull()
   })
 
-  it('maps the 20 000–30 000 € range to its integer-cent median', () => {
+  it('maps each bracket to its integer-cent median', () => {
     expect(BUDGET_RANGES[2]).toEqual({ label: '20 000 – 30 000 €', cents: 2_500_000 })
+    expect(BUDGET_RANGES[3]).toEqual({ label: '30 000 – 50 000 €', cents: 4_000_000 })
+    expect(BUDGET_RANGES[4]).toEqual({ label: 'Plus de 50 000 €', cents: 5_500_000 })
   })
 
   it('exposes the slider mount values as usable data instead of an empty state', () => {
@@ -56,20 +58,38 @@ describe('couple onboarding store', () => {
     })
   })
 
-  it('starts the guest slider at 10 guests', () => {
-    expect(DEFAULT_GUEST_COUNT).toBe(10)
-    expect(GUEST_COUNT_MIN).toBe(10)
+  it('opens both sliders where the design source opens them', () => {
+    expect(DEFAULT_GUEST_COUNT).toBe(100)
+    expect(GUEST_COUNT_MIN).toBe(20)
+    expect(budgetRangeForCents(DEFAULT_BUDGET_CENTS)).toBe('20 000 – 30 000 €')
+  })
+
+  it('lists the five budget brackets of the design source', () => {
+    expect(BUDGET_RANGES.map((range) => range.label)).toEqual([
+      'Moins de 10 000 €',
+      '10 000 – 20 000 €',
+      '20 000 – 30 000 €',
+      '30 000 – 50 000 €',
+      'Plus de 50 000 €',
+    ])
+  })
+
+  it('falls back to the opening bracket when a stored amount no longer exists', () => {
+    expect(withSliderDefaults({ budgetCents: 3_500_000 }).budgetCents).toBe(DEFAULT_BUDGET_CENTS)
+    expect(budgetRangeForCents(3_500_000)).toBe('20 000 – 30 000 €')
+    expect(budgetIndexForCents(3_500_000)).toBe(2)
   })
 
   it('never overwrites slider values restored from a previous session', () => {
-    expect(withSliderDefaults({ budgetCents: 3_500_000, guestCount: 120 })).toEqual({
-      budgetCents: 3_500_000,
+    expect(withSliderDefaults({ budgetCents: 4_000_000, guestCount: 120 })).toEqual({
+      budgetCents: 4_000_000,
       guestCount: 120,
     })
   })
 
-  it('normalizes a persisted guest count below 10 to the minimum', () => {
+  it('normalizes a persisted guest count below the minimum', () => {
     expect(withSliderDefaults({ guestCount: 0 }).guestCount).toBe(GUEST_COUNT_MIN)
+    expect(withSliderDefaults({ guestCount: 10 }).guestCount).toBe(GUEST_COUNT_MIN)
   })
 
   it('resolves the budget slider position and label from the stored cents', () => {
@@ -77,8 +97,9 @@ describe('couple onboarding store', () => {
     expect(budgetRangeForCents(2_500_000)).toBe('20 000 – 30 000 €')
   })
 
-  it('keeps the first range reachable as the mount value', () => {
-    expect(budgetIndexForCents(DEFAULT_BUDGET_CENTS)).toBe(0)
-    expect(budgetRangeForCents(DEFAULT_BUDGET_CENTS)).toBe('Moins de 10 000 €')
+  it('keeps every bracket reachable, including the cheapest one', () => {
+    expect(budgetIndexForCents(DEFAULT_BUDGET_CENTS)).toBe(2)
+    expect(budgetIndexForCents(750_000)).toBe(0)
+    expect(budgetRangeForCents(750_000)).toBe('Moins de 10 000 €')
   })
 })

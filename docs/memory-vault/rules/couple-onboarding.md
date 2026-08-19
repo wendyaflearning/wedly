@@ -137,9 +137,14 @@ Interdit :
 positionné
 - reconvertir la valeur d'un curseur en `undefined`
 
-Le curseur invités démarre à `10` invités, qui est aussi sa borne minimale.
-Toute valeur persistée inférieure à `10` est ramenée à cette borne afin qu'un
-ancien état local ne puisse pas réintroduire `0` invité.
+Les valeurs de départ et les graduations des deux curseurs viennent de la
+source Claude Design, qui fait foi pour ce parcours : le curseur invités
+démarre à `100` invités et sa borne minimale est `20` ; le curseur budget
+ouvre sur `20 000 – 30 000 €` parmi cinq fourchettes.
+
+Toute valeur persistée hors de ces bornes est ramenée à la valeur d'ouverture —
+un ancien état local ne doit ni réintroduire une graduation supprimée, ni faire
+retomber silencieusement le budget sur la fourchette la moins chère.
 
 Couverture attendue :
 
