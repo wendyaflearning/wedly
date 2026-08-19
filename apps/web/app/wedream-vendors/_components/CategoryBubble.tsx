@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 interface CategoryBubbleProps {
   href: string;
@@ -20,9 +21,7 @@ export default function CategoryBubble({ href, label, tagline, imageUrl, imageAl
       : "text-[17px] not-italic md:text-[clamp(17px,1.4vw,20px)]";
 
   return (
-    // Écran 2 (sous-taxonomie par métier, maquette "Wedream Page Spécialités.dc.html")
-    // hors scope WED-57 v4 — lien laissé en ancre en attendant ce futur ticket.
-    <a href={href} className="group flex flex-col items-center text-center gap-4 no-underline">
+    <Link href={href} className="group flex flex-col items-center text-center gap-4 no-underline">
       <div
         className={`relative rounded-full overflow-hidden transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5 ${circleClass}`}
         style={{ backgroundColor: "#EDE1D3" }}
@@ -60,6 +59,6 @@ export default function CategoryBubble({ href, label, tagline, imageUrl, imageAl
           </svg>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }

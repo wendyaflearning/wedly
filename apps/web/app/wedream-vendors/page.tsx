@@ -30,13 +30,13 @@ export default function WedreamVendorsPage() {
       <div className="flex flex-col gap-10 px-6 pt-11 pb-2 md:block md:mx-auto md:max-w-[1320px] md:px-[clamp(20px,4vw,40px)] md:pt-[clamp(56px,7vw,88px)] md:pb-24">
         <div className="flex flex-col items-center gap-10 md:flex-row md:justify-center md:gap-[clamp(48px,6vw,100px)] md:mb-[clamp(56px,7vw,92px)]">
           {largeBubbles.map((bubble) => (
-            <CategoryBubble key={bubble.slug} href="#" {...bubble} />
+            <CategoryBubble key={bubble.slug} href={`/wedream-vendors/${bubble.slug}`} {...bubble} />
           ))}
         </div>
 
         <div className="grid grid-cols-2 gap-x-[22px] gap-y-9 justify-items-center md:grid-cols-4 md:gap-x-[clamp(32px,4vw,64px)] md:gap-y-[clamp(40px,4.5vw,60px)]">
           {smallBubbles.map((bubble) => (
-            <CategoryBubble key={bubble.slug} href="#" {...bubble} />
+            <CategoryBubble key={bubble.slug} href={`/wedream-vendors/${bubble.slug}`} {...bubble} />
           ))}
         </div>
       </div>
