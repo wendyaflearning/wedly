@@ -13,6 +13,7 @@ use App\Enum\User\InviteTokenStatus;
 use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\InviteTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
@@ -24,6 +25,7 @@ final readonly class AdminVendorInvitationService
         private InviteTokenRepository $inviteTokenRepository,
         private EntityManagerInterface $em,
         private MailerInterface $mailer,
+        private LoggerInterface $logger,
         #[Autowire('%env(FRONTEND_URL)%')]
         private string $frontendUrl,
     ) {}
@@ -92,7 +94,9 @@ final readonly class AdminVendorInvitationService
         if ($vendor->getServices()->isEmpty() || $vendor->getRegions()->isEmpty()) {
             throw new \DomainException("Le service et au moins une région sont requis avant l’envoi.", 422);
         }
-        if ($vendor->getPriceMinCents() < 0 || $vendor->getPriceMaxCents() < 0 || $vendor->getPriceMinCents() > $vendor->getPriceMaxCents()) {
+        $priceMin = $vendor->getPriceMinCents();
+        $priceMax = $vendor->getPriceMaxCents();
+        if ($priceMin >= 0 && $priceMax >= 0 && $priceMin > $priceMax) {
             throw new \DomainException('La fourchette de prix est invalide.', 422);
         }
     }
@@ -114,7 +118,11 @@ final readonly class AdminVendorInvitationService
 
             $this->mailer->send($email);
             return true;
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->logger->error('Vendor invitation email failed to send.', [
+                'vendorId' => $vendor->getId()?->toRfc4122(),
+                'exception' => $e,
+            ]);
             return false;
         }
     }
