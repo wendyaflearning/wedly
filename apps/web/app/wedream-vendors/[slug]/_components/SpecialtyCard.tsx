@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import type { PublicTagValue } from '@/lib/specialties'
 
 // Dégradés de repli repris de la maquette : utilisés tant qu'une TagValue
@@ -27,7 +28,7 @@ type SpecialtyCardProps = {
 
 export default function SpecialtyCard({ tagValue, index, href }: SpecialtyCardProps) {
   return (
-    <a
+    <Link
       href={href}
       className="group relative block aspect-[4/5] overflow-hidden rounded-[5px] text-inherit shadow-[0_10px_24px_rgba(41,26,16,0.16)]"
       style={{ background: TONES[index % TONES.length] }}
@@ -63,6 +64,6 @@ export default function SpecialtyCard({ tagValue, index, href }: SpecialtyCardPr
           </svg>
         </div>
       </div>
-    </a>
+    </Link>
   )
 }
