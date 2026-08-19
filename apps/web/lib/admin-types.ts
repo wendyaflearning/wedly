@@ -281,6 +281,7 @@ export type AdminTagValue = {
   tagTypeId: string
   label: string
   isActive: boolean
+  vignetteUrl: string | null
 }
 
 export type AdminTagType = {
@@ -311,8 +312,10 @@ export type UpdateTagTypePayload = {
 export type CreateTagValuePayload = {
   tagTypeId: string
   label: string
+  vignetteUrl?: string
 }
 
 export type UpdateTagValuePayload = {
   label?: string
+  vignetteUrl?: string
 }
