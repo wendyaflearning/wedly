@@ -31,7 +31,8 @@ final readonly class AdminTagValueService
 
         $tagValue = (new TagValue())
             ->setTagType($tagType)
-            ->setLabel($dto->label);
+            ->setLabel($dto->label)
+            ->setVignetteUrl($dto->vignetteUrl);
 
         $this->em->persist($tagValue);
         $this->em->flush();
@@ -51,6 +52,10 @@ final readonly class AdminTagValueService
             }
 
             $tagValue->setLabel($dto->label);
+        }
+
+        if ($dto->vignetteUrl !== null) {
+            $tagValue->setVignetteUrl($dto->vignetteUrl);
         }
 
         $this->em->flush();

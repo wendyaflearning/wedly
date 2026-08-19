@@ -11,5 +11,9 @@ final readonly class UpdateTagValueRequestDto
     public function __construct(
         #[Assert\Length(min: 1, max: 100)]
         public ?string $label = null,
+
+        #[Assert\Url]
+        #[Assert\Length(max: 512)]
+        public ?string $vignetteUrl = null,
     ) {}
 }

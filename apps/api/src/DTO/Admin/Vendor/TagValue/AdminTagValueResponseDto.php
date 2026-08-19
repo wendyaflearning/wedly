@@ -13,15 +13,17 @@ final readonly class AdminTagValueResponseDto
         public string $tagTypeId,
         public string $label,
         public bool $isActive,
+        public ?string $vignetteUrl = null,
     ) {}
 
     public static function fromEntity(TagValue $tagValue): self
     {
         return new self(
-            id:        $tagValue->getId()->toRfc4122(),
-            tagTypeId: $tagValue->getTagType()->getId()->toRfc4122(),
-            label:     $tagValue->getLabel(),
-            isActive:  $tagValue->isActive(),
+            id:          $tagValue->getId()->toRfc4122(),
+            tagTypeId:   $tagValue->getTagType()->getId()->toRfc4122(),
+            label:       $tagValue->getLabel(),
+            isActive:    $tagValue->isActive(),
+            vignetteUrl: $tagValue->getVignetteUrl(),
         );
     }
 }
