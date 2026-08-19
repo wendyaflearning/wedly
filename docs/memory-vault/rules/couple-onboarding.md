@@ -144,3 +144,29 @@ ancien état local ne puisse pas réintroduire `0` invité.
 Couverture attendue :
 
 - `apps/web/lib/couple-onboarding-store.test.ts` (`withSliderDefaults`)
+
+## COUPLE-ONBOARDING-006 — Le prénom est saisi à l'écran 1 et conditionne la suite
+
+Statut : `active`
+
+Le prénom est saisi directement dans le titre de l'écran 1 (« Bonjour *[votre
+prénom]*, vous en êtes où ? »), dans un champ qui s'élargit avec ce qui est
+tapé. Tant qu'il est vide, le bouton de progression reste désactivé.
+
+Raison :
+
+- `User.firstName` est `NOT NULL` : sans prénom, la création de compte de
+l'écran final échoue.
+- le parcours réutilise le prénom dans les titres suivants (« Alors {prénom},
+c'est pour quand ? ») : un parcours sans prénom dégrade toute la copy.
+
+Interdit :
+
+- créer un écran dédié au prénom (la maquette le porte dans le titre de
+l'écran 1, pas sur une étape séparée — l'indicateur reste sur 7 étapes)
+- appliquer ce blocage aux champs de l'écran 2, qui restent tous facultatifs
+(voir `COUPLE-ONBOARDING-005`)
+
+Couverture attendue :
+
+- `apps/web/app/couple-onboarding/navigation.test.ts` (`canContinue`)

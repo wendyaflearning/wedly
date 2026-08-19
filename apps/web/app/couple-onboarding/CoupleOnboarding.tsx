@@ -1,10 +1,10 @@
 'use client'
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ProgressIndicator from './ProgressIndicator'
 import { canGoToPreviousMonth, isSelectableWeddingDate, selectableWeddingYears, setCalendarMonth, startOfDay } from './calendar'
-import { getContinueAction, type CoupleOnboardingScreen } from './navigation'
+import { canContinue, getContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
   budgetIndexForCents,
@@ -110,6 +110,39 @@ function Calendar({
   )
 }
 
+const NAME_PLACEHOLDER = 'votre prénom'
+
+/**
+ * The first name is typed straight inside the headline, so the field has to grow
+ * with what is typed. A hidden twin carries the exact same typography and gives
+ * the width to copy — which keeps the input aligned at every responsive size.
+ */
+function NameField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const sizer = useRef<HTMLSpanElement>(null)
+  const [width, setWidth] = useState<number>()
+
+  useEffect(() => {
+    if (sizer.current) setWidth(sizer.current.offsetWidth + 12)
+  }, [value])
+
+  return (
+    <span className="relative inline-block">
+      <span aria-hidden="true" ref={sizer} className="invisible absolute left-0 top-0 whitespace-pre font-semibold italic">
+        {value || NAME_PLACEHOLDER}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={NAME_PLACEHOLDER}
+        aria-label="Votre prénom"
+        style={{ width }}
+        className="max-w-full border-b-2 border-bordeaux/20 bg-transparent text-center font-semibold italic text-accent outline-none transition-colors placeholder:font-normal placeholder:text-gris/60 focus:border-highlight"
+      />
+    </span>
+  )
+}
+
 interface CoupleOnboardingProps {
   /**
    * The parent 7-step flow owns screens 3–7. Stage A only emits its complete,
@@ -157,6 +190,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
   }
 
   const name = data.firstName?.trim()
+  const canGoOn = canContinue(screen, data)
   const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
   const guestCount = data.guestCount ?? DEFAULT_GUEST_COUNT
   const dateLabel = data.weddingDate ? formatter.format(dateFromValue(data.weddingDate)!) : 'Choisissez une date'
@@ -172,7 +206,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
         {screen === 1 ? (
           <section className="m-auto w-full text-center">
             <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl lg:text-6xl">
-              {name ? <>Bonjour <em className="font-semibold text-accent">{name}</em>, vous en êtes où&nbsp;?</> : <>Bonjour, vous en êtes où&nbsp;?</>}
+              Bonjour <NameField value={data.firstName ?? ''} onChange={(value) => update('firstName', value)} />, vous en êtes où&nbsp;?
             </h1>
             <div className="mx-auto mt-12 flex max-w-3xl flex-col justify-center gap-3 sm:flex-row" role="radiogroup" aria-label="Avancement de l’organisation">
               {PLANNING_STAGES.map((stage) => {
@@ -211,7 +245,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
         )}
 
         <footer className="mt-10 flex justify-center pb-2">
-          <button type="button" onClick={continueOnboarding} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux">
+          <button type="button" disabled={!canGoOn} onClick={continueOnboarding} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
             CONTINUER <ChevronRight size={18} aria-hidden="true" />
           </button>
         </footer>

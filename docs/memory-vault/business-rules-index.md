@@ -49,6 +49,7 @@ dans les fichiers de règles.
 | `COUPLE-ONBOARDING-003` | `NULL` sur `Wedding.zone`/`ambiance`/`ceremonyType` signifie « non renseigné », jamais de valeur par défaut | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-004` | La date de mariage ne peut pas être antérieure au jour courant | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-005` | `budgetCents` et `guestCount` portent toujours une valeur (colonnes `NOT NULL`) | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-006` | Le prénom est saisi dans le titre de l'écran 1 et conditionne la progression | `active` | `rules/couple-onboarding.md` |
 
 ## Data and schema
 
