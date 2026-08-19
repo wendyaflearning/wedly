@@ -43,7 +43,7 @@ export default function CategoryBubble({ href, label, tagline, imageUrl, imageAl
           {label}
         </h3>
         <p
-          className="text-gris m-0 mx-auto mt-1 max-w-[170px] md:mt-1.5 md:max-w-[190px]"
+          className="text-gris m-0 mx-auto mt-1 max-w-[170px] min-h-[35px] md:mt-1.5 md:max-w-[190px]"
           style={{ fontFamily: "var(--font-manrope-var)", fontSize: "12px", lineHeight: 1.45 }}
         >
           {tagline}

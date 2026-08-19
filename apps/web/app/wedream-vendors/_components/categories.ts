@@ -67,11 +67,19 @@ export const CATEGORY_BUBBLES: CategoryBubble[] = [
     size: "sm",
   },
   {
-    slug: "mua",
-    label: "MUA",
-    tagline: "Maquillage et coiffure",
+    slug: "maquillage",
+    label: "Maquillage",
+    tagline: "Mise en beauté du jour J",
     imageUrl: "https://res.cloudinary.com/dadvrspox/image/upload/v1787060433/makeup_atrtist_xieyqy.jpg",
-    imageAlt: "MUA",
+    imageAlt: "Maquillage",
+    size: "sm",
+  },
+  {
+    slug: "coiffure",
+    label: "Coiffure",
+    tagline: "Chignons, essais, jour J",
+    imageUrl: "https://res.cloudinary.com/dadvrspox/image/upload/v1787143968/coiffure_ozmg8v.jpg",
+    imageAlt: "Coiffure",
     size: "sm",
   },
   {

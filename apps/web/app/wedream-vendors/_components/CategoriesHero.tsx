@@ -43,7 +43,7 @@ export default function CategoriesHero() {
       </div>
 
       <div
-        className="relative overflow-hidden w-full aspect-[4/3] mt-8 md:mt-0 md:aspect-auto md:h-full"
+        className="hidden md:block relative overflow-hidden w-full aspect-[4/3] mt-8 md:mt-0 md:aspect-auto md:h-full"
         style={{ backgroundColor: "#EDE1D3" }}
       >
         <Image
