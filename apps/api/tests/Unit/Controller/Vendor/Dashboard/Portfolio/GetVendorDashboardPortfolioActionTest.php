@@ -76,7 +76,7 @@ final class GetVendorDashboardPortfolioActionTest extends TestCase
                     'sort_order'            => 0,
                     'is_visible_in_wedream' => true,
                     'tags'                  => [
-                        ['id' => $tagValueId->toRfc4122(), 'label' => 'Bohème'],
+                        ['id' => $tagValueId->toRfc4122(), 'label' => 'Bohème', 'vignetteUrl' => null],
                     ],
                 ],
                 [

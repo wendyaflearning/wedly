@@ -16,5 +16,9 @@ final readonly class CreateTagValueRequestDto
         #[Assert\NotBlank]
         #[Assert\Length(max: 100)]
         public string $label,
+
+        #[Assert\Url]
+        #[Assert\Length(max: 512)]
+        public ?string $vignetteUrl = null,
     ) {}
 }

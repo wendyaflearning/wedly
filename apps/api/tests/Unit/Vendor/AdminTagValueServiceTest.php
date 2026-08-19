@@ -217,6 +217,85 @@ final class AdminTagValueServiceTest extends TestCase
         (new AdminTagValueService($em, $tagValueRepository))->update('missing', $dto);
     }
 
+    public function test_create_applies_vignette_url_when_provided(): void
+    {
+        $tagType = $this->makeTagType();
+
+        $tagValueRepository = $this->createStub(TagValueRepository::class);
+        $tagValueRepository->method('findOneByLabelAndTagType')->willReturn(null);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('find')->with(TagType::class, 'tag-type-id')->willReturn($tagType);
+        $em->expects($this->once())->method('flush');
+
+        $dto = new CreateTagValueRequestDto(
+            tagTypeId:   'tag-type-id',
+            label:       'Château',
+            vignetteUrl: 'https://res.cloudinary.com/wedly/image/upload/chateau.jpg',
+        );
+
+        $tagValue = (new AdminTagValueService($em, $tagValueRepository))->create($dto);
+
+        self::assertSame('https://res.cloudinary.com/wedly/image/upload/chateau.jpg', $tagValue->getVignetteUrl());
+    }
+
+    public function test_create_leaves_vignette_url_null_when_omitted(): void
+    {
+        $tagType = $this->makeTagType();
+
+        $tagValueRepository = $this->createStub(TagValueRepository::class);
+        $tagValueRepository->method('findOneByLabelAndTagType')->willReturn(null);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('find')->with(TagType::class, 'tag-type-id')->willReturn($tagType);
+
+        $dto = new CreateTagValueRequestDto(tagTypeId: 'tag-type-id', label: 'Péniche');
+
+        $tagValue = (new AdminTagValueService($em, $tagValueRepository))->create($dto);
+
+        self::assertNull($tagValue->getVignetteUrl());
+    }
+
+    public function test_update_applies_vignette_url_without_touching_label(): void
+    {
+        $tagValue = $this->makeTagValue($this->makeTagType(), label: 'Château');
+
+        $tagValueRepository = $this->createMock(TagValueRepository::class);
+        $tagValueRepository->method('find')->willReturn($tagValue);
+        // Aucun contrôle de doublon attendu : le label n'est pas fourni.
+        $tagValueRepository->expects($this->never())->method('findOneByLabelAndTagType');
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('flush');
+
+        $dto = new UpdateTagValueRequestDto(vignetteUrl: 'https://res.cloudinary.com/wedly/image/upload/chateau.jpg');
+
+        $updated = (new AdminTagValueService($em, $tagValueRepository))->update('tag-value-id', $dto);
+
+        self::assertSame('https://res.cloudinary.com/wedly/image/upload/chateau.jpg', $updated->getVignetteUrl());
+        self::assertSame('Château', $updated->getLabel());
+    }
+
+    public function test_update_keeps_existing_vignette_url_when_omitted(): void
+    {
+        $tagValue = $this->makeTagValue($this->makeTagType())
+            ->setVignetteUrl('https://res.cloudinary.com/wedly/image/upload/existant.jpg');
+
+        $tagValueRepository = $this->createStub(TagValueRepository::class);
+        $tagValueRepository->method('find')->willReturn($tagValue);
+        $tagValueRepository->method('findOneByLabelAndTagType')->willReturn(null);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('flush');
+
+        // vignetteUrl absent du payload : la valeur en base est conservée, jamais remise à null.
+        $dto = new UpdateTagValueRequestDto(label: 'Nouveau label');
+
+        $updated = (new AdminTagValueService($em, $tagValueRepository))->update('tag-value-id', $dto);
+
+        self::assertSame('https://res.cloudinary.com/wedly/image/upload/existant.jpg', $updated->getVignetteUrl());
+    }
+
     public function test_deactivate_is_idempotent(): void
     {
         $tagValue = $this->makeTagValue($this->makeTagType());
