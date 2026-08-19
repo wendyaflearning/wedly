@@ -10,6 +10,7 @@ erDiagram
     WEDDING }o--o{ "STYLE" : styles
     WEDDING }o--o{ CULTURE : cultures
     WEDDING }o--o{ CONFESSION : confessions
+    WEDDING ||--o{ WEDDING_CONSENT : wedding
     SERVICE ||--o{ SERVICE : parent
     VENDOR ||--o{ OFFER : vendor
     VENDOR ||--o{ PORTFOLIO_IMAGE : vendor
@@ -329,6 +330,15 @@ erDiagram
     VENDOR_CONSENT {
         uuid id
         uuid vendor_id
+        string consent_type
+        boolean granted
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    WEDDING_CONSENT {
+        uuid id
+        uuid wedding_id
         string consent_type
         boolean granted
         datetime_immutable created_at

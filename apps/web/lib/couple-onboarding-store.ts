@@ -10,6 +10,10 @@ export interface CoupleOnboardingData {
   location?: string
   budgetCents?: number
   guestCount?: number
+  sensitiveDataConsent?: boolean
+  confessionSlugs?: string[]
+  cultureSlugs?: string[]
+  providerBudgetCents?: number
 }
 
 interface PersistedOnboardingData {

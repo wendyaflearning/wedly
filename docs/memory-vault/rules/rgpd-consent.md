@@ -2,8 +2,8 @@
 
 ## Scope
 
-Règles liées au consentement prestataire pour la collecte de données sensibles
-utilisées dans le matching.
+Règles liées au consentement explicite avant la collecte de données sensibles
+utilisées dans le matching, côté prestataire comme côté couple.
 
 Code principal :
 
@@ -16,6 +16,8 @@ Code principal :
 - `apps/api/src/Builder/Vendor/Onboarding/VendorOnboardingOverviewBuilder.php`
 - `apps/api/src/Controller/Vendor/Consent/PostVendorConsentAction.php`
 - `apps/web/app/onboarding/[token]/steps/consent/ConsentStep.tsx`
+- `apps/api/src/Entity/Wedding/WeddingConsent.php`
+- `apps/web/app/couple-onboarding/CoupleOnboarding.tsx`
 
 ## RGPD-CONSENT-001 — Consentement explicite avant données sensibles
 
@@ -187,3 +189,35 @@ E2E attendu :
 attendu selon la décision produit
 - parcours profil : modifier le consentement après onboarding et vérifier que
 l'overview/onboarding lit bien le dernier état attendu
+
+## RGPD-CONSENT-006 — Consentement couple avant cultures et confessions
+
+Statut : `active`
+
+Le parcours couple demande un accord explicite avant les écrans de sélection
+des confessions et cultures. Le refus efface les sélections locales, ne bloque
+pas le parcours et désactive ce critère de matching.
+
+Implémentation actuelle :
+
+- écrans 3 à 5 dans `CoupleOnboarding.tsx`, conservés uniquement dans
+  `sessionStorage` jusqu'à la création finale du compte
+- `WeddingConsent` prévoit une trace append-only, liée au `Wedding`, qui sera
+  créée par la soumission atomique de l'écran final
+
+Contrat attendu :
+
+- accepter précède toujours la sélection des confessions puis des cultures
+- « Je préfère passer cette étape » transmet un refus avec des listes vides
+- une modification ultérieure vers le refus doit supprimer les associations
+  `Wedding.cultures` et `Wedding.confessions` dans la même transaction
+
+Couverture existante :
+
+- `navigation.test.ts` couvre la transition consentement accepté/refusé
+
+Couverture manquante :
+
+- test de la soumission finale atomique, incluant la persistance de
+  `WeddingConsent` et l'effacement des associations lors d'un refus ultérieur
+- E2E desktop et mobile du parcours couple complet

@@ -27,6 +27,15 @@ const PLANNING_STAGES: Array<{ value: PlanningStage; label: string }> = [
   { value: 'almost_ready', label: 'On est presque prêts' },
 ]
 
+const CONFESSIONS = [
+  ['aucune-specialite-religieuse', 'Aucune spécialité religieuse'], ['laic', 'Laïc'], ['catholique', 'Catholique'], ['musulman', 'Musulman'], ['juif', 'Juif'],
+  ['protestant', 'Protestant'], ['orthodoxe', 'Orthodoxe'], ['bouddhiste', 'Bouddhiste'], ['hindou', 'Hindou'], ['mixte', 'Mixte'],
+] as const
+
+const CULTURES = [
+  ['europe', 'Europe'], ['afrique', 'Afrique'], ['asie', 'Asie'], ['amerique', 'Amériques'], ['moyen-orient', 'Moyen-Orient'], ['oceanie', 'Océanie'], ['maghreb', 'Maghreb'], ['aucune-specialite-culturelle', 'Aucune spécialité culturelle'],
+] as const
+
 const formatter = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 const monthOptionsFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long' })
 const weekdayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
@@ -143,19 +152,40 @@ function NameField({ value, onChange }: { value: string; onChange: (value: strin
   )
 }
 
+function MultiSelect({ options, selected, onChange, legend }: {
+  options: readonly (readonly [string, string])[]
+  selected: string[]
+  onChange: (values: string[]) => void
+  legend: string
+}) {
+  function toggle(value: string) {
+    onChange(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
+  }
+
+  return (
+    <fieldset className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2" aria-label={legend}>
+      <legend className="sr-only">{legend}</legend>
+      {options.map(([value, label]) => {
+        const isSelected = selected.includes(value)
+        return <button key={value} type="button" aria-pressed={isSelected} onClick={() => toggle(value)} className={`rounded-xl border px-5 py-4 text-left text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bordeaux ${isSelected ? 'border-bordeaux bg-bordeaux text-creme' : 'border-bordeaux/20 bg-creme text-texte hover:border-bordeaux'}`}>{label}</button>
+      })}
+    </fieldset>
+  )
+}
+
 interface CoupleOnboardingProps {
   /**
-   * The parent 7-step flow owns screens 3–7. Stage A only emits its complete,
-   * in-memory data at the boundary so the next stage can continue without an API call.
+   * The remaining account-creation stage owns screens 6–7. This component only
+   * emits in-memory data, so no data is persisted before the final account step.
    */
   onStageComplete?: (data: CoupleOnboardingData) => void
 }
 
-function emitStageAComplete(data: CoupleOnboardingData) {
-  window.dispatchEvent(new CustomEvent('wedly:couple-onboarding-stage-a-complete', { detail: data }))
+function emitOnboardingComplete(data: CoupleOnboardingData) {
+  window.dispatchEvent(new CustomEvent('wedly:couple-onboarding-complete', { detail: data }))
 }
 
-export default function CoupleOnboarding({ onStageComplete = emitStageAComplete }: CoupleOnboardingProps) {
+export default function CoupleOnboarding({ onStageComplete = emitOnboardingComplete }: CoupleOnboardingProps) {
   const [screen, setScreen] = useState<CoupleOnboardingScreen>(1)
   const [data, setData] = useState<CoupleOnboardingData>({})
   const [hydrated, setHydrated] = useState(false)
@@ -178,21 +208,38 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
     setData((current) => ({ ...current, [key]: value }))
   }
 
-  function continueOnboarding() {
-    const action = getContinueAction(screen, withSliderDefaults(data))
+  function continueOnboarding(nextData = withSliderDefaults(data)) {
+    const action = getContinueAction(screen, nextData)
 
-    if (action.type === 'show_wedding_profile') {
-      setScreen(2)
+    if (action.type === 'complete_onboarding') {
+      onStageComplete(action.data)
       return
     }
 
-    onStageComplete(action.data)
+    setScreen(action.type === 'show_wedding_profile' ? 2 : action.type === 'show_sensitive_data_consent' ? 3 : action.type === 'show_confessions' ? 4 : action.type === 'show_cultures' ? 5 : 6)
+  }
+
+  function skipSensitiveData() {
+    const nextData = { ...withSliderDefaults(data), sensitiveDataConsent: false, confessionSlugs: [], cultureSlugs: [] }
+    setData(nextData)
+    continueOnboarding(nextData)
+  }
+
+  function grantSensitiveData() {
+    const nextData = { ...withSliderDefaults(data), sensitiveDataConsent: true }
+    setData(nextData)
+    continueOnboarding(nextData)
+  }
+
+  function goBack() {
+    setScreen(screen === 6 && data.sensitiveDataConsent === false ? 3 : (screen - 1) as CoupleOnboardingScreen)
   }
 
   const name = data.firstName?.trim()
   const canGoOn = canContinue(screen, data)
   const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
   const guestCount = data.guestCount ?? DEFAULT_GUEST_COUNT
+  const providerBudgetEuros = (data.providerBudgetCents ?? 250_000) / 100
   const dateLabel = data.weddingDate ? formatter.format(dateFromValue(data.weddingDate)!) : 'Choisissez une date'
 
   return (
@@ -200,7 +247,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col">
         <header className="flex items-center justify-between">
           <ProgressIndicator currentStep={screen} />
-          {screen === 2 && <button type="button" onClick={() => setScreen(1)} className="inline-flex items-center gap-1 text-sm text-bordeaux underline-offset-4 hover:underline"><ChevronLeft size={16} />Retour</button>}
+          {screen > 1 && <button type="button" onClick={goBack} className="inline-flex items-center gap-1 text-sm text-bordeaux underline-offset-4 hover:underline"><ChevronLeft size={16} />Retour</button>}
         </header>
 
         {screen === 1 ? (
@@ -215,7 +262,7 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
               })}
             </div>
           </section>
-        ) : (
+        ) : screen === 2 ? (
           <section className="m-auto w-full">
             <h1 className="text-center font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl lg:text-6xl">
               {name ? <>Alors {name}, c&apos;est <em className="font-semibold text-accent">pour quand&nbsp;?</em></> : <>Alors, c&apos;est <em className="font-semibold text-accent">pour quand&nbsp;?</em></>}
@@ -242,13 +289,38 @@ export default function CoupleOnboarding({ onStageComplete = emitStageAComplete 
               </div>
             </div>
           </section>
+        ) : screen === 3 ? (
+          <section className="m-auto w-full max-w-3xl text-center">
+            <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">Vos préférences, à votre rythme</h1>
+            <p className="mt-8 text-base leading-7 text-texte">Pour vous mettre en relation avec des prestataires qui vous ressemblent, on peut tenir compte de vos traditions culturelles ou confessionnelles. On ne vous pose la question qu&apos;avec votre accord, et vous pourrez changer d&apos;avis à tout moment depuis votre espace. Si vous préférez ne pas répondre, ça ne change rien à votre accès à Wedly — seul le matching sur ce critère ne sera pas activé.</p>
+          </section>
+        ) : screen === 6 ? (
+          <section className="m-auto w-full max-w-2xl text-center">
+            <p className="text-xs font-bold tracking-[0.2em] text-accent">PHOTOGRAPHE</p>
+            <h1 className="mt-4 font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">Un budget pour ce photographe&nbsp;?</h1>
+            <p className="mx-auto mt-6 max-w-xl text-sm leading-6 text-gris">Ce type de prestataire pratique généralement entre 2&nbsp;000&nbsp;€ et 4&nbsp;500&nbsp;€ pour cette prestation.</p>
+            <label className="mx-auto mt-10 flex max-w-xs flex-col gap-3 text-left text-sm font-medium" htmlFor="provider-budget">
+              Quel budget aviez-vous en tête&nbsp;?
+              <span className="flex items-center rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-xl text-texte focus-within:border-bordeaux">
+                <input id="provider-budget" type="number" min="0" step="100" value={providerBudgetEuros} onChange={(event) => update('providerBudgetCents', Math.max(0, Number(event.target.value) || 0) * 100)} className="w-full bg-transparent outline-none" aria-label="Budget pour ce photographe en euros" />
+                <span aria-hidden="true">€</span>
+              </span>
+            </label>
+          </section>
+        ) : (
+          <section className="m-auto w-full text-center">
+            <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">{screen === 4 ? 'Une cérémonie religieuse est-elle prévue ?' : 'Quelles sont vos origines ou univers culturels ?'}</h1>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-gris">Vous pouvez sélectionner plusieurs réponses.</p>
+            <MultiSelect options={screen === 4 ? CONFESSIONS : CULTURES} selected={screen === 4 ? data.confessionSlugs ?? [] : data.cultureSlugs ?? []} onChange={(values) => update(screen === 4 ? 'confessionSlugs' : 'cultureSlugs', values)} legend={screen === 4 ? 'Cérémonie religieuse' : 'Origines ou univers culturel'} />
+          </section>
         )}
 
         <footer className="mt-10 flex justify-center pb-2">
-          <button type="button" disabled={!canGoOn} onClick={continueOnboarding} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
+          <button type="button" disabled={!canGoOn} onClick={() => screen === 3 ? grantSensitiveData() : continueOnboarding()} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
             CONTINUER <ChevronRight size={18} aria-hidden="true" />
           </button>
         </footer>
+        {screen === 3 && <button type="button" onClick={skipSensitiveData} className="mx-auto pb-6 text-sm text-bordeaux underline underline-offset-4 hover:text-accent">Je préfère passer cette étape</button>}
       </div>
     </main>
   )
