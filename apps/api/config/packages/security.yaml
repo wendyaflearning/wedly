@@ -39,6 +39,7 @@ security:
         - { path: ^/api/v1/onboarding/,          roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/services$,            roles: PUBLIC_ACCESS }
         - { path: '^/api/v1/services/[0-9a-fA-F-]{36}/tag-types$', roles: PUBLIC_ACCESS }
+        - { path: '^/api/v1/tag-values/[0-9a-fA-F-]{36}/portfolio-images$', roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/styles$,               roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/specialties$,          roles: PUBLIC_ACCESS }
         - { path: ^/api/v1/confessions$,         roles: PUBLIC_ACCESS }
