@@ -21,7 +21,7 @@ export default function CategoryBubble({ href, label, tagline, imageUrl, imageAl
       : "text-[17px] not-italic md:text-[clamp(17px,1.4vw,20px)]";
 
   return (
-    <Link href={href} className="group flex flex-col items-center text-center gap-4 no-underline">
+    <Link href={href} prefetch={false} className="group flex flex-col items-center text-center gap-4 no-underline">
       <div
         className={`relative rounded-full overflow-hidden transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5 ${circleClass}`}
         style={{ backgroundColor: "#EDE1D3" }}
