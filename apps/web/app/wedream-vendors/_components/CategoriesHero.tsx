@@ -51,8 +51,7 @@ export default function CategoriesHero() {
           alt="Mains d'un artisan en plein geste — fleuriste, traiteur ou couturière"
           fill
           className="object-cover"
-          sizes="(min-width: 768px) 55vw, 100vw"
-          priority
+          sizes="55vw"
         />
         <div
           className="hidden md:block absolute inset-x-0 bottom-0 pointer-events-none"
