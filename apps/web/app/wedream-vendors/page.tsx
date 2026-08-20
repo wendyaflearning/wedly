@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const CLOSING_IMAGE_URL =
-  "https://res.cloudinary.com/dadvrspox/image/upload/v1787060532/Marie%CC%81s_dansent_ensemble_u6wulx.jpg";
+  "https://res.cloudinary.com/dadvrspox/image/upload/w_1600,q_auto,f_auto/v1787060532/Marie%CC%81s_dansent_ensemble_u6wulx.jpg";
 
 const largeBubbles = CATEGORY_BUBBLES.filter((bubble) => bubble.size === "lg");
 const smallBubbles = CATEGORY_BUBBLES.filter((bubble) => bubble.size === "sm");
