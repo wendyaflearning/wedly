@@ -31,7 +31,8 @@ export default function CategoryBubble({ href, label, tagline, imageUrl, imageAl
           alt={imageAlt}
           fill
           className="object-cover grayscale md:grayscale-0"
-          sizes={size === "lg" ? "260px" : "168px"}
+          sizes={size === "lg" ? "(min-width: 768px) 260px, 200px" : "(min-width: 768px) 168px, 128px"}
+          quality={60}
         />
       </div>
       <div>

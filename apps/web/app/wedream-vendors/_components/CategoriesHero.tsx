@@ -1,9 +1,9 @@
 import Image from "next/image";
 
 const COUPLE_IMAGE_URL =
-  "https://res.cloudinary.com/dadvrspox/image/upload/v1787060519/Ajith_Kumar_Photo_o4gyai.jpg";
+  "https://res.cloudinary.com/dadvrspox/image/upload/w_800,q_auto,f_auto/v1787060519/Ajith_Kumar_Photo_o4gyai.jpg";
 const ARTISAN_IMAGE_URL =
-  "https://res.cloudinary.com/dadvrspox/image/upload/v1787060488/hero_wedream_vendors_csntjc.jpg";
+  "https://res.cloudinary.com/dadvrspox/image/upload/w_1600,q_auto,f_auto/v1787060488/hero_wedream_vendors_csntjc.jpg";
 
 export default function CategoriesHero() {
   return (
@@ -36,7 +36,8 @@ export default function CategoriesHero() {
             alt="Couple — instant volé, non posé"
             fill
             className="object-cover"
-            sizes="190px"
+            sizes="(min-width: 768px) 190px, 140px"
+            quality={60}
             priority
           />
         </div>
