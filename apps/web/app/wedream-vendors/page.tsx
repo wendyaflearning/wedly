@@ -48,6 +48,7 @@ export default function WedreamVendorsPage() {
           fill
           className="object-cover object-[30%_center] md:object-center"
           sizes="100vw"
+          quality={60}
         />
       </div>
 

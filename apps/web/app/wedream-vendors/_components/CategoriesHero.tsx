@@ -36,7 +36,8 @@ export default function CategoriesHero() {
             alt="Couple — instant volé, non posé"
             fill
             className="object-cover"
-            sizes="190px"
+            sizes="(min-width: 768px) 190px, 140px"
+            quality={60}
             priority
           />
         </div>
