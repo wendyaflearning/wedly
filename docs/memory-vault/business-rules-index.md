@@ -71,6 +71,14 @@ dans les fichiers de règles.
 | `TAG-TAXONOMY-004` | Un TagValue ne peut être créé sous une catégorie inactive | `active` | `rules/tag-taxonomy.md` |
 | `TAG-TAXONOMY-005` | Désactivation sans cascade sur portfolio_image_tag | `active` | `rules/tag-taxonomy.md` |
 
+## Provider leads
+
+| ID                  | Règle                                                                 | Statut   | Fichier                  |
+| ------------------- | --------------------------------------------------------------------- | -------- | ------------------------ |
+| `PROVIDER-LEAD-001` | Un lead appartient à un couple et cible un prestataire précis         | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-002` | Le budget d'un lead est le budget global du mariage, figé à la création | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-003` | Le budget est borné à 1 000 000 €                                     | `active` | `rules/provider-leads.md` |
+
 ## À ajouter lors des prochains tickets
 
 - règles WedMatch dès que le matching est implémenté

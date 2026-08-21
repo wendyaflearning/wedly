@@ -34,6 +34,8 @@ erDiagram
     VENDOR ||--o{ VENDOR_AUTO_TAGGED_SERVICE : vendor
     SERVICE ||--o{ VENDOR_AUTO_TAGGED_SERVICE : service
     VENDOR ||--o{ VENDOR_CONSENT : vendor
+    COUPLE ||--o{ PROVIDER_LEAD : creates
+    VENDOR ||--o{ PROVIDER_LEAD : receives
 
     USER {
         uuid id
@@ -83,6 +85,18 @@ erDiagram
         uuid wedding_id
         string status
         string planning_stage
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    PROVIDER_LEAD {
+        uuid id
+        uuid couple_id
+        uuid vendor_id
+        int budget_cents
+        string status
+        boolean unlocked
+        string origin
         datetime_immutable created_at
         datetime_immutable updated_at
     }
