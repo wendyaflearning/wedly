@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   applySensitiveDataConsent,
   BUDGET_RANGES,
+  clampBudgetCents,
+  MAX_BUDGET_CENTS,
+  weddingBudgetCents,
+  withExactBudget,
   budgetIndexForCents,
   budgetRangeForCents,
   COUPLE_ONBOARDING_STORAGE_KEY,
@@ -150,5 +154,78 @@ describe('sensitive-preference consent', () => {
 
     expect(source.confessionSlugs).toEqual(['catholique', 'mixte'])
     expect(source.cultureSlugs).toEqual(['europe', 'maghreb'])
+  })
+})
+
+describe('wedding budget', () => {
+  it('keeps the bracket until the couple types an exact amount', () => {
+    expect(weddingBudgetCents({ budgetCents: 2_500_000 })).toBe(2_500_000)
+    expect(weddingBudgetCents({ budgetCents: 2_500_000, exactBudgetCents: 2_350_000 })).toBe(2_350_000)
+  })
+
+  it('falls back to the opening bracket when nothing was ever chosen', () => {
+    expect(weddingBudgetCents({})).toBe(DEFAULT_BUDGET_CENTS)
+  })
+
+  it('refuses an amount the integer column could not store', () => {
+    expect(clampBudgetCents(MAX_BUDGET_CENTS + 1)).toBe(MAX_BUDGET_CENTS)
+    expect(clampBudgetCents(999_999_999_900)).toBe(MAX_BUDGET_CENTS)
+  })
+
+  it('accepts any amount to the euro, without imposing a step', () => {
+    expect(clampBudgetCents(2_350_100)).toBe(2_350_100)
+    expect(clampBudgetCents(0)).toBe(0)
+  })
+
+  it('never returns a negative amount or NaN', () => {
+    expect(clampBudgetCents(-1)).toBe(0)
+    expect(clampBudgetCents(Number.NaN)).toBe(DEFAULT_BUDGET_CENTS)
+  })
+
+  it('re-bounds the exact amount restored from the storage the couple can edit', () => {
+    expect(withSliderDefaults({ exactBudgetCents: 999_999_999_900 })).toMatchObject({ exactBudgetCents: MAX_BUDGET_CENTS })
+    expect(withSliderDefaults({ exactBudgetCents: 2_350_000 })).toMatchObject({ exactBudgetCents: 2_350_000 })
+  })
+
+  it('leaves the exact amount unset for a couple that never opened the budget screen', () => {
+    expect(withSliderDefaults({ firstName: 'Camille' }).exactBudgetCents).toBeUndefined()
+  })
+
+  it('keeps the exact amount through a consent refusal', () => {
+    expect(applySensitiveDataConsent({ exactBudgetCents: 2_350_000 }, false)).toMatchObject({ exactBudgetCents: 2_350_000 })
+  })
+})
+
+describe('budget typed on the last screen', () => {
+  const started = { budgetCents: 2_500_000, exactBudgetCents: 2_350_000 }
+
+  it('turns a finished entry into cents', () => {
+    expect(withExactBudget(started, '18500')).toMatchObject({ exactBudgetCents: 1_850_000 })
+    expect(withExactBudget(started, ' 18500 ')).toMatchObject({ exactBudgetCents: 1_850_000 })
+  })
+
+  it('keeps the last amount while the field holds nothing readable yet', () => {
+    // A number input reports an empty string for a lone `-` or a half-typed `1e`,
+    // so an entry in progress must not be read as an amount.
+    expect(withExactBudget(started, '')).toBe(started)
+    expect(withExactBudget(started, '   ')).toBe(started)
+    expect(withExactBudget(started, '-')).toBe(started)
+    expect(withExactBudget(started, '1e')).toBe(started)
+  })
+
+  it('brings a finished entry back inside the bounds instead of mid-keystroke', () => {
+    expect(withExactBudget(started, '-500')).toMatchObject({ exactBudgetCents: 0 })
+    expect(withExactBudget(started, '99999999')).toMatchObject({ exactBudgetCents: MAX_BUDGET_CENTS })
+  })
+
+  it('rounds to the cent rather than carrying a float error', () => {
+    expect(withExactBudget(started, '2350.07')).toMatchObject({ exactBudgetCents: 235_007 })
+  })
+
+  it('never mutates the data it is given', () => {
+    const source = { ...started }
+    withExactBudget(source, '18500')
+
+    expect(source.exactBudgetCents).toBe(2_350_000)
   })
 })

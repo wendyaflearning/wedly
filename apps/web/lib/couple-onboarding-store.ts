@@ -3,6 +3,18 @@ export const COUPLE_ONBOARDING_TTL_MS = 30 * 60 * 1000
 
 export type PlanningStage = 'just_started' | 'in_progress' | 'almost_ready'
 
+/**
+ * WED-49 stores this context when the journey started on “Je veux entrer en
+ * contact” rather than on a pin. It travels with the onboarding state up to the
+ * final atomic submission, which is the only place a `ProviderLead` is created
+ * (Stage D / WED-109). A pin never stores it, so it never creates a lead — but
+ * it does not change the screens: the budget question is asked either way.
+ */
+export interface ProviderContactRequest {
+  vendorId: string
+  serviceLabel: string
+}
+
 export interface CoupleOnboardingData {
   firstName?: string
   planningStage?: PlanningStage
@@ -13,6 +25,8 @@ export interface CoupleOnboardingData {
   sensitiveDataConsent?: boolean
   confessionSlugs?: string[]
   cultureSlugs?: string[]
+  contactRequest?: ProviderContactRequest
+  exactBudgetCents?: number
 }
 
 interface PersistedOnboardingData {
@@ -45,12 +59,58 @@ export const BUDGET_RANGES = [
  * the control cannot actually represent. Both starting points are the ones the
  * design source opens on.
  */
+/**
+ * The last screen refines the bracket into an exact amount, so the two live side
+ * by side: `budgetCents` is the bracket the slider can represent, and
+ * `exactBudgetCents` the figure the couple actually typed. Writing the exact
+ * figure back into `budgetCents` would send the slider back to its default the
+ * moment the couple walks back to screen 2, since a free amount is never one of
+ * the five graduations.
+ */
 export const DEFAULT_BUDGET_INDEX = 2
 export const DEFAULT_BUDGET_CENTS = BUDGET_RANGES[DEFAULT_BUDGET_INDEX].cents
 export const GUEST_COUNT_MIN = 20
 export const GUEST_COUNT_MAX = 300
 export const GUEST_COUNT_STEP = 10
 export const DEFAULT_GUEST_COUNT = 100
+
+/**
+ * `budget_cents` is a PostgreSQL `integer` on both `wedding` and `provider_lead`,
+ * so an amount past its ceiling would fail at insert instead of being refused.
+ * The bound mirrors `ProviderLead::MAX_BUDGET_CENTS`; the backend re-applies it,
+ * because this value is held in user-writable sessionStorage until submission.
+ */
+export const MAX_BUDGET_CENTS = 100_000_000
+
+export function clampBudgetCents(budgetCents: number): number {
+  if (!Number.isFinite(budgetCents)) return DEFAULT_BUDGET_CENTS
+
+  return Math.min(Math.max(Math.round(budgetCents), 0), MAX_BUDGET_CENTS)
+}
+
+/**
+ * The budget screen holds what the couple types as a string while it types.
+ * A half-typed entry — an empty field, a lone `-`, an unfinished `1e` — is not a
+ * number yet, and clamping on every keystroke rewrote the field under the cursor:
+ * typing `-500` snapped to `0` mid-entry, then the following digits landed on a
+ * value the couple never meant. The entry becomes cents only when the field is
+ * left or the couple moves on, and anything unreadable keeps the last amount.
+ */
+export function withExactBudget(data: CoupleOnboardingData, typed: string): CoupleOnboardingData {
+  const euros = Number(typed.trim())
+
+  if (typed.trim() === '' || !Number.isFinite(euros)) return data
+
+  return { ...data, exactBudgetCents: clampBudgetCents(euros * 100) }
+}
+
+/**
+ * The single budget carried to `Wedding.budgetCents` and to the lead: the exact
+ * amount when the couple typed one, the bracket median otherwise.
+ */
+export function weddingBudgetCents(data: CoupleOnboardingData): number {
+  return data.exactBudgetCents ?? data.budgetCents ?? DEFAULT_BUDGET_CENTS
+}
 
 export function budgetRangeForCents(budgetCents: number): string {
   return BUDGET_RANGES.find((range) => range.cents === budgetCents)?.label ?? BUDGET_RANGES[DEFAULT_BUDGET_INDEX].label
@@ -68,9 +128,15 @@ export function budgetIndexForCents(budgetCents: number): number {
  */
 export function withSliderDefaults(data: CoupleOnboardingData): CoupleOnboardingData {
   const restoredBudget = data.budgetCents
+  const restoredExactBudget = data.exactBudgetCents
 
   return {
     ...data,
+    // Restored from storage the couple can edit, so it is re-bounded here rather
+    // than trusted from the value that was written when the screen was left.
+    exactBudgetCents: restoredExactBudget === undefined
+      ? undefined
+      : clampBudgetCents(restoredExactBudget),
     // A bracket removed since the session started must not silently land on the
     // cheapest one, so an unknown amount falls back to the opening bracket.
     budgetCents: restoredBudget !== undefined && isKnownBudget(restoredBudget)

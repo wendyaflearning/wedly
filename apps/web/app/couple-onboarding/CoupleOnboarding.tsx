@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ProgressIndicator from './ProgressIndicator'
 import { canGoToPreviousMonth, isSelectableWeddingDate, selectableWeddingYears, setCalendarMonth, startOfDay } from './calendar'
-import { canContinue, getContinueAction, type CoupleOnboardingScreen } from './navigation'
+import { canContinue, getContinueAction, previousScreen, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
   budgetIndexForCents,
@@ -17,6 +17,9 @@ import {
   GUEST_COUNT_STEP,
   type PlanningStage,
   applySensitiveDataConsent,
+  MAX_BUDGET_CENTS,
+  weddingBudgetCents,
+  withExactBudget,
   loadCoupleOnboarding,
   saveCoupleOnboarding,
   withSliderDefaults,
@@ -191,6 +194,9 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   const [screen, setScreen] = useState<CoupleOnboardingScreen>(1)
   const [data, setData] = useState<CoupleOnboardingData>({})
   const [hydrated, setHydrated] = useState(false)
+  // What the couple is currently typing on the budget screen, untouched until it
+  // leaves the field. `null` means the field simply mirrors the stored amount.
+  const [budgetDraft, setBudgetDraft] = useState<string | null>(null)
   const [today] = useState(() => startOfDay(new Date()))
 
   useEffect(() => {
@@ -218,7 +224,29 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
       return
     }
 
-    setScreen(action.type === 'show_wedding_profile' ? 2 : action.type === 'show_sensitive_data_consent' ? 3 : action.type === 'show_confessions' ? 4 : 5)
+    setScreen(action.type === 'show_wedding_profile' ? 2 : action.type === 'show_sensitive_data_consent' ? 3 : action.type === 'show_confessions' ? 4 : action.type === 'show_cultures' ? 5 : 6)
+  }
+
+  /**
+   * The budget being typed is only turned into an amount here, so leaving the
+   * screen never loses an entry the couple never blurred out of.
+   */
+  function commitBudget(current = data): CoupleOnboardingData {
+    const next = budgetDraft === null ? current : withExactBudget(current, budgetDraft)
+
+    if (budgetDraft !== null) {
+      setData(next)
+      setBudgetDraft(null)
+    }
+
+    return next
+  }
+
+  function continueFromScreen() {
+    if (screen === 3) return decideSensitiveData(true)
+    if (screen === 6) return continueOnboarding(withSliderDefaults(commitBudget()))
+
+    return continueOnboarding()
   }
 
   function decideSensitiveData(granted: boolean) {
@@ -228,12 +256,13 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   }
 
   function goBack() {
-    setScreen((screen - 1) as CoupleOnboardingScreen)
+    setScreen(previousScreen(screen, commitBudget()))
   }
 
   const name = data.firstName?.trim()
   const canGoOn = canContinue(screen, data)
   const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
+  const exactBudgetEuros = budgetDraft ?? String(weddingBudgetCents(data) / 100)
   const guestCount = data.guestCount ?? DEFAULT_GUEST_COUNT
   const dateLabel = data.weddingDate ? formatter.format(dateFromValue(data.weddingDate)!) : 'Choisissez une date'
 
@@ -289,6 +318,16 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
             <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">Vos préférences, à votre rythme</h1>
             <p className="mt-8 text-base leading-7 text-texte">Pour vous mettre en relation avec des prestataires qui vous ressemblent, on peut tenir compte de vos traditions culturelles ou confessionnelles. On ne vous pose la question qu&apos;avec votre accord, et vous pourrez changer d&apos;avis à tout moment depuis votre espace. Si vous préférez ne pas répondre, ça ne change rien à votre accès à Wedly — seul le matching sur ce critère ne sera pas activé.</p>
           </section>
+        ) : screen === 6 ? (
+          <section className="m-auto w-full max-w-2xl text-center">
+            <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">Votre budget, <em className="font-semibold text-accent">plus précisément&nbsp;?</em></h1>
+            <p className="mx-auto mt-6 max-w-xl text-sm leading-6 text-gris">Vous avez indiqué {budgetRangeForCents(budgetCents).toLocaleLowerCase('fr-FR')} pour l&apos;ensemble du mariage. Affinez le montant si vous le souhaitez : il aide les prestataires à vous répondre avec des propositions réalistes.</p>
+            <div className="mx-auto mt-10 flex max-w-xs items-center gap-2 border-b border-bordeaux/30 pb-3 font-cormorant text-3xl font-semibold text-accent focus-within:border-bordeaux">
+              <input id="exact-budget" type="number" min="0" max={MAX_BUDGET_CENTS / 100} value={exactBudgetEuros} onChange={(event) => setBudgetDraft(event.target.value)} onBlur={() => commitBudget()} className="w-full bg-transparent text-right outline-none" aria-label="Budget total du mariage en euros" />
+              <span aria-hidden="true">€</span>
+            </div>
+            <p className="mt-4 text-xs italic text-gris">Vous pourrez l&apos;ajuster à tout moment depuis votre espace.</p>
+          </section>
         ) : (
           <section className="m-auto w-full text-center">
             <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">{screen === 4 ? 'Une cérémonie religieuse est-elle prévue ?' : 'Quelles sont vos origines ou univers culturels ?'}</h1>
@@ -298,7 +337,7 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
         )}
 
         <footer className="mt-10 flex justify-center pb-2">
-          <button type="button" disabled={!canGoOn} onClick={() => screen === 3 ? decideSensitiveData(true) : continueOnboarding()} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
+          <button type="button" disabled={!canGoOn} onClick={continueFromScreen} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
             CONTINUER <ChevronRight size={18} aria-hidden="true" />
           </button>
         </footer>
