@@ -9,103 +9,44 @@ use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\TagType;
 use App\Entity\Vendor\TagValue;
 use App\Entity\Vendor\Vendor;
+use App\ArgumentResolver\CursorPaginationValueResolver;
+use App\ArgumentResolver\PublicActiveTagValueResolver;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Repository\Vendor\TagValueRepository;
-use PHPUnit\Framework\Attributes\DataProvider;
+use App\ValueObject\CursorPagination;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
+use Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver;
+use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadataFactory;
 use Symfony\Component\Uid\UuidV7;
 
 final class GetTagValuePortfolioImagesActionTest extends TestCase
 {
     private const TAG_VALUE_ID = '0198a1c0-0000-7000-8000-0000000000ff';
 
-    public function test_invoke_returns_404_when_tag_value_is_unknown(): void
+    public function test_invoke_asks_the_repository_for_one_extra_row(): void
     {
-        $tagValueRepository = $this->createStub(TagValueRepository::class);
-        $tagValueRepository->method('find')->willReturn(null);
+        $cursor = UuidV7::fromString('0198a1c0-0000-7000-8000-000000000009');
 
-        $imageRepository = $this->createMock(PortfolioImageRepository::class);
-        $imageRepository->expects($this->never())->method('findPublicByTagValue');
-
-        $response = $this->action($tagValueRepository, $imageRepository)(self::TAG_VALUE_ID, new Request());
-
-        $this->assertSame(404, $response->getStatusCode());
-        $this->assertSame(['error' => 'Sous-style introuvable.'], $this->payload($response));
-    }
-
-    public function test_invoke_returns_404_when_tag_value_is_inactive(): void
-    {
-        $tagValue = (new TagValue())->setLabel('Bohème')->setIsActive(false);
-
-        $tagValueRepository = $this->createStub(TagValueRepository::class);
-        $tagValueRepository->method('find')->willReturn($tagValue);
-
-        $imageRepository = $this->createMock(PortfolioImageRepository::class);
-        $imageRepository->expects($this->never())->method('findPublicByTagValue');
-
-        $response = $this->action($tagValueRepository, $imageRepository)(self::TAG_VALUE_ID, new Request());
-
-        $this->assertSame(404, $response->getStatusCode());
-    }
-
-    public function test_invoke_returns_400_when_cursor_is_not_a_uuid_v7(): void
-    {
-        $imageRepository = $this->createMock(PortfolioImageRepository::class);
-        $imageRepository->expects($this->never())->method('findPublicByTagValue');
-
-        $request  = new Request(['cursor' => '11111111-1111-4111-8111-111111111111']);
-        $response = $this->action($this->tagValueRepository(), $imageRepository)(self::TAG_VALUE_ID, $request);
-
-        $this->assertSame(400, $response->getStatusCode());
-        $this->assertSame(['error' => 'Curseur invalide.'], $this->payload($response));
-    }
-
-    public function test_invoke_defaults_to_24_and_asks_one_extra_row(): void
-    {
         $imageRepository = $this->createMock(PortfolioImageRepository::class);
         $imageRepository->expects($this->once())
             ->method('findPublicByTagValue')
-            ->with($this->anything(), null, 25)
+            ->with($this->anything(), $cursor, 11)
             ->willReturn([]);
         $imageRepository->method('countByTagValue')->willReturn(0);
 
-        $response = $this->action($this->tagValueRepository(), $imageRepository)(self::TAG_VALUE_ID, new Request());
+        $response = $this->action($imageRepository)(
+            $this->activeTagValue(),
+            new CursorPagination(10, $cursor),
+        );
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(
             ['items' => [], 'nextCursor' => null, 'total' => 0],
             $this->payload($response),
         );
-    }
-
-    /**
-     * @return iterable<string, array{int|string, int}>
-     */
-    public static function limitProvider(): iterable
-    {
-        yield 'above the ceiling'   => [120, 49];
-        yield 'at the ceiling'      => [48, 49];
-        yield 'below the floor'     => [0, 2];
-        yield 'negative'            => [-5, 2];
-        yield 'not a number'        => ['abc', 25];
-        yield 'empty string'        => ['', 25];
-        yield 'within bounds'       => [10, 11];
-    }
-
-    #[DataProvider('limitProvider')]
-    public function test_invoke_clamps_limit_between_1_and_48(int|string $requested, int $expectedFetch): void
-    {
-        $imageRepository = $this->createMock(PortfolioImageRepository::class);
-        $imageRepository->expects($this->once())
-            ->method('findPublicByTagValue')
-            ->with($this->anything(), null, $expectedFetch)
-            ->willReturn([]);
-        $imageRepository->method('countByTagValue')->willReturn(0);
-
-        $request = new Request(['limit' => $requested]);
-
-        $this->action($this->tagValueRepository(), $imageRepository)(self::TAG_VALUE_ID, $request);
     }
 
     public function test_invoke_drops_the_extra_row_and_exposes_next_cursor(): void
@@ -120,9 +61,11 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
         $imageRepository->method('findPublicByTagValue')->willReturn($images);
         $imageRepository->method('countByTagValue')->willReturn(42);
 
-        $request  = new Request(['limit' => 2]);
-        $response = $this->action($this->tagValueRepository(), $imageRepository)(self::TAG_VALUE_ID, $request);
-        $payload  = $this->payload($response);
+        $response = $this->action($imageRepository)(
+            $this->activeTagValue(),
+            new CursorPagination(2),
+        );
+        $payload = $this->payload($response);
 
         $this->assertCount(2, $payload['items']);
         $this->assertSame('0198a1c0-0000-7000-8000-000000000003', $payload['items'][0]['id']);
@@ -139,32 +82,14 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
         ]);
         $imageRepository->method('countByTagValue')->willReturn(1);
 
-        $request  = new Request(['limit' => 2]);
-        $response = $this->action($this->tagValueRepository(), $imageRepository)(self::TAG_VALUE_ID, $request);
-        $payload  = $this->payload($response);
+        $response = $this->action($imageRepository)(
+            $this->activeTagValue(),
+            new CursorPagination(2),
+        );
+        $payload = $this->payload($response);
 
         $this->assertCount(1, $payload['items']);
         $this->assertNull($payload['nextCursor']);
-    }
-
-    public function test_invoke_forwards_a_valid_cursor_to_the_repository(): void
-    {
-        $cursor = '0198a1c0-0000-7000-8000-000000000009';
-
-        $imageRepository = $this->createMock(PortfolioImageRepository::class);
-        $imageRepository->expects($this->once())
-            ->method('findPublicByTagValue')
-            ->with(
-                $this->anything(),
-                $this->callback(static fn(?UuidV7 $uuid) => $uuid?->toRfc4122() === $cursor),
-                25,
-            )
-            ->willReturn([]);
-        $imageRepository->method('countByTagValue')->willReturn(0);
-
-        $request = new Request(['cursor' => $cursor]);
-
-        $this->action($this->tagValueRepository(), $imageRepository)(self::TAG_VALUE_ID, $request);
     }
 
     public function test_invoke_never_exposes_vendor_identity(): void
@@ -175,28 +100,82 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
         ]);
         $imageRepository->method('countByTagValue')->willReturn(1);
 
-        $response = $this->action($this->tagValueRepository(), $imageRepository)(self::TAG_VALUE_ID, new Request());
+        $response = $this->action($imageRepository)(
+            $this->activeTagValue(),
+            new CursorPagination(),
+        );
 
         $this->assertSame(['id', 'url', 'tagsByGroup'], array_keys($this->payload($response)['items'][0]));
         $this->assertStringNotContainsString('Studio Lumiere', (string) $response->getContent());
     }
 
-    private function action(
-        TagValueRepository $tagValueRepository,
-        PortfolioImageRepository $imageRepository,
-    ): GetTagValuePortfolioImagesAction {
-        return new GetTagValuePortfolioImagesAction($tagValueRepository, $imageRepository);
+    /**
+     * Régression : avant l'extraction du TagValue dans un resolver, un sous-style
+     * inconnu combiné à un curseur invalide renvoyait 400 au lieu de 404, parce que
+     * la pagination était résolue avant que le controller ne vérifie le sous-style.
+     *
+     * On rejoue ici la vraie résolution d'arguments de Symfony sur la signature
+     * réelle du controller : c'est l'ordre des paramètres qui rétablit la priorité.
+     */
+    public function test_unknown_tag_value_wins_over_an_invalid_cursor(): void
+    {
+        $tagValueRepository = $this->createStub(TagValueRepository::class);
+        $tagValueRepository->method('find')->willReturn(null);
+
+        $controller = $this->action($this->createStub(PortfolioImageRepository::class));
+
+        $request = Request::create('/api/v1/tag-values/'.self::TAG_VALUE_ID.'/portfolio-images?cursor=nimportequoi');
+        $request->attributes->set('tagValueId', self::TAG_VALUE_ID);
+
+        $resolver = new ArgumentResolver(new ArgumentMetadataFactory(), [
+            new PublicActiveTagValueResolver($tagValueRepository),
+            new CursorPaginationValueResolver(),
+            new DefaultValueResolver(),
+        ]);
+
+        try {
+            $resolver->getArguments($request, $controller);
+            $this->fail('La résolution aurait dû échouer sur le sous-style introuvable.');
+        } catch (\DomainException $exception) {
+            $this->assertSame('Sous-style introuvable.', $exception->getMessage());
+            $this->assertSame(404, $exception->getCode(), 'Le 404 doit primer sur le 400 du curseur.');
+        }
     }
 
-    private function tagValueRepository(): TagValueRepository
+    public function test_a_valid_tag_value_still_surfaces_an_invalid_cursor_as_400(): void
     {
-        $tagType  = (new TagType())->setLabel('Sous-style');
-        $tagValue = (new TagValue())->setLabel('Bohème')->setTagType($tagType)->setIsActive(true);
+        $tagValueRepository = $this->createStub(TagValueRepository::class);
+        $tagValueRepository->method('find')->willReturn($this->activeTagValue());
 
-        $repository = $this->createStub(TagValueRepository::class);
-        $repository->method('find')->willReturn($tagValue);
+        $controller = $this->action($this->createStub(PortfolioImageRepository::class));
 
-        return $repository;
+        $request = Request::create('/api/v1/tag-values/'.self::TAG_VALUE_ID.'/portfolio-images?cursor=nimportequoi');
+        $request->attributes->set('tagValueId', self::TAG_VALUE_ID);
+
+        $resolver = new ArgumentResolver(new ArgumentMetadataFactory(), [
+            new PublicActiveTagValueResolver($tagValueRepository),
+            new CursorPaginationValueResolver(),
+            new DefaultValueResolver(),
+        ]);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Curseur invalide.');
+        $this->expectExceptionCode(400);
+
+        $resolver->getArguments($request, $controller);
+    }
+
+    private function action(PortfolioImageRepository $imageRepository): GetTagValuePortfolioImagesAction
+    {
+        return new GetTagValuePortfolioImagesAction($imageRepository);
+    }
+
+    private function activeTagValue(): TagValue
+    {
+        return (new TagValue())
+            ->setLabel('Bohème')
+            ->setTagType((new TagType())->setLabel('Sous-style'))
+            ->setIsActive(true);
     }
 
     private function image(string $id, string $url): PortfolioImage
@@ -218,7 +197,7 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
     }
 
     /** @return array<string, mixed> */
-    private function payload(\Symfony\Component\HttpFoundation\JsonResponse $response): array
+    private function payload(JsonResponse $response): array
     {
         return json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
     }
