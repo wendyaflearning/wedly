@@ -47,6 +47,35 @@ maintenant.
 Si un besoin de transaction multi-service apparaît (ex. création
 couple + wedding en un seul commit).
 
+**Ce cas est arrivé — voir « Révision — août 2026 » ci-dessous.**
+
 ## Référence
 
 Découvert sur : PR #97 ([WED-102](mention://issue/0f22e00f-082a-4752-a7f6-c66e017e8d9a), AdminTagTypeService)
+
+## Révision — août 2026 (WED-109)
+
+Le cas prévu s'est présenté : l'inscription du couple crée `User`,
+`Wedding`, `Couple`, `WeddingConsent` et, le cas échéant, `ProviderLead`
+en un seul commit. Aucun de ces enregistrements n'a de sens seul — un
+`Couple` sans `Wedding` est impossible (`NOT NULL`), et un consentement
+RGPD orphelin serait pire qu'absent.
+
+**Décision** : le service porte aussi la **transaction**, pas seulement
+le flush. Concrètement `beginTransaction()` / `persist()` × N / `flush()`
+/ `commit()`, avec `rollback()` sur tout `Throwable` puis relance de
+l'exception.
+
+Le Controller reste interdit de `flush()` **comme de**
+`beginTransaction()` : sa responsabilité ne change pas.
+
+Aucun service orchestrateur au-dessus des services existants n'a été
+introduit. Un seul service métier possède l'opération de bout en bout,
+ce qui reste testable en isolation — un orchestrateur n'aurait ajouté
+qu'un niveau d'indirection sans propriétaire clair.
+
+Références d'implémentation :
+
+- `src/Service/Couple/CoupleRegistrationService.php` (WED-109)
+- `src/Service/Vendor/AdminVendorDraftService.php::create` (précédent
+  antérieur, déjà conforme à ce patron)
