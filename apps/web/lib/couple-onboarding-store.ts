@@ -13,7 +13,6 @@ export interface CoupleOnboardingData {
   sensitiveDataConsent?: boolean
   confessionSlugs?: string[]
   cultureSlugs?: string[]
-  providerBudgetCents?: number
 }
 
 interface PersistedOnboardingData {
@@ -83,6 +82,22 @@ export function withSliderDefaults(data: CoupleOnboardingData): CoupleOnboarding
 
 function isKnownBudget(budgetCents: number): boolean {
   return BUDGET_RANGES.some((range) => range.cents === budgetCents)
+}
+
+/**
+ * Refusing the sensitive-preference step must leave nothing behind: a couple can
+ * pick confessions or cultures, walk back to the consent screen and change its
+ * mind, and the selections made before that refusal have to go with it (WED-107).
+ */
+export function applySensitiveDataConsent(
+  data: CoupleOnboardingData,
+  granted: boolean,
+): CoupleOnboardingData {
+  const next = withSliderDefaults(data)
+
+  return granted
+    ? { ...next, sensitiveDataConsent: true }
+    : { ...next, sensitiveDataConsent: false, confessionSlugs: [], cultureSlugs: [] }
 }
 
 export function loadCoupleOnboarding(

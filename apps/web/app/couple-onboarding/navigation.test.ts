@@ -19,15 +19,16 @@ describe('couple onboarding navigation', () => {
     expect(getContinueAction(2, data)).toEqual({ type: 'show_sensitive_data_consent' })
   })
 
-  it('skips sensitive preferences when consent is declined', () => {
-    expect(getContinueAction(3, { ...data, sensitiveDataConsent: false })).toEqual({ type: 'show_provider_budget' })
+  it('hands the flow over without showing the sensitive screens when consent is declined', () => {
+    const declined = { ...data, sensitiveDataConsent: false }
+
+    expect(getContinueAction(3, declined)).toEqual({ type: 'complete_onboarding', data: declined })
   })
 
   it('continues through the sensitive preference screens after consent', () => {
     expect(getContinueAction(3, { ...data, sensitiveDataConsent: true })).toEqual({ type: 'show_confessions' })
     expect(getContinueAction(4, { ...data, sensitiveDataConsent: true })).toEqual({ type: 'show_cultures' })
-    expect(getContinueAction(5, { ...data, sensitiveDataConsent: true })).toEqual({ type: 'show_provider_budget' })
-    expect(getContinueAction(6, { ...data, sensitiveDataConsent: true })).toEqual({ type: 'complete_onboarding', data: { ...data, sensitiveDataConsent: true } })
+    expect(getContinueAction(5, { ...data, sensitiveDataConsent: true })).toEqual({ type: 'complete_onboarding', data: { ...data, sensitiveDataConsent: true } })
   })
 
   it('keeps screen 1 blocked until a first name is typed', () => {

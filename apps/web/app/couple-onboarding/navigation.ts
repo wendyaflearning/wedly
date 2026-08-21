@@ -1,15 +1,20 @@
 import type { CoupleOnboardingData } from '@/lib/couple-onboarding-store'
 
-export type CoupleOnboardingScreen = 1 | 2 | 3 | 4 | 5 | 6
+export type CoupleOnboardingScreen = 1 | 2 | 3 | 4 | 5
 
 export type CoupleOnboardingContinueAction =
   | { type: 'show_wedding_profile' }
   | { type: 'show_sensitive_data_consent' }
   | { type: 'show_confessions' }
   | { type: 'show_cultures' }
-  | { type: 'show_provider_budget' }
   | { type: 'complete_onboarding'; data: CoupleOnboardingData }
 
+/**
+ * Stages A and B own screens 1 to 5. Both the refusal path and the completed
+ * preference path hand the collected data over once screen 5 is behind: the
+ * provider budget screen belongs to Stage C (WED-108) and the account creation
+ * screen to Stage D (WED-109), neither of which exists in this flow yet.
+ */
 export function getContinueAction(
   screen: CoupleOnboardingScreen,
   data: CoupleOnboardingData,
@@ -22,12 +27,10 @@ export function getContinueAction(
     case 3:
       return data.sensitiveDataConsent
         ? { type: 'show_confessions' }
-        : { type: 'show_provider_budget' }
+        : { type: 'complete_onboarding', data }
     case 4:
       return { type: 'show_cultures' }
     case 5:
-      return { type: 'show_provider_budget' }
-    case 6:
       return { type: 'complete_onboarding', data }
   }
 }

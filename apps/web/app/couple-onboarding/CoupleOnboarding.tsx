@@ -16,6 +16,7 @@ import {
   GUEST_COUNT_MIN,
   GUEST_COUNT_STEP,
   type PlanningStage,
+  applySensitiveDataConsent,
   loadCoupleOnboarding,
   saveCoupleOnboarding,
   withSliderDefaults,
@@ -175,8 +176,9 @@ function MultiSelect({ options, selected, onChange, legend }: {
 
 interface CoupleOnboardingProps {
   /**
-   * The remaining account-creation stage owns screens 6–7. This component only
-   * emits in-memory data, so no data is persisted before the final account step.
+   * Screens 6 and 7 belong to Stage C (WED-108) and Stage D (WED-109). This
+   * component only emits in-memory data, so nothing is persisted before the
+   * final account step.
    */
   onStageComplete?: (data: CoupleOnboardingData) => void
 }
@@ -216,30 +218,23 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
       return
     }
 
-    setScreen(action.type === 'show_wedding_profile' ? 2 : action.type === 'show_sensitive_data_consent' ? 3 : action.type === 'show_confessions' ? 4 : action.type === 'show_cultures' ? 5 : 6)
+    setScreen(action.type === 'show_wedding_profile' ? 2 : action.type === 'show_sensitive_data_consent' ? 3 : action.type === 'show_confessions' ? 4 : 5)
   }
 
-  function skipSensitiveData() {
-    const nextData = { ...withSliderDefaults(data), sensitiveDataConsent: false, confessionSlugs: [], cultureSlugs: [] }
-    setData(nextData)
-    continueOnboarding(nextData)
-  }
-
-  function grantSensitiveData() {
-    const nextData = { ...withSliderDefaults(data), sensitiveDataConsent: true }
+  function decideSensitiveData(granted: boolean) {
+    const nextData = applySensitiveDataConsent(data, granted)
     setData(nextData)
     continueOnboarding(nextData)
   }
 
   function goBack() {
-    setScreen(screen === 6 && data.sensitiveDataConsent === false ? 3 : (screen - 1) as CoupleOnboardingScreen)
+    setScreen((screen - 1) as CoupleOnboardingScreen)
   }
 
   const name = data.firstName?.trim()
   const canGoOn = canContinue(screen, data)
   const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
   const guestCount = data.guestCount ?? DEFAULT_GUEST_COUNT
-  const providerBudgetEuros = (data.providerBudgetCents ?? 250_000) / 100
   const dateLabel = data.weddingDate ? formatter.format(dateFromValue(data.weddingDate)!) : 'Choisissez une date'
 
   return (
@@ -294,19 +289,6 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
             <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">Vos préférences, à votre rythme</h1>
             <p className="mt-8 text-base leading-7 text-texte">Pour vous mettre en relation avec des prestataires qui vous ressemblent, on peut tenir compte de vos traditions culturelles ou confessionnelles. On ne vous pose la question qu&apos;avec votre accord, et vous pourrez changer d&apos;avis à tout moment depuis votre espace. Si vous préférez ne pas répondre, ça ne change rien à votre accès à Wedly — seul le matching sur ce critère ne sera pas activé.</p>
           </section>
-        ) : screen === 6 ? (
-          <section className="m-auto w-full max-w-2xl text-center">
-            <p className="text-xs font-bold tracking-[0.2em] text-accent">PHOTOGRAPHE</p>
-            <h1 className="mt-4 font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">Un budget pour ce photographe&nbsp;?</h1>
-            <p className="mx-auto mt-6 max-w-xl text-sm leading-6 text-gris">Ce type de prestataire pratique généralement entre 2&nbsp;000&nbsp;€ et 4&nbsp;500&nbsp;€ pour cette prestation.</p>
-            <label className="mx-auto mt-10 flex max-w-xs flex-col gap-3 text-left text-sm font-medium" htmlFor="provider-budget">
-              Quel budget aviez-vous en tête&nbsp;?
-              <span className="flex items-center rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-xl text-texte focus-within:border-bordeaux">
-                <input id="provider-budget" type="number" min="0" step="100" value={providerBudgetEuros} onChange={(event) => update('providerBudgetCents', Math.max(0, Number(event.target.value) || 0) * 100)} className="w-full bg-transparent outline-none" aria-label="Budget pour ce photographe en euros" />
-                <span aria-hidden="true">€</span>
-              </span>
-            </label>
-          </section>
         ) : (
           <section className="m-auto w-full text-center">
             <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">{screen === 4 ? 'Une cérémonie religieuse est-elle prévue ?' : 'Quelles sont vos origines ou univers culturels ?'}</h1>
@@ -316,11 +298,11 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
         )}
 
         <footer className="mt-10 flex justify-center pb-2">
-          <button type="button" disabled={!canGoOn} onClick={() => screen === 3 ? grantSensitiveData() : continueOnboarding()} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
+          <button type="button" disabled={!canGoOn} onClick={() => screen === 3 ? decideSensitiveData(true) : continueOnboarding()} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
             CONTINUER <ChevronRight size={18} aria-hidden="true" />
           </button>
         </footer>
-        {screen === 3 && <button type="button" onClick={skipSensitiveData} className="mx-auto pb-6 text-sm text-bordeaux underline underline-offset-4 hover:text-accent">Je préfère passer cette étape</button>}
+        {screen === 3 && <button type="button" onClick={() => decideSensitiveData(false)} className="mx-auto pb-6 text-sm text-bordeaux underline underline-offset-4 hover:text-accent">Je préfère passer cette étape</button>}
       </div>
     </main>
   )
