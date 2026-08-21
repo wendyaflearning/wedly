@@ -17,9 +17,9 @@ import {
   GUEST_COUNT_STEP,
   type PlanningStage,
   applySensitiveDataConsent,
-  clampBudgetCents,
   MAX_BUDGET_CENTS,
   weddingBudgetCents,
+  withExactBudget,
   loadCoupleOnboarding,
   saveCoupleOnboarding,
   withSliderDefaults,
@@ -194,6 +194,9 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   const [screen, setScreen] = useState<CoupleOnboardingScreen>(1)
   const [data, setData] = useState<CoupleOnboardingData>({})
   const [hydrated, setHydrated] = useState(false)
+  // What the couple is currently typing on the budget screen, untouched until it
+  // leaves the field. `null` means the field simply mirrors the stored amount.
+  const [budgetDraft, setBudgetDraft] = useState<string | null>(null)
   const [today] = useState(() => startOfDay(new Date()))
 
   useEffect(() => {
@@ -224,6 +227,28 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
     setScreen(action.type === 'show_wedding_profile' ? 2 : action.type === 'show_sensitive_data_consent' ? 3 : action.type === 'show_confessions' ? 4 : action.type === 'show_cultures' ? 5 : 6)
   }
 
+  /**
+   * The budget being typed is only turned into an amount here, so leaving the
+   * screen never loses an entry the couple never blurred out of.
+   */
+  function commitBudget(current = data): CoupleOnboardingData {
+    const next = budgetDraft === null ? current : withExactBudget(current, budgetDraft)
+
+    if (budgetDraft !== null) {
+      setData(next)
+      setBudgetDraft(null)
+    }
+
+    return next
+  }
+
+  function continueFromScreen() {
+    if (screen === 3) return decideSensitiveData(true)
+    if (screen === 6) return continueOnboarding(withSliderDefaults(commitBudget()))
+
+    return continueOnboarding()
+  }
+
   function decideSensitiveData(granted: boolean) {
     const nextData = applySensitiveDataConsent(data, granted)
     setData(nextData)
@@ -231,13 +256,13 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   }
 
   function goBack() {
-    setScreen(previousScreen(screen, data))
+    setScreen(previousScreen(screen, commitBudget()))
   }
 
   const name = data.firstName?.trim()
   const canGoOn = canContinue(screen, data)
   const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
-  const exactBudgetEuros = weddingBudgetCents(data) / 100
+  const exactBudgetEuros = budgetDraft ?? String(weddingBudgetCents(data) / 100)
   const guestCount = data.guestCount ?? DEFAULT_GUEST_COUNT
   const dateLabel = data.weddingDate ? formatter.format(dateFromValue(data.weddingDate)!) : 'Choisissez une date'
 
@@ -298,7 +323,7 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
             <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">Votre budget, <em className="font-semibold text-accent">plus précisément&nbsp;?</em></h1>
             <p className="mx-auto mt-6 max-w-xl text-sm leading-6 text-gris">Vous avez indiqué {budgetRangeForCents(budgetCents).toLocaleLowerCase('fr-FR')} pour l&apos;ensemble du mariage. Affinez le montant si vous le souhaitez : il aide les prestataires à vous répondre avec des propositions réalistes.</p>
             <div className="mx-auto mt-10 flex max-w-xs items-center gap-2 border-b border-bordeaux/30 pb-3 font-cormorant text-3xl font-semibold text-accent focus-within:border-bordeaux">
-              <input id="exact-budget" type="number" min="0" max={MAX_BUDGET_CENTS / 100} value={exactBudgetEuros} onChange={(event) => update('exactBudgetCents', clampBudgetCents((Number(event.target.value) || 0) * 100))} className="w-full bg-transparent text-right outline-none" aria-label="Budget total du mariage en euros" />
+              <input id="exact-budget" type="number" min="0" max={MAX_BUDGET_CENTS / 100} value={exactBudgetEuros} onChange={(event) => setBudgetDraft(event.target.value)} onBlur={() => commitBudget()} className="w-full bg-transparent text-right outline-none" aria-label="Budget total du mariage en euros" />
               <span aria-hidden="true">€</span>
             </div>
             <p className="mt-4 text-xs italic text-gris">Vous pourrez l&apos;ajuster à tout moment depuis votre espace.</p>
@@ -312,7 +337,7 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
         )}
 
         <footer className="mt-10 flex justify-center pb-2">
-          <button type="button" disabled={!canGoOn} onClick={() => screen === 3 ? decideSensitiveData(true) : continueOnboarding()} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
+          <button type="button" disabled={!canGoOn} onClick={continueFromScreen} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
             CONTINUER <ChevronRight size={18} aria-hidden="true" />
           </button>
         </footer>

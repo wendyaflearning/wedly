@@ -89,6 +89,22 @@ export function clampBudgetCents(budgetCents: number): number {
 }
 
 /**
+ * The budget screen holds what the couple types as a string while it types.
+ * A half-typed entry — an empty field, a lone `-`, an unfinished `1e` — is not a
+ * number yet, and clamping on every keystroke rewrote the field under the cursor:
+ * typing `-500` snapped to `0` mid-entry, then the following digits landed on a
+ * value the couple never meant. The entry becomes cents only when the field is
+ * left or the couple moves on, and anything unreadable keeps the last amount.
+ */
+export function withExactBudget(data: CoupleOnboardingData, typed: string): CoupleOnboardingData {
+  const euros = Number(typed.trim())
+
+  if (typed.trim() === '' || !Number.isFinite(euros)) return data
+
+  return { ...data, exactBudgetCents: clampBudgetCents(euros * 100) }
+}
+
+/**
  * The single budget carried to `Wedding.budgetCents` and to the lead: the exact
  * amount when the couple typed one, the bracket median otherwise.
  */

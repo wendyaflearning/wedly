@@ -5,6 +5,7 @@ import {
   clampBudgetCents,
   MAX_BUDGET_CENTS,
   weddingBudgetCents,
+  withExactBudget,
   budgetIndexForCents,
   budgetRangeForCents,
   COUPLE_ONBOARDING_STORAGE_KEY,
@@ -192,5 +193,39 @@ describe('wedding budget', () => {
 
   it('keeps the exact amount through a consent refusal', () => {
     expect(applySensitiveDataConsent({ exactBudgetCents: 2_350_000 }, false)).toMatchObject({ exactBudgetCents: 2_350_000 })
+  })
+})
+
+describe('budget typed on the last screen', () => {
+  const started = { budgetCents: 2_500_000, exactBudgetCents: 2_350_000 }
+
+  it('turns a finished entry into cents', () => {
+    expect(withExactBudget(started, '18500')).toMatchObject({ exactBudgetCents: 1_850_000 })
+    expect(withExactBudget(started, ' 18500 ')).toMatchObject({ exactBudgetCents: 1_850_000 })
+  })
+
+  it('keeps the last amount while the field holds nothing readable yet', () => {
+    // A number input reports an empty string for a lone `-` or a half-typed `1e`,
+    // so an entry in progress must not be read as an amount.
+    expect(withExactBudget(started, '')).toBe(started)
+    expect(withExactBudget(started, '   ')).toBe(started)
+    expect(withExactBudget(started, '-')).toBe(started)
+    expect(withExactBudget(started, '1e')).toBe(started)
+  })
+
+  it('brings a finished entry back inside the bounds instead of mid-keystroke', () => {
+    expect(withExactBudget(started, '-500')).toMatchObject({ exactBudgetCents: 0 })
+    expect(withExactBudget(started, '99999999')).toMatchObject({ exactBudgetCents: MAX_BUDGET_CENTS })
+  })
+
+  it('rounds to the cent rather than carrying a float error', () => {
+    expect(withExactBudget(started, '2350.07')).toMatchObject({ exactBudgetCents: 235_007 })
+  })
+
+  it('never mutates the data it is given', () => {
+    const source = { ...started }
+    withExactBudget(source, '18500')
+
+    expect(source.exactBudgetCents).toBe(2_350_000)
   })
 })
