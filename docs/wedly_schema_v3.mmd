@@ -10,6 +10,7 @@ erDiagram
     WEDDING }o--o{ "STYLE" : styles
     WEDDING }o--o{ CULTURE : cultures
     WEDDING }o--o{ CONFESSION : confessions
+    WEDDING ||--o{ WEDDING_CONSENT : wedding
     SERVICE ||--o{ SERVICE : parent
     VENDOR ||--o{ OFFER : vendor
     VENDOR ||--o{ PORTFOLIO_IMAGE : vendor
@@ -81,6 +82,7 @@ erDiagram
         uuid user_id
         uuid wedding_id
         string status
+        string planning_stage
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -90,10 +92,10 @@ erDiagram
         date date
         int budget_cents
         string location
-        string zone
+        string zone "nullable"
         int guest_count
-        string ambiance
-        string ceremony_type
+        string ambiance "nullable"
+        string ceremony_type "nullable"
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -328,6 +330,15 @@ erDiagram
     VENDOR_CONSENT {
         uuid id
         uuid vendor_id
+        string consent_type
+        boolean granted
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    WEDDING_CONSENT {
+        uuid id
+        uuid wedding_id
         string consent_type
         boolean granted
         datetime_immutable created_at

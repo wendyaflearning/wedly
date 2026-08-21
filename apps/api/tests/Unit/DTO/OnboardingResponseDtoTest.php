@@ -25,6 +25,7 @@ use App\Entity\Vendor\VendorVenueDetails;
 use App\Entity\Wedding\Wedding;
 use App\Entity\Wedding\WeddingStyle;
 use App\Enum\Couple\CoupleStatus;
+use App\Enum\Couple\PlanningStage;
 use App\Enum\Vendor\OnboardingStep;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorType;
@@ -74,6 +75,28 @@ final class OnboardingResponseDtoTest extends TestCase
         $this->assertSame('Boheme', $dto->data['wedding']['styles'][0]['name']);
         $this->assertSame('France', $dto->data['wedding']['cultures'][0]['name']);
         $this->assertSame('Laic', $dto->data['wedding']['confessions'][0]['name']);
+    }
+
+    public function test_couple_invite_token_data_handles_null_zone_ambiance_ceremony_type(): void
+    {
+        $wedding = (new Wedding())
+            ->setDate(new \DateTimeImmutable('2027-05-12'))
+            ->setBudgetCents(2500000)
+            ->setLocation('Paris')
+            ->setGuestCount(120);
+
+        $couple = (new Couple())
+            ->setUser($this->user('Alex', 'alex@example.com'))
+            ->setWedding($wedding)
+            ->setStatus(CoupleStatus::Active)
+            ->setPlanningStage(PlanningStage::JustStarted);
+        $this->withId($couple);
+
+        $dto = new CoupleInviteTokenDataDto($couple);
+
+        $this->assertNull($dto->data['wedding']['zone']);
+        $this->assertNull($dto->data['wedding']['ambiance']);
+        $this->assertNull($dto->data['wedding']['ceremony_type']);
     }
 
     public function test_onboarding_data_response_maps_vendor_state_for_venue(): void
@@ -215,7 +238,8 @@ final class OnboardingResponseDtoTest extends TestCase
         $couple = (new Couple())
             ->setUser($this->user('Alex', 'alex@example.com'))
             ->setWedding($wedding)
-            ->setStatus(CoupleStatus::Active);
+            ->setStatus(CoupleStatus::Active)
+            ->setPlanningStage(PlanningStage::InProgress);
 
         return $this->withId($couple);
     }
