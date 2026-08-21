@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applySensitiveDataConsent,
   BUDGET_RANGES,
   budgetIndexForCents,
   budgetRangeForCents,
@@ -101,5 +102,53 @@ describe('couple onboarding store', () => {
     expect(budgetIndexForCents(DEFAULT_BUDGET_CENTS)).toBe(2)
     expect(budgetIndexForCents(750_000)).toBe(0)
     expect(budgetRangeForCents(750_000)).toBe('Moins de 10 000 €')
+  })
+})
+
+describe('sensitive-preference consent', () => {
+  const withSelections = {
+    firstName: 'Camille',
+    budgetCents: DEFAULT_BUDGET_CENTS,
+    guestCount: DEFAULT_GUEST_COUNT,
+    confessionSlugs: ['catholique', 'mixte'],
+    cultureSlugs: ['europe', 'maghreb'],
+  }
+
+  it('records the consent and keeps the selections when it is granted', () => {
+    expect(applySensitiveDataConsent(withSelections, true)).toMatchObject({
+      sensitiveDataConsent: true,
+      confessionSlugs: ['catholique', 'mixte'],
+      cultureSlugs: ['europe', 'maghreb'],
+    })
+  })
+
+  it('stores nothing sensitive when the couple skips the step', () => {
+    expect(applySensitiveDataConsent({ firstName: 'Camille' }, false)).toMatchObject({
+      sensitiveDataConsent: false,
+      confessionSlugs: [],
+      cultureSlugs: [],
+    })
+  })
+
+  it('erases preferences already entered when consent is refused afterwards', () => {
+    expect(applySensitiveDataConsent(withSelections, false)).toMatchObject({
+      sensitiveDataConsent: false,
+      confessionSlugs: [],
+      cultureSlugs: [],
+    })
+  })
+
+  it('leaves the wedding profile untouched when the step is skipped', () => {
+    const refused = applySensitiveDataConsent({ ...withSelections, location: 'Lyon' }, false)
+
+    expect(refused).toMatchObject({ firstName: 'Camille', location: 'Lyon', guestCount: DEFAULT_GUEST_COUNT })
+  })
+
+  it('never mutates the data it is given', () => {
+    const source = { ...withSelections }
+    applySensitiveDataConsent(source, false)
+
+    expect(source.confessionSlugs).toEqual(['catholique', 'mixte'])
+    expect(source.cultureSlugs).toEqual(['europe', 'maghreb'])
   })
 })

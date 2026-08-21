@@ -215,6 +215,9 @@ Contrat attendu :
 Couverture existante :
 
 - `navigation.test.ts` couvre la transition consentement accepté/refusé
+- `couple-onboarding-store.test.ts` couvre `applySensitiveDataConsent` :
+  effacement des confessions et cultures au refus, y compris après une saisie
+- `WeddingConsentTest` couvre le modèle append-only et l'absence de setter
 
 Couverture manquante :
 
