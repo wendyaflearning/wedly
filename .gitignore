@@ -13,5 +13,8 @@ apps/api/vendor/
 apps/web/.next/
 apps/web/node_modules/
 
+# Any node_modules, wherever a tool decides to create one
+node_modules/
+
 # OS
 .DS_Store
