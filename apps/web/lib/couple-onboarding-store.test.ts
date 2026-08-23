@@ -12,6 +12,8 @@ import {
   COUPLE_ONBOARDING_TTL_MS,
   DEFAULT_BUDGET_CENTS,
   DEFAULT_GUEST_COUNT,
+  DEFAULT_PLANNING_STAGE,
+  GUEST_COUNT_MAX,
   GUEST_COUNT_MIN,
   loadCoupleOnboarding,
   saveCoupleOnboarding,
@@ -56,7 +58,7 @@ describe('couple onboarding store', () => {
   })
 
   it('exposes the slider mount values as usable data instead of an empty state', () => {
-    expect(withSliderDefaults({ planningStage: 'just_started' })).toEqual({
+    expect(withSliderDefaults({ planningStage: 'just_started' })).toMatchObject({
       planningStage: 'just_started',
       budgetCents: DEFAULT_BUDGET_CENTS,
       guestCount: DEFAULT_GUEST_COUNT,
@@ -86,7 +88,7 @@ describe('couple onboarding store', () => {
   })
 
   it('never overwrites slider values restored from a previous session', () => {
-    expect(withSliderDefaults({ budgetCents: 4_000_000, guestCount: 120 })).toEqual({
+    expect(withSliderDefaults({ budgetCents: 4_000_000, guestCount: 120 })).toMatchObject({
       budgetCents: 4_000_000,
       guestCount: 120,
     })
@@ -95,6 +97,27 @@ describe('couple onboarding store', () => {
   it('normalizes a persisted guest count below the minimum', () => {
     expect(withSliderDefaults({ guestCount: 0 }).guestCount).toBe(GUEST_COUNT_MIN)
     expect(withSliderDefaults({ guestCount: 10 }).guestCount).toBe(GUEST_COUNT_MIN)
+  })
+
+  it('normalizes a guest count a rewritten storage pushed past the slider ceiling', () => {
+    // `wedding.guest_count` is an integer column: an amount like 1e20 travelled
+    // through untouched before the bound was closed on both ends.
+    expect(withSliderDefaults({ guestCount: 1e20 }).guestCount).toBe(GUEST_COUNT_MAX)
+    expect(withSliderDefaults({ guestCount: Number.NaN }).guestCount).toBe(DEFAULT_GUEST_COUNT)
+    expect(withSliderDefaults({ guestCount: 137.4 }).guestCount).toBe(137)
+  })
+
+  it('preselects the opening planning stage, which the NOT NULL column has no default for', () => {
+    expect(withSliderDefaults({}).planningStage).toBe(DEFAULT_PLANNING_STAGE)
+    expect(DEFAULT_PLANNING_STAGE).toBe('just_started')
+  })
+
+  it('keeps the stage the couple actually picked', () => {
+    expect(withSliderDefaults({ planningStage: 'almost_ready' }).planningStage).toBe('almost_ready')
+  })
+
+  it('stores the first name trimmed, the way the screen-1 guard reads it', () => {
+    expect(withSliderDefaults({ firstName: '  Camille  ' }).firstName).toBe('Camille')
   })
 
   it('resolves the budget slider position and label from the stored cents', () => {
@@ -204,17 +227,23 @@ describe('budget typed on the last screen', () => {
     expect(withExactBudget(started, ' 18500 ')).toMatchObject({ exactBudgetCents: 1_850_000 })
   })
 
-  it('keeps the last amount while the field holds nothing readable yet', () => {
-    // A number input reports an empty string for a lone `-` or a half-typed `1e`,
-    // so an entry in progress must not be read as an amount.
-    expect(withExactBudget(started, '')).toBe(started)
-    expect(withExactBudget(started, '   ')).toBe(started)
-    expect(withExactBudget(started, '-')).toBe(started)
-    expect(withExactBudget(started, '1e')).toBe(started)
+  it('falls back to the screen-2 bracket when the field is left empty or unreadable', () => {
+    // Arbitrage Denis, 23/08/2026: an entry that is not an amount returns the
+    // budget to the bracket the couple did choose, rather than keeping a figure
+    // it just erased.
+    expect(withExactBudget(started, '').exactBudgetCents).toBeUndefined()
+    expect(withExactBudget(started, '   ').exactBudgetCents).toBeUndefined()
+    expect(withExactBudget(started, '-').exactBudgetCents).toBeUndefined()
+    expect(withExactBudget(started, '1e').exactBudgetCents).toBeUndefined()
+    expect(weddingBudgetCents(withExactBudget(started, ''))).toBe(2_500_000)
   })
 
-  it('brings a finished entry back inside the bounds instead of mid-keystroke', () => {
-    expect(withExactBudget(started, '-500')).toMatchObject({ exactBudgetCents: 0 })
+  it('falls back to the screen-2 bracket rather than qualifying a wedding at 0 €', () => {
+    expect(weddingBudgetCents(withExactBudget(started, '0'))).toBe(2_500_000)
+    expect(weddingBudgetCents(withExactBudget(started, '-500'))).toBe(2_500_000)
+  })
+
+  it('brings a finished entry back under the ceiling instead of mid-keystroke', () => {
     expect(withExactBudget(started, '99999999')).toMatchObject({ exactBudgetCents: MAX_BUDGET_CENTS })
   })
 
