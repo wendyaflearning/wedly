@@ -79,6 +79,13 @@ dans les fichiers de règles.
 | `PROVIDER-LEAD-002` | Le budget d'un lead est le budget global du mariage, figé à la création | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-003` | Le budget est borné à 1 000 000 €                                     | `active` | `rules/provider-leads.md` |
 
+## Wedream visibility
+
+| ID                        | Règle                                                                        | Statut   | Fichier                       |
+| ------------------------- | ---------------------------------------------------------------------------- | -------- | ----------------------------- |
+| `WEDREAM-VISIBILITY-001`  | La publication publique exige un opt-in explicite du prestataire             | `active` | `rules/wedream-visibility.md` |
+| `WEDREAM-VISIBILITY-002`  | La désactivation coupe la lecture publique sans toucher photos ni tags       | `active` | `rules/wedream-visibility.md` |
+
 ## À ajouter lors des prochains tickets
 
 - règles WedMatch dès que le matching est implémenté

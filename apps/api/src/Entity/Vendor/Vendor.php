@@ -95,6 +95,9 @@ class Vendor
     #[ORM\Column(name: 'is_published', type: 'boolean', options: ['default' => false])]
     private bool $isPublished = false;
 
+    #[ORM\Column(name: 'wedream_enabled', type: 'boolean', options: ['default' => false])]
+    private bool $wedreamEnabled = false;
+
     #[ORM\Column(name: 'submitted_for_review_at', type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $submittedForReviewAt = null;
 
@@ -413,6 +416,18 @@ class Vendor
     public function setIsPublished(bool $isPublished): static
     {
         $this->isPublished = $isPublished;
+
+        return $this;
+    }
+
+    public function isWedreamEnabled(): bool
+    {
+        return $this->wedreamEnabled;
+    }
+
+    public function setWedreamEnabled(bool $wedreamEnabled): static
+    {
+        $this->wedreamEnabled = $wedreamEnabled;
 
         return $this;
     }

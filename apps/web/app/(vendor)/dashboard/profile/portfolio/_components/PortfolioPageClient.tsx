@@ -96,7 +96,7 @@ export default function PortfolioPageClient({ initialPhotos, vendorId, vendorSer
             theme="dark"
             onConfirm={async (tagValueIds) => {
               await hook.confirmTagging(activeId, vendorId, tagValueIds)
-              showToast('success', 'Toutes vos photos sont taguées. Activez votre visibilité Wedream quand vous êtes prêt à participer.')
+              showToast('success', 'Toutes vos photos sont taguées. Rendez-vous dans WedDream pour activer votre visibilité quand vous êtes prêt.')
             }}
             onCancel={async () => hook.cancelTagging(activeId)}
           />

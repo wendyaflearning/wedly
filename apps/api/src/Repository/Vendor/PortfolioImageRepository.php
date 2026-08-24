@@ -35,6 +35,10 @@ class PortfolioImageRepository extends ServiceEntityRepository
     /**
      * Page publique de la galerie Wedream pour un sous-style donné.
      *
+     * Une photo n'est publiée que si le prestataire a activé sa visibilité Wedream
+     * (`v.wedreamEnabled`) ET que la photo elle-même est marquée visible
+     * (`p.isVisibleInWedream`) : taguer ne publie plus à lui seul.
+     *
      * L'id étant un UUIDv7, il est trié chronologiquement : ordonner sur p.id DESC
      * équivaut à un createdAt DESC et rend le curseur suffisant à lui seul
      * (pas de tie-breaker nécessaire).
@@ -48,6 +52,7 @@ class PortfolioImageRepository extends ServiceEntityRepository
             ->innerJoin('p.tags', 't')
             ->where('t = :tagValue')
             ->andWhere('v.isPublished = true')
+            ->andWhere('v.wedreamEnabled = true')
             ->andWhere('p.isVisibleInWedream = true')
             ->setParameter('tagValue', $tagValue)
             ->orderBy('p.id', 'DESC')
@@ -74,6 +79,7 @@ class PortfolioImageRepository extends ServiceEntityRepository
             ->innerJoin('p.tags', 't')
             ->where('t = :tagValue')
             ->andWhere('v.isPublished = true')
+            ->andWhere('v.wedreamEnabled = true')
             ->andWhere('p.isVisibleInWedream = true')
             ->setParameter('tagValue', $tagValue)
             ->getQuery()

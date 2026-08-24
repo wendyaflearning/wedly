@@ -32,6 +32,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    label: 'WedDream',
+    href: '/dashboard/wedream',
+    locked: false,
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 15c-3.2-2.2-5.5-4.3-5.5-6.8A2.9 2.9 0 019 6.3a2.9 2.9 0 015.5 1.9c0 2.5-2.3 4.6-5.5 6.8z" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M13.5 2.5l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5.5-1.3z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     label: 'Messages',
     href: null,
     locked: true,
