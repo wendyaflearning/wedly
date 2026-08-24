@@ -50,6 +50,9 @@ dans les fichiers de règles.
 | `COUPLE-ONBOARDING-004` | La date de mariage ne peut pas être antérieure au jour courant | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-005` | `budgetCents` et `guestCount` portent toujours une valeur (colonnes `NOT NULL`) | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-006` | Le prénom est saisi dans le titre de l'écran 1 et conditionne la progression | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-007` | La date et le lieu bloquent l'écran 2 | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-008` | L'avancement de l'organisation est présélectionné, pas bloquant | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-009` | L'inscription du couple est email + mot de passe, en un seul appel | `active` | `rules/couple-onboarding.md` |
 
 ## Data and schema
 

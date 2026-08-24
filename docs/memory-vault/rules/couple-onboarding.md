@@ -146,6 +146,12 @@ Toute valeur persistée hors de ces bornes est ramenée à la valeur d'ouverture
 un ancien état local ne doit ni réintroduire une graduation supprimée, ni faire
 retomber silencieusement le budget sur la fourchette la moins chère.
 
+Le bornage vaut **dans les deux sens** : `sessionStorage` est réinscriptible par
+l'utilisateur, et un `guestCount` au-delà du plafond du curseur (ou non fini)
+traversait le parcours intact jusqu'à `wedding.guest_count`. Le DTO de l'écran 7
+rejoue les mêmes bornes côté serveur : les garanties front protègent la saisie,
+pas la base.
+
 Couverture attendue :
 
 - `apps/web/lib/couple-onboarding-store.test.ts` (`withSliderDefaults`)
@@ -165,13 +171,101 @@ l'écran final échoue.
 - le parcours réutilise le prénom dans les titres suivants (« Alors {prénom},
 c'est pour quand ? ») : un parcours sans prénom dégrade toute la copy.
 
+Le prénom est stocké **détouré** : la garde le lit `trim()`, la valeur doit être
+persistée de la même façon.
+
 Interdit :
 
 - créer un écran dédié au prénom (la maquette le porte dans le titre de
 l'écran 1, pas sur une étape séparée — l'indicateur reste sur 7 étapes)
-- appliquer ce blocage aux champs de l'écran 2, qui restent tous facultatifs
-(voir `COUPLE-ONBOARDING-005`)
 
 Couverture attendue :
 
 - `apps/web/app/couple-onboarding/navigation.test.ts` (`canContinue`)
+
+## COUPLE-ONBOARDING-007 — La date et le lieu bloquent l'écran 2
+
+Statut : `active`
+
+`wedding.date` et `wedding.location` sont `NOT NULL`, et l'écran 7 est le seul
+moment où quoi que ce soit est écrit : une valeur manquante n'échouerait qu'au
+tout dernier écran du parcours. Le bouton CONTINUER de l'écran 2 reste donc
+désactivé tant que la date **et** la ville ne sont pas renseignées.
+
+Arbitrage de Denis du 23/08/2026, entre trois options :
+
+- **(a) bloquer l'écran 2** — retenue ;
+- (b) rendre les deux colonnes `nullable` comme `zone`/`ambiance`/`ceremonyType`
+(voir `COUPLE-ONBOARDING-003`) — écartée ;
+- (c) une valeur par défaut côté front — écartée : elle fabriquerait une date et
+une ville que le couple n'a jamais données, que Wedmatch relirait comme de
+vraies préférences.
+
+Cet arbitrage **renverse** le critère d'acceptance de WED-106 « tous les champs
+de l'écran 2 restent modifiables plus tard, aucun ne bloque la progression » :
+il ne vaut plus que pour les deux curseurs, qui portent toujours une valeur
+(`COUPLE-ONBOARDING-005`). La copy « Pas encore sûrs ? Vous pourrez ajuster plus
+tard. » porte sur le budget et reste vraie.
+
+Interdit :
+
+- laisser passer l'écran 2 sans date ni ville
+- inventer une valeur par défaut pour l'un des deux champs
+
+Couverture attendue :
+
+- `apps/web/app/couple-onboarding/navigation.test.ts` (`canContinue`)
+- `apps/api/tests/Unit/DTO/Couple/RegisterCoupleRequestDtoTest.php` (contraintes
+serveur : `sessionStorage` reste réinscriptible)
+
+## COUPLE-ONBOARDING-008 — L'avancement de l'organisation est présélectionné
+
+Statut : `active`
+
+`couple.planning_stage` est `NOT NULL` sans valeur par défaut, et l'écran 1
+n'active CONTINUER que sur le prénom. La première pilule (« On vient de
+commencer ») est donc **présélectionnée** dès le premier rendu, comme les deux
+curseurs de l'écran 2 — plutôt que de rendre la sélection bloquante.
+
+Raison :
+
+- c'est la réponse qu'un couple qui démarre le parcours donnerait ;
+- il s'agit d'un défaut de saisie, pas d'un défaut de colonne : le mapping
+Doctrine reste sans valeur par défaut (voir `COUPLE-ONBOARDING-002`).
+
+Couverture attendue :
+
+- `apps/web/lib/couple-onboarding-store.test.ts` (`withSliderDefaults`)
+
+## COUPLE-ONBOARDING-009 — L'inscription est email + mot de passe, en un seul appel
+
+Statut : `active`
+
+L'écran 7 crée le compte via `POST /api/v1/register` : email, mot de passe et
+confirmation, plancher de 8 caractères — le même que celui de la
+réinitialisation de mot de passe, puisque c'est par là que le couple le changera
+ensuite. La réponse pose le JWT dans le cookie httpOnly `jwt_token` utilisé par
+le reste de la plateforme, et l'écran 8 (thème sombre) accueille le couple sans
+autre appel.
+
+Cet endpoint **remplace intégralement** le mécanisme de compte auto-généré à mot
+de passe aléatoire envoyé par email (WED-50).
+
+La transaction appartient au service, jamais au contrôleur : voir
+`docs/ADR/ADR-006-flush-service-jamais-controller.md`, que ce ticket a fait
+sortir de son cas par défaut.
+
+Interdit :
+
+- réintroduire un mot de passe généré automatiquement
+- créer un second endpoint d'inscription couple
+- renvoyer le JWT au frontend autrement que par le cookie httpOnly
+
+Couverture attendue :
+
+- `apps/api/tests/Functional/Auth/RegisterActionTest.php` (doublon d'email :
+le critère « aucun compte créé » ne se vérifie vraiment qu'au niveau HTTP)
+- `apps/api/tests/Unit/Service/Couple/CoupleRegistrationServiceTest.php`
+(consentement, lead, prestataire inactif)
+- `apps/api/tests/Unit/DTO/Couple/RegisterCoupleRequestDtoTest.php` (mot de passe
+trop court, confirmation différente)

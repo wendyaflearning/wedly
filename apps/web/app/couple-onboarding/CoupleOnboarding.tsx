@@ -4,9 +4,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ProgressIndicator from './ProgressIndicator'
 import { canGoToPreviousMonth, isSelectableWeddingDate, selectableWeddingYears, setCalendarMonth, startOfDay } from './calendar'
-import { canContinue, getContinueAction, previousScreen, type CoupleOnboardingScreen } from './navigation'
+import { COUPLE_ONBOARDING_STEPS, canContinue, getContinueAction, previousScreen, type CoupleOnboardingContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
+  COUPLE_ONBOARDING_STORAGE_KEY,
   budgetIndexForCents,
   budgetRangeForCents,
   type CoupleOnboardingData,
@@ -24,6 +25,13 @@ import {
   saveCoupleOnboarding,
   withSliderDefaults,
 } from '@/lib/couple-onboarding-store'
+import {
+  buildRegistrationPayload,
+  credentialsError,
+  MIN_PASSWORD_LENGTH,
+  registerCouple,
+  type CoupleCredentials,
+} from '@/lib/couple-registration'
 
 const PLANNING_STAGES: Array<{ value: PlanningStage; label: string }> = [
   { value: 'just_started', label: 'On vient de commencer' },
@@ -123,6 +131,20 @@ function Calendar({
   )
 }
 
+/**
+ * Every action but `complete_onboarding`, which never moves the couple to a
+ * screen: the account creation of screen 7 owns that transition itself.
+ */
+const SCREEN_FOR_ACTION = {
+  show_wedding_profile: 2,
+  show_sensitive_data_consent: 3,
+  show_confessions: 4,
+  show_cultures: 5,
+  show_budget: 6,
+  show_account_creation: 7,
+  complete_onboarding: 7,
+} as const satisfies Record<CoupleOnboardingContinueAction['type'], CoupleOnboardingScreen>
+
 const NAME_PLACEHOLDER = 'votre prénom'
 
 /**
@@ -198,6 +220,11 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   // leaves the field. `null` means the field simply mirrors the stored amount.
   const [budgetDraft, setBudgetDraft] = useState<string | null>(null)
   const [today] = useState(() => startOfDay(new Date()))
+  const [credentials, setCredentials] = useState<CoupleCredentials>({ email: '', password: '', passwordConfirmation: '' })
+  const [submitting, setSubmitting] = useState(false)
+  // Holds what the server refused — a duplicate email above all, which no
+  // browser-side check can anticipate.
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     const hydration = window.setTimeout(() => {
@@ -216,6 +243,15 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
     setData((current) => ({ ...current, [key]: value }))
   }
 
+  /**
+   * Credentials never join the onboarding state: that state is persisted to
+   * sessionStorage on every change, and a password has no business being there.
+   */
+  function updateCredentials<K extends keyof CoupleCredentials>(key: K, value: string) {
+    setSubmitError(null)
+    setCredentials((current) => ({ ...current, [key]: value }))
+  }
+
   function continueOnboarding(nextData = withSliderDefaults(data)) {
     const action = getContinueAction(screen, nextData)
 
@@ -224,7 +260,7 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
       return
     }
 
-    setScreen(action.type === 'show_wedding_profile' ? 2 : action.type === 'show_sensitive_data_consent' ? 3 : action.type === 'show_confessions' ? 4 : action.type === 'show_cultures' ? 5 : 6)
+    setScreen(SCREEN_FOR_ACTION[action.type])
   }
 
   /**
@@ -245,8 +281,40 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   function continueFromScreen() {
     if (screen === 3) return decideSensitiveData(true)
     if (screen === 6) return continueOnboarding(withSliderDefaults(commitBudget()))
+    if (screen === 7) return createAccount()
 
     return continueOnboarding()
+  }
+
+  /**
+   * The only write of the whole journey: everything collected since screen 1 is
+   * submitted at once (COUPLE-ONBOARDING-001). The stored state is dropped only
+   * once the account exists — a failed attempt must leave the couple able to
+   * retry without retyping six screens.
+   */
+  async function createAccount() {
+    const invalid = credentialsError(credentials)
+
+    if (invalid) {
+      setSubmitError(invalid)
+      return
+    }
+
+    setSubmitting(true)
+    setSubmitError(null)
+
+    const result = await registerCouple(buildRegistrationPayload(withSliderDefaults(data), credentials))
+
+    setSubmitting(false)
+
+    if (!result.success) {
+      setSubmitError(result.error)
+      return
+    }
+
+    sessionStorage.removeItem(COUPLE_ONBOARDING_STORAGE_KEY)
+    onStageComplete(data)
+    setScreen(8)
   }
 
   function decideSensitiveData(granted: boolean) {
@@ -260,17 +328,30 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   }
 
   const name = data.firstName?.trim()
-  const canGoOn = canContinue(screen, data)
+  const canGoOn = canContinue(screen, data) && !submitting
   const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
   const exactBudgetEuros = budgetDraft ?? String(weddingBudgetCents(data) / 100)
   const guestCount = data.guestCount ?? DEFAULT_GUEST_COUNT
   const dateLabel = data.weddingDate ? formatter.format(dateFromValue(data.weddingDate)!) : 'Choisissez une date'
 
+  if (screen === 8) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-texte px-6 py-16 text-creme">
+        <section className="w-full max-w-2xl text-center">
+          <h1 className="font-cormorant text-4xl font-medium tracking-tight sm:text-5xl lg:text-6xl">
+            Bienvenue chez Wedly{name ? <>, <em className="font-semibold text-highlight not-italic">{name}</em></> : null}.
+          </h1>
+          <p className="mt-8 text-base leading-7 text-creme/80">Votre compte est prêt. Vous allez maintenant découvrir vos premiers prestataires.</p>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-creme px-6 py-8 sm:px-12 lg:px-20">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col">
         <header className="flex items-center justify-between">
-          <ProgressIndicator currentStep={screen} />
+          <ProgressIndicator currentStep={screen} totalSteps={COUPLE_ONBOARDING_STEPS} />
           {screen > 1 && <button type="button" onClick={goBack} className="inline-flex items-center gap-1 text-sm text-bordeaux underline-offset-4 hover:underline"><ChevronLeft size={16} />Retour</button>}
         </header>
 
@@ -328,6 +409,29 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
             </div>
             <p className="mt-4 text-xs italic text-gris">Vous pourrez l&apos;ajuster à tout moment depuis votre espace.</p>
           </section>
+        ) : screen === 7 ? (
+          <section className="m-auto w-full max-w-md">
+            <h1 className="text-center font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">
+              {name ? <>{name}, créez <em className="font-semibold text-accent">votre espace</em></> : <>Créez <em className="font-semibold text-accent">votre espace</em></>}
+            </h1>
+            <p className="mt-4 text-center text-sm leading-6 text-gris">Vous retrouverez à tout moment votre mariage et vos prestataires dans l&apos;espace du couple.</p>
+            <div className="mt-10 flex flex-col gap-5">
+              <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="couple-email">
+                Votre adresse email
+                <input id="couple-email" type="email" autoComplete="email" value={credentials.email} onChange={(event) => updateCredentials('email', event.target.value)} placeholder="camille@exemple.fr" className="rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-base outline-none placeholder:text-gris focus:border-bordeaux" />
+              </label>
+              <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="couple-password">
+                Votre mot de passe
+                <input id="couple-password" type="password" autoComplete="new-password" value={credentials.password} onChange={(event) => updateCredentials('password', event.target.value)} aria-describedby="couple-password-hint" className="rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-base outline-none focus:border-bordeaux" />
+                <span id="couple-password-hint" className="text-xs font-normal text-gris">{MIN_PASSWORD_LENGTH} caractères minimum.</span>
+              </label>
+              <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="couple-password-confirmation">
+                Confirmez votre mot de passe
+                <input id="couple-password-confirmation" type="password" autoComplete="new-password" value={credentials.passwordConfirmation} onChange={(event) => updateCredentials('passwordConfirmation', event.target.value)} className="rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-base outline-none focus:border-bordeaux" />
+              </label>
+              {submitError && <p role="alert" className="text-sm font-medium text-highlight">{submitError}</p>}
+            </div>
+          </section>
         ) : (
           <section className="m-auto w-full text-center">
             <h1 className="font-cormorant text-4xl font-medium tracking-tight text-texte sm:text-5xl">{screen === 4 ? 'Une cérémonie religieuse est-elle prévue ?' : 'Quelles sont vos origines ou univers culturels ?'}</h1>
@@ -338,7 +442,7 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
 
         <footer className="mt-10 flex justify-center pb-2">
           <button type="button" disabled={!canGoOn} onClick={continueFromScreen} className="inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bordeaux disabled:cursor-not-allowed disabled:opacity-[0.32] disabled:shadow-none disabled:hover:bg-highlight">
-            CONTINUER <ChevronRight size={18} aria-hidden="true" />
+            {screen === 7 ? (submitting ? 'CRÉATION…' : 'CRÉER MON COMPTE') : 'CONTINUER'} <ChevronRight size={18} aria-hidden="true" />
           </button>
         </footer>
         {screen === 3 && <button type="button" onClick={() => decideSensitiveData(false)} className="mx-auto pb-6 text-sm text-bordeaux underline underline-offset-4 hover:text-accent">Je préfère passer cette étape</button>}

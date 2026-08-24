@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canContinue, getContinueAction, previousScreen } from './navigation'
+import { COUPLE_ONBOARDING_STEPS, canContinue, getContinueAction, previousScreen } from './navigation'
 
 describe('couple onboarding navigation', () => {
   const data = {
@@ -39,10 +39,16 @@ describe('couple onboarding navigation', () => {
     expect(getContinueAction(3, fromContactRequest)).toEqual({ type: 'show_budget' })
   })
 
-  it('hands the collected data over once the budget screen is behind', () => {
+  it('leads to the account creation once the budget screen is behind', () => {
     const completed = { ...data, sensitiveDataConsent: true, exactBudgetCents: 2_350_000 }
 
-    expect(getContinueAction(6, completed)).toEqual({ type: 'complete_onboarding', data: completed })
+    expect(getContinueAction(6, completed)).toEqual({ type: 'show_account_creation' })
+  })
+
+  it('hands the collected data over from the account creation screen', () => {
+    const completed = { ...data, sensitiveDataConsent: true, exactBudgetCents: 2_350_000 }
+
+    expect(getContinueAction(7, completed)).toEqual({ type: 'complete_onboarding', data: completed })
   })
 
   it('walks back from the budget screen to the screen the couple really came from', () => {
@@ -57,7 +63,33 @@ describe('couple onboarding navigation', () => {
     expect(canContinue(1, { firstName: 'Camille' })).toBe(true)
   })
 
-  it('never blocks screen 2, whose fields must all stay optional', () => {
-    expect(canContinue(2, {})).toBe(true)
+  it('keeps screen 2 blocked until the wedding date and the town are given', () => {
+    // Both back NOT NULL columns, and screen 7 is the only write of the journey:
+    // a value missing here would only fail at the very last screen.
+    expect(canContinue(2, {})).toBe(false)
+    expect(canContinue(2, { weddingDate: '2027-06-18' })).toBe(false)
+    expect(canContinue(2, { location: 'Lyon' })).toBe(false)
+    expect(canContinue(2, { weddingDate: '2027-06-18', location: '   ' })).toBe(false)
+    expect(canContinue(2, { weddingDate: '2027-06-18', location: 'Lyon' })).toBe(true)
+  })
+
+  it('never blocks on the two sliders of screen 2, which always carry a value', () => {
+    expect(canContinue(2, { weddingDate: '2027-06-18', location: 'Lyon' })).toBe(true)
+  })
+
+  it('leaves the sensitive-preference and budget screens unblocked', () => {
+    expect(canContinue(3, {})).toBe(true)
+    expect(canContinue(4, {})).toBe(true)
+    expect(canContinue(5, {})).toBe(true)
+    expect(canContinue(6, {})).toBe(true)
+  })
+
+  it('never walks back out of the welcome screen, whose account already exists', () => {
+    expect(previousScreen(8, data)).toBe(8)
+    expect(previousScreen(7, data)).toBe(6)
+  })
+
+  it('counts the seven steps the couple fills in, the welcome screen aside', () => {
+    expect(COUPLE_ONBOARDING_STEPS).toBe(7)
   })
 })
