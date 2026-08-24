@@ -19,6 +19,16 @@ Un simple épingle ne crée pas de `ProviderLead` : seule une demande de mise en
 relation (« Je veux entrer en contact », WED-49) en produit un. La distinction
 porte sur la création du lead, pas sur les écrans du parcours.
 
+Le contexte que le parcours transmet au serveur pour créer ce lead se réduit au
+**prestataire ciblé**, revalidé côté serveur (existence et statut actif). Le
+libellé du métier affiché au couple pendant le parcours reste dans le navigateur :
+il n'est ni transmis ni persisté (review du 24/08/2026 — il était validé côté
+backend puis jeté).
+
+Si un ticket futur a besoin de savoir *quel service* le couple visait — un
+prestataire pouvant en porter plusieurs via `vendor_service` — c'est une relation
+vers `Service` qu'il faudra poser, pas un libellé libre recopié depuis l'écran.
+
 ## PROVIDER-LEAD-002 — Le budget d'un lead est le budget global du mariage, figé à la création
 
 Statut : `active`
@@ -37,7 +47,15 @@ pas imposé. Les deux valeurs coexistent dans l'état frontend :
 - `exactBudgetCents` — le montant tapé à l'écran 6, s'il l'a été.
 
 Le montant porté à `Wedding.budgetCents` et au lead est `exactBudgetCents` quand
-il existe, la médiane de la tranche sinon (`weddingBudgetCents()`). Écrire le
+il existe, la médiane de la tranche sinon (`weddingBudgetCents()`).
+
+Une saisie **vide ou aberrante** à l'écran 6 — champ laissé vide, `-`, montant
+négatif ou nul — ne conserve pas le dernier montant et n'invente pas de plancher :
+elle **efface** `exactBudgetCents`, ce qui ramène le budget à la tranche choisie
+à l'écran 2 (arbitrage de Denis du 23/08/2026). Un mariage à 0 € ne qualifierait
+rien pour un prestataire, et un plancher à 1 € serait un montant que le couple
+n'a jamais donné. Le montant reste converti à la sortie du champ, jamais à la
+frappe. Écrire le
 montant exact dans `budgetCents` renverrait le curseur de l'écran 2 à sa valeur
 par défaut, un montant libre n'étant jamais l'une des cinq graduations.
 

@@ -9,6 +9,10 @@ export type PlanningStage = 'just_started' | 'in_progress' | 'almost_ready'
  * final atomic submission, which is the only place a `ProviderLead` is created
  * (Stage D / WED-109). A pin never stores it, so it never creates a lead — but
  * it does not change the screens: the budget question is asked either way.
+ *
+ * Only `vendorId` is submitted. `serviceLabel` is here for what the journey
+ * shows the couple; the server has no column for it and revalidates the vendor
+ * anyway, so sending it would mean validating a field only to drop it.
  */
 export interface ProviderContactRequest {
   vendorId: string
@@ -75,6 +79,13 @@ export const GUEST_COUNT_STEP = 10
 export const DEFAULT_GUEST_COUNT = 100
 
 /**
+ * Screen 1 leaves its pills unselected in the mockup, but `couple.planning_stage`
+ * cannot be NULL: the flow opens on the first of the three, which is also the
+ * answer a couple starting the journey would give.
+ */
+export const DEFAULT_PLANNING_STAGE: PlanningStage = 'just_started'
+
+/**
  * `budget_cents` is a PostgreSQL `integer` on both `wedding` and `provider_lead`,
  * so an amount past its ceiling would fail at insert instead of being refused.
  * The bound mirrors `ProviderLead::MAX_BUDGET_CENTS`; the backend re-applies it,
@@ -93,13 +104,24 @@ export function clampBudgetCents(budgetCents: number): number {
  * A half-typed entry — an empty field, a lone `-`, an unfinished `1e` — is not a
  * number yet, and clamping on every keystroke rewrote the field under the cursor:
  * typing `-500` snapped to `0` mid-entry, then the following digits landed on a
- * value the couple never meant. The entry becomes cents only when the field is
- * left or the couple moves on, and anything unreadable keeps the last amount.
+ * value the couple never meant. The entry only becomes cents when the field is
+ * left or the couple moves on.
+ *
+ * At that point an entry that is empty or nonsensical — nothing typed, a lone
+ * `-`, a negative or zero amount — drops the exact amount instead of storing it,
+ * so the budget falls back to the bracket chosen on screen 2 (arbitrage Denis du
+ * 23/08/2026). Keeping a `0 €` wedding would qualify nothing for a vendor, and
+ * inventing a floor the couple never typed would be just as wrong.
  */
 export function withExactBudget(data: CoupleOnboardingData, typed: string): CoupleOnboardingData {
   const euros = Number(typed.trim())
 
-  if (typed.trim() === '' || !Number.isFinite(euros)) return data
+  if (typed.trim() === '' || !Number.isFinite(euros) || euros <= 0) {
+    const withoutExactBudget = { ...data }
+    delete withoutExactBudget.exactBudgetCents
+
+    return withoutExactBudget
+  }
 
   return { ...data, exactBudgetCents: clampBudgetCents(euros * 100) }
 }
@@ -132,6 +154,14 @@ export function withSliderDefaults(data: CoupleOnboardingData): CoupleOnboarding
 
   return {
     ...data,
+    // `User.firstName` is stored as typed today, surrounding spaces included,
+    // while the screen-1 guard reads it trimmed: the two must agree.
+    firstName: data.firstName?.trim(),
+    // `couple.planning_stage` is NOT NULL without a default, and screen 1 lets
+    // the couple move on with only a first name. The opening pill is preselected
+    // the way both sliders are, so the screen always carries a real value — a
+    // typing default, not a column default (COUPLE-ONBOARDING-002).
+    planningStage: data.planningStage ?? DEFAULT_PLANNING_STAGE,
     // Restored from storage the couple can edit, so it is re-bounded here rather
     // than trusted from the value that was written when the screen was left.
     exactBudgetCents: restoredExactBudget === undefined
@@ -142,8 +172,16 @@ export function withSliderDefaults(data: CoupleOnboardingData): CoupleOnboarding
     budgetCents: restoredBudget !== undefined && isKnownBudget(restoredBudget)
       ? restoredBudget
       : DEFAULT_BUDGET_CENTS,
-    guestCount: Math.max(data.guestCount ?? DEFAULT_GUEST_COUNT, GUEST_COUNT_MIN),
+    // Bounded on both ends: sessionStorage is user-writable, and an amount past
+    // the slider ceiling would reach `wedding.guest_count` untouched.
+    guestCount: clampGuestCount(data.guestCount),
   }
+}
+
+export function clampGuestCount(guestCount: number | undefined): number {
+  if (guestCount === undefined || !Number.isFinite(guestCount)) return DEFAULT_GUEST_COUNT
+
+  return Math.min(Math.max(Math.round(guestCount), GUEST_COUNT_MIN), GUEST_COUNT_MAX)
 }
 
 function isKnownBudget(budgetCents: number): boolean {

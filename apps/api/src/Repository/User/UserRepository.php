@@ -17,4 +17,13 @@ class UserRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, User::class);
     }
+
+    /**
+     * Centralise la vérification faite jusqu'ici en ligne dans
+     * AdminVendorDraftService, pour ne pas la dupliquer une troisième fois.
+     */
+    public function isEmailTaken(string $email): bool
+    {
+        return $this->findOneBy(['email' => $email]) !== null;
+    }
 }
