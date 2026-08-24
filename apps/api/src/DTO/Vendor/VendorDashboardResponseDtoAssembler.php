@@ -51,6 +51,7 @@ final readonly class VendorDashboardResponseDtoAssembler
             bookingBlockersUpdatedAt: $this->vendorRepository->findLatestBookingBlockerUpdatedAt($vendor),
             bio:                     $vendor->getBio(),
             vendorServices:          $vendor->resolveVendorServices(),
+            wedreamEnabled:          $vendor->isWedreamEnabled(),
         );
     }
 }
