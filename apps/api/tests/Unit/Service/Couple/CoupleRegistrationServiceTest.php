@@ -22,6 +22,8 @@ use App\Enum\User\UserStatus;
 use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\UserRepository;
 use App\Service\Couple\CoupleRegistrationService;
+use Doctrine\DBAL\Driver\Exception as DriverException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\TestCase;
@@ -141,7 +143,7 @@ final class CoupleRegistrationServiceTest extends TestCase
     public function test_a_contact_request_creates_a_pending_unlocked_lead(): void
     {
         $this->makeService($this->makeEntityManager())->register($this->makeDto(
-            contactRequest: new ProviderContactRequestDto(self::VENDOR_ID, 'Photographe'),
+            contactRequest: new ProviderContactRequestDto(self::VENDOR_ID),
         ));
 
         $lead = $this->persistedOf(ProviderLead::class);
@@ -159,7 +161,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectExceptionCode(422);
 
         $this->makeService($this->makeEntityManager(vendorStatus: VendorStatus::Pending))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID, 'Photographe')),
+            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID)),
         );
     }
 
@@ -169,7 +171,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectExceptionCode(422);
 
         $this->makeService($this->makeEntityManager(vendorStatus: null))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID, 'Photographe')),
+            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID)),
         );
     }
 
@@ -181,6 +183,27 @@ final class CoupleRegistrationServiceTest extends TestCase
         $em->expects($this->never())->method('commit');
 
         $this->expectException(\RuntimeException::class);
+
+        $this->makeService($em)->register($this->makeDto());
+    }
+
+    /**
+     * Le contrôle préalable sur l'email ne ferme pas la fenêtre de course : deux
+     * inscriptions simultanées peuvent le franchir avant qu'aucune n'ait
+     * committé. La violation d'unicité qui en résulte doit répondre le même 409
+     * que le chemin nominal, pas un 500 non mappé par l'ExceptionListener.
+     */
+    public function test_a_concurrent_duplicate_email_answers_409_rather_than_500(): void
+    {
+        $em = $this->makeEntityManager(strict: true);
+        $em->method('flush')->willThrowException(
+            new UniqueConstraintViolationException($this->createStub(DriverException::class), null),
+        );
+        $em->expects($this->once())->method('rollback');
+        $em->expects($this->never())->method('commit');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(409);
 
         $this->makeService($em)->register($this->makeDto());
     }

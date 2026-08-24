@@ -255,6 +255,15 @@ La transaction appartient au service, jamais au contrôleur : voir
 `docs/ADR/ADR-006-flush-service-jamais-controller.md`, que ce ticket a fait
 sortir de son cas par défaut.
 
+Un email déjà pris répond **409 sur les deux chemins** : le contrôle avant
+transaction, et la violation de la contrainte unique `app_user.email` quand deux
+inscriptions concurrentes franchissent ce contrôle avant qu'aucune n'ait committé.
+Le second cas est un filet, pas une redondance : sans lui la violation remonte en
+500, l'`ExceptionListener` ne sachant mapper que `ValidationException`, les
+`HttpExceptionInterface` 422 et `\DomainException`. C'est aussi la seule
+contrainte d'unicité métier de cette transaction, donc le mapping est sans
+ambiguïté (review du 24/08/2026).
+
 Interdit :
 
 - réintroduire un mot de passe généré automatiquement
@@ -266,6 +275,7 @@ Couverture attendue :
 - `apps/api/tests/Functional/Auth/RegisterActionTest.php` (doublon d'email :
 le critère « aucun compte créé » ne se vérifie vraiment qu'au niveau HTTP)
 - `apps/api/tests/Unit/Service/Couple/CoupleRegistrationServiceTest.php`
-(consentement, lead, prestataire inactif)
+(consentement, lead, prestataire inactif, doublon d'email concurrent — la
+concurrence réelle n'étant pas rejouable au niveau fonctionnel)
 - `apps/api/tests/Unit/DTO/Couple/RegisterCoupleRequestDtoTest.php` (mot de passe
 trop court, confirmation différente)

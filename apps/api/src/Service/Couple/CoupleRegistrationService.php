@@ -18,6 +18,7 @@ use App\Enum\User\Role;
 use App\Enum\User\UserStatus;
 use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\UserRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -110,6 +111,17 @@ final readonly class CoupleRegistrationService
 
             $this->em->flush();
             $this->em->commit();
+        } catch (UniqueConstraintViolationException) {
+            // Le contrôle ci-dessus laisse passer deux requêtes concurrentes sur
+            // le même email : elles peuvent le franchir toutes les deux avant
+            // qu'aucune n'ait committé. La contrainte unique de `app_user.email`
+            // est le seul filet qui reste, et c'est aussi la seule contrainte
+            // d'unicité métier de cette transaction — la ramener au même 409 que
+            // le chemin nominal évite un 500 que l'ExceptionListener ne saurait
+            // pas mapper. Même patron que PatchVendorSettingsAction.
+            $this->em->rollback();
+
+            throw new \DomainException('Cet email est déjà utilisé.', 409);
         } catch (\Throwable $throwable) {
             $this->em->rollback();
 
