@@ -100,11 +100,18 @@ describe('registration payload', () => {
     expect(payload.cultureSlugs).toEqual(['europe'])
   })
 
-  it('carries the contact request of a journey that started on one', () => {
+  it('carries the contact request of a journey that started on one, vendor only', () => {
     const contactRequest = { vendorId: '0198f0a1-0000-7000-8000-000000000001', serviceLabel: 'photographe' }
     const payload = buildRegistrationPayload({ ...onboarding, contactRequest }, credentials)
 
-    expect(payload.contactRequest).toEqual(contactRequest)
+    expect(payload.contactRequest).toEqual({ vendorId: '0198f0a1-0000-7000-8000-000000000001' })
+  })
+
+  it('keeps the service label out of the payload', () => {
+    const contactRequest = { vendorId: '0198f0a1-0000-7000-8000-000000000001', serviceLabel: 'photographe' }
+    const payload = buildRegistrationPayload({ ...onboarding, contactRequest }, credentials)
+
+    expect(JSON.stringify(payload)).not.toContain('photographe')
   })
 
   it('carries no contact request for a couple that came from a pin', () => {

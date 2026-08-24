@@ -101,7 +101,7 @@ final class RegisterCoupleRequestDtoTest extends TestCase
     public function test_a_non_uuid_vendor_id_is_rejected(): void
     {
         $violations = $this->validator->validate(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto('pas-un-uuid', 'Photographe')),
+            $this->makeDto(contactRequest: new ProviderContactRequestDto('pas-un-uuid')),
         );
 
         self::assertCount(1, $violations);
@@ -114,7 +114,6 @@ final class RegisterCoupleRequestDtoTest extends TestCase
             $this->validator->validate($this->makeDto(
                 contactRequest: new ProviderContactRequestDto(
                     '0198f1c2-0000-7000-8000-000000000000',
-                    'Photographe',
                 ),
             )),
         );

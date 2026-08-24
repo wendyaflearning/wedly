@@ -19,6 +19,16 @@ Un simple épingle ne crée pas de `ProviderLead` : seule une demande de mise en
 relation (« Je veux entrer en contact », WED-49) en produit un. La distinction
 porte sur la création du lead, pas sur les écrans du parcours.
 
+Le contexte que le parcours transmet au serveur pour créer ce lead se réduit au
+**prestataire ciblé**, revalidé côté serveur (existence et statut actif). Le
+libellé du métier affiché au couple pendant le parcours reste dans le navigateur :
+il n'est ni transmis ni persisté (review du 24/08/2026 — il était validé côté
+backend puis jeté).
+
+Si un ticket futur a besoin de savoir *quel service* le couple visait — un
+prestataire pouvant en porter plusieurs via `vendor_service` — c'est une relation
+vers `Service` qu'il faudra poser, pas un libellé libre recopié depuis l'écran.
+
 ## PROVIDER-LEAD-002 — Le budget d'un lead est le budget global du mariage, figé à la création
 
 Statut : `active`

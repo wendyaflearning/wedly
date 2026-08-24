@@ -9,6 +9,10 @@ export type PlanningStage = 'just_started' | 'in_progress' | 'almost_ready'
  * final atomic submission, which is the only place a `ProviderLead` is created
  * (Stage D / WED-109). A pin never stores it, so it never creates a lead — but
  * it does not change the screens: the budget question is asked either way.
+ *
+ * Only `vendorId` is submitted. `serviceLabel` is here for what the journey
+ * shows the couple; the server has no column for it and revalidates the vendor
+ * anyway, so sending it would mean validating a field only to drop it.
  */
 export interface ProviderContactRequest {
   vendorId: string

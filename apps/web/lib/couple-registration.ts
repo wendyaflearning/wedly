@@ -4,7 +4,6 @@ import {
   DEFAULT_PLANNING_STAGE,
   type CoupleOnboardingData,
   type PlanningStage,
-  type ProviderContactRequest,
   weddingBudgetCents,
 } from './couple-onboarding-store'
 
@@ -24,8 +23,10 @@ export interface CoupleCredentials {
 /**
  * Everything the couple typed across screens 1 to 7, in the shape
  * `POST /api/v1/register` reads it. The contact request keeps the nested form the
- * store already holds — `RegisterCoupleRequestDto` validates it as a whole, its
- * presence alone deciding whether a lead is created (PROVIDER-LEAD-001).
+ * store already holds, narrowed to the vendor alone — `RegisterCoupleRequestDto`
+ * validates it as a whole, its presence deciding whether a lead is created
+ * (PROVIDER-LEAD-001). The service label the journey shows the couple stays in
+ * the browser: the server neither reads nor stores it.
  */
 export interface CoupleRegistrationPayload {
   email: string
@@ -40,7 +41,7 @@ export interface CoupleRegistrationPayload {
   sensitiveDataConsent: boolean
   confessionSlugs: string[]
   cultureSlugs: string[]
-  contactRequest: ProviderContactRequest | null
+  contactRequest: { vendorId: string } | null
 }
 
 /**
@@ -88,7 +89,7 @@ export function buildRegistrationPayload(
     sensitiveDataConsent: consentGranted,
     confessionSlugs: consentGranted ? data.confessionSlugs ?? [] : [],
     cultureSlugs: consentGranted ? data.cultureSlugs ?? [] : [],
-    contactRequest: data.contactRequest ?? null,
+    contactRequest: data.contactRequest ? { vendorId: data.contactRequest.vendorId } : null,
   }
 }
 
