@@ -26,6 +26,7 @@ export type VendorDashboard = {
   portfolio_has_cover: boolean
   booking_blockers_count: number
   booking_blockers_updated_at: string | null
+  wedream_enabled: boolean
 }
 
 export const fetchVendorDashboard = cache(async (): Promise<VendorDashboard | null> => {
