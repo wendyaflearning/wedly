@@ -385,13 +385,30 @@ function TagModalSlide({
   )
 }
 
-function WedreamToggleSlide() {
+/**
+ * Miniature du panneau d'activation réel (WedreamVisibilityClient.tsx) : titre,
+ * accroche raccourcie et toggle **éteint**. Un prestataire qui découvre le guide
+ * n'a encore rien activé — c'est « Activer WedDream » qu'il verra en arrivant sur
+ * l'écran, pas l'inverse.
+ */
+function WedreamActivationSlide() {
   return (
-    <div className="inline-flex items-center gap-3 px-5 py-[11px] rounded-full border-[1.5px] border-accent bg-white">
-      <span className="relative w-[34px] h-[19px] rounded-full bg-accent shrink-0">
-        <span className="absolute top-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-white" />
+    <div className="w-[250px] max-w-full bg-white rounded-[10px] shadow-[0_8px_20px_rgba(41,26,16,0.12)] px-4 py-3.5 flex flex-col items-center text-center gap-2">
+      <p className="font-cormorant font-medium text-[15px] tracking-[-0.01em] leading-tight text-bordeaux">
+        Partagez votre univers dans WedDream
+      </p>
+
+      <p className="font-manrope text-[10px] leading-snug text-bordeaux/60">
+        Vos photos taguées sont prêtes à être découvertes.
+      </p>
+
+      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-[1.5px] border-accent bg-transparent">
+        {/* État éteint : piste `bordeaux/[0.18]` et rond à gauche, comme L363-376 du vrai écran. */}
+        <span className="relative w-[26px] h-[15px] rounded-full bg-bordeaux/[0.18] shrink-0">
+          <span className="absolute top-[2px] left-[2px] w-[11px] h-[11px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]" />
+        </span>
+        <span className="text-[10px] font-bold tracking-[0.02em] text-accent">Activer WedDream</span>
       </span>
-      <span className="text-[11.5px] font-semibold text-bordeaux">Désactiver WedDream</span>
     </div>
   )
 }
@@ -453,7 +470,7 @@ const TAGGING_PHASES: JourneyPhase[] = [
   },
   {
     key: 'activation',
-    content: <WedreamToggleSlide />,
+    content: <WedreamActivationSlide />,
     legend: <Caption>Direction WedDream pour activer</Caption>,
   },
   {
@@ -532,7 +549,7 @@ const STEPS: StepConfig[] = [
     eyebrow: 'Le tagging',
     titleBefore: 'Un geste, ',
     titleItalic: 'pour rejoindre WedDream.',
-    body: "Une pastille orange sur chaque photo signale qu'il lui manque un tag. Un clic, et la modal s'ouvre : choisissez le style qui la représente le mieux, ajoutez quelques précisions si vous le souhaitez, et passez à la suivante. Le tag principal décide si la photo rejoint WedDream, les autres tags enrichissent la photo pour renseigner au mieux les couples. Une fois toutes vos pastilles passées au bordeaux, direction l'onglet WedDream pour activer votre visibilité.",
+    body: "Une photo peut être magnifique et rester invisible si elle n'est pas rangée au bon endroit. C'est justement le rôle du tagging : il classe chaque photo dans votre catégorie, château pour un lieu, cocktail pour un traiteur, reportage pour un photographe, afin qu'un couple qui cherche précisément ça tombe dessus. Une pastille orange sert à signaler qu'une photo n'est pas taguée. Un clic ouvre la modal, vous choisissez le tag principal. Vous pouvez ensuite ajouter d'autres tags : ils donnent plus de détails aux couples, pour les aider à savoir si vous êtes fait pour eux. Une fois toutes les pastilles passées au bordeaux, vos photos sont prêtes à apparaître dans la galerie. Direction WedDream pour activer votre profil.",
     cta: 'Suivant',
     renderIllustration: () => <TaggingIllustration />,
   },
