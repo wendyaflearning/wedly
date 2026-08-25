@@ -138,3 +138,30 @@ button:not([disabled]) {
   transform-origin: top;
   animation: scroll-line 2.2s ease-in-out infinite;
 }
+
+/* Pulse cœur de la phase « galerie » du WedreamJourneyPreview : rejoué à chaque
+   passage de la phase grâce au data-active posé par l'orchestrateur. */
+@keyframes wedream-heart-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.wedream-heart-pop {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.7);
+}
+
+.wedream-journey-phase[data-active='true'] .wedream-heart-pop {
+  animation: wedream-heart-pop 0.4s ease 0.2s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedream-heart-pop {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .wedream-journey-phase[data-active='true'] .wedream-heart-pop {
+    animation: none;
+  }
+}

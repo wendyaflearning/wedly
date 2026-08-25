@@ -1,13 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import type { PortfolioImage } from '@/app/onboarding/[token]/types'
 import { Toast } from '@/components/ui/Toast'
+import {
+  WedreamJourneyPreview,
+  type JourneyPhase,
+} from '@/components/wedream/WedreamJourneyPreview'
 import { useToast } from '@/hooks/useToast'
 import { apiFetch } from '@/lib/fetchClient'
+import {
+  GALLERY_CELL_COUNT,
+  JOURNEY_PLACEHOLDER_BG,
+  JOURNEY_STYLE_GRADIENT,
+  JOURNEY_TRADE_CIRCLE_BG,
+  pickWedreamPhotos,
+  resolvePrimaryTagLabel,
+  resolveVendorTrade,
+  type VendorTrade,
+} from '@/lib/wedream-journey'
 
 interface WedreamVisibilityClientProps {
   wedreamEnabled: boolean
+  vendorServices: string[]
+  portfolioPhotos: PortfolioImage[]
 }
 
 /**
@@ -125,11 +143,162 @@ function EmptyRequestsState() {
   )
 }
 
-export function WedreamVisibilityClient({ wedreamEnabled }: WedreamVisibilityClientProps) {
+function FilledHeartIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <path
+        d="M13 21.5s-9-5.6-9-12.2C4 5.9 6.4 4 9 4c1.8 0 3.3 1 4 2.4C13.7 5 15.2 4 17 4c2.6 0 5 1.9 5 5.3 0 6.6-9 12.2-9 12.2z"
+        fill="var(--color-highlight)"
+      />
+    </svg>
+  )
+}
+
+function SlideSublabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-texte/55">
+      {children}
+    </span>
+  )
+}
+
+function LegendStrong({ children }: { children: React.ReactNode }) {
+  return <strong className="font-bold text-bordeaux">{children}</strong>
+}
+
+/** Phase 1 — le métier réel du prestataire. */
+function JourneyTradeSlide({ trade }: { trade: VendorTrade }) {
+  const TradeIcon = trade.icon
+
+  return (
+    <>
+      <div
+        className="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center"
+        style={{
+          background: JOURNEY_TRADE_CIRCLE_BG,
+          boxShadow: '0 0 0 10px color-mix(in srgb, var(--color-accent) 12%, transparent)',
+        }}
+      >
+        <TradeIcon size={26} strokeWidth={1.5} className="text-accent" aria-hidden="true" />
+      </div>
+
+      <span className="font-cormorant italic font-medium text-[14px] text-bordeaux">
+        {trade.label}
+      </span>
+
+      <SlideSublabel>votre métier</SlideSublabel>
+    </>
+  )
+}
+
+/** Phase 2 — le tag de style mis en avant, sur la carte dégradée de la maquette. */
+function JourneyStyleSlide({ label }: { label: string }) {
+  return (
+    <>
+      <div
+        className="w-[78px] h-24 rounded-md flex items-end justify-center pb-2 shadow-[0_6px_16px_rgba(0,0,0,0.25)]"
+        style={{ background: JOURNEY_STYLE_GRADIENT }}
+      >
+        <span className="font-cormorant font-light text-[12px] text-white">{label}</span>
+      </div>
+
+      <SlideSublabel>votre style</SlideSublabel>
+    </>
+  )
+}
+
+/** Phase 3 — les vraies photos WedDream, cases restantes en placeholder rayé. */
+function JourneyGallerySlide({ photos }: { photos: PortfolioImage[] }) {
+  // Le cœur pulse sur une case qui porte une vraie photo : la 2e dès qu'elle existe,
+  // pour reproduire le décalage de la maquette sans viser une case vide. À 0 photo,
+  // -1 ne correspond à aucun index : aucune case grisée ne reçoit le cœur.
+  const highlightIndex = photos.length === 0 ? -1 : photos.length > 1 ? 1 : 0
+
+  return (
+    <div className="grid grid-cols-4 gap-1.5">
+      {Array.from({ length: GALLERY_CELL_COUNT }, (_, index) => {
+        const photo = photos[index]
+        const highlighted = index === highlightIndex
+
+        return (
+          <div
+            key={photo?.id ?? `empty-${index}`}
+            className={[
+              'relative w-[58px] aspect-[4/3] rounded-[5px] overflow-hidden',
+              highlighted
+                ? 'shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent)_35%,transparent),0_0_14px_color-mix(in_srgb,var(--color-accent)_22%,transparent)]'
+                : '',
+            ].join(' ')}
+            style={photo ? undefined : { background: JOURNEY_PLACEHOLDER_BG }}
+          >
+            {photo && (
+              <Image src={photo.url} alt="" fill sizes="58px" className="object-cover" />
+            )}
+
+            {highlighted && (
+              <span className="wedream-heart-pop absolute top-1/2 left-1/2">
+                <FilledHeartIcon />
+              </span>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export function WedreamVisibilityClient({
+  wedreamEnabled,
+  vendorServices,
+  portfolioPhotos,
+}: WedreamVisibilityClientProps) {
   const [enabled, setEnabled] = useState(wedreamEnabled)
   const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
   const { toast, showToast } = useToast()
+
+  const journeyPhases = useMemo<JourneyPhase[]>(() => {
+    const trade = resolveVendorTrade(vendorServices)
+    const styleLabel = resolvePrimaryTagLabel(portfolioPhotos)
+    const galleryPhotos = pickWedreamPhotos(portfolioPhotos, GALLERY_CELL_COUNT)
+
+    const phases: JourneyPhase[] = []
+
+    // Une phase sans donnée réelle n'est pas rendue vide : elle est simplement
+    // absente du tableau, l'orchestrateur boucle sur ce qui reste.
+    if (trade) {
+      phases.push({
+        key: 'trade',
+        content: <JourneyTradeSlide trade={trade} />,
+        legend: <>Son métier : <LegendStrong>{trade.label}</LegendStrong></>,
+      })
+    }
+
+    if (styleLabel) {
+      phases.push({
+        key: 'style',
+        content: <JourneyStyleSlide label={styleLabel} />,
+        legend: <>Son style : <LegendStrong>{styleLabel}</LegendStrong></>,
+      })
+    }
+
+    // La phase galerie est toujours présente, même sans aucune photo publiée : les
+    // 4 cases retombent sur le placeholder grisé et la boucle continue de tourner
+    // au lieu de se figer sur la seule phase restante.
+    phases.push({
+      key: 'gallery',
+      content: <JourneyGallerySlide photos={galleryPhotos} />,
+      legend: <><LegendStrong>Vos photos</LegendStrong>, découvertes en vrai</>,
+    })
+
+    return phases
+  }, [vendorServices, portfolioPhotos])
+
+  // TODO(WED-121) : cette condition ne masque pas encore le bloc aperçu quand le
+  // prestataire a de vraies demandes en cours — cette donnée n'existe pas côté client
+  // tant que les tickets 8-10 (réception/gestion des leads WedDream) ne sont pas livrés.
+  // Une fois livrés, ajouter un `hasRequests` (ou équivalent) à cette condition.
+  const showJourney = enabled && journeyPhases.length > 0
 
   // TODO(WED-1XX) : ajouter une modal de confirmation ici, mais seulement si des demandes
   // de mise en relation sont en cours — dépend des tickets 8-10 (leads Wedream prestataire),
@@ -213,23 +382,40 @@ export function WedreamVisibilityClient({ wedreamEnabled }: WedreamVisibilityCli
         </CardPanel>
 
         {/* ── Demandes ─────────────────────────────────────────────────── */}
-        <CardPanel>
-          <PanelTitle>Vos demandes de mise en relation</PanelTitle>
-
-          {enabled ? (
-            <EmptyRequestsState />
-          ) : (
-            <div className="relative mt-2">
-              <div className="absolute inset-0 z-[2] rounded-lg bg-creme/60 pointer-events-none" />
-              <div
-                className="filter grayscale blur-[3px] pointer-events-none select-none"
-                aria-hidden="true"
-              >
-                <RequestGrid />
-              </div>
-            </div>
+        {/* Maquette « Activé — vide » : la preview prend la colonne large (60 %) et
+            le panneau des demandes passe à droite. Sous 900 px, tout repasse en une
+            colonne avec la preview au-dessus. */}
+        <div
+          className={
+            showJourney ? 'grid gap-5 items-stretch min-[900px]:grid-cols-[60%_40%]' : undefined
+          }
+        >
+          {showJourney && (
+            <WedreamJourneyPreview
+              phases={journeyPhases}
+              title="Comment un couple vous découvre"
+              badgeLabel="Aperçu"
+            />
           )}
-        </CardPanel>
+
+          <CardPanel>
+            <PanelTitle>Vos demandes de mise en relation</PanelTitle>
+
+            {enabled ? (
+              <EmptyRequestsState />
+            ) : (
+              <div className="relative mt-2">
+                <div className="absolute inset-0 z-[2] rounded-lg bg-creme/60 pointer-events-none" />
+                <div
+                  className="filter grayscale blur-[3px] pointer-events-none select-none"
+                  aria-hidden="true"
+                >
+                  <RequestGrid />
+                </div>
+              </div>
+            )}
+          </CardPanel>
+        </div>
       </div>
     </div>
   )
