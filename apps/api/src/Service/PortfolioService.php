@@ -19,6 +19,7 @@ use Cloudinary\Cloudinary;
 use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class PortfolioService
@@ -32,6 +33,8 @@ class PortfolioService
         private readonly LoggerInterface $logger,
         private readonly SpecialtyRepository $specialtyRepository,
         private readonly TagValueRepository $tagValueRepository,
+        #[Autowire('%kernel.environment%')]
+        private readonly string $environment,
     ) {}
 
     public function uploadPhoto(
@@ -247,11 +250,24 @@ class PortfolioService
         $image->setIsCover(true);
     }
 
+    /**
+     * Staging and prod share one Cloudinary account (CLOUDINARY_CLOUD_NAME):
+     * namespacing by environment keeps staging test uploads out of prod's
+     * folders. Prod keeps its existing, unprefixed path so already-uploaded
+     * images (referenced by the public_id stored on PortfolioImage) don't move.
+     */
+    private function cloudinaryFolder(string $vendorId): string
+    {
+        $namespace = $this->environment === 'prod' ? 'wedly' : sprintf('wedly-%s', $this->environment);
+
+        return sprintf('%s/vendors/%s', $namespace, $vendorId);
+    }
+
     private function cloudinaryUpload(string $filePath, string $vendorId): array
     {
         try {
             return (array) $this->cloudinary->uploadApi()->upload($filePath, [
-                'folder'       => 'wedly/vendors/' . $vendorId,
+                'folder'       => $this->cloudinaryFolder($vendorId),
                 'quality'      => 'auto:good',
                 'fetch_format' => 'auto',
                 'width'        => 2500,
