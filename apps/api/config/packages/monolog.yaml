@@ -53,3 +53,27 @@ when@prod:
                 channels: [deprecation]
                 path: php://stderr
                 formatter: monolog.formatter.json
+
+# Staging reprend l'observabilité de prod (cf. sentry.yaml when@staging), mais
+# "main" troque le buffering fingers_crossed de prod contre un stream simple :
+# fingers_crossed ne flush que si une erreur survient dans la même requête, donc
+# un miroir verbatim de prod laisserait ici le même trou signalé en review sur
+# toute requête qui se termine sans erreur (logs info/debug jamais écrits).
+when@staging:
+    monolog:
+        handlers:
+            main:
+                type: stream
+                path: php://stderr
+                level: debug
+                formatter: monolog.formatter.json
+                channels: ["!event", "!deprecation"]
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]
+            deprecation:
+                type: stream
+                channels: [deprecation]
+                path: php://stderr
+                formatter: monolog.formatter.json
