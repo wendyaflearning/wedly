@@ -21,6 +21,11 @@ services:
       - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN}
     volumes:
       - ./config/jwt:/var/www/html/config/jwt:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.staging-api.rule=Host(`staging-api.wedly-apps.com`)"
