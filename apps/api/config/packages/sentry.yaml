@@ -32,7 +32,12 @@ when@staging:
                 - 'Symfony\Component\ErrorHandler\Error\FatalError'
                 - 'Symfony\Component\Debug\Exception\FatalErrorException'
                 - 'App\Exception\ValidationException'
-        register_error_listener: false
+        # true (the bundle default) here, unlike prod: without it, Sentry\SentryBundle\EventListener\ErrorListener
+        # is never registered, so nothing reaches Sentry except what already hits the Monolog "sentry" handler at
+        # ERROR+. App\EventListener\ExceptionListener converts DomainException (e.g. duplicate email, 409) straight
+        # to a JSON response without logging it, so that whole category was invisible in Sentry — this restores it.
+        # Kept false on prod for now: same fix candidate, rolling out on staging first to check event volume/signal.
+        register_error_listener: true
         register_error_handler: false
 
     monolog:
