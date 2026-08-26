@@ -28,6 +28,7 @@ services:
       - "traefik.http.routers.staging-api.entrypoints=web,websecure"
       - "traefik.http.routers.staging-api.tls.certresolver=mytlschallenge"
       - "traefik.http.services.staging-api.loadbalancer.server.port=80"
+      - "traefik.docker.network=root_default"
     networks:
       - traefik-public
       - staging-internal
