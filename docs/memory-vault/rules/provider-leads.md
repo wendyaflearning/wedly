@@ -11,9 +11,15 @@ les deux profils métier portent les données nécessaires au cycle de vie du le
 À sa création lors de la finalisation de l'onboarding, le lead est :
 
 - au statut `pending` ;
-- d'origine `wedream` ;
-- `unlocked = true` — la mise en relation est gratuite au lancement, décision
-  produit confirmée le 21/08/2026 ; le verrouillage payant viendra plus tard.
+- d'origine `wedream`.
+
+Le lead ne porte **aucun indicateur de déblocage payant**. Le champ `unlocked`,
+posé le 11/08/2026 en attendant l'arbitrage pricing, a été supprimé le
+27/08/2026 (WED-130) : le verrouillage pricing des 10-13/08/2026 a rendu le
+contact prestataire gratuit à vie — le 99 € ne couvre que le copilote Wedmatch
++ Wedplan + Wedwallet. La visibilité de la fiche couple dépendra de la décision
+du prestataire d'accepter ou refuser le lead (Epic 3 / WED-113), jamais d'un
+paiement.
 
 Un simple épingle ne crée pas de `ProviderLead` : seule une demande de mise en
 relation (« Je veux entrer en contact », WED-49) en produit un. La distinction
