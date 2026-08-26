@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Loader2, X } from 'lucide-react'
-import { classifyTagSelection, mergeTagSelection, type TagType } from '@/lib/portfolio-tags'
+import { classifyTagSelection, hasUsablePrimaryTagType, mergeTagSelection, type TagType } from '@/lib/portfolio-tags'
 
 interface PortfolioTaggingModalProps {
   photoUrl: string
@@ -59,6 +59,12 @@ export function PortfolioTaggingModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Filet de sécurité : pas d'axe principal exploitable et rien à signaler → on
+  // ne rend rien plutôt qu'une modale dont le bouton de validation resterait
+  // désactivé. Volontairement pas de fermeture auto : côté admin, `onCancel`
+  // supprime la photo non taguée, une fermeture automatique effacerait l'upload.
+  if (!tagTypesLoading && !tagTypesError && !hasUsablePrimaryTagType(tagTypes)) return null
 
   function selectPrimary(id: string) {
     setSelection((prev) => ({ ...prev, primaryId: id }))

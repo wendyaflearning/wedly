@@ -5,6 +5,7 @@ import type { PortfolioImage } from '@/app/onboarding/[token]/types'
 import type { ServiceOptionNode } from '@/lib/admin-types'
 import { usePortfolioUpload } from '@/hooks/usePortfolioUpload'
 import { useServiceTagTypes } from '@/hooks/useServiceTagTypes'
+import { hasUsablePrimaryTagType } from '@/lib/portfolio-tags'
 import { useToast } from '@/hooks/useToast'
 import { Toast } from '@/components/ui/Toast'
 import { PortfolioTaggingModal } from '@/components/portfolio/PortfolioTaggingModal'
@@ -28,26 +29,6 @@ function findServiceBySlug(nodes: ServiceOptionNode[], slug: string): ServiceOpt
 }
 
 export default function PortfolioPageClient({ initialPhotos, vendorId, vendorServices }: Props) {
-  const hook = usePortfolioUpload({
-    uploadFn: async (file: File) => {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch(`/api/vendor/${vendorId}/portfolio`, { method: 'POST', body: fd })
-      if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur')
-      return res.json() as Promise<PortfolioImage>
-    },
-    deleteFn: async (photoId: string) => {
-      const res = await fetch(`/api/vendor/${vendorId}/portfolio/${photoId}`, { method: 'DELETE' })
-      if (!res.ok && res.status !== 204) throw new Error('delete_failed')
-    },
-    setCoverFn: async (photoId: string) => {
-      const res = await fetch(`/api/vendor/${vendorId}/portfolio/${photoId}/cover`, { method: 'PATCH' })
-      if (!res.ok) throw new Error('cover_failed')
-    },
-    initialPhotos,
-    maxPhotos: MAX_PHOTOS,
-  })
-
   const primarySlug = vendorServices[0] ?? null
   const [primaryService, setPrimaryService] = useState<ServiceOptionNode | null>(null)
 
@@ -71,11 +52,38 @@ export default function PortfolioPageClient({ initialPhotos, vendorId, vendorSer
     ? "Impossible de déterminer votre métier pour charger les tags disponibles."
     : tagTypesFetchError
 
+  // Tous les métiers n'ont pas encore de taxonomie exploitable : sans axe
+  // principal proposant au moins une valeur, la modale s'ouvrirait sans issue
+  // autre qu'annuler. Reste faux pendant le chargement pour éviter le flash de
+  // pastille au montage.
+  const taggingAvailable = !tagTypesLoading && !tagTypesError && hasUsablePrimaryTagType(tagTypes)
+
+  const hook = usePortfolioUpload({
+    uploadFn: async (file: File) => {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch(`/api/vendor/${vendorId}/portfolio`, { method: 'POST', body: fd })
+      if (!res.ok) throw new Error((await res.json()).error ?? 'Erreur')
+      return res.json() as Promise<PortfolioImage>
+    },
+    deleteFn: async (photoId: string) => {
+      const res = await fetch(`/api/vendor/${vendorId}/portfolio/${photoId}`, { method: 'DELETE' })
+      if (!res.ok && res.status !== 204) throw new Error('delete_failed')
+    },
+    setCoverFn: async (photoId: string) => {
+      const res = await fetch(`/api/vendor/${vendorId}/portfolio/${photoId}/cover`, { method: 'PATCH' })
+      if (!res.ok) throw new Error('cover_failed')
+    },
+    initialPhotos,
+    maxPhotos: MAX_PHOTOS,
+    taggingAvailable,
+  })
+
   const { toast, showToast } = useToast()
 
   return (
     <>
-      <PortfolioUploaderDashboard {...hook} maxPhotos={MAX_PHOTOS} />
+      <PortfolioUploaderDashboard {...hook} maxPhotos={MAX_PHOTOS} taggingAvailable={taggingAvailable} />
 
       {hook.taggingQueue.length > 0 && (() => {
         const activeId = hook.taggingQueue[0]

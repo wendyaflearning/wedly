@@ -9,6 +9,10 @@ export interface UsePortfolioUploadOptions {
   setCoverFn:    (photoId: string) => Promise<void>
   initialPhotos: PortfolioImage[]
   maxPhotos:     number
+  /** Faux tant que la taxonomie du métier n'est pas chargée ou n'existe pas :
+   *  `openTagging` devient alors un no-op. Défaut volontairement `false` — un
+   *  appelant qui n'expose pas le tagging n'a rien à passer. */
+  taggingAvailable?: boolean
 }
 
 export interface UsePortfolioUploadReturn {
@@ -32,6 +36,7 @@ export function usePortfolioUpload({
   setCoverFn,
   initialPhotos,
   maxPhotos,
+  taggingAvailable = false,
 }: UsePortfolioUploadOptions): UsePortfolioUploadReturn {
   const [photos, setPhotos]             = useState<PortfolioImage[]>(initialPhotos)
   const [uploadCount, setUploadCount]   = useState(0)
@@ -76,11 +81,15 @@ export function usePortfolioUpload({
   }, [photos, setCoverFn])
 
   const openTagging = useCallback((photoId: string) => {
+    // Aucune taxonomie pour ce métier → la modale n'aurait aucun tag à proposer
+    // et son bouton de validation resterait désactivé : on n'ouvre pas la queue.
+    if (!taggingAvailable) return
+
     // Un clic sur une pastille ne concerne toujours qu'une seule photo déjà
     // existante dans le portfolio — jamais un lot, contrairement au flux admin.
     setTaggingQueue([photoId])
     setCompletedCount(0)
-  }, [])
+  }, [taggingAvailable])
 
   const confirmTagging = useCallback(async (
     photoId: string,
