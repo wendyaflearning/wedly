@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import type {
   AdminSession,
+  AdminTagTypeWithValues,
   AdminVendorDraft,
   AdminVendorDraftListResponse,
   AdminVendorInvitationListResponse,
@@ -118,6 +119,16 @@ export async function fetchAdminVendorDrafts(): Promise<AdminFetchResult<AdminVe
 
 export async function fetchAdminVendorDraft(id: string): Promise<AdminFetchResult<AdminVendorDraft>> {
   return parseResult(await adminFetch(`/api/v1/admin/vendors/${id}/draft`))
+}
+
+export async function fetchServiceTree(): Promise<ServiceOptionNode[]> {
+  return publicFetch<ServiceOptionNode>('/api/v1/services')
+}
+
+export async function fetchAdminServiceTagTypes(
+  serviceId: string
+): Promise<AdminFetchResult<AdminTagTypeWithValues[]>> {
+  return parseResult(await adminFetch(`/api/v1/admin/services/${serviceId}/tag-types`))
 }
 
 export async function fetchAdminVendorFormOptions(): Promise<AdminVendorFormOptions> {

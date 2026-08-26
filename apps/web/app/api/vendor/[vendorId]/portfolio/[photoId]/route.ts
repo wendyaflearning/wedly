@@ -7,12 +7,12 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ vendorId: string; photoId: string }> }
 ) {
-  const { vendorId, photoId } = await params
+  const { photoId } = await params
   const cookieStore = await cookies()
   const token = cookieStore.get('jwt_token')
   if (!token) return Response.json({ error: 'Non authentifié.' }, { status: 401 })
 
-  const res = await fetch(`${API}/api/v1/vendors/${vendorId}/portfolio/${photoId}`, {
+  const res = await fetch(`${API}/api/v1/vendors/me/portfolio/${photoId}`, {
     method: 'DELETE',
     headers: { Cookie: `jwt_token=${token.value}` },
   })

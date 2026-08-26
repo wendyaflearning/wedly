@@ -17,6 +17,7 @@ import { PortfolioGallery } from '@/components/profile/PortfolioGallery'
 import { PortfolioTaggingModal } from '@/components/portfolio/PortfolioTaggingModal'
 import { useAdminPortfolioUpload } from '@/hooks/useAdminPortfolioUpload'
 import { useServiceTagTypes } from '@/hooks/useServiceTagTypes'
+import { hasUsablePrimaryTagType } from '@/lib/portfolio-tags'
 
 const PRICE_TYPES = [
   { value: 'per_service', label: 'Par prestation' },
@@ -177,6 +178,18 @@ export function AdminVendorDraftForm({
   const [copied, setCopied] = useState(false)
   const hasPendingInvitation = draft?.invitation?.status === 'pending' || sendResult !== null
 
+  const { tagTypes, loading: tagTypesLoading, error: tagTypesFetchError } =
+    useServiceTagTypes(form.serviceId || null)
+  const tagTypesError = form.serviceId === ''
+    ? "Sélectionnez d'abord un métier pour pouvoir tagger les photos."
+    : tagTypesFetchError
+
+  // Tous les métiers n'ont pas encore de taxonomie exploitable : sans axe
+  // principal proposant au moins une valeur, la modale s'ouvrirait sans issue
+  // autre qu'annuler. Reste faux pendant le chargement pour éviter d'enfiler
+  // une photo avant de savoir.
+  const taggingAvailable = !tagTypesLoading && !tagTypesError && hasUsablePrimaryTagType(tagTypes)
+
   const {
     images: portfolioImages,
     pendingUploads,
@@ -190,12 +203,8 @@ export function AdminVendorDraftForm({
     completedCount,
   } = useAdminPortfolioUpload({
     initialImages: draft?.portfolio ?? [],
+    taggingAvailable,
   })
-  const { tagTypes, loading: tagTypesLoading, error: tagTypesFetchError } =
-    useServiceTagTypes(form.serviceId || null)
-  const tagTypesError = form.serviceId === ''
-    ? "Sélectionnez d'abord un métier pour pouvoir tagger les photos."
-    : tagTypesFetchError
   const portfolioPendingUploads = useMemo(
     () => pendingUploads.map((p) => ({ localId: p.localId, previewUrl: URL.createObjectURL(p.file), status: p.status })),
     [pendingUploads]
@@ -211,15 +220,14 @@ export function AdminVendorDraftForm({
 
   const priceMin = parseEuroToCents(form.priceMin)
   const priceMax = parseEuroToCents(form.priceMax)
+  const priceRangeValid = priceMin === null || priceMax === null || priceMax >= priceMin
   const canSend =
     form.firstname.trim() !== '' &&
     form.email.trim() !== '' &&
     form.brandName.trim() !== '' &&
     form.serviceId !== '' &&
     form.regionIds.length > 0 &&
-    priceMin !== null &&
-    priceMax !== null &&
-    priceMax >= priceMin &&
+    priceRangeValid &&
     form.priceType !== ''
 
   function update<K extends keyof DraftFormState>(key: K, value: DraftFormState[K]) {
@@ -429,7 +437,9 @@ export function AdminVendorDraftForm({
         </div>
         {!canSend && (
           <p className="mt-3 text-sm text-gris">
-            L’envoi sera disponible après prénom, email, nom de marque, service, régions et prix valides.
+            {priceRangeValid
+              ? 'L’envoi sera disponible après prénom, email, nom de marque, service et régions renseignés.'
+              : 'Le prix minimum ne peut pas dépasser le prix maximum.'}
           </p>
         )}
         {notice && <p className="mt-3 rounded-md bg-success-soft px-3 py-2 text-sm font-semibold text-success">{notice}</p>}
@@ -510,7 +520,7 @@ export function AdminVendorDraftForm({
                 // Une tuile existante implique que le brouillon existe déjà.
                 deleteImage(imageId, vendorId as string).catch(() => setError('La suppression de la photo a échoué.'))
               },
-              onTileClick: (imageId) => openTagging(imageId),
+              onTileClick: taggingAvailable ? (imageId) => openTagging(imageId) : undefined,
               pendingUploads: portfolioPendingUploads,
               onRetry: (localId) => { void retryUpload(localId, vendorId as string) },
             }}
@@ -543,8 +553,8 @@ export function AdminVendorDraftForm({
       <section className="rounded-lg border border-bordeaux/10 bg-white p-5 shadow-sm">
         <h2 className="font-cormorant text-2xl font-semibold text-bordeaux">Zones et tarifs</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <TextField label="Prix minimum (€) *" value={form.priceMin} onChange={(value) => update('priceMin', value)} inputMode="decimal" />
-          <TextField label="Prix maximum (€) *" value={form.priceMax} onChange={(value) => update('priceMax', value)} inputMode="decimal" />
+          <TextField label="Prix minimum (€)" value={form.priceMin} onChange={(value) => update('priceMin', value)} inputMode="decimal" />
+          <TextField label="Prix maximum (€)" value={form.priceMax} onChange={(value) => update('priceMax', value)} inputMode="decimal" />
           <TextField label="Ville" value={form.legalCity} onChange={(value) => update('legalCity', value)} />
         </div>
         <CheckboxGrid

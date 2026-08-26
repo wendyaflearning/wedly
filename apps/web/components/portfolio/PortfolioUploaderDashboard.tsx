@@ -4,9 +4,12 @@ import type { UsePortfolioUploadReturn } from '@/hooks/usePortfolioUpload'
 
 interface Props extends UsePortfolioUploadReturn {
   maxPhotos: number
+  /** Le métier du prestataire a-t-il une taxonomie de tags ? Faux tant qu'elle
+   *  charge, pour ne pas faire clignoter la pastille au montage. */
+  taggingAvailable: boolean
 }
 
-export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePhoto, setCover, isUploading, count, isFull, maxPhotos }: Props) {
+export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePhoto, setCover, isUploading, count, isFull, maxPhotos, openTagging, taggingAvailable }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [localError, setLocalError]     = useState<string | null>(null)
   const [justAddedId, setJustAddedId]   = useState<string | null>(null)
@@ -177,6 +180,9 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
                 </span>
               </div>
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '28px 14px 14px', background: 'linear-gradient(to top, rgba(41,26,16,0.6) 0%, transparent 100%)' }} />
+              {taggingAvailable && (
+                <TagStatusBadge visible={coverPhoto.is_visible_in_wedream} onClick={() => openTagging(coverPhoto.id)} />
+              )}
               {coverPhoto.id === justAddedId && <SuccessBadge />}
             </>
           ) : (
@@ -208,9 +214,12 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
                   alt={`Photo ${i + 2}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
-                <span className="font-josefin" style={{ position: 'absolute', top: 6, left: 8, fontSize: 10, color: 'rgba(255,246,237,0.8)', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                <span className="font-josefin" style={{ position: 'absolute', top: 6, left: 8, fontSize: 11, color: '#FFF6ED', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
                   {String(i + 2).padStart(2, '0')}
                 </span>
+                {taggingAvailable && (
+                  <TagStatusBadge visible={photo.is_visible_in_wedream} onClick={() => openTagging(photo.id)} />
+                )}
                 <DeleteButton onDelete={() => deletePhoto(photo.id)} />
                 {photo.id === justAddedId && <SuccessBadge />}
               </div>
@@ -237,18 +246,16 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
                 onClick={() => !isUploading && fileInputRef.current?.click()}
                 style={{
                   aspectRatio: '1 / 1', borderRadius: 8,
-                  border: '1.5px dashed rgba(78,26,50,0.2)',
+                  border: '1px solid rgba(78,26,50,0.08)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   gap: 5, cursor: isUploading ? 'default' : 'pointer',
-                  background: 'rgba(78,26,50,0.015)',
+                  background: 'rgba(78,26,50,0.035)',
                 }}
               >
-                <span className="font-josefin" style={{ fontSize: 10, color: 'rgba(78,26,50,0.25)', letterSpacing: '0.04em' }}>
+                <span className="font-josefin" style={{ fontSize: 11, color: 'rgba(41,26,16,0.35)', letterSpacing: '0.04em' }}>
                   {String(i + 2).padStart(2, '0')}
                 </span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 3v10M3 8h10" stroke="rgba(227,87,4,0.45)" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
+                <span style={{ fontSize: 16, color: 'var(--color-accent)', lineHeight: 1 }}>+</span>
               </div>
             )
           )}
@@ -268,6 +275,38 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
         <p className="font-josefin text-sm text-highlight text-center" style={{ marginTop: 12 }}>{localError}</p>
       )}
     </div>
+  )
+}
+
+// ── Pastille de statut de tagging ────────────────────────────────────────────
+
+function TagStatusBadge({ visible, onClick }: { visible: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={e => { e.stopPropagation(); onClick() }}
+      aria-label={visible ? 'Modifier les tags de cette photo' : 'Taguer cette photo'}
+      style={{
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        width: 20,
+        height: 20,
+        borderRadius: '50%',
+        border: 'none',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: visible ? 'var(--color-bordeaux)' : 'var(--color-highlight)',
+      }}
+    >
+      {visible && (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+          <path d="M5 13L9.5 17.5L19 6.5" stroke="#FFF6ED" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
   )
 }
 
@@ -330,10 +369,10 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
     <button
       onClick={e => { e.stopPropagation(); setConfirming(true) }}
       aria-label="Supprimer"
-      style={{ position: 'absolute', top: 4, right: 4, width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'rgba(41,26,16,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ position: 'absolute', top: 8, right: 34, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
-      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-        <path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="#FFF6ED" strokeWidth="1.4" strokeLinecap="round" />
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+        <path d="M5 5L19 19M19 5L5 19" stroke="#FFF6ED" strokeWidth="2.4" strokeLinecap="round" />
       </svg>
     </button>
   )

@@ -21,6 +21,7 @@ final readonly class VendorDashboardResponseDto
     public ?string $booking_blockers_updated_at;
     public ?string $bio;
     public array $vendorServices;
+    public bool $wedream_enabled;
 
     public function __construct(
         string $id,
@@ -38,6 +39,7 @@ final readonly class VendorDashboardResponseDto
         ?\DateTimeImmutable $bookingBlockersUpdatedAt,
         ?string $bio,
         array $vendorServices,
+        bool $wedreamEnabled,
     ) {
         $this->id                          = $id;
         $this->firstName                   = $firstName;
@@ -54,5 +56,6 @@ final readonly class VendorDashboardResponseDto
         $this->booking_blockers_updated_at = $bookingBlockersUpdatedAt?->format(\DateTimeInterface::ATOM);
         $this->bio                         = $bio;
         $this->vendorServices              = $vendorServices;
+        $this->wedream_enabled             = $wedreamEnabled;
     }
 }

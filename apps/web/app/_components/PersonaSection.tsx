@@ -68,7 +68,7 @@ export default function PersonaSection() {
           {/* CTA block */}
           <div className="relative flex flex-col gap-4">
             <Link
-              href="/wedding-fair"
+              href="/wedream"
               className="inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-80"
               style={{
                 fontFamily: "var(--font-dm-sans-var)",

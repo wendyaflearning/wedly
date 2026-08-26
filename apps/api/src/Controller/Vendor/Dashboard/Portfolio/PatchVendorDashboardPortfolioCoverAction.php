@@ -10,49 +10,45 @@ use App\Repository\Vendor\PortfolioImageRepository;
 use App\Service\PortfolioService;
 use App\Service\Vendor\VendorOwnershipResolver;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
-#[Route('/api/v1/vendors/{id}/portfolio/{photoId}/cover', name: 'api_vendor_dashboard_portfolio_cover', methods: ['PATCH'])]
-final class PatchVendorDashboardPortfolioCoverAction extends AbstractController
+#[Route(
+    '/api/v1/vendors/me/portfolio/{photoId}/cover',
+    name: 'api_vendor_dashboard_portfolio_cover',
+    requirements: ['photoId' => '[0-9a-fA-F-]{36}'],
+    methods: ['PATCH'],
+)]
+final readonly class PatchVendorDashboardPortfolioCoverAction
 {
     public function __construct(
-        private readonly Security                  $security,
-        private readonly VendorOwnershipResolver   $vendorOwnershipResolver,
-        private readonly PortfolioImageRepository  $portfolioImageRepository,
-        private readonly PortfolioService          $portfolioService,
-        private readonly EntityManagerInterface    $em,
+        private Security                  $security,
+        private VendorOwnershipResolver   $vendorOwnershipResolver,
+        private PortfolioImageRepository  $portfolioImageRepository,
+        private PortfolioService          $portfolioService,
+        private EntityManagerInterface    $em,
     ) {}
 
-    public function __invoke(string $id, string $photoId): JsonResponse
+    public function __invoke(string $photoId): JsonResponse
     {
-        try {
-            /** @var User $user */
-            $user   = $this->security->getUser();
-            $vendor = $this->vendorOwnershipResolver->resolve($user);
+        /** @var User $user */
+        $user   = $this->security->getUser();
+        $vendor = $this->vendorOwnershipResolver->resolve($user);
 
-            if ($vendor->getId()->toRfc4122() !== $id) {
-                return new JsonResponse(['error' => 'Accès interdit.'], 403);
-            }
+        $image = $this->portfolioImageRepository->findOneBy([
+            'id'     => $photoId,
+            'vendor' => $vendor,
+        ]);
 
-            $image = $this->portfolioImageRepository->findOneBy([
-                'id'     => $photoId,
-                'vendor' => $vendor,
-            ]);
-
-            if ($image === null) {
-                return new JsonResponse(['error' => 'Image introuvable.'], 404);
-            }
-
-            $this->portfolioService->setCover($image, $vendor);
-            $this->em->flush();
-        } catch (\DomainException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], $e->getCode());
+        if ($image === null) {
+            return new JsonResponse(['error' => 'Image introuvable.'], 404);
         }
+
+        $this->portfolioService->setCover($image, $vendor);
+        $this->em->flush();
 
         return new JsonResponse(new PortfolioImageResponseDto($image), 200);
     }

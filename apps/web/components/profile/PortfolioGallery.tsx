@@ -14,7 +14,9 @@ type PendingUploadTile = {
 type EditableProps = {
   onAddFiles: (files: FileList) => void
   onDelete: (imageId: string) => void
-  onTileClick: (imageId: string) => void
+  /** Absent quand le métier n'a pas de taxonomie de tags : la tuile retombe
+   *  alors sur la lightbox au lieu d'ouvrir la modale de tagging. */
+  onTileClick?: (imageId: string) => void
   pendingUploads: PendingUploadTile[]
   onRetry: (localId: string) => void
 }
@@ -48,7 +50,7 @@ export function PortfolioGallery({
               <button
                 type="button"
                 onClick={() => {
-                  if (editable) {
+                  if (editable?.onTileClick) {
                     editable.onTileClick(image.id)
                   } else {
                     setActiveIndex(index)
