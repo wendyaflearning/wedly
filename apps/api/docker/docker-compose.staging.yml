@@ -3,24 +3,37 @@ services:
     image: ghcr.io/wendyaflearning/wedly-api:staging
     environment:
       - APP_ENV=staging
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_SECRET=${APP_SECRET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - DATABASE_URL=${DATABASE_URL_STAGING}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
-      - JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+      - JWT_SECRET_KEY=/var/www/html/config/jwt/private.pem
+      - JWT_PUBLIC_KEY=/var/www/html/config/jwt/public.pem
       - JWT_PASSPHRASE=${JWT_PASSPHRASE_STAGING}
-      - MAILER_DSN=${MAILER_DSN} 
+      - MAILER_DSN=${MAILER_DSN}
       - SENTRY_DSN=${SENTRY_DSN}
       - SLACK_WEBHOOK=${SLACK_WEBHOOK}
       - VENDOR_FEEDBACK_SLACK_WEBHOOK_URL=${VENDOR_FEEDBACK_SLACK_WEBHOOK_URL}
       - SLACK_MESSAGE_PREFIX=🧪 [STAGING]
       - PAPPERS_API_TOKEN=${PAPPERS_API_TOKEN}
+      - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN}
+    volumes:
+      - ./config/jwt:/var/www/html/config/jwt:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.staging-api.rule=Host(`staging-api.wedly-apps.com`)"
       - "traefik.http.routers.staging-api.tls=true"
       - "traefik.http.routers.staging-api.entrypoints=web,websecure"
       - "traefik.http.routers.staging-api.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.staging-api.loadbalancer.server.port=80"
+      - "traefik.docker.network=root_default"
     networks:
       - traefik-public
       - staging-internal
