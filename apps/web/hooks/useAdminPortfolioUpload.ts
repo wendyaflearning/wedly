@@ -12,6 +12,9 @@ export type PendingUpload = {
 
 export interface UseAdminPortfolioUploadOptions {
   initialImages: PortfolioImage[]
+  /** Faux tant que la taxonomie du métier sélectionné n'est pas chargée ou
+   *  n'existe pas : ni l'upload ni `openTagging` n'alimentent alors la queue. */
+  taggingAvailable: boolean
 }
 
 export interface UseAdminPortfolioUploadReturn {
@@ -29,6 +32,7 @@ export interface UseAdminPortfolioUploadReturn {
 
 export function useAdminPortfolioUpload({
   initialImages,
+  taggingAvailable,
 }: UseAdminPortfolioUploadOptions): UseAdminPortfolioUploadReturn {
   const [images, setImages] = useState<PortfolioImage[]>(initialImages)
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([])
@@ -56,15 +60,19 @@ export function useAdminPortfolioUpload({
       const data = (await response.json()) as { id: string; url: string }
 
       setImages(prev => [...prev, { id: data.id, url: data.url, isCover: false, tags: [], isVisibleInWedream: false }])
-      setTaggingQueue(prev => {
-        if (prev.length === 0) setCompletedCount(0)
-        return [...prev, data.id]
-      })
+      // Sans taxonomie, enfiler la photo ouvrirait une modale vide dont la seule
+      // sortie (annuler) supprimerait la photo qu'on vient tout juste d'uploader.
+      if (taggingAvailable) {
+        setTaggingQueue(prev => {
+          if (prev.length === 0) setCompletedCount(0)
+          return [...prev, data.id]
+        })
+      }
       setPendingUploads(prev => prev.filter(p => p.localId !== localId))
     } catch {
       setPendingUploads(prev => prev.map(p => (p.localId === localId ? { ...p, status: 'error' } : p)))
     }
-  }, [])
+  }, [taggingAvailable])
 
   const addFiles = useCallback(async (files: FileList, ensureVendorId: () => Promise<string | null>) => {
     const entries: PendingUpload[] = Array.from(files).map(file => ({
@@ -112,12 +120,16 @@ export function useAdminPortfolioUpload({
   }, [images])
 
   const openTagging = useCallback((imageId: string) => {
+    // Aucune taxonomie pour ce métier → la modale n'aurait aucun tag à proposer
+    // et son bouton de validation resterait désactivé : on n'ouvre pas la queue.
+    if (!taggingAvailable) return
+
     // La modale de tagging est un overlay plein écran : on ne peut jamais cliquer
     // une tuile existante pendant qu'une queue est déjà active, donc la queue est
     // toujours vide quand openTagging est appelé depuis un clic utilisateur.
     setTaggingQueue([imageId])
     setCompletedCount(0)
-  }, [])
+  }, [taggingAvailable])
 
   const confirmTagging = useCallback(async (
     imageId: string,

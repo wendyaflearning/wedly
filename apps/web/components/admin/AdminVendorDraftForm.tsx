@@ -17,6 +17,7 @@ import { PortfolioGallery } from '@/components/profile/PortfolioGallery'
 import { PortfolioTaggingModal } from '@/components/portfolio/PortfolioTaggingModal'
 import { useAdminPortfolioUpload } from '@/hooks/useAdminPortfolioUpload'
 import { useServiceTagTypes } from '@/hooks/useServiceTagTypes'
+import { hasUsablePrimaryTagType } from '@/lib/portfolio-tags'
 
 const PRICE_TYPES = [
   { value: 'per_service', label: 'Par prestation' },
@@ -177,6 +178,18 @@ export function AdminVendorDraftForm({
   const [copied, setCopied] = useState(false)
   const hasPendingInvitation = draft?.invitation?.status === 'pending' || sendResult !== null
 
+  const { tagTypes, loading: tagTypesLoading, error: tagTypesFetchError } =
+    useServiceTagTypes(form.serviceId || null)
+  const tagTypesError = form.serviceId === ''
+    ? "Sélectionnez d'abord un métier pour pouvoir tagger les photos."
+    : tagTypesFetchError
+
+  // Tous les métiers n'ont pas encore de taxonomie exploitable : sans axe
+  // principal proposant au moins une valeur, la modale s'ouvrirait sans issue
+  // autre qu'annuler. Reste faux pendant le chargement pour éviter d'enfiler
+  // une photo avant de savoir.
+  const taggingAvailable = !tagTypesLoading && !tagTypesError && hasUsablePrimaryTagType(tagTypes)
+
   const {
     images: portfolioImages,
     pendingUploads,
@@ -190,12 +203,8 @@ export function AdminVendorDraftForm({
     completedCount,
   } = useAdminPortfolioUpload({
     initialImages: draft?.portfolio ?? [],
+    taggingAvailable,
   })
-  const { tagTypes, loading: tagTypesLoading, error: tagTypesFetchError } =
-    useServiceTagTypes(form.serviceId || null)
-  const tagTypesError = form.serviceId === ''
-    ? "Sélectionnez d'abord un métier pour pouvoir tagger les photos."
-    : tagTypesFetchError
   const portfolioPendingUploads = useMemo(
     () => pendingUploads.map((p) => ({ localId: p.localId, previewUrl: URL.createObjectURL(p.file), status: p.status })),
     [pendingUploads]
@@ -511,7 +520,7 @@ export function AdminVendorDraftForm({
                 // Une tuile existante implique que le brouillon existe déjà.
                 deleteImage(imageId, vendorId as string).catch(() => setError('La suppression de la photo a échoué.'))
               },
-              onTileClick: (imageId) => openTagging(imageId),
+              onTileClick: taggingAvailable ? (imageId) => openTagging(imageId) : undefined,
               pendingUploads: portfolioPendingUploads,
               onRetry: (localId) => { void retryUpload(localId, vendorId as string) },
             }}

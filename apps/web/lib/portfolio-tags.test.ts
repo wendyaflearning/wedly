@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { classifyTagSelection, mergeTagSelection, type TagType } from './portfolio-tags'
+import { classifyTagSelection, hasUsablePrimaryTagType, mergeTagSelection, type TagType } from './portfolio-tags'
 
 const tagTypes: TagType[] = [
   {
@@ -78,5 +78,45 @@ describe('mergeTagSelection', () => {
       'value-exterieur',
       'value-interieur',
     ])
+  })
+})
+
+describe('hasUsablePrimaryTagType', () => {
+  it('est vrai quand l\u2019axe principal propose au moins une valeur', () => {
+    expect(hasUsablePrimaryTagType(tagTypes)).toBe(true)
+  })
+
+  it('est faux quand le service n\u2019a aucun TagType', () => {
+    expect(hasUsablePrimaryTagType([])).toBe(false)
+  })
+
+  it('est faux quand l\u2019axe principal existe mais n\u2019a aucune valeur', () => {
+    // Cas constaté sur le métier « live sketching » : le TagType primaire
+    // « Spécialités » existe et est actif, mais sans aucune TagValue — la modale
+    // s\u2019ouvrait alors sur un axe vide, bouton de validation à jamais désactivé.
+    const emptyPrimary: TagType[] = [
+      { id: 'type-primary', label: 'Spécialités', isPrimary: true, maxSelections: 1, tagValues: [] },
+      {
+        id: 'type-optional',
+        label: 'Ambiance',
+        isPrimary: false,
+        maxSelections: null,
+        tagValues: [{ id: 'value-vibrant', label: 'Moment vibrant' }],
+      },
+    ]
+    expect(hasUsablePrimaryTagType(emptyPrimary)).toBe(false)
+  })
+
+  it('est faux quand il n\u2019existe que des axes optionnels', () => {
+    const optionalOnly: TagType[] = [
+      {
+        id: 'type-optional',
+        label: 'Ambiance',
+        isPrimary: false,
+        maxSelections: null,
+        tagValues: [{ id: 'value-vibrant', label: 'Moment vibrant' }],
+      },
+    ]
+    expect(hasUsablePrimaryTagType(optionalOnly)).toBe(false)
   })
 })

@@ -4,9 +4,12 @@ import type { UsePortfolioUploadReturn } from '@/hooks/usePortfolioUpload'
 
 interface Props extends UsePortfolioUploadReturn {
   maxPhotos: number
+  /** Le métier du prestataire a-t-il une taxonomie de tags ? Faux tant qu'elle
+   *  charge, pour ne pas faire clignoter la pastille au montage. */
+  taggingAvailable: boolean
 }
 
-export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePhoto, setCover, isUploading, count, isFull, maxPhotos, openTagging }: Props) {
+export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePhoto, setCover, isUploading, count, isFull, maxPhotos, openTagging, taggingAvailable }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [localError, setLocalError]     = useState<string | null>(null)
   const [justAddedId, setJustAddedId]   = useState<string | null>(null)
@@ -177,7 +180,9 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
                 </span>
               </div>
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '28px 14px 14px', background: 'linear-gradient(to top, rgba(41,26,16,0.6) 0%, transparent 100%)' }} />
-              <TagStatusBadge visible={coverPhoto.is_visible_in_wedream} onClick={() => openTagging(coverPhoto.id)} />
+              {taggingAvailable && (
+                <TagStatusBadge visible={coverPhoto.is_visible_in_wedream} onClick={() => openTagging(coverPhoto.id)} />
+              )}
               {coverPhoto.id === justAddedId && <SuccessBadge />}
             </>
           ) : (
@@ -212,7 +217,9 @@ export default function PortfolioUploaderDashboard({ photos, addPhoto, deletePho
                 <span className="font-josefin" style={{ position: 'absolute', top: 6, left: 8, fontSize: 11, color: '#FFF6ED', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
                   {String(i + 2).padStart(2, '0')}
                 </span>
-                <TagStatusBadge visible={photo.is_visible_in_wedream} onClick={() => openTagging(photo.id)} />
+                {taggingAvailable && (
+                  <TagStatusBadge visible={photo.is_visible_in_wedream} onClick={() => openTagging(photo.id)} />
+                )}
                 <DeleteButton onDelete={() => deletePhoto(photo.id)} />
                 {photo.id === justAddedId && <SuccessBadge />}
               </div>
