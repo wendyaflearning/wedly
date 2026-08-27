@@ -166,7 +166,7 @@ final class VendorWeddreamLaunchEmailServiceTest extends TestCase
         $context = $sentEmail->getContext();
         self::assertSame('Accéder à mon espace', $context['ctaLabel']);
         self::assertSame(self::FRONTEND_URL . '/dashboard', $context['ctaUrl']);
-        self::assertSame('https://tally.so/r/TODO-CONFIRMER-URL', $context['consentFormUrl']);
+        self::assertSame('https://tally.so/r/xX5okd', $context['consentFormUrl']);
     }
 
     public function test_send_to_pending_vendor_creates_token_then_logs_success(): void
