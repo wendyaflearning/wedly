@@ -25,9 +25,7 @@ use Symfony\Component\Mime\Address;
 
 final readonly class VendorWeddreamLaunchEmailService
 {
-    // TODO: confirmer l'URL réelle du formulaire de consentement Tally avant le vrai envoi
-    // (bloquant avant le 6 septembre, pas bloquant pour ce merge)
-    private const CONSENT_FORM_URL = 'https://tally.so/r/TODO-CONFIRMER-URL';
+    private const CONSENT_FORM_URL = 'https://tally.so/r/xX5okd';
 
     public function __construct(
         private VendorEmailLogRepository $vendorEmailLogRepository,
