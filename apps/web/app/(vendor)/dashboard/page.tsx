@@ -31,7 +31,7 @@ export default async function DashboardPage({
   )
 
   return (
-    <GuideProvider>
+    <GuideProvider vendorServices={data.vendorServices}>
       <div className="relative">
         {showPasswordBanner && <PasswordResetBanner />}
         <DashboardHero

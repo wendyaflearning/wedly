@@ -59,8 +59,9 @@ class PortfolioService
             ->setIsCover(false)
             ->setSortOrder($resolvedSortOrder);
 
-        // TODO WED-100: $specialties/$styles ne sont plus attachées à $image depuis la suppression de
-        // portfolio_image_specialty/portfolio_image_style (WED-97) — à remplacer par un mapping vers TagValue.
+        // $specialties/$styles ne sont plus attachées à $image depuis la suppression de
+        // portfolio_image_specialty/portfolio_image_style (WED-97). Le tagging réel de la photo
+        // se fait désormais via PortfolioService::updatePortfolioTags() (TagValue), pas à l'upload.
 
         $this->em->persist($image);
 

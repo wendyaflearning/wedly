@@ -33,6 +33,9 @@ class TagValue
     #[ORM\Column(name: 'is_active', type: 'boolean', options: ['default' => true])]
     private bool $isActive = true;
 
+    #[ORM\Column(name: 'vignette_url', length: 512, nullable: true)]
+    private ?string $vignetteUrl = null;
+
     public function getId(): UuidV7
     {
         return $this->id;
@@ -70,6 +73,18 @@ class TagValue
     public function setIsActive(bool $isActive): static
     {
         $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    public function getVignetteUrl(): ?string
+    {
+        return $this->vignetteUrl;
+    }
+
+    public function setVignetteUrl(?string $vignetteUrl): static
+    {
+        $this->vignetteUrl = $vignetteUrl;
 
         return $this;
     }

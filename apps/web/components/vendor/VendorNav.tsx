@@ -94,6 +94,7 @@ export function VendorNav({ vendorFirstName, vendorLastName, vendorEmail, vendor
           <nav className="flex gap-8">
             {desktopLink('/dashboard', 'Dashboard')}
             {lockedDesktopItem('Wedmatch')}
+            {desktopLink('/dashboard/wedream', 'WedDream')}
             {lockedDesktopItem('Matches & Messagerie')}
             {desktopLink('/dashboard/profile', 'Mon Profil')}
             {desktopLink('/parametres', 'Paramètres')}

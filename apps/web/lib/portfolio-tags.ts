@@ -11,6 +11,17 @@ export type TagType = {
   tagValues: TagValueOption[]
 }
 
+/**
+ * Le tagging n'est exploitable que s'il existe un axe principal proposant au
+ * moins une valeur : la modale n'active son bouton de validation qu'une fois un
+ * tag primaire choisi. Un service sans aucun TagType, ou dont le TagType
+ * primaire n'a aucune TagValue active, produit donc une modale sans issue.
+ */
+export function hasUsablePrimaryTagType(tagTypes: TagType[]): boolean {
+  const primary = tagTypes.find(t => t.isPrimary)
+  return primary !== undefined && primary.tagValues.length > 0
+}
+
 export function classifyTagSelection(
   tagTypes: TagType[],
   tagValueIds: string[]

@@ -9,16 +9,25 @@ export interface UsePortfolioUploadOptions {
   setCoverFn:    (photoId: string) => Promise<void>
   initialPhotos: PortfolioImage[]
   maxPhotos:     number
+  /** Faux tant que la taxonomie du métier n'est pas chargée ou n'existe pas :
+   *  `openTagging` devient alors un no-op. Défaut volontairement `false` — un
+   *  appelant qui n'expose pas le tagging n'a rien à passer. */
+  taggingAvailable?: boolean
 }
 
 export interface UsePortfolioUploadReturn {
-  photos:      PortfolioImage[]
-  addPhoto:    (file: File, isCover?: boolean) => Promise<PortfolioImage>
-  deletePhoto: (photoId: string) => Promise<void>
-  setCover:    (photoId: string) => Promise<void>
-  isUploading: boolean
-  count:       number
-  isFull:      boolean
+  photos:         PortfolioImage[]
+  addPhoto:       (file: File, isCover?: boolean) => Promise<PortfolioImage>
+  deletePhoto:    (photoId: string) => Promise<void>
+  setCover:       (photoId: string) => Promise<void>
+  isUploading:    boolean
+  count:          number
+  isFull:         boolean
+  taggingQueue:   string[]
+  openTagging:    (photoId: string) => void
+  confirmTagging: (photoId: string, vendorId: string, tagValueIds: string[]) => Promise<void>
+  cancelTagging:  (photoId: string) => void
+  completedCount: number
 }
 
 export function usePortfolioUpload({
@@ -27,9 +36,12 @@ export function usePortfolioUpload({
   setCoverFn,
   initialPhotos,
   maxPhotos,
+  taggingAvailable = false,
 }: UsePortfolioUploadOptions): UsePortfolioUploadReturn {
-  const [photos, setPhotos]           = useState<PortfolioImage[]>(initialPhotos)
-  const [uploadCount, setUploadCount] = useState(0)
+  const [photos, setPhotos]             = useState<PortfolioImage[]>(initialPhotos)
+  const [uploadCount, setUploadCount]   = useState(0)
+  const [taggingQueue, setTaggingQueue] = useState<string[]>([])
+  const [completedCount, setCompletedCount] = useState(0)
 
   const addPhoto = useCallback(async (file: File, isCover?: boolean): Promise<PortfolioImage> => {
     setUploadCount(c => c + 1)
@@ -68,6 +80,52 @@ export function usePortfolioUpload({
     }
   }, [photos, setCoverFn])
 
+  const openTagging = useCallback((photoId: string) => {
+    // Aucune taxonomie pour ce métier → la modale n'aurait aucun tag à proposer
+    // et son bouton de validation resterait désactivé : on n'ouvre pas la queue.
+    if (!taggingAvailable) return
+
+    // Un clic sur une pastille ne concerne toujours qu'une seule photo déjà
+    // existante dans le portfolio — jamais un lot, contrairement au flux admin.
+    setTaggingQueue([photoId])
+    setCompletedCount(0)
+  }, [taggingAvailable])
+
+  const confirmTagging = useCallback(async (
+    photoId: string,
+    vendorId: string,
+    tagValueIds: string[],
+  ) => {
+    const response = await fetch(`/api/vendor/${vendorId}/portfolio/${photoId}/tags`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tagValueIds }),
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(typeof data.error === 'string' ? data.error : 'La mise à jour des tags a échoué.')
+    }
+
+    // Cette route renvoie du camelCase (isVisibleInWedream) alors que le GET qui
+    // alimente l'état initial renvoie du snake_case (is_visible_in_wedream) — les
+    // deux endpoints ne partagent pas le même DTO côté backend.
+    const data = (await response.json()) as { id: string; tags: PortfolioImage['tags']; isVisibleInWedream: boolean }
+
+    setPhotos(prev => prev.map(ph => (
+      ph.id === photoId ? { ...ph, tags: data.tags, is_visible_in_wedream: data.isVisibleInWedream } : ph
+    )))
+    setTaggingQueue(prev => prev.filter(id => id !== photoId))
+    setCompletedCount(c => c + 1)
+  }, [])
+
+  const cancelTagging = useCallback((photoId: string) => {
+    // Contrairement au flux admin, une photo entrant dans la queue est toujours
+    // déjà persistée dans le portfolio : annuler ferme juste la modale, on ne
+    // supprime jamais la photo.
+    setTaggingQueue(prev => prev.filter(id => id !== photoId))
+  }, [])
+
   return {
     photos,
     addPhoto,
@@ -76,5 +134,10 @@ export function usePortfolioUpload({
     isUploading: uploadCount > 0,
     count:       photos.length,
     isFull:      photos.length >= maxPhotos,
+    taggingQueue,
+    openTagging,
+    confirmTagging,
+    cancelTagging,
+    completedCount,
   }
 }

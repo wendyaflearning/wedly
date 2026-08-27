@@ -12,7 +12,6 @@ use App\Repository\Vendor\PortfolioImageRepository;
 use App\Service\PortfolioService;
 use App\Service\Vendor\VendorOwnershipResolver;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -21,30 +20,26 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_VENDOR')]
 #[Route(
-    '/api/v1/vendors/{id}/portfolio/{imageId}/tags',
+    '/api/v1/vendors/me/portfolio/{imageId}/tags',
     name: 'api_vendor_dashboard_portfolio_tags_patch',
-    requirements: ['id' => '[0-9a-fA-F-]{36}', 'imageId' => '[0-9a-fA-F-]{36}'],
+    requirements: ['imageId' => '[0-9a-fA-F-]{36}'],
     methods: ['PATCH'],
 )]
-final class PatchVendorDashboardPortfolioTagsAction extends AbstractController
+final readonly class PatchVendorDashboardPortfolioTagsAction
 {
     public function __construct(
-        private readonly Security $security,
-        private readonly VendorOwnershipResolver $vendorOwnershipResolver,
-        private readonly PortfolioImageRepository $portfolioImageRepository,
-        private readonly PortfolioService $portfolioService,
-        private readonly EntityManagerInterface $em,
+        private Security $security,
+        private VendorOwnershipResolver $vendorOwnershipResolver,
+        private PortfolioImageRepository $portfolioImageRepository,
+        private PortfolioService $portfolioService,
+        private EntityManagerInterface $em,
     ) {}
 
-    public function __invoke(string $id, string $imageId, #[MapRequestPayload] PatchPortfolioTagsRequestDto $dto): JsonResponse
+    public function __invoke(string $imageId, #[MapRequestPayload] PatchPortfolioTagsRequestDto $dto): JsonResponse
     {
         /** @var User $user */
         $user   = $this->security->getUser();
         $vendor = $this->vendorOwnershipResolver->resolve($user);
-
-        if ($vendor->getId()->toRfc4122() !== $id) {
-            return new JsonResponse(['error' => 'Accès interdit.'], 403);
-        }
 
         $image = $this->portfolioImageRepository->findOneBy([
             'id'     => $imageId,
