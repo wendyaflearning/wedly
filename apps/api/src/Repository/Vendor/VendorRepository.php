@@ -13,6 +13,7 @@ use App\Entity\Vendor\VendorConsent;
 use App\Enum\User\InviteTokenPersona;
 use App\Enum\Vendor\ConsentType;
 use App\Enum\Vendor\VendorStatus;
+use App\Service\Vendor\AdminVendorDraftService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -117,6 +118,44 @@ class VendorRepository extends ServiceEntityRepository
             ->setParameter('id', $id)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /** @return Vendor[] */
+    public function findEligibleForWeddreamLaunch(
+        ?string $vendorId = null,
+        ?string $email = null,
+        ?VendorStatus $status = null,
+    ): array {
+        $activeModes = count(array_filter(
+            [$vendorId, $email, $status],
+            static fn(mixed $mode): bool => $mode !== null,
+        ));
+
+        if ($activeModes > 1) {
+            throw new \DomainException('Un seul mode de ciblage doit être actif.', 500);
+        }
+
+        $qb = $this->createQueryBuilder('vendor')
+            ->addSelect('user')
+            ->innerJoin('vendor.user', 'user')
+            ->andWhere('vendor.status != :excludedStatus')
+            ->andWhere('user.email NOT LIKE :draftEmailPattern')
+            ->setParameter('excludedStatus', VendorStatus::Rejected->value)
+            ->setParameter('draftEmailPattern', '%@' . AdminVendorDraftService::DRAFT_EMAIL_DOMAIN)
+            ->orderBy('vendor.createdAt', 'ASC');
+
+        if ($vendorId !== null) {
+            $qb->andWhere('vendor.id = :vendorId')
+                ->setParameter('vendorId', $vendorId);
+        } elseif ($email !== null) {
+            $qb->andWhere('user.email = :email')
+                ->setParameter('email', $email);
+        } elseif ($status !== null) {
+            $qb->andWhere('vendor.status = :status')
+                ->setParameter('status', $status->value);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     public function hasPortfolioCoverByVendor(Vendor $vendor): bool
