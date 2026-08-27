@@ -140,7 +140,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         self::assertSame([], array_filter($this->persisted, static fn($e) => $e instanceof ProviderLead));
     }
 
-    public function test_a_contact_request_creates_a_pending_unlocked_lead(): void
+    public function test_a_contact_request_creates_a_pending_lead(): void
     {
         $this->makeService($this->makeEntityManager())->register($this->makeDto(
             contactRequest: new ProviderContactRequestDto(self::VENDOR_ID),
@@ -150,7 +150,6 @@ final class CoupleRegistrationServiceTest extends TestCase
 
         self::assertSame(ProviderLeadStatus::Pending, $lead->getStatus());
         self::assertSame(ProviderLeadOrigin::Wedream, $lead->getOrigin());
-        self::assertTrue($lead->isUnlocked());
         // PROVIDER-LEAD-002 : le lead porte sa propre copie du budget global.
         self::assertSame(2_350_000, $lead->getBudgetCents());
     }

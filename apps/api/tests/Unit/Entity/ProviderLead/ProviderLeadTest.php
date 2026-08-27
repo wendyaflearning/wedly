@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ProviderLeadTest extends TestCase
 {
-    public function testItStartsAsAnUnlockedWedreamLeadPendingForTheTargetVendor(): void
+    public function testItStartsAsAWedreamLeadPendingForTheTargetVendor(): void
     {
         $couple = new Couple();
         $vendor = new Vendor();
@@ -24,7 +24,6 @@ final class ProviderLeadTest extends TestCase
         self::assertSame($vendor, $lead->getVendor());
         self::assertSame(250_000, $lead->getBudgetCents());
         self::assertSame(ProviderLeadStatus::Pending, $lead->getStatus());
-        self::assertTrue($lead->isUnlocked());
         self::assertSame(ProviderLeadOrigin::Wedream, $lead->getOrigin());
     }
 
@@ -55,13 +54,12 @@ final class ProviderLeadTest extends TestCase
         new ProviderLead(new Couple(), new Vendor(), -1);
     }
 
-    public function testItsStatusAndUnlockStateCanBeUpdatedByTheLaterLeadWorkflow(): void
+    public function testItsStatusCanBeUpdatedByTheLaterLeadWorkflow(): void
     {
         $lead = new ProviderLead(new Couple(), new Vendor(), 250_000);
 
-        $lead->setStatus(ProviderLeadStatus::Contacted)->setUnlocked(false);
+        $lead->setStatus(ProviderLeadStatus::Contacted);
 
         self::assertSame(ProviderLeadStatus::Contacted, $lead->getStatus());
-        self::assertFalse($lead->isUnlocked());
     }
 }

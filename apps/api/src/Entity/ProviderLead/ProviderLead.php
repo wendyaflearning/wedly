@@ -57,9 +57,6 @@ class ProviderLead
     #[ORM\Column(type: 'string', length: 20, enumType: ProviderLeadStatus::class, options: ['default' => 'pending'])]
     private ProviderLeadStatus $status = ProviderLeadStatus::Pending;
 
-    #[ORM\Column(type: 'boolean', options: ['default' => true])]
-    private bool $unlocked = true;
-
     #[ORM\Column(type: 'string', length: 20, enumType: ProviderLeadOrigin::class, options: ['default' => 'wedream'])]
     private ProviderLeadOrigin $origin = ProviderLeadOrigin::Wedream;
 
@@ -106,18 +103,6 @@ class ProviderLead
     public function setStatus(ProviderLeadStatus $status): static
     {
         $this->status = $status;
-
-        return $this;
-    }
-
-    public function isUnlocked(): bool
-    {
-        return $this->unlocked;
-    }
-
-    public function setUnlocked(bool $unlocked): static
-    {
-        $this->unlocked = $unlocked;
 
         return $this;
     }
