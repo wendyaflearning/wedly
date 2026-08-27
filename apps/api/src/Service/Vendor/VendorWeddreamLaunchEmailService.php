@@ -162,10 +162,22 @@ final readonly class VendorWeddreamLaunchEmailService
                 'brandName'       => $vendor->getBrandName(),
                 'ctaLabel'        => $ctaLabel,
                 'ctaUrl'          => $ctaUrl,
-                'consentFormUrl'  => self::CONSENT_FORM_URL,
+                'consentFormUrl'  => $this->resolveConsentFormUrl($vendor),
             ]);
 
         $this->mailer->send($email);
+    }
+
+    /**
+     * Le formulaire Tally porte deux champs cachés (prestataire_id, email) alimentés
+     * par query params : le prestataire n'a pas à se ré-identifier en arrivant dessus.
+     */
+    private function resolveConsentFormUrl(Vendor $vendor): string
+    {
+        return self::CONSENT_FORM_URL . '?' . http_build_query([
+            'prestataire_id' => $vendor->getId()->toRfc4122(),
+            'email'          => $vendor->getUser()->getEmail(),
+        ]);
     }
 
     private function recordAttempt(Vendor $vendor, VendorEmailLogStatus $status, ?string $errorMessage): void
