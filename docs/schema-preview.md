@@ -44,6 +44,7 @@ erDiagram
     VENDOR ||--o{ VENDOR_AUTO_TAGGED_SERVICE : vendor
     SERVICE ||--o{ VENDOR_AUTO_TAGGED_SERVICE : service
     VENDOR ||--o{ VENDOR_CONSENT : vendor
+    VENDOR ||--o{ VENDOR_EMAIL_LOG : vendor
 
     USER {
         uuid id
@@ -79,6 +80,7 @@ erDiagram
         string onboarding_step
         text bio
         boolean is_published
+        boolean wedream_enabled
         datetime_immutable submitted_for_review_at
         datetime_immutable reviewed_at
         json rejection_reasons
@@ -172,6 +174,7 @@ erDiagram
         int sort_order
         string cloudinary_public_id
         boolean is_cover
+        boolean is_visible_in_wedream
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -324,6 +327,7 @@ erDiagram
         uuid tag_type_id
         string label
         boolean is_active
+        string vignette_url
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -341,6 +345,16 @@ erDiagram
         uuid vendor_id
         string consent_type
         boolean granted
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    VENDOR_EMAIL_LOG {
+        uuid id
+        uuid vendor_id
+        string type
+        string status
+        text error_message
         datetime_immutable created_at
         datetime_immutable updated_at
     }
