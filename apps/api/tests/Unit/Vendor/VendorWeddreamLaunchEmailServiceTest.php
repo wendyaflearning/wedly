@@ -28,7 +28,8 @@ use Symfony\Component\Uid\UuidV7;
 
 final class VendorWeddreamLaunchEmailServiceTest extends TestCase
 {
-    private const FRONTEND_URL = 'https://app.wedly.test';
+    private const FRONTEND_URL           = 'https://app.wedly.test';
+    private const CONSENT_FORM_URL_BASE = 'https://tally.so/r/xX5okd';
 
     public function test_send_skips_vendor_already_contacted_successfully(): void
     {
@@ -166,7 +167,12 @@ final class VendorWeddreamLaunchEmailServiceTest extends TestCase
         $context = $sentEmail->getContext();
         self::assertSame('Accéder à mon espace', $context['ctaLabel']);
         self::assertSame(self::FRONTEND_URL . '/dashboard', $context['ctaUrl']);
-        self::assertSame('https://tally.so/r/xX5okd', $context['consentFormUrl']);
+        $consentFormUrl = $context['consentFormUrl'];
+        self::assertStringStartsWith(self::CONSENT_FORM_URL_BASE . '?', $consentFormUrl);
+
+        parse_str((string) parse_url($consentFormUrl, PHP_URL_QUERY), $consentFormQuery);
+        self::assertSame($vendor->getId()->toRfc4122(), $consentFormQuery['prestataire_id']);
+        self::assertSame('camille@example.fr', $consentFormQuery['email']);
     }
 
     public function test_send_to_pending_vendor_creates_token_then_logs_success(): void
