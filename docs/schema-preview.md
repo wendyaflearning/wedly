@@ -38,12 +38,16 @@ erDiagram
     VENDOR ||--o| VENDOR_ANIMATION_DETAILS : vendor
     VENDOR ||--o| VENDOR_CREATOR_DETAILS : vendor
     VENDOR_CREATOR_DETAILS }o--o{ CREATOR_VALUE : creator_values
+    COUPLE ||--o{ PROVIDER_LEAD : couple
+    VENDOR ||--o{ PROVIDER_LEAD : vendor
     SERVICE ||--o{ SPECIALTY : service
     SERVICE ||--o{ TAG_TYPE : service
     TAG_TYPE ||--o{ TAG_VALUE : tag_type
     VENDOR ||--o{ VENDOR_AUTO_TAGGED_SERVICE : vendor
     SERVICE ||--o{ VENDOR_AUTO_TAGGED_SERVICE : service
     VENDOR ||--o{ VENDOR_CONSENT : vendor
+    VENDOR ||--o{ VENDOR_EMAIL_LOG : vendor
+    WEDDING ||--o{ WEDDING_CONSENT : wedding
 
     USER {
         uuid id
@@ -79,6 +83,7 @@ erDiagram
         string onboarding_step
         text bio
         boolean is_published
+        boolean wedream_enabled
         datetime_immutable submitted_for_review_at
         datetime_immutable reviewed_at
         json rejection_reasons
@@ -92,13 +97,14 @@ erDiagram
         uuid user_id
         uuid wedding_id
         string status
+        string planning_stage
         datetime_immutable created_at
         datetime_immutable updated_at
     }
 
     WEDDING {
         uuid id
-        date date
+        date_immutable date
         int budget_cents
         string location
         string zone
@@ -172,6 +178,7 @@ erDiagram
         int sort_order
         string cloudinary_public_id
         boolean is_cover
+        boolean is_visible_in_wedream
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -296,6 +303,18 @@ erDiagram
         datetime_immutable updated_at
     }
 
+    PROVIDER_LEAD {
+        uuid id
+        uuid couple_id
+        uuid vendor_id
+        int budget_cents
+        string status
+        boolean unlocked
+        string origin
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
     SPECIALTY {
         uuid id
         uuid service_id
@@ -324,6 +343,7 @@ erDiagram
         uuid tag_type_id
         string label
         boolean is_active
+        string vignette_url
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -339,6 +359,25 @@ erDiagram
     VENDOR_CONSENT {
         uuid id
         uuid vendor_id
+        string consent_type
+        boolean granted
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    VENDOR_EMAIL_LOG {
+        uuid id
+        uuid vendor_id
+        string type
+        string status
+        text error_message
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    WEDDING_CONSENT {
+        uuid id
+        uuid wedding_id
         string consent_type
         boolean granted
         datetime_immutable created_at
