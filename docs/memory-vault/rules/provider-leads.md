@@ -31,9 +31,12 @@ libellé du métier affiché au couple pendant le parcours reste dans le navigat
 il n'est ni transmis ni persisté (review du 24/08/2026 — il était validé côté
 backend puis jeté).
 
-Si un ticket futur a besoin de savoir *quel service* le couple visait — un
-prestataire pouvant en porter plusieurs via `vendor_service` — c'est une relation
-vers `Service` qu'il faudra poser, pas un libellé libre recopié depuis l'écran.
+Le service visé n'est pas non plus recopié depuis l'écran. WED-131 a eu besoin
+de l'afficher et l'a **dérivé de la photo coup de cœur** plutôt que d'ajouter une
+colonne : voir `PROVIDER-LEAD-004`.
+
+Depuis WED-131, le lead porte en revanche la **photo coup de cœur**
+(`portfolio_image_id`, nullable), qui n'est déductible de rien d'autre.
 
 ## PROVIDER-LEAD-002 — Le budget d'un lead est le budget global du mariage, figé à la création
 
@@ -104,3 +107,91 @@ Couverture attendue :
 - tests de navigation frontend : écran budget présenté sur les deux chemins,
   retour arrière vers l'écran réellement affiché ;
 - E2E lorsque WED-49 et l'écran final d'authentification seront raccordés.
+
+## PROVIDER-LEAD-004 — La photo coup de cœur est portée par le lead, la catégorie en est dérivée
+
+Statut : `active`
+
+Décision du 28/08/2026 (Wendy + Denis, WED-131).
+
+Le parcours de découverte Wedream part d'un sous-style : le couple ouvre
+`GET /api/v1/tag-values/{tagValueId}/portfolio-images`, clique sur une photo,
+puis demande la mise en relation. La demande de contact transporte donc
+`portfolioImageId` en plus de `vendorId`, et le lead la persiste
+(`provider_lead.portfolio_image_id`, nullable, `ON DELETE SET NULL`).
+
+Deux garde-fous à la création, la valeur venant de l'état client :
+
+- la photo doit appartenir au prestataire ciblé — sinon la fiche dévoilée
+  afficherait le travail d'un tiers ;
+- la photo doit être publiée dans Wedream (`is_visible_in_wedream`), seule
+  galerie où le couple a pu la voir.
+
+Un identifiant qui ne satisfait pas ces conditions est refusé en 422, jamais
+ignoré silencieusement : c'est un état client incohérent, pas une absence de
+photo. La photo reste facultative — un lead créé avant ce ticket, ou une demande
+partie d'un autre point d'entrée, n'en a pas.
+
+**La catégorie de la demande n'est pas stockée.** Elle est dérivée à la lecture :
+
+`portfolio_image` → `portfolio_image_tag` → `tag_value` → `tag_type` (`is_primary`) → `service`
+
+en remontant sur `Service.parent` pour afficher le métier plutôt qu'un
+sous-service. La chaîne est fiable parce qu'une photo n'est visible dans Wedream
+que si elle porte un tag primaire, et qu'un `tag_type` appartient à exactement
+un `service`.
+
+Lire `vendor_service` à la place donnerait une **autre** réponse, et une mauvaise :
+la relation est multiple, et elle grandit toute seule quand le prestataire tague
+de nouvelles photos (`VendorAutoTaggedService`). La catégorie affichée sur une
+demande déjà transmise changerait donc après coup, ce que `PROVIDER-LEAD-002`
+refuse pour le budget.
+
+Cas de repli, dans cet ordre :
+
+1. tag primaire de la photo (deux services primaires sur une même photo : tri par
+   `sort_order` puis slug, pour que la lecture soit reproductible) ;
+2. pas de photo et prestataire mono-service : ce service ;
+3. sinon : pas de catégorie, la carte n'en affiche pas.
+
+Contrepartie assumée : la catégorie suit un retag du prestataire. C'est un
+libellé d'affichage, pas une donnée contractuelle. Le jour où elle doit être
+figée à la demande — apparition dans un email ou un document — il faudra poser
+`provider_lead.service_id`.
+
+## PROVIDER-LEAD-005 — Un couple ne voit la fiche prestataire qu'après acceptation
+
+Statut : `active`
+
+`GET /api/v1/couples/me/provider-leads` projette le `ProviderLeadStatus` côté
+prestataire sur les trois seuls statuts que le couple voit :
+
+| Couple | ProviderLeadStatus |
+|---|---|
+| `DEBLOQUEE` | `accepted`, `confirmed`, `contacted` |
+| `REFUSEE` | `refused`, `unavailable` |
+| `EN_ATTENTE` | `pending`, `closed` |
+
+`Accepted` et `Refused` sont posés par WED-131 : aucune valeur historique
+n'exprimait la décision du prestataire, et c'est elle — jamais un paiement — qui
+décide de la visibilité de la fiche. Epic 3 (WED-113) les écrira quand
+accepter/refuser sortira de pause.
+
+La projection est une **liste blanche** : seule une acceptation explicite dévoile
+la fiche. `closed` est trop générique pour être lu comme une acceptation et reste
+masqué. Le `match` est exhaustif et sans branche par défaut, et un test parcourt
+`ProviderLeadStatus::cases()` : ajouter un statut sans décider ce qu'il montre au
+couple casse le test au lieu de tomber dans un défaut silencieux.
+
+Le masquage est porté par la **forme du DTO**, pas par une condition posée plus
+loin : `MaskedProviderLeadResponseDto` n'a aucune propriété capable de porter le
+nom ou les coordonnées du prestataire. Masqué, le couple voit la catégorie, les
+zones d'intervention et sa photo coup de cœur — rien qui identifie quelqu'un.
+
+Implémentation :
+
+- `apps/api/src/Controller/Couple/ProviderLead/GetCoupleProviderLeadsAction.php`
+- `apps/api/src/Assembler/Couple/ProviderLead/CoupleProviderLeadResponseDtoAssembler.php`
+- `apps/api/src/Enum/Couple/CoupleLeadStatus.php`
+- `apps/api/src/Service/ProviderLead/ProviderLeadCategoryResolver.php`
+- `apps/api/migrations/Version20260828080000.php`

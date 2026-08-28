@@ -81,6 +81,8 @@ dans les fichiers de règles.
 | `PROVIDER-LEAD-001` | Un lead appartient à un couple et cible un prestataire précis         | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-002` | Le budget d'un lead est le budget global du mariage, figé à la création | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-003` | Le budget est borné à 1 000 000 €                                     | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-004` | La photo coup de cœur est portée par le lead, la catégorie en est dérivée | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-005` | Un couple ne voit la fiche prestataire qu'après acceptation            | `active` | `rules/provider-leads.md` |
 
 ## Wedream visibility
 

@@ -9,11 +9,12 @@ use App\Entity\User\User;
 use App\Entity\Wedding\Wedding;
 use App\Enum\Couple\CoupleStatus;
 use App\Enum\Couple\PlanningStage;
+use App\Repository\Couple\CoupleRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: CoupleRepository::class)]
 #[ORM\Table(name: 'couple')]
 #[ORM\HasLifecycleCallbacks]
 class Couple

@@ -100,11 +100,30 @@ describe('registration payload', () => {
     expect(payload.cultureSlugs).toEqual(['europe'])
   })
 
-  it('carries the contact request of a journey that started on one, vendor only', () => {
+  it('carries the contact request of a journey that started on one, vendor and crush photo', () => {
+    const contactRequest = {
+      vendorId: '0198f0a1-0000-7000-8000-000000000001',
+      serviceLabel: 'photographe',
+      portfolioImageId: '0198f0a1-0000-7000-8000-0000000000aa',
+    }
+    const payload = buildRegistrationPayload({ ...onboarding, contactRequest }, credentials)
+
+    expect(payload.contactRequest).toEqual({
+      vendorId: '0198f0a1-0000-7000-8000-000000000001',
+      portfolioImageId: '0198f0a1-0000-7000-8000-0000000000aa',
+    })
+  })
+
+  // A contact request can start somewhere without a photo; the card then shows
+  // no visual rather than the server rejecting the whole registration.
+  it('sends a null crush photo when the journey did not start on one', () => {
     const contactRequest = { vendorId: '0198f0a1-0000-7000-8000-000000000001', serviceLabel: 'photographe' }
     const payload = buildRegistrationPayload({ ...onboarding, contactRequest }, credentials)
 
-    expect(payload.contactRequest).toEqual({ vendorId: '0198f0a1-0000-7000-8000-000000000001' })
+    expect(payload.contactRequest).toEqual({
+      vendorId: '0198f0a1-0000-7000-8000-000000000001',
+      portfolioImageId: null,
+    })
   })
 
   it('keeps the service label out of the payload', () => {

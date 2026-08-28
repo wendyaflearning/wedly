@@ -10,6 +10,7 @@ use App\Entity\Couple\Couple;
 use App\Entity\Culture\Culture;
 use App\Entity\ProviderLead\ProviderLead;
 use App\Entity\User\User;
+use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Wedding\Wedding;
 use App\Entity\Wedding\WeddingConsent;
@@ -57,6 +58,10 @@ final readonly class CoupleRegistrationService
             ? $this->resolveActiveVendor($dto->contactRequest->vendorId)
             : null;
 
+        $crushPhoto = $vendor !== null && $dto->contactRequest?->portfolioImageId !== null
+            ? $this->resolveCrushPhoto($vendor, $dto->contactRequest->portfolioImageId)
+            : null;
+
         $user = (new User())
             ->setFirstName(trim($dto->firstName))
             ->setEmail($dto->email)
@@ -92,9 +97,10 @@ final readonly class CoupleRegistrationService
 
         // Un simple épingle n'envoie pas de contactRequest et ne produit donc
         // aucun lead (PROVIDER-LEAD-001). Le lead garde sa propre copie du
-        // montant, figée à la création (PROVIDER-LEAD-002).
+        // montant, figée à la création (PROVIDER-LEAD-002), et la photo coup de
+        // cœur qui a déclenché la demande (PROVIDER-LEAD-004).
         $lead = $vendor !== null
-            ? new ProviderLead($couple, $vendor, $dto->budgetCents)
+            ? new ProviderLead($couple, $vendor, $dto->budgetCents, $crushPhoto)
             : null;
 
         $this->em->beginTransaction();
@@ -193,5 +199,27 @@ final readonly class CoupleRegistrationService
         }
 
         return $vendor;
+    }
+
+    /**
+     * La photo coup de cœur vient elle aussi de l'état client. Elle doit
+     * appartenir au prestataire ciblé — sinon la carte du couple afficherait le
+     * travail d'un tiers — et être publiée dans Wedream, seule galerie où le
+     * couple a pu la voir. Un identifiant qui ne satisfait pas ces deux
+     * conditions est refusé en 422, jamais silencieusement ignoré : c'est un
+     * état client incohérent, pas une absence de photo.
+     */
+    private function resolveCrushPhoto(Vendor $vendor, string $portfolioImageId): PortfolioImage
+    {
+        $image = $this->em->getRepository(PortfolioImage::class)->findOneBy(['id' => $portfolioImageId]);
+
+        if (!$image instanceof PortfolioImage
+            || $image->getVendor() !== $vendor
+            || !$image->isVisibleInWedream()
+        ) {
+            throw new \DomainException('Cette photo n\'est pas disponible.', 422);
+        }
+
+        return $image;
     }
 }

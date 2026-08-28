@@ -25,8 +25,9 @@ export interface CoupleCredentials {
  * `POST /api/v1/register` reads it. The contact request keeps the nested form the
  * store already holds, narrowed to the vendor alone — `RegisterCoupleRequestDto`
  * validates it as a whole, its presence deciding whether a lead is created
- * (PROVIDER-LEAD-001). The service label the journey shows the couple stays in
- * the browser: the server neither reads nor stores it.
+ * (PROVIDER-LEAD-001). The crush photo travels with it when the journey started
+ * on one (PROVIDER-LEAD-004). The service label the journey shows the couple
+ * stays in the browser: the server neither reads nor stores it.
  */
 export interface CoupleRegistrationPayload {
   email: string
@@ -41,7 +42,7 @@ export interface CoupleRegistrationPayload {
   sensitiveDataConsent: boolean
   confessionSlugs: string[]
   cultureSlugs: string[]
-  contactRequest: { vendorId: string } | null
+  contactRequest: { vendorId: string; portfolioImageId: string | null } | null
 }
 
 /**
@@ -89,7 +90,12 @@ export function buildRegistrationPayload(
     sensitiveDataConsent: consentGranted,
     confessionSlugs: consentGranted ? data.confessionSlugs ?? [] : [],
     cultureSlugs: consentGranted ? data.cultureSlugs ?? [] : [],
-    contactRequest: data.contactRequest ? { vendorId: data.contactRequest.vendorId } : null,
+    contactRequest: data.contactRequest
+      ? {
+          vendorId: data.contactRequest.vendorId,
+          portfolioImageId: data.contactRequest.portfolioImageId ?? null,
+        }
+      : null,
   }
 }
 
