@@ -1,147 +1,267 @@
-{% extends 'emails/base.html.twig' %}
+{#
+  Template autonome : il n'étend PAS emails/base.html.twig.
 
-{% block title %}WedDream est prêt : on le teste au Salon du Mariage{% endblock %}
+  La maquette validée (weddream-pilot-email-preview.html) impose une largeur de 600px,
+  un header crème et un footer bordeaux, là où la base partagée est en 580px avec un
+  header bordeaux et un footer crème. Cinq autres emails héritent de cette base — la
+  modifier pour cet email-ci les casserait tous.
 
-{% block extra_styles %}
-    .footer-unsub { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: rgba(157,79,30,0.5) !important; text-decoration: underline; }
-    .cta-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; background-color: #9D4F1E; color: #FFF6ED !important; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 12px; padding: 16px 36px; letter-spacing: 0.01em; }
-    .consent-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; border: 1px solid rgba(78,26,50,0.35); border-radius: 20px; padding: 12px 26px; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: #4E1A32; text-decoration: none; }
-    .hero { background-color: #4E1A32; padding: 32px 28px; border-radius: 12px; }
-    .hero-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 28px; line-height: 1.2; font-weight: 600; color: #FFF6ED; margin: 0; }
-    .hero-title-accent { font-style: italic; font-weight: 400; color: #E35704; }
-    .hero-text { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.7; color: rgba(255,246,237,0.82); margin: 14px 0 0 0; }
-    .eyebrow { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; color: #4E1A32; margin: 0 0 8px 0; }
-    .section-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 23px; line-height: 1.25; font-weight: 600; color: #4E1A32; margin: 0 0 16px 0; }
-    .quote { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 19px; line-height: 1.45; font-style: italic; color: #4E1A32; border-left: 3px solid rgba(78,26,50,0.18); padding: 2px 0 2px 18px; margin: 0; }
-    .flow-step { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase; color: #4E1A32; background-color: rgba(78,26,50,0.04); border: 1px solid rgba(78,26,50,0.18); border-radius: 22px; padding: 14px 6px; line-height: 1.3; }
-    .flow-arrow { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; color: rgba(157,79,30,0.65); }
-    .flow-arrow-v { display: none; }
-    .flow-recap { font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.6; color: rgba(157,79,30,0.65); margin: 14px 0 0 0; }
-    .panel { background-color: rgba(78,26,50,0.04); padding: 24px 22px; }
-    .panel-accent { border-left: 3px solid #4E1A32; }
-    .panel-item { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.65; color: #9D4F1E; margin: 0 0 12px 0; }
-    .panel-item:last-child { margin-bottom: 0; }
-    .badge { font-family: Arial, Helvetica, sans-serif; display: inline-block; background-color: #4E1A32; color: #FFF6ED !important; border-radius: 20px; padding: 9px 20px; font-size: 10.5px; font-weight: bold; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; }
-    .note { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 16px; font-style: italic; color: rgba(157,79,30,0.75); text-align: center; margin: 0 0 22px 0; line-height: 1.5; }
-    .consent-card { background-color: rgba(78,26,50,0.04); border: 1px solid rgba(227,87,4,0.28); border-radius: 12px; padding: 30px 26px; }
-    .consent-eyebrow { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; color: #E35704; margin: 0 0 8px 0; }
-    @media only screen and (max-width: 600px) {
-      .flow-cell { display: block !important; width: 100% !important; padding: 0 0 10px 0 !important; }
-      .flow-arrow-h { display: none !important; }
-      .flow-arrow-v { display: inline !important; }
-      .hero { padding: 26px 20px !important; }
-      .hero-title { font-size: 24px !important; }
-      .consent-card, .panel { padding: 20px 18px !important; }
-    }
-{% endblock %}
+  Logos : servis depuis Cloudinary, convertis en PNG via `f_png` (les SVG sont retirés
+  par Gmail). Le logo du header est le wordmark crème recoloré en bordeaux via
+  `e_colorize` — voir le TODO plus bas.
+#}
+<!DOCTYPE html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>WedDream est prêt — Wedly</title>
+<!--[if mso]>
+<noscript>
+<xml>
+<o:OfficeDocumentSettings>
+<o:PixelsPerInch>96</o:PixelsPerInch>
+</o:OfficeDocumentSettings>
+</xml>
+</noscript>
+<![endif]-->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body, table, td { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+  img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+  body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; background-color: #F1E4D6; }
+  a { text-decoration: none; }
+  .serif { font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; }
+  .sans { font-family: 'Manrope', Arial, Helvetica, sans-serif; }
+  @media screen and (max-width: 600px) {
+    .wrap { width: 100% !important; }
+    .pad { padding-left: 24px !important; padding-right: 24px !important; }
+    .pad-lg { padding: 32px 24px !important; }
+    .h1 { font-size: 28px !important; line-height: 1.15 !important; }
+    .h2 { font-size: 22px !important; }
+    .quote { font-size: 19px !important; }
+    .stack-td { display: block !important; width: 100% !important; text-align: center !important; padding: 0 0 8px 0 !important; }
+    .arrow-h { display: none !important; }
+    .arrow-v { display: block !important; padding: 6px 0 !important; }
+    .btn-a { padding: 16px 24px !important; }
+  }
+  @media (prefers-color-scheme: dark) {
+    .bg-creme { background-color: #FFF6ED !important; }
+    .txt-dark { color: #291A10 !important; }
+  }
+</style>
+</head>
+<body style="margin:0; padding:0; background-color:#F1E4D6;">
+<!-- Preheader -->
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#F1E4D6; opacity:0;">
+WedDream arrive : la galerie inspirationnelle Wedly, testée en direct au Salon du Mariage. Phase pilote 100% gratuite.
+&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+</div>
 
-{% block body %}
-              <p class="greeting">Bonjour <span class="greeting-italic">{{ firstName }},</span></p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1E4D6;">
+<tr>
+<td align="center" style="padding:32px 12px;">
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                <tr>
-                  <td class="hero" align="center" bgcolor="#4E1A32">
-                    <p class="hero-title">WedDream est prêt&nbsp;: on le teste au <span class="hero-title-accent">Salon du Mariage</span>&nbsp;!</p>
-                    <p class="hero-text">Une nouvelle façon pour les futurs mariés de vous découvrir, directement à travers vos plus belles réalisations.</p>
-                  </td>
-                </tr>
-              </table>
+<table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#FFF6ED;">
 
-              <p class="eyebrow">Le concept</p>
-              <p class="section-title">WedDream, qu'est-ce que c'est&nbsp;?</p>
-              <p class="quote">
-                Une galerie inspirationnelle qui permet aux futurs mariés de découvrir les prestataires directement à travers leur portfolio.
-              </p>
+<!-- HEADER -->
+<tr>
+<td class="pad" align="center" style="padding:32px 40px 24px 40px; background-color:#FFF6ED;">
+{# TODO (WED-145) : le wordmark crème est recoloré en bordeaux par Cloudinary (`e_colorize`),
+   ce qui aplatit l'anneau orange du logo de la maquette. À remplacer par l'asset
+   `logo_dark.svg` de la maquette une fois déposé sur Cloudinary en PNG. #}
+<img src="https://res.cloudinary.com/dadvrspox/image/upload/e_colorize,co_rgb:4E1A32,f_png,w_280/v1781796191/logo_light_kcub6h.png" alt="Wedly" width="140" height="46" style="display:block; border:0; outline:none; height:auto; max-width:140px;">
+</td>
+</tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 26px 0 32px 0;">
-                <tr>
-                  <td class="flow-cell flow-step" width="30%" align="center">Portfolio</td>
-                  <td class="flow-arrow flow-cell" width="5%" align="center"><span class="flow-arrow-h">&rarr;</span><span class="flow-arrow-v">&darr;</span></td>
-                  <td class="flow-cell flow-step" width="30%" align="center">Épingler</td>
-                  <td class="flow-arrow flow-cell" width="5%" align="center"><span class="flow-arrow-h">&rarr;</span><span class="flow-arrow-v">&darr;</span></td>
-                  <td class="flow-cell flow-step" width="30%" align="center">Mise en relation</td>
-                </tr>
-              </table>
+<!-- HERO -->
+<tr>
+<td class="pad-lg" align="center" style="padding:44px 40px; background-color:#4E1A32;">
+<h1 class="serif h1" style="margin:16px 0 0 0; font-size:34px; line-height:1.12; font-weight:300; color:#FFF6ED; letter-spacing:-0.01em;">
+WedDream est prêt&nbsp;: on le teste au <span class="serif" style="font-style:italic; color:#E8A87C;">Salon du Mariage</span>&nbsp;!
+</h1>
+<p class="sans" style="margin:18px 0 0 0; font-size:15px; line-height:1.6; color:rgba(255,246,237,0.82); max-width:440px;">
+Une nouvelle façon pour les futurs mariés de vous découvrir, directement à travers vos plus belles réalisations.
+</p></td>
+</tr>
 
-              <hr class="separator">
+<!-- SECTION: QU'EST-CE QUE C'EST -->
+<tr>
+<td class="pad" align="left" style="padding:44px 40px 8px 40px; background-color:#FFF6ED;">
+<span class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#291A10;">LE CONCEPT</span>
+<h2 class="serif h2" style="margin:10px 0 0 0; font-size:26px; line-height:1.2; font-weight:300; color:#291A10;">WedDream, qu'est-ce que c'est&nbsp;?</h2>
+</td>
+</tr>
+<tr>
+<td class="pad" style="padding:16px 40px 8px 40px; background-color:#FFF6ED;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-left:2px solid rgba(78,26,50,0.18);">
+<tr><td style="padding:2px 0 2px 20px;">
+<p class="serif quote" style="margin:0; font-size:21px; line-height:1.4; font-style:italic; font-weight:300; color:#4E1A32;">
+Une galerie inspirationnelle qui permet aux futurs mariés de découvrir les prestataires directement à travers leur portfolio.
+</p>
+</td></tr>
+</table>
+</td>
+</tr>
 
-              <p class="eyebrow">Salon du Mariage</p>
-              <p class="section-title">Premier lancement&nbsp;: le Salon du Mariage</p>
-              <p class="text">
-                WedDream fait ses tout premiers pas en phase pilote, à l'occasion du prochain Salon du Mariage. Sur place, nous irons à la rencontre des futurs mariés en micro-trottoirs pour leur faire découvrir la galerie et mettre les réalisations de {{ brandName }} sous les projecteurs. À chaque coup de cœur, ils pourront épingler une photo ou demander directement une mise en relation avec vous.
-              </p>
+<!-- Flow: Portfolio -> Épingler -> Mise en relation -->
+<tr>
+<td class="pad" style="padding:28px 40px 44px 40px; background-color:#FFF6ED;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td class="stack-td" align="center" width="33%" style="width:33%;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>
+<td align="center" bgcolor="#F6EDE2" style="width:88px; height:88px; border-radius:50%; border:1px solid rgba(78,26,50,0.18);">
+<div class="sans" style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#4E1A32; line-height:1.3; padding:0 6px;">Portfolio</div>
+</td>
+</tr></table>
+</td>
+<td class="stack-td" align="center" width="10%" style="width:10%;">
+<span class="serif arrow-h" style="font-size:22px; color:#9E8E85;">&rarr;</span>
+<span class="serif arrow-v" style="display:none; font-size:20px; color:#9E8E85;">&darr;</span>
+</td>
+<td class="stack-td" align="center" width="33%" style="width:33%;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>
+<td align="center" bgcolor="#F6EDE2" style="width:88px; height:88px; border-radius:50%; border:1px solid rgba(78,26,50,0.18);">
+<div class="sans" style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#4E1A32; line-height:1.3; padding:0 6px;">Épingler</div>
+</td>
+</tr></table>
+</td>
+<td class="stack-td" align="center" width="10%" style="width:10%;">
+<span class="serif arrow-h" style="font-size:22px; color:#9E8E85;">&rarr;</span>
+<span class="serif arrow-v" style="display:none; font-size:20px; color:#9E8E85;">&darr;</span>
+</td>
+<td class="stack-td" align="center" width="33%" style="width:33%;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;"><tr>
+<td align="center" bgcolor="#F6EDE2" style="width:88px; height:88px; border-radius:50%; border:1px solid rgba(78,26,50,0.18);">
+<div class="sans" style="font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#4E1A32; line-height:1.3; padding:0 6px;">Mise en relation</div>
+</td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                <tr>
-                  <td align="center">
-                    <span class="badge">Phase pilote 100% gratuite</span>
-                  </td>
-                </tr>
-              </table>
+<!-- SECTION: SALON DU MARIAGE -->
+<tr>
+<td class="pad-lg" style="padding:44px 40px; background-color:#F6EDE2;">
+<span class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#291A10;">SALON DU MARIAGE</span>
+<h2 class="serif h2" style="margin:10px 0 0 0; font-size:26px; line-height:1.2; font-weight:300; color:#291A10;">Premier lancement&nbsp;: le Salon du Mariage</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 0 0;"><tr><td style="width:56px; height:3px; background-color:#E35704; font-size:0; line-height:0;">&nbsp;</td></tr></table>
+<p class="sans" style="margin:16px 0 0 0; font-size:14px; line-height:1.65; color:#9D4F1E;">
+WedDream fait ses tout premiers pas en phase pilote, à l'occasion du prochain Salon du Mariage. Sur place, nous irons à la rencontre des futurs mariés en micro-trottoirs pour leur faire découvrir la galerie et mettre vos portfolios sous les projecteurs. À chaque coup de cœur, ils pourront épingler une photo ou demander directement une mise en relation avec vous.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0 0;">
+<tr><td align="center" bgcolor="#4E1A32" style="border-radius:9999px; padding:10px 22px;">
+<span class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#FFF6ED;">Phase pilote 100% gratuite</span>
+</td></tr>
+</table>
+</td>
+</tr>
 
-              <hr class="divider">
+<!-- SECTION: COMMENT PARTICIPER -->
+<tr>
+<td class="pad-lg" align="left" style="padding:48px 40px 24px 40px; background-color:#FFF6ED;">
+<span class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#291A10;">À VOUS DE JOUER</span>
+<h2 class="serif h2" style="margin:10px 0 0 0; font-size:26px; line-height:1.2; font-weight:300; color:#291A10;">Comment participer&nbsp;?</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 0 0;"><tr><td style="width:56px; height:3px; background-color:#E35704; font-size:0; line-height:0;">&nbsp;</td></tr></table>
+<p class="sans" style="margin:20px 0 0 0; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#291A10;">Selon votre situation</p>
+</td>
+</tr>
+<tr>
+<td class="pad" style="padding:12px 40px 0 40px; background-color:#FFF6ED;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-left:2px solid #4E1A32; background-color:#FBF1E7;">
+<tr><td style="padding:20px 24px;">
+<p class="sans" style="margin:0; font-size:14px; line-height:1.65; color:#9D4F1E;">Déjà inscrit·e sur Wedly&nbsp;? Connectez-vous à votre espace prestataire et taguez vos photos.</p>
+<p class="sans" style="margin:14px 0 0 0; font-size:14px; line-height:1.65; color:#9D4F1E;">Pas encore inscrit·e&nbsp;? C'est le moment de préparer votre portfolio pour le lancement de WedDream.</p>
+</td></tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="pad" align="center" style="padding:20px 40px 8px 40px; background-color:#FFF6ED;">
+<p class="serif" style="margin:0; font-size:16px; font-style:italic; font-weight:300; color:#9D4F1E;">Dès votre prochaine connexion, une fenêtre s'ouvrira pour vous guider pas à pas.</p>
+</td>
+</tr>
+<tr>
+<td align="center" style="padding:24px 40px 48px 40px; background-color:#FFF6ED;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+<tr><td align="center" bgcolor="#9D4F1E" style="border-radius:13px;">
+{# ctaLabel/ctaUrl sont calculés par VendorWeddreamLaunchEmailService selon le statut du
+   prestataire : « Accéder à mon espace » vers /dashboard pour un vendor actif,
+   « Rejoindre Wedly » vers son lien d'invitation pour un vendor en attente. Le libellé
+   ne doit donc jamais être figé en dur ici. #}
+<a href="{{ ctaUrl }}" target="_blank" class="sans btn-a" style="display:block; padding:16px 40px; font-size:13px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#FFF6ED; border-radius:13px;">{{ ctaLabel }}&nbsp;&rarr;</a>
+</td></tr>
+</table>
+</td>
+</tr>
 
-              <p class="eyebrow">À vous de jouer</p>
-              <p class="section-title">Comment participer&nbsp;?</p>
+<!-- SECTION: MISE EN RELATION -->
+<tr>
+<td class="pad-lg" style="padding:40px 40px; background-color:#F6EDE2;">
+<span class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#291A10;">MISE EN RELATION</span>
+<h2 class="serif h2" style="margin:10px 0 0 0; font-size:22px; line-height:1.25; font-weight:300; color:#291A10;">Et si un couple demande à vous contacter&nbsp;?</h2>
+<p class="sans" style="margin:14px 0 0 0; font-size:14px; line-height:1.65; color:#9D4F1E;">
+Vous êtes notifié·e immédiatement et recevez ses coordonnées. La messagerie Wedly n'étant pas encore disponible, vous prenez ensuite contact directement.
+</p>
+<p class="sans" style="margin:16px 0 0 0; font-size:12px; line-height:1.6; letter-spacing:0.02em; color:#9E8E85; text-align:center;">
+Couple &rarr; Demande &rarr; Notification &rarr; Vos coordonnées &rarr; Prise de contact
+</p>
+</td>
+</tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
-                <tr>
-                  <td class="panel panel-accent">
-                    <p class="panel-item">— Déjà inscrit·e sur Wedly&nbsp;? Connectez-vous à votre espace prestataire et taguez vos photos.</p>
-                    <p class="panel-item">— Pas encore inscrit·e&nbsp;? C'est le moment de préparer votre portfolio pour le lancement de WedDream.</p>
-                  </td>
-                </tr>
-              </table>
+<!-- SECTION: CONSENTEMENT PHOTO -->
+<tr>
+<td class="pad-lg" style="padding:48px 40px;background-color:#FFF6ED;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid rgba(227,87,4,0.28); border-radius:13px; background-color:#FBF1E7;">
+<tr><td align="center" style="padding:36px 32px;">
+<span class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#E35704;">DÉPLIANTS DU SALON</span>
+<h2 class="serif h2" style="margin:10px 0 0 0; font-size:24px; line-height:1.25; font-weight:300; color:#291A10;">Vos photos sur nos supports</h2>
+<p class="sans" style="margin:14px 0 0 0; font-size:14px; line-height:1.6; color:#9D4F1E; max-width:420px; margin-left:auto; margin-right:auto;">
+Nous préparons des dépliants WedDream pour le salon et aimerions mettre certaines de vos réalisations en avant. Donnez-nous simplement votre accord ci-dessous.
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px auto 0 auto;">
+<tr><td align="center" bgcolor="#FBF1E7" style="border:1.5px solid #4E1A32; border-radius:13px;">
+<a href="{{ consentFormUrl }}" target="_blank" class="sans btn-a" style="display:block; padding:14px 30px; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#4E1A32; border-radius:13px;">Je donne mon accord</a>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</td>
+</tr>
 
-              <p class="note">Dès votre prochaine connexion, une fenêtre s'ouvrira pour vous guider pas à pas.</p>
+<!-- FOOTER -->
+<tr>
+<td align="center" style="padding:36px 40px; background-color:#4E1A32;">
+<img src="https://res.cloudinary.com/dadvrspox/image/upload/f_png,w_192/v1781796191/logo_light_kcub6h.png" alt="Wedly" width="96" height="32" style="display:block; margin:0 auto 14px auto; border:0; outline:none; height:auto; max-width:96px;">
+<p class="sans" style="margin:0; font-size:12px; line-height:1.6; color:rgba(255,246,237,0.6);">
+Wedly &middot; contact@wedly-apps.com
+</p>
+<p class="sans" style="margin:16px 0 0 0; font-size:12px; line-height:1.6; color:rgba(255,246,237,0.6);">Suivez nos r&eacute;seaux&nbsp;!</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:10px auto 0 auto;">
+<tr>
+<td style="padding:0 10px;"><a href="https://instagram.com/wedlyapps" target="_blank" class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,246,237,0.7);">Instagram</a></td>
+<td style="padding:0; color:rgba(255,246,237,0.35); font-size:11px;">&middot;</td>
+<td style="padding:0 10px;"><a href="https://tiktok.com/@wedlyapps" target="_blank" class="sans" style="font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,246,237,0.7);">TikTok</a></td>
+</tr>
+</table>
+<p class="sans" style="margin:14px 0 0 0; font-size:11px; line-height:1.6; color:rgba(255,246,237,0.4);">
+Vous recevez cet email car vous êtes en relation avec Wedly.<br>
+<a href="{{ unsubscribeUrl }}" style="color:rgba(255,246,237,0.55); text-decoration:underline;">Se désinscrire</a>
+</p>
+</td>
+</tr>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
-                <tr>
-                  <td align="center">
-                    <a href="{{ ctaUrl }}" class="cta-btn">{{ ctaLabel }}</a>
-                  </td>
-                </tr>
-              </table>
+</table>
+</td>
+</tr>
+</table>
 
-              <hr class="divider">
-
-              <p class="eyebrow">Mise en relation</p>
-              <p class="section-title">Et si un couple demande à vous contacter&nbsp;?</p>
-              <p class="text">
-                Vous êtes notifié·e immédiatement et recevez ses coordonnées. La messagerie Wedly n'étant pas encore disponible, vous prenez ensuite contact directement.
-              </p>
-              <p class="flow-recap">Couple &rarr; Demande &rarr; Notification &rarr; Vos coordonnées &rarr; Prise de contact</p>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
-                <tr>
-                  <td class="consent-card" align="center">
-                    <p class="consent-eyebrow">Dépliants du salon</p>
-                    <p class="section-title">Vos photos sur nos supports</p>
-                    <p class="text" style="margin-bottom: 22px;">
-                      Nous préparons des dépliants WedDream pour le salon et aimerions mettre en avant certaines réalisations de {{ brandName }}. Donnez-nous simplement votre accord ci-dessous.
-                    </p>
-                    <a href="{{ consentFormUrl }}" class="consent-btn">Je donne mon accord</a>
-                  </td>
-                </tr>
-              </table>
-
-              <hr class="divider">
-
-              <p class="social-label">En attendant, suivez l'aventure Wedly</p>
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://instagram.com/wedlyapps" class="social-btn">Instagram</a>
-                    <a href="https://tiktok.com/@wedlyapps" class="social-btn">TikTok</a>
-                  </td>
-                </tr>
-              </table>
-
-              <hr class="divider">
-
-              <p class="signature-label">À très vite,</p>
-              <p class="signature-name">Jennifer &amp; Wendy</p>
-              <p class="signature-team">L'équipe Wedly</p>
-{% endblock %}
-
-{% block footer_text %}Vous recevez cet email car vous êtes prestataire partenaire Wedly. <a href="{{ unsubscribeUrl }}" class="footer-unsub">Se désinscrire</a>{% endblock %}
+</body>
+</html>
