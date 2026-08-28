@@ -52,6 +52,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private UserStatus $status = UserStatus::Pending;
 
+    /**
+     * Opt-out global de la personne : elle ne veut plus recevoir de campagne email.
+     *
+     * Porté par User et non par Vendor parce que Vendor et Couple pointent tous deux
+     * vers un User : le refus appartient à la personne, pas à sa casquette.
+     *
+     * Ne coupe que les campagnes (aujourd'hui la campagne de lancement WedDream),
+     * jamais les emails transactionnels — réinitialisation de mot de passe,
+     * invitation, rejet de candidature restent envoyés.
+     *
+     * TODO (WED-145) : flag global volontairement non normalisé. Le jour où des
+     * préférences par type d'email sont cadrées (marketing / produit / transactionnel),
+     * migrer vers une table dédiée. Pas avant — le besoin n'existe pas encore (YAGNI).
+     */
+    #[ORM\Column(name: 'unsubscribed_at', type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $unsubscribedAt = null;
+
     public function getId(): UuidV7
     {
         return $this->id;
@@ -135,6 +152,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatus(UserStatus $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getUnsubscribedAt(): ?\DateTimeImmutable
+    {
+        return $this->unsubscribedAt;
+    }
+
+    public function setUnsubscribedAt(?\DateTimeImmutable $unsubscribedAt): static
+    {
+        $this->unsubscribedAt = $unsubscribedAt;
 
         return $this;
     }
