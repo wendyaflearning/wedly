@@ -55,6 +55,12 @@ final readonly class UserDeleteService
         try {
             if ($vendor !== null) {
                 $vendorId = $vendor->getId()->toRfc4122();
+
+                $this->connection->executeStatement(
+                    'DELETE FROM vendor_creator_value WHERE creator_details_id IN (SELECT id FROM vendor_creator_details WHERE vendor_id = :vendorId)',
+                    ['vendorId' => $vendorId],
+                );
+
                 foreach (self::VENDOR_CHILD_TABLES as $table) {
                     $this->connection->executeStatement(
                         "DELETE FROM {$table} WHERE vendor_id = :vendorId",
