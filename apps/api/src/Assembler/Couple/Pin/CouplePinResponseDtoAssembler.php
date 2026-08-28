@@ -25,9 +25,10 @@ final readonly class CouplePinResponseDtoAssembler
     public function assemble(CouplePin $pin): CouplePinResponseDto
     {
         return new CouplePinResponseDto(
-            id:       $pin->getId()->toRfc4122(),
-            photoUrl: $pin->getPortfolioImage()->getUrl(),
-            pinnedAt: $pin->getCreatedAt(),
+            id:               $pin->getId()->toRfc4122(),
+            portfolioImageId: $pin->getPortfolioImage()->getId()->toRfc4122(),
+            photoUrl:         $pin->getPortfolioImage()->getUrl(),
+            pinnedAt:         $pin->getCreatedAt(),
         );
     }
 }

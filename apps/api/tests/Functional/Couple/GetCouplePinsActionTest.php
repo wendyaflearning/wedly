@@ -14,11 +14,13 @@ use App\Enum\Couple\PlanningStage;
 use App\Enum\User\Role;
 use App\Enum\User\UserStatus;
 use App\Enum\Vendor\PriceType;
+use App\Enum\Vendor\VendorStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Uid\UuidV7;
 
 /**
  * The acceptance criterion is a privacy rule — « no vendor data, only the image ».
@@ -29,6 +31,8 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 final class GetCouplePinsActionTest extends WebTestCase
 {
     private const ENDPOINT = '/api/v1/couples/me/pins';
+
+    private const VENDOR_ID = '0198f0a1-0000-7000-8000-0000000000aa';
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -69,11 +73,49 @@ final class GetCouplePinsActionTest extends WebTestCase
         self::assertCount(1, $body['items']);
 
         $item = $body['items'][0];
-        self::assertSame('https://cdn.wedly.test/coup-de-coeur.jpg', $item['photoUrl']);
+        self::assertSame($this->cloudinaryUrl('coup-de-coeur.jpg'), $item['photoUrl']);
+        self::assertSame($photo->getId()->toRfc4122(), $item['portfolioImageId']);
         self::assertArrayHasKey('pinnedAt', $item);
         self::assertArrayHasKey('id', $item);
         self::assertStringNotContainsString('Studio Lumière', json_encode($body, JSON_THROW_ON_ERROR));
         self::assertStringNotContainsString('studio@example.test', json_encode($body, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_pins_are_returned_most_recent_first_even_when_created_in_the_same_second(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $vendor = $this->vendor('studio@example.test', 'Studio Lumière');
+
+        $first  = $this->pin($couple, $this->photo($vendor, $this->cloudinaryUrl('first.jpg')));
+        $second = $this->pin($couple, $this->photo($vendor, $this->cloudinaryUrl('second.jpg')));
+        $third  = $this->pin($couple, $this->photo($vendor, $this->cloudinaryUrl('third.jpg')));
+        $this->em->flush();
+
+        $body = $this->get($couple->getUser());
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(
+            [
+                $third->getId()->toRfc4122(),
+                $second->getId()->toRfc4122(),
+                $first->getId()->toRfc4122(),
+            ],
+            array_column($body['items'], 'id'),
+        );
+    }
+
+    public function test_a_vendor_wedream_opt_out_hides_the_pin_from_the_couple(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $vendor = $this->vendor('studio@example.test', 'Studio Lumière');
+        $this->pin($couple, $this->photo($vendor));
+        $vendor->setWedreamEnabled(false);
+        $this->em->flush();
+
+        $body = $this->get($couple->getUser());
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([], $body['items']);
     }
 
     public function test_a_couple_only_reads_its_own_pins(): void
@@ -83,14 +125,14 @@ final class GetCouplePinsActionTest extends WebTestCase
         $vendor = $this->vendor('studio@example.test', 'Studio Lumière');
         $photo  = $this->photo($vendor);
         $this->pin($mine, $photo);
-        $this->pin($theirs, $this->photo($vendor, 'https://cdn.wedly.test/other.jpg'));
+        $this->pin($theirs, $this->photo($vendor, $this->cloudinaryUrl('other.jpg')));
         $this->em->flush();
 
         $body = $this->get($mine->getUser());
 
         self::assertResponseIsSuccessful();
         self::assertCount(1, $body['items']);
-        self::assertSame('https://cdn.wedly.test/coup-de-coeur.jpg', $body['items'][0]['photoUrl']);
+        self::assertSame($this->cloudinaryUrl('coup-de-coeur.jpg'), $body['items'][0]['photoUrl']);
     }
 
     public function test_a_couple_without_any_pin_gets_an_empty_list(): void
@@ -137,6 +179,15 @@ final class GetCouplePinsActionTest extends WebTestCase
         );
     }
 
+    private function cloudinaryUrl(string $filename): string
+    {
+        return sprintf(
+            'https://res.cloudinary.com/wedly/image/upload/v1/wedly/vendors/%s/%s',
+            self::VENDOR_ID,
+            $filename,
+        );
+    }
+
     private function couple(string $email): Couple
     {
         $user = (new User())
@@ -180,7 +231,13 @@ final class GetCouplePinsActionTest extends WebTestCase
             ->setAddress('12 rue des Lilas')
             ->setPriceType(PriceType::PerService)
             ->setPriceMinCents(100_000)
-            ->setPriceMaxCents(500_000);
+            ->setPriceMaxCents(500_000)
+            ->setStatus(VendorStatus::Active)
+            ->setIsPublished(true)
+            ->setWedreamEnabled(true);
+
+        $id = new \ReflectionProperty(Vendor::class, 'id');
+        $id->setValue($vendor, UuidV7::fromString(self::VENDOR_ID));
 
         $this->em->persist($user);
         $this->em->persist($vendor);
@@ -188,12 +245,13 @@ final class GetCouplePinsActionTest extends WebTestCase
         return $vendor;
     }
 
-    private function photo(Vendor $vendor, string $url = 'https://cdn.wedly.test/coup-de-coeur.jpg'): PortfolioImage
+    private function photo(Vendor $vendor, ?string $url = null): PortfolioImage
     {
         $photo = (new PortfolioImage())
             ->setVendor($vendor)
-            ->setUrl($url)
-            ->setSortOrder(0);
+            ->setUrl($url ?? $this->cloudinaryUrl('coup-de-coeur.jpg'))
+            ->setSortOrder(0)
+            ->setVisibleInWedream(true);
 
         $this->em->persist($photo);
 

@@ -38,8 +38,11 @@ erDiagram
     VENDOR ||--o| VENDOR_ANIMATION_DETAILS : vendor
     VENDOR ||--o| VENDOR_CREATOR_DETAILS : vendor
     VENDOR_CREATOR_DETAILS }o--o{ CREATOR_VALUE : creator_values
+    COUPLE ||--o{ COUPLE_PIN : couple
+    PORTFOLIO_IMAGE ||--o{ COUPLE_PIN : portfolio_image
     COUPLE ||--o{ PROVIDER_LEAD : couple
     VENDOR ||--o{ PROVIDER_LEAD : vendor
+    PORTFOLIO_IMAGE ||--o{ PROVIDER_LEAD : portfolio_image
     SERVICE ||--o{ SPECIALTY : service
     SERVICE ||--o{ TAG_TYPE : service
     TAG_TYPE ||--o{ TAG_VALUE : tag_type
@@ -57,6 +60,7 @@ erDiagram
         string first_name
         string last_name
         string status
+        datetime_immutable unsubscribed_at
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -303,10 +307,19 @@ erDiagram
         datetime_immutable updated_at
     }
 
+    COUPLE_PIN {
+        uuid id
+        uuid couple_id
+        uuid portfolio_image_id
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
     PROVIDER_LEAD {
         uuid id
         uuid couple_id
         uuid vendor_id
+        uuid portfolio_image_id
         int budget_cents
         string status
         string origin

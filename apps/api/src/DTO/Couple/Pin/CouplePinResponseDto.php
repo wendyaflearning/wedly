@@ -14,16 +14,19 @@ namespace App\DTO\Couple\Pin;
 final readonly class CouplePinResponseDto
 {
     public string $id;
+    public string $portfolioImageId;
     public string $photoUrl;
     public string $pinnedAt;
 
     public function __construct(
         string $id,
+        string $portfolioImageId,
         string $photoUrl,
         \DateTimeImmutable $pinnedAt,
     ) {
-        $this->id       = $id;
-        $this->photoUrl = $photoUrl;
-        $this->pinnedAt = $pinnedAt->format(\DateTimeInterface::ATOM);
+        $this->id               = $id;
+        $this->portfolioImageId = $portfolioImageId;
+        $this->photoUrl         = $photoUrl;
+        $this->pinnedAt         = $pinnedAt->format(\DateTimeInterface::ATOM);
     }
 }

@@ -25,6 +25,14 @@ class CouplePinRepository extends ServiceEntityRepository
      * The portfolio image is joined because the assembler reads its URL for every
      * pin — without this, a list of ten pins would trigger ten extra queries.
      *
+     * Only Wedream-visible photos are returned (COUPLE-PIN-003): same three
+     * conditions as the public gallery, so a vendor opt-out stops serving the
+     * image even if the couple_pin row still exists.
+     *
+     * Pin ids are UUIDv7, so ordering on pin.id DESC is chronological and
+     * avoids the second-precision tie on created_at (PortfolioImageRepository
+     * uses the same idiom).
+     *
      * @return CouplePin[]
      */
     public function findByCouple(Couple $couple): array
@@ -32,9 +40,13 @@ class CouplePinRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('pin')
             ->addSelect('photo')
             ->join('pin.portfolioImage', 'photo')
+            ->innerJoin('photo.vendor', 'vendor')
             ->where('pin.couple = :couple')
+            ->andWhere('vendor.isPublished = true')
+            ->andWhere('vendor.wedreamEnabled = true')
+            ->andWhere('photo.isVisibleInWedream = true')
             ->setParameter('couple', $couple)
-            ->orderBy('pin.createdAt', 'DESC')
+            ->orderBy('pin.id', 'DESC')
             ->getQuery()
             ->getResult();
     }

@@ -16,6 +16,10 @@ use Symfony\Component\Uid\UuidV7;
 
 final class CouplePinResponseDtoAssemblerTest extends TestCase
 {
+    private const VENDOR_ID = '0198f0a1-0000-7000-8000-0000000000aa';
+
+    private const PHOTO_ID = '0198f0a1-1111-7000-8000-0000000000bb';
+
     private CouplePinResponseDtoAssembler $assembler;
 
     protected function setUp(): void
@@ -30,10 +34,19 @@ final class CouplePinResponseDtoAssemblerTest extends TestCase
         $dto = $this->assembler->assemble($pin);
 
         $json = json_encode($dto, JSON_THROW_ON_ERROR);
-        self::assertSame('https://cdn.wedly.test/coup-de-coeur.jpg', $dto->photoUrl);
+        self::assertSame($this->cloudinaryUrl(), $dto->photoUrl);
+        self::assertSame(self::PHOTO_ID, $dto->portfolioImageId);
         self::assertStringNotContainsString('Studio Lumière', $json);
         self::assertStringNotContainsString('contact@studio-lumiere.test', $json);
         self::assertStringNotContainsString('0600000000', $json);
+    }
+
+    private function cloudinaryUrl(): string
+    {
+        return sprintf(
+            'https://res.cloudinary.com/wedly/image/upload/v1/wedly/vendors/%s/photo.jpg',
+            self::VENDOR_ID,
+        );
     }
 
     private function pin(): CouplePin
@@ -56,10 +69,16 @@ final class CouplePinResponseDtoAssemblerTest extends TestCase
             ->setPriceMinCents(100_000)
             ->setPriceMaxCents(500_000);
 
+        $id = new \ReflectionProperty(Vendor::class, 'id');
+        $id->setValue($vendor, UuidV7::fromString(self::VENDOR_ID));
+
         $photo = (new PortfolioImage())
             ->setVendor($vendor)
-            ->setUrl('https://cdn.wedly.test/coup-de-coeur.jpg')
+            ->setUrl($this->cloudinaryUrl())
             ->setSortOrder(0);
+
+        $photoId = new \ReflectionProperty(PortfolioImage::class, 'id');
+        $photoId->setValue($photo, UuidV7::fromString(self::PHOTO_ID));
 
         $pin = new CouplePin($couple, $photo);
 
