@@ -173,6 +173,13 @@ final class VendorWeddreamLaunchEmailServiceTest extends TestCase
         parse_str((string) parse_url($consentFormUrl, PHP_URL_QUERY), $consentFormQuery);
         self::assertSame($vendor->getId()->toRfc4122(), $consentFormQuery['prestataire_id']);
         self::assertSame('camille@example.fr', $consentFormQuery['email']);
+
+        // L'URL de désinscription reste vendor-scoped et pointe vers la page Next.js,
+        // jamais directement vers l'endpoint Symfony.
+        self::assertSame(
+            self::FRONTEND_URL . '/unsubscribe/' . $vendor->getId()->toRfc4122(),
+            $context['unsubscribeUrl'],
+        );
     }
 
     public function test_send_to_pending_vendor_creates_token_then_logs_success(): void
