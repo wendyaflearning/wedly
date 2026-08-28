@@ -224,3 +224,50 @@ Couverture manquante :
 - test de la soumission finale atomique, incluant la persistance de
   `WeddingConsent` et l'effacement des associations lors d'un refus ultérieur
 - E2E desktop et mobile du parcours couple complet
+
+## RGPD-CONSENT-007 — Opt-out email porté par la personne, campagnes uniquement
+
+Statut : `active`
+
+Le refus de recevoir des emails appartient à la **personne**, pas à sa casquette
+sur la plateforme. `unsubscribed_at` vit donc sur `app_user` et non sur `vendor` :
+`Vendor` et `Couple` pointent tous deux vers un `User`, et porter le flag côté
+`Vendor` obligerait à le dupliquer le jour d'une campagne côté couple.
+
+**Why:** obligation d'opt-out sur une communication commerciale, y compris à des
+professionnels. Un prestataire qui se désinscrit ne doit plus jamais entrer dans
+un ciblage de campagne, sans intervention manuelle.
+
+**How to apply:** toute nouvelle campagne email doit exclure
+`user.unsubscribedAt IS NULL` dans sa requête de ciblage, au même niveau que les
+exclusions structurelles (statut, emails placeholder) — donc y compris quand le
+ciblage est nominatif. Un ciblage nominatif reste un envoi de campagne.
+
+Portée volontairement limitée :
+
+- le flag ne coupe **que** les campagnes — aujourd'hui la seule est le lancement
+  WedDream
+- il ne coupe **jamais** les emails transactionnels : réinitialisation de mot de
+  passe, invitation prestataire, notification de rejet continuent de partir. Les
+  brancher sur ce flag couperait un prestataire de son propre compte.
+
+Implémentation actuelle :
+
+- `apps/api/src/Entity/User/User.php` — `unsubscribedAt`
+- `apps/api/src/Repository/Vendor/VendorRepository.php` — `findEligibleForWeddreamLaunch()`
+- `apps/api/src/Service/Vendor/VendorUnsubscribeService.php`
+- `apps/api/src/Controller/Onboarding/PostVendorUnsubscribeAction.php`
+
+Contrat attendu :
+
+- désinscription idempotente : un lien cliqué deux fois renvoie un succès, pas une
+  erreur, et n'écrase pas la date d'origine
+- identifiant prestataire malformé : `404` au routeur, jamais `500`
+- l'URL publique reste vendor-scoped (`/unsubscribe/{vendorId}`) pour rester lisible
+  côté prestataire, même si la donnée est stockée sur son `User`
+
+Risque de régression :
+
+- rattacher un envoi transactionnel à ce flag
+- oublier la clause dans une future campagne : le ciblage nominatif est le piège,
+  c'est le cas où on croit « forcer » un envoi légitime

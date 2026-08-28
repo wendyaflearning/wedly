@@ -140,6 +140,7 @@ class VendorRepository extends ServiceEntityRepository
             ->innerJoin('vendor.user', 'user')
             ->andWhere('vendor.status != :excludedStatus')
             ->andWhere('user.email NOT LIKE :draftEmailPattern')
+            ->andWhere('user.unsubscribedAt IS NULL')
             ->setParameter('excludedStatus', VendorStatus::Rejected->value)
             ->setParameter('draftEmailPattern', '%@' . AdminVendorDraftService::DRAFT_EMAIL_DOMAIN)
             ->orderBy('vendor.createdAt', 'ASC');

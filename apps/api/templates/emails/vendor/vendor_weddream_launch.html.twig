@@ -3,6 +3,7 @@
 {% block title %}WedDream est prêt : on le teste au Salon du Mariage{% endblock %}
 
 {% block extra_styles %}
+    .footer-unsub { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: rgba(157,79,30,0.5) !important; text-decoration: underline; }
     .cta-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; background-color: #9D4F1E; color: #FFF6ED !important; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 12px; padding: 16px 36px; letter-spacing: 0.01em; }
     .consent-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; border: 1px solid rgba(78,26,50,0.35); border-radius: 20px; padding: 12px 26px; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: #4E1A32; text-decoration: none; }
     .hero { background-color: #4E1A32; padding: 32px 28px; border-radius: 12px; }
@@ -143,4 +144,4 @@
               <p class="signature-team">L'équipe Wedly</p>
 {% endblock %}
 
-{% block footer_text %}Vous recevez cet email car vous êtes prestataire partenaire Wedly.{% endblock %}
+{% block footer_text %}Vous recevez cet email car vous êtes prestataire partenaire Wedly. <a href="{{ unsubscribeUrl }}" class="footer-unsub">Se désinscrire</a>{% endblock %}

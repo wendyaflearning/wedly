@@ -163,6 +163,7 @@ final readonly class VendorWeddreamLaunchEmailService
                 'ctaLabel'        => $ctaLabel,
                 'ctaUrl'          => $ctaUrl,
                 'consentFormUrl'  => $this->resolveConsentFormUrl($vendor),
+                'unsubscribeUrl'  => $this->resolveUnsubscribeUrl($vendor),
             ]);
 
         $this->mailer->send($email);
@@ -178,6 +179,15 @@ final readonly class VendorWeddreamLaunchEmailService
             'prestataire_id' => $vendor->getId()->toRfc4122(),
             'email'          => $vendor->getUser()->getEmail(),
         ]);
+    }
+
+    /**
+     * L'URL publique reste vendor-scoped pour rester lisible côté prestataire,
+     * même si l'opt-out est stocké sur son User.
+     */
+    private function resolveUnsubscribeUrl(Vendor $vendor): string
+    {
+        return rtrim($this->frontendUrl, '/') . '/unsubscribe/' . $vendor->getId()->toRfc4122();
     }
 
     private function recordAttempt(Vendor $vendor, VendorEmailLogStatus $status, ?string $errorMessage): void
