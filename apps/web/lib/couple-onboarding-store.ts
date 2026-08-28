@@ -10,13 +10,19 @@ export type PlanningStage = 'just_started' | 'in_progress' | 'almost_ready'
  * (Stage D / WED-109). A pin never stores it, so it never creates a lead — but
  * it does not change the screens: the budget question is asked either way.
  *
- * Only `vendorId` is submitted. `serviceLabel` is here for what the journey
- * shows the couple; the server has no column for it and revalidates the vendor
- * anyway, so sending it would mean validating a field only to drop it.
+ * `vendorId` and `portfolioImageId` are submitted. The photo is the one the
+ * couple fell for in the Wedream gallery: the lead stores it, and the request
+ * category is derived from it server-side (PROVIDER-LEAD-004). It is optional —
+ * a contact request can start somewhere without a photo.
+ *
+ * `serviceLabel` stays here for what the journey shows the couple; the server
+ * has no column for it and derives the category from the photo anyway, so
+ * sending it would mean validating a field only to drop it.
  */
 export interface ProviderContactRequest {
   vendorId: string
   serviceLabel: string
+  portfolioImageId?: string
 }
 
 export interface CoupleOnboardingData {
