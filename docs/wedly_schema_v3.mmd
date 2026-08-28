@@ -30,6 +30,8 @@ erDiagram
     COUPLE ||--o{ PROVIDER_LEAD : couple
     VENDOR ||--o{ PROVIDER_LEAD : vendor
     PORTFOLIO_IMAGE ||--o{ PROVIDER_LEAD : crush_photo
+    COUPLE ||--o{ COUPLE_PIN : couple
+    PORTFOLIO_IMAGE ||--o{ COUPLE_PIN : portfolio_image
     SERVICE ||--o{ SPECIALTY : service
     SERVICE ||--o{ TAG_TYPE : service
     TAG_TYPE ||--o{ TAG_VALUE : tag_type
@@ -302,6 +304,14 @@ erDiagram
         int budget_cents
         string status
         string origin
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    COUPLE_PIN {
+        uuid id
+        uuid couple_id
+        uuid portfolio_image_id
         datetime_immutable created_at
         datetime_immutable updated_at
     }

@@ -91,6 +91,13 @@ dans les fichiers de règles.
 | `WEDREAM-VISIBILITY-001`  | La publication publique exige un opt-in explicite du prestataire             | `active` | `rules/wedream-visibility.md` |
 | `WEDREAM-VISIBILITY-002`  | La désactivation coupe la lecture publique sans toucher photos ni tags       | `active` | `rules/wedream-visibility.md` |
 
+## Couple pins
+
+| ID               | Règle                                                              | Statut   | Fichier                 |
+| ---------------- | ------------------------------------------------------------------ | -------- | ----------------------- |
+| `COUPLE-PIN-001` | Un épinglé relie un couple à une photo de portfolio                | `active` | `rules/couple-pins.md`  |
+| `COUPLE-PIN-002` | Le couple ne voit que l'image, jamais le prestataire               | `active` | `rules/couple-pins.md`  |
+
 ## À ajouter lors des prochains tickets
 
 - règles WedMatch dès que le matching est implémenté
