@@ -69,19 +69,23 @@ class DeleteUserCommand extends Command
             return Command::SUCCESS;
         }
 
-        $helper = $this->getHelper('question');
-        $confirmed = $helper->ask(
-            $input,
-            $output,
-            new ConfirmationQuestion(
-                sprintf('Confirmer suppression de %s ? [y/N] ', $email),
-                false,
-            ),
-        );
+        if ($input->isInteractive()) {
+            $helper = $this->getHelper('question');
+            $confirmed = $helper->ask(
+                $input,
+                $output,
+                new ConfirmationQuestion(
+                    sprintf('Confirmer suppression de %s ? [y/N] ', $email),
+                    false,
+                ),
+            );
 
-        if (!$confirmed) {
-            $io->warning('Deletion cancelled.');
-            return Command::SUCCESS;
+            if (!$confirmed) {
+                $io->warning('Deletion cancelled.');
+                return Command::SUCCESS;
+            }
+        } else {
+            $io->note('Non-interactive mode: proceeding with --force.');
         }
 
         $this->userDeleteService->delete($user, $vendor);
