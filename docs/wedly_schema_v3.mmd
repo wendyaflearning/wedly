@@ -27,9 +27,11 @@ erDiagram
     VENDOR ||--o| VENDOR_ANIMATION_DETAILS : vendor
     VENDOR ||--o| VENDOR_CREATOR_DETAILS : vendor
     VENDOR_CREATOR_DETAILS }o--o{ CREATOR_VALUE : creator_values
+    COUPLE ||--o{ COUPLE_PIN : couple
+    PORTFOLIO_IMAGE ||--o{ COUPLE_PIN : portfolio_image
     COUPLE ||--o{ PROVIDER_LEAD : couple
     VENDOR ||--o{ PROVIDER_LEAD : vendor
-    PORTFOLIO_IMAGE ||--o{ PROVIDER_LEAD : crush_photo
+    PORTFOLIO_IMAGE ||--o{ PROVIDER_LEAD : portfolio_image
     SERVICE ||--o{ SPECIALTY : service
     SERVICE ||--o{ TAG_TYPE : service
     TAG_TYPE ||--o{ TAG_VALUE : tag_type
@@ -290,6 +292,14 @@ erDiagram
         uuid id
         string name
         string slug
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    COUPLE_PIN {
+        uuid id
+        uuid couple_id
+        uuid portfolio_image_id
         datetime_immutable created_at
         datetime_immutable updated_at
     }
