@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isCoupleSpaceRedirect } from '@/lib/auth-redirect';
 import { loginVendor } from '@/lib/auth';
 
 export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
@@ -11,6 +12,7 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [error, setError] = useState('');
 
   const isEmailValid = email.includes('@') && email.includes('.');
+  const isCoupleLogin = isCoupleSpaceRedirect(redirectTo);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,13 +32,13 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
       {/* Header */}
       <div className="flex flex-col gap-[9px]">
         <span className="font-manrope text-[10.5px] font-bold tracking-[0.18em] uppercase text-[rgb(240,168,117)] md:text-highlight">
-          Espace prestataire
+          {isCoupleLogin ? 'Espace couple' : 'Espace prestataire'}
         </span>
         <h1 className="font-cormorant font-medium text-[30px] leading-[1.1] text-creme tracking-[0.005em] md:hidden">
           Connexion
         </h1>
         <h1 className="hidden md:block font-cormorant font-medium text-[38px] leading-[1.1] text-texte tracking-[0.005em]">
-          Bienvenue sur Wedly
+          {isCoupleLogin ? 'Retrouvez votre espace' : 'Bienvenue sur Wedly'}
         </h1>
       </div>
 
@@ -50,8 +52,17 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
           </svg>
         </span>
         <p className="font-manrope text-[12.5px] font-normal leading-[1.5] text-[rgba(255,246,237,0.78)] md:text-[rgba(41,26,16,0.78)]">
-          <span className="font-semibold text-creme md:text-texte">Profil validé par nos équipes.</span>{' '}
-          Connectez-vous avec vos identifiants d&apos;inscription.
+          {isCoupleLogin ? (
+            <>
+              <span className="font-semibold text-creme md:text-texte">Mon espace Wedly.</span>{' '}
+              Connectez-vous avec l&apos;email et le mot de passe créés lors de votre inscription.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-creme md:text-texte">Profil validé par nos équipes.</span>{' '}
+              Connectez-vous avec vos identifiants d&apos;inscription.
+            </>
+          )}
         </p>
       </div>
 

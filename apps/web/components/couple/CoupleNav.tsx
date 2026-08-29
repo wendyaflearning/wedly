@@ -3,102 +3,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { AvatarMenu } from '@/components/vendor/AvatarMenu'
 import { WEDDREAM_GALLERY_PATH } from '@/lib/couple-space'
 import type { CoupleSession } from '@/lib/couple'
 
 interface CoupleNavProps {
   session: CoupleSession
-}
-
-function CoupleAvatarMenu({
-  firstName,
-  lastName,
-  email,
-}: {
-  firstName: string
-  lastName?: string | null
-  email?: string
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const initials = `${firstName[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
-  const fullName = [firstName, lastName].filter(Boolean).join(' ')
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') setIsOpen(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [])
-
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    window.location.href = '/login'
-  }
-
-  return (
-    <div ref={menuRef} className="relative">
-      <button
-        onClick={() => setIsOpen((v) => !v)}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-bordeaux text-xs font-semibold tracking-[0.04em] text-white"
-        style={{
-          fontFamily: 'var(--font-manrope-var)',
-          boxShadow: '0 0 0 2.5px rgba(255,246,237,0.4)',
-        }}
-        aria-label="Menu compte"
-      >
-        {initials || firstName[0]?.toUpperCase()}
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute right-0 top-[calc(100%+12px)] z-50 w-[268px] overflow-hidden rounded-2xl bg-creme"
-          style={{
-            border: '0.5px solid rgba(78,26,50,0.12)',
-            boxShadow: '0px 8px 28px rgba(41,26,16,0.18), 0px 2px 6px rgba(41,26,16,0.08)',
-          }}
-        >
-          <div className="px-5 pb-4 pt-5">
-            <p className="text-[15px] font-semibold leading-snug text-texte" style={{ fontFamily: 'var(--font-manrope-var)' }}>
-              {fullName || firstName}
-            </p>
-            {email && (
-              <p className="mt-0.5 text-[12px] text-gris" style={{ fontFamily: 'var(--font-manrope-var)' }}>
-                {email}
-              </p>
-            )}
-          </div>
-
-          <hr className="mx-0 h-px border-0 bg-bordeaux/10" />
-
-          <div className="py-1.5">
-            <button
-              onClick={handleLogout}
-              className="flex w-full cursor-pointer items-center gap-3 px-5 py-[11px] text-[13px] font-medium text-highlight transition-colors hover:bg-highlight/5"
-              style={{ fontFamily: 'var(--font-manrope-var)' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M6.5 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3.5" stroke="#E35704" strokeWidth="1.3" strokeLinecap="round" />
-                <path d="M11 11.5l3.5-3.5L11 4.5M14.5 8H6.5" stroke="#E35704" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Se déconnecter
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 
 /**
@@ -144,10 +54,11 @@ export function CoupleNav({ session }: CoupleNavProps) {
           <span className="sm:hidden">WedDream</span>
         </Link>
 
-        <CoupleAvatarMenu
+        <AvatarMenu
           firstName={session.firstName}
           lastName={session.lastName}
           email={session.email}
+          showAccountLinks={false}
         />
       </div>
     </header>
