@@ -50,6 +50,13 @@ dans les fichiers de règles.
 | `DATA-SCHEMA-004` | Les référentiels sont chargés par fixtures, pas par API métier | `active` | `rules/data-and-schema.md` |
 | `DATA-SCHEMA-005` | `vendor_consent` conserve les décisions de consentement par vendor | `active` | `rules/data-and-schema.md` |
 
+## Tag taxonomy (admin)
+
+| ID                 | Règle                                                    | Statut   | Fichier                 |
+| ------------------ | -------------------------------------------------------- | -------- | ----------------------- |
+| `TAG-TAXONOMY-001` | Une seule catégorie principale active par métier         | `active` | `rules/tag-taxonomy.md` |
+| `TAG-TAXONOMY-002` | Désactivation sans cascade, jamais de suppression réelle | `active` | `rules/tag-taxonomy.md` |
+
 ## À ajouter lors des prochains tickets
 
 - règles WedMatch dès que le matching est implémenté
