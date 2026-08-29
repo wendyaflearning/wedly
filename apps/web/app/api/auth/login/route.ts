@@ -40,6 +40,10 @@ function safeRedirectForRole(value: unknown, isAdmin: boolean): string {
     return normalizedRedirect;
   }
 
+  if (!isAdmin && isRouteInSection(normalizedRedirect, '/mon-espace')) {
+    return normalizedRedirect;
+  }
+
   return fallback;
 }
 
