@@ -89,8 +89,9 @@ au lieu d'être refusé à la saisie.
 
 Un montant hors bornes est refusé par le constructeur de `ProviderLead`. Le DTO
 de l'écran final (Stage D / WED-109) doit porter la contrainte `Assert`
-équivalente, et revalider le `vendorId` — prestataire existant et actif — pour
-répondre en 422 plutôt qu'en 500.
+équivalente, et revalider le prestataire ciblé — existant et actif — pour
+répondre en 422 plutôt qu'en 500. Depuis WED-150, ce prestataire n'est plus
+nécessairement désigné par un `vendorId` explicite : voir `PROVIDER-LEAD-006`.
 
 Implémentation actuelle :
 
@@ -117,8 +118,10 @@ Décision du 28/08/2026 (Wendy + Denis, WED-131).
 Le parcours de découverte Wedream part d'un sous-style : le couple ouvre
 `GET /api/v1/tag-values/{tagValueId}/portfolio-images`, clique sur une photo,
 puis demande la mise en relation. La demande de contact transporte donc
-`portfolioImageId` en plus de `vendorId`, et le lead la persiste
-(`provider_lead.portfolio_image_id`, nullable, `ON DELETE SET NULL`).
+`portfolioImageId`, et le lead la persiste (`provider_lead.portfolio_image_id`,
+nullable, `ON DELETE SET NULL`). Elle transportait aussi `vendorId` de façon
+systématique jusqu'à WED-150 ; ce n'est plus le cas — voir `PROVIDER-LEAD-006`
+pour la résolution du prestataire quand `vendorId` est absent.
 
 Deux garde-fous à la création, la valeur venant de l'état client :
 
@@ -195,3 +198,66 @@ Implémentation :
 - `apps/api/src/Enum/Couple/CoupleLeadStatus.php`
 - `apps/api/src/Service/ProviderLead/ProviderLeadCategoryResolver.php`
 - `apps/api/migrations/Version20260828080000.php`
+
+## PROVIDER-LEAD-006 — Le prestataire ciblé se résout côté serveur, jamais depuis un `vendorId` de confiance
+
+Statut : `active`
+
+Décision verrouillée #1 de WED-49 (29/08/2026, Wendy) : aucun identifiant de
+prestataire ne doit transiter côté client, ni en lecture ni en écriture. WED-150
+en pose le premier étage côté écriture — la demande de contact de l'écran final
+d'onboarding (Stage D / WED-109, `PostRegisterAction`).
+
+`ProviderContactRequestDto::$vendorId` devient nullable. Le couple cible
+toujours une photo précise avant de demander le contact ; le prestataire n'a
+donc jamais besoin d'être désigné explicitement, puisque
+`CoupleRegistrationService` sait déjà le remonter depuis
+`portfolio_image.vendor_id` — c'est exactement ce que fait `PROVIDER-LEAD-004`
+pour la validation d'appartenance de la photo.
+
+`resolveActiveVendor()` accepte les deux chemins :
+
+- `vendorId` présent → comportement historique inchangé (lookup + statut
+  `active`, sinon 422) ;
+- `vendorId` absent → le vendor est dérivé de `portfolioImageId` via
+  `findVisiblePortfolioImage()->getVendor()`.
+
+Le contrôle de statut `active` s'applique **aux deux chemins**, pas seulement au
+premier. `is_visible_in_wedream` est recalculé au tagging de la photo, pas à
+chaque changement de statut du prestataire (voir `WEDREAM-VISIBILITY-001/002`) :
+une photo encore taguée visible ne dit rien de la disponibilité actuelle de son
+propriétaire. Sans ce contrôle sur le second chemin, un prestataire désactivé
+resterait joignable via une vieille photo.
+
+Au moins un des deux identifiants reste obligatoire — une demande de contact
+sans aucune cible n'a pas de sens. La contrainte est portée par le DTO
+(`#[Assert\Callback]` sur la classe, violation rattachée à `vendorId` pour que
+le frontend ait un chemin d'affichage) et revérifiée dans le service, qui reste
+appelable sans passer par `MapRequestPayload`.
+
+`vendorId` reste accepté aujourd'hui : le frontend de l'écran 7 continue de
+l'envoyer systématiquement (`couple-registration.ts`), la bascule complète est
+hors scope de WED-150. Elle est prévue pour US2 (couple déjà connecté qui
+épingle/contacte une nouvelle photo sans repasser par l'onboarding) et US3a —
+seul un couple déjà authentifié n'aura alors plus de raison d'envoyer autre
+chose qu'un `portfolioImageId`. Tant que ces deux US ne sont pas livrées,
+`vendorId` ne doit pas être retiré du DTO : l'endpoint `POST /api/v1/register`
+reste son seul point d'entrée (aucun autre controller ne consomme
+`ProviderContactRequestDto`) et le frontend actuel dépend encore de son envoi.
+
+Implémentation :
+
+- `apps/api/src/DTO/Couple/ProviderContactRequestDto.php`
+- `apps/api/src/Service/Couple/CoupleRegistrationService.php` (`resolveActiveVendor`, `findVisiblePortfolioImage`)
+
+Couverture :
+
+- `apps/api/tests/Unit/Service/Couple/CoupleRegistrationServiceTest.php` — résolution
+  depuis la photo seule, photo non visible dans Wedream, photo visible d'un
+  vendor inactif, absence totale de cible ;
+- `apps/api/tests/Unit/DTO/Couple/RegisterCoupleRequestDtoTest.php` — validation
+  DTO sur les mêmes cas limites (photo seule acceptée, aucune cible rejetée).
+
+À auditer : quand US2/US3a seront livrées et que le frontend n'enverra plus
+`vendorId` du tout, revenir ici pour décider si le champ doit rester nullable
+en confort de compatibilité descendante ou être retiré du DTO.
