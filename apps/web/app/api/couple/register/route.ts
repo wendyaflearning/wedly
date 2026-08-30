@@ -15,11 +15,18 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify(body),
   });
 
-  const data = await res.json().catch(() => null);
+  const text = await res.text();
+  let data: { error?: string; detail?: string; firstName?: string } | null = null;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    console.error('[couple/register] réponse Symfony non-JSON :', res.status, text.slice(0, 500));
+  }
 
   if (!res.ok) {
+    if (data) console.error('[couple/register] erreur Symfony :', res.status, data);
     return NextResponse.json(
-      { error: data?.error ?? 'Une erreur est survenue. Réessayez.' },
+      { error: data?.error ?? data?.detail ?? 'Une erreur est survenue. Réessayez.' },
       { status: res.status },
     );
   }
