@@ -108,6 +108,31 @@ cd apps/api
 php bin/phpunit
 ```
 
+### Tests fonctionnels — préparation à faire une fois
+
+Les tests de `tests/Functional/` tapent sur une vraie base. Doctrine suffixe
+automatiquement le nom de base en environnement de test (`dbname_suffix` dans
+`config/packages/doctrine.yaml`), donc `app` devient `app_test` — il n'y a
+aucun `DATABASE_URL` à redéfinir, seulement la base à créer :
+
+```bash
+cd apps/api
+php bin/console doctrine:database:create --env=test --if-not-exists
+php bin/console doctrine:migrations:migrate --env=test --no-interaction
+```
+
+Chaque test s'exécute dans une transaction annulée à la fin : la base ne se
+remplit pas au fil des exécutions et n'a pas besoin d'être réinitialisée.
+
+**Passphrase JWT.** Symfony ne charge **pas** `.env.local` en environnement de
+test. La passphrase des clés JWT y vivant, l'encodage du token échoue sans
+elle et les tests d'inscription tombent en erreur. Il faut la redonner dans
+`.env.test.local`, qui est ignoré par git :
+
+```bash
+echo 'JWT_PASSPHRASE="<la même que dans .env.local>"' >> apps/api/.env.test.local
+```
+
 ## 5. Hooks Git locaux optionnels
 
 Le dépôt fournit un hook `pre-push` non bloquant dans `.githooks/pre-push`.

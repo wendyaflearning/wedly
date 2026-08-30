@@ -126,7 +126,7 @@ Generate realistic French wedding data for fixtures. Examples:
 ## Memory vault — règles métier
 
 Après chaque implémentation de feature ou de fix, identifier les règles métier impliquées
-et les sauvegarder dans le memory vault (`~/.claude/projects/.../memory/`).
+et les sauvegarder dans le memory vault (`docs/memory-vault/`).
 
 **Ce qui doit être capturé :**
 - Toute contrainte métier non évidente (ex. : une zone unique par créateur, tarification
