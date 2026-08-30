@@ -44,6 +44,20 @@ import {
   type CoupleCredentials,
 } from '@/lib/couple-registration'
 
+/**
+ * Played once on the welcome screen. Each burst is a fixed origin point;
+ * FIREWORK_PARTICLE_COUNT particles per burst radiate at evenly-spaced
+ * angles, their (--dx, --dy) computed below rather than stored, so the CSS
+ * side only needs one keyframe (globals.css) to animate every particle.
+ */
+const FIREWORK_COLORS = ['#9D4F1E', '#E35704', '#E8A87C', '#4E1A32']
+const FIREWORK_BURSTS = [
+  { top: '18%', left: '20%', delay: 0, radius: 70 },
+  { top: '14%', left: '78%', delay: 0.18, radius: 60 },
+  { top: '32%', left: '50%', delay: 0.36, radius: 85 },
+]
+const FIREWORK_PARTICLE_COUNT = 10
+
 const PLANNING_STAGES: Array<{ value: PlanningStage; label: string }> = [
   { value: 'just_started', label: 'On vient de commencer' },
   { value: 'in_progress', label: 'On est en plein dedans' },
@@ -259,6 +273,11 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   // Holds what the server refused — a duplicate email above all, which no
   // browser-side check can anticipate.
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Which screens the couple has actually been shown, not just "before the
+  // current one": screens 4-5 never happen at all on the refused-consent
+  // path, and a step of the progress bar has no business being clickable if
+  // it was skipped rather than filled in.
+  const [visitedScreens, setVisitedScreens] = useState<Set<CoupleOnboardingScreen>>(() => new Set([1]))
 
   useLayoutEffect(() => {
     queueMicrotask(() => {
@@ -270,6 +289,12 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   useEffect(() => {
     if (hydrated) saveCoupleOnboarding(sessionStorage, data)
   }, [data, hydrated])
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setVisitedScreens((current) => (current.has(screen) ? current : new Set(current).add(screen)))
+    })
+  }, [screen])
 
   /**
    * The "Continuer" button keeps focus across the screen swap. Left alone,
@@ -368,6 +393,16 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
     setScreen(previousScreen(screen, commitBudget()))
   }
 
+  /**
+   * Reached only from a progress-bar dot, which the couple can only click on
+   * an already-visited screen — so, unlike goBack, there is no skipped-screen
+   * case to resolve here.
+   */
+  function goToScreen(target: number) {
+    commitBudget()
+    setScreen(target as CoupleOnboardingScreen)
+  }
+
   const name = data.firstName?.trim()
   const canGoOn = canContinue(screen, data) && !submitting
   const budgetCents = data.budgetCents ?? DEFAULT_BUDGET_CENTS
@@ -377,13 +412,48 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
 
   if (screen === 8) {
     return (
-      <main className="grid min-h-screen place-items-center bg-creme px-6 py-16 text-texte">
-        <section className="w-full max-w-2xl text-center">
-          <h1 className="font-cormorant text-4xl font-medium tracking-tight sm:text-5xl lg:text-6xl">
-            Bienvenue chez Wedly{name ? <>, <em className="font-semibold text-accent not-italic">{name}</em></> : null}.
-          </h1>
-          <p className="mt-8 text-base leading-7 text-gris">Votre compte est prêt. Vous allez maintenant découvrir vos premiers prestataires.</p>
-        </section>
+      <main className="relative min-h-screen overflow-hidden bg-creme px-6 py-8 text-texte sm:px-12 lg:px-20">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          {FIREWORK_BURSTS.map((burst, burstIndex) => (
+            <div key={burstIndex} className="absolute" style={{ top: burst.top, left: burst.left }}>
+              {Array.from({ length: FIREWORK_PARTICLE_COUNT }, (_, particleIndex) => {
+                const angle = (particleIndex / FIREWORK_PARTICLE_COUNT) * 2 * Math.PI
+                const dx = Math.round(Math.cos(angle) * burst.radius)
+                const dy = Math.round(Math.sin(angle) * burst.radius)
+                return (
+                  <span
+                    key={particleIndex}
+                    className="firework-particle"
+                    style={{
+                      backgroundColor: FIREWORK_COLORS[(burstIndex + particleIndex) % FIREWORK_COLORS.length],
+                      animationDelay: `${burst.delay}s`,
+                      '--dx': `${dx}px`,
+                      '--dy': `${dy}px`,
+                    } as React.CSSProperties}
+                  />
+                )
+              })}
+            </div>
+          ))}
+        </div>
+
+        <header className="relative">
+          <Link href="/" aria-label="Retour à l'accueil Wedly">
+            <Image src={LOGO_ON_CREME} alt="Wedly" width={0} height={0} sizes="160px" style={{ height: '40px', width: 'auto' }} priority />
+          </Link>
+        </header>
+
+        <div className="relative grid min-h-[calc(100vh-8rem)] place-items-center">
+          <section className="w-full max-w-2xl text-center">
+            <h1 className="font-cormorant text-4xl font-medium tracking-tight sm:text-5xl lg:text-6xl">
+              Bienvenue chez Wedly{name ? <>, <em className="font-semibold text-accent not-italic">{name}</em></> : null}.
+            </h1>
+            <p className="mt-8 text-base leading-7 text-gris">Votre compte est prêt. Vous allez maintenant découvrir vos premiers prestataires.</p>
+            <Link href="/login" className="mt-10 inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent">
+              SE CONNECTER <ChevronRight size={18} aria-hidden="true" />
+            </Link>
+          </section>
+        </div>
       </main>
     )
   }
@@ -398,9 +468,9 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
         <header className="mb-8 flex items-center justify-between sm:mb-0">
           <div className="flex items-center gap-4">
             <Link href="/" aria-label="Retour à l'accueil Wedly">
-              <Image src={isDark ? LOGO_ON_BORDEAUX : LOGO_ON_CREME} alt="Wedly" width={0} height={0} sizes="120px" style={{ height: '20px', width: 'auto' }} priority />
+              <Image src={isDark ? LOGO_ON_BORDEAUX : LOGO_ON_CREME} alt="Wedly" width={0} height={0} sizes="120px" style={{ height: '40px', width: 'auto' }} priority />
             </Link>
-            <ProgressIndicator currentStep={screen} totalSteps={COUPLE_ONBOARDING_STEPS} dark={isDark} />
+            <ProgressIndicator currentStep={screen} totalSteps={COUPLE_ONBOARDING_STEPS} dark={isDark} visitedSteps={visitedScreens} onStepClick={goToScreen} />
           </div>
           {screen > 1 && <button type="button" onClick={goBack} className={`inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline ${accentColor}`}><ChevronLeft size={16} />Retour</button>}
         </header>
