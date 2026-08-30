@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Lightbox } from '@/components/portfolio/Lightbox'
 import type { PortfolioImagesPage, PublicPortfolioImage } from '@/lib/wedream-gallery'
 
 type PortfolioGridProps = {
@@ -24,6 +25,7 @@ export default function PortfolioGrid({
   const [items, setItems] = useState(initialItems)
   const [nextCursor, setNextCursor] = useState(initialNextCursor)
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<PublicPortfolioImage | null>(null)
 
   const sentinelRef = useRef<HTMLDivElement>(null)
   const inFlightRef = useRef(false)
@@ -79,14 +81,21 @@ export default function PortfolioGrid({
     <div>
       <div className="columns-2 gap-4 md:columns-3 lg:columns-4" aria-label={`${initialTotal} photos ${label}`}>
         {items.map((item) => (
-          /* eslint-disable-next-line @next/next/no-img-element -- ratio inconnu à l'avance : next/image imposerait des dimensions qu'on n'a pas. */
-          <img
+          <button
             key={item.id}
-            src={item.url}
-            alt={`Photo ${label}`}
-            loading="lazy"
-            className="mb-4 w-full rounded-[5px] break-inside-avoid"
-          />
+            type="button"
+            onClick={() => setSelectedImage(item)}
+            aria-label={`Ouvrir la photo ${label}`}
+            className="mb-4 block w-full overflow-hidden rounded-[5px] break-inside-avoid"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- ratio inconnu à l'avance : next/image imposerait des dimensions qu'on n'a pas. */}
+            <img
+              src={item.url}
+              alt={`Photo ${label}`}
+              loading="lazy"
+              className="w-full transition-transform duration-[450ms] ease-out hover:scale-[1.03]"
+            />
+          </button>
         ))}
       </div>
 
@@ -97,6 +106,10 @@ export default function PortfolioGrid({
           </span>
         )}
       </div>
+
+      {selectedImage && (
+        <Lightbox photo={selectedImage} onClose={() => setSelectedImage(null)} />
+      )}
     </div>
   )
 }
