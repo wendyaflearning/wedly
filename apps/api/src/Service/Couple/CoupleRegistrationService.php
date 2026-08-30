@@ -8,6 +8,7 @@ use App\DTO\Couple\ProviderContactRequestDto;
 use App\DTO\Couple\RegisterCoupleRequestDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Couple\Couple;
+use App\Entity\Couple\CouplePin;
 use App\Entity\Culture\Culture;
 use App\Entity\ProviderLead\ProviderLead;
 use App\Entity\User\User;
@@ -55,14 +56,6 @@ final readonly class CoupleRegistrationService
         $confessions = $granted ? $this->resolveConfessions($dto->confessionSlugs) : [];
         $cultures    = $granted ? $this->resolveCultures($dto->cultureSlugs) : [];
 
-        $vendor = $dto->contactRequest !== null
-            ? $this->resolveActiveVendor($dto->contactRequest)
-            : null;
-
-        $crushPhoto = $vendor !== null && $dto->contactRequest?->portfolioImageId !== null
-            ? $this->resolveCrushPhoto($vendor, $dto->contactRequest->portfolioImageId)
-            : null;
-
         $user = (new User())
             ->setFirstName(trim($dto->firstName))
             ->setEmail($dto->email)
@@ -96,13 +89,11 @@ final readonly class CoupleRegistrationService
         // refusé, un refus n'est pas une absence de décision.
         $consent = new WeddingConsent($wedding, ConsentType::SensitiveData, $granted);
 
-        // Un simple épingle n'envoie pas de contactRequest et ne produit donc
-        // aucun lead (PROVIDER-LEAD-001). Le lead garde sa propre copie du
-        // montant, figée à la création (PROVIDER-LEAD-002), et la photo coup de
-        // cœur qui a déclenché la demande (PROVIDER-LEAD-004).
-        $lead = $vendor !== null
-            ? new ProviderLead($couple, $vendor, $dto->budgetCents, $crushPhoto)
-            : null;
+        // Tout est résolu avant d'ouvrir la transaction : un identifiant
+        // incohérent sort en 422 sans qu'aucune écriture n'ait commencé, il n'y a
+        // donc rien à annuler.
+        $leads = $this->buildProviderLeads($dto, $couple);
+        $pins  = $this->buildCouplePins($dto, $couple);
 
         $this->em->beginTransaction();
 
@@ -112,12 +103,17 @@ final readonly class CoupleRegistrationService
             $this->em->persist($couple);
             $this->em->persist($consent);
 
-            if ($lead !== null) {
+            foreach ($leads as $lead) {
                 $this->em->persist($lead);
+            }
+
+            foreach ($pins as $pin) {
+                $this->em->persist($pin);
             }
 
             $this->em->flush();
             $this->em->commit();
+            // TODO PROVIDER-LEAD-007 : le catch UniqueConstraintViolationException ci-dessous suppose une seule contrainte unique possible (email). Un doublon dans $dto->pins violerait aussi UNIQ_couple_pin_couple_image et serait incorrectement mappé sur "email déjà utilisé". Pas bloquant (nécessite bug frontend ou race), à traiter si ça remonte en prod.
         } catch (UniqueConstraintViolationException) {
             // Le contrôle ci-dessus laisse passer deux requêtes concurrentes sur
             // le même email : elles peuvent le franchir toutes les deux avant
@@ -136,6 +132,86 @@ final readonly class CoupleRegistrationService
         }
 
         return $user;
+    }
+
+    /**
+     * Un simple épingle n'envoie pas de demande de contact et ne produit donc
+     * aucun lead (PROVIDER-LEAD-001). Chaque lead garde sa propre copie du
+     * montant, figée à la création (PROVIDER-LEAD-002), et la photo coup de
+     * cœur qui a déclenché la demande (PROVIDER-LEAD-004).
+     *
+     * Un couple n'a qu'un lead par prestataire (PROVIDER-LEAD-007) : le parcours
+     * peut contacter deux fois le même prestataire depuis deux photos, c'est un
+     * geste légitime côté couple, pas une erreur à lui renvoyer. La première
+     * demande dans l'ordre du tableau gagne — avec sa photo — et les suivantes
+     * vers ce même prestataire sont ignorées en silence.
+     *
+     * @return ProviderLead[]
+     */
+    private function buildProviderLeads(RegisterCoupleRequestDto $dto, Couple $couple): array
+    {
+        $leads         = [];
+        $seenVendorIds = [];
+
+        foreach ($this->contactRequestsOf($dto) as $contactRequest) {
+            $vendor   = $this->resolveActiveVendor($contactRequest);
+            $vendorId = (string) $vendor->getId();
+
+            if (isset($seenVendorIds[$vendorId])) {
+                continue;
+            }
+
+            $seenVendorIds[$vendorId] = true;
+
+            $crushPhoto = $contactRequest->portfolioImageId !== null
+                ? $this->resolveCrushPhoto($vendor, $contactRequest->portfolioImageId)
+                : null;
+
+            $leads[] = new ProviderLead($couple, $vendor, $dto->budgetCents, $crushPhoto);
+        }
+
+        return $leads;
+    }
+
+    /**
+     * TODO WED-152 : contactRequest (singulier) est un shim de compatibilité, à
+     * retirer une fois le frontend basculé sur contactRequests/pins. Ticket de
+     * nettoyage à créer.
+     *
+     * Le renommage seul aurait fait disparaître les demandes de contact sans
+     * bruit : la clé `contactRequest` du payload actuel serait simplement ignorée
+     * à la dénormalisation, sans 422 pour le signaler. Le tableau prime dès
+     * qu'il porte quelque chose, l'ancien champ ne sert que s'il est vide.
+     *
+     * @return ProviderContactRequestDto[]
+     */
+    private function contactRequestsOf(RegisterCoupleRequestDto $dto): array
+    {
+        if ($dto->contactRequests !== []) {
+            return $dto->contactRequests;
+        }
+
+        return $dto->contactRequest !== null ? [$dto->contactRequest] : [];
+    }
+
+    /**
+     * Les photos épinglées sont validées une à une comme n'importe quelle photo
+     * du parcours : exister et être publiée dans Wedream, seule galerie où le
+     * couple a pu les voir. Aucun dédoublonnage applicatif ici — la contrainte
+     * unique de `couple_pin` reste le seul juge (voir le TODO PROVIDER-LEAD-007
+     * sur le mapping du catch).
+     *
+     * @return CouplePin[]
+     */
+    private function buildCouplePins(RegisterCoupleRequestDto $dto, Couple $couple): array
+    {
+        $pins = [];
+
+        foreach ($dto->pins as $portfolioImageId) {
+            $pins[] = new CouplePin($couple, $this->findVisiblePortfolioImage($portfolioImageId));
+        }
+
+        return $pins;
     }
 
     /**

@@ -17,6 +17,10 @@ use Symfony\Component\Uid\UuidV7;
 
 #[ORM\Entity(repositoryClass: ProviderLeadRepository::class)]
 #[ORM\Table(name: 'provider_lead')]
+// PROVIDER-LEAD-007 : un couple n'a qu'un lead par prestataire. Le service
+// dédoublonne déjà à l'inscription ; l'index reste le dernier rempart contre
+// deux demandes concurrentes vers le même prestataire.
+#[ORM\UniqueConstraint(name: 'UNIQ_provider_lead_couple_vendor', columns: ['couple_id', 'vendor_id'])]
 #[ORM\HasLifecycleCallbacks]
 class ProviderLead
 {

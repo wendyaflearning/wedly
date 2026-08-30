@@ -101,7 +101,7 @@ final class RegisterCoupleRequestDtoTest extends TestCase
     public function test_a_non_uuid_vendor_id_is_rejected(): void
     {
         $violations = $this->validator->validate(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto('pas-un-uuid')),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto('pas-un-uuid')]),
         );
 
         self::assertCount(1, $violations);
@@ -112,9 +112,9 @@ final class RegisterCoupleRequestDtoTest extends TestCase
         self::assertCount(
             0,
             $this->validator->validate($this->makeDto(
-                contactRequest: new ProviderContactRequestDto(
+                contactRequests: [new ProviderContactRequestDto(
                     '0198f1c2-0000-7000-8000-000000000000',
-                ),
+                )],
             )),
         );
     }
@@ -128,9 +128,9 @@ final class RegisterCoupleRequestDtoTest extends TestCase
         self::assertCount(
             0,
             $this->validator->validate($this->makeDto(
-                contactRequest: new ProviderContactRequestDto(
+                contactRequests: [new ProviderContactRequestDto(
                     portfolioImageId: '0198f1c2-0000-7000-8000-000000000001',
-                ),
+                )],
             )),
         );
     }
@@ -138,7 +138,38 @@ final class RegisterCoupleRequestDtoTest extends TestCase
     public function test_a_contact_request_without_any_target_is_rejected(): void
     {
         $violations = $this->validator->validate(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto()),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto()]),
+        );
+
+        self::assertCount(1, $violations);
+        self::assertSame('contactRequests[0].vendorId', $violations->get(0)->getPropertyPath());
+    }
+
+    public function test_a_non_uuid_pin_is_rejected(): void
+    {
+        $violations = $this->validator->validate($this->makeDto(pins: ['pas-un-uuid']));
+
+        self::assertCount(1, $violations);
+        self::assertSame('pins[0]', $violations->get(0)->getPropertyPath());
+    }
+
+    /**
+     * Un parcours sans coup de cœur est un parcours valide : les deux tableaux
+     * vides ne sont pas une absence de donnée à signaler.
+     */
+    public function test_empty_pins_and_contact_requests_have_no_violations(): void
+    {
+        self::assertCount(0, $this->validator->validate($this->makeDto(contactRequests: [], pins: [])));
+    }
+
+    /**
+     * TODO WED-152 : couvre le shim de compatibilité `contactRequest`
+     * (singulier), à retirer avec lui une fois le frontend basculé.
+     */
+    public function test_the_legacy_single_contact_request_is_still_validated(): void
+    {
+        $violations = $this->validator->validate(
+            $this->makeDto(contactRequest: new ProviderContactRequestDto('pas-un-uuid')),
         );
 
         self::assertCount(1, $violations);
@@ -158,6 +189,8 @@ final class RegisterCoupleRequestDtoTest extends TestCase
         bool $sensitiveDataConsent = false,
         array $confessionSlugs = [],
         array $cultureSlugs = [],
+        array $contactRequests = [],
+        array $pins = [],
         ?ProviderContactRequestDto $contactRequest = null,
     ): RegisterCoupleRequestDto {
         return new RegisterCoupleRequestDto(
@@ -173,6 +206,8 @@ final class RegisterCoupleRequestDtoTest extends TestCase
             sensitiveDataConsent: $sensitiveDataConsent,
             confessionSlugs: $confessionSlugs,
             cultureSlugs: $cultureSlugs,
+            contactRequests: $contactRequests,
+            pins: $pins,
             contactRequest: $contactRequest,
         );
     }

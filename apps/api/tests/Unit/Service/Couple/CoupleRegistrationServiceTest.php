@@ -8,6 +8,7 @@ use App\DTO\Couple\ProviderContactRequestDto;
 use App\DTO\Couple\RegisterCoupleRequestDto;
 use App\Entity\Confession\Confession;
 use App\Entity\Couple\Couple;
+use App\Entity\Couple\CouplePin;
 use App\Entity\Culture\Culture;
 use App\Entity\ProviderLead\ProviderLead;
 use App\Entity\User\User;
@@ -145,7 +146,7 @@ final class CoupleRegistrationServiceTest extends TestCase
     public function test_a_contact_request_creates_a_pending_lead(): void
     {
         $this->makeService($this->makeEntityManager())->register($this->makeDto(
-            contactRequest: new ProviderContactRequestDto(self::VENDOR_ID),
+            contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID)],
         ));
 
         $lead = $this->persistedOf(ProviderLead::class);
@@ -162,7 +163,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectExceptionCode(422);
 
         $this->makeService($this->makeEntityManager(vendorStatus: VendorStatus::Pending))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID)]),
         );
     }
 
@@ -172,7 +173,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectExceptionCode(422);
 
         $this->makeService($this->makeEntityManager(vendorStatus: null))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID)]),
         );
     }
 
@@ -182,7 +183,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectExceptionCode(422);
 
         $this->makeService($this->makeEntityManager())->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)]),
         );
     }
 
@@ -196,7 +197,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->makeService($this->makeEntityManager(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($otherVendor),
         ))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)]),
         );
     }
 
@@ -208,7 +209,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->makeService($this->makeEntityManager(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor, visibleInWedream: false),
         ))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)]),
         );
     }
 
@@ -222,7 +223,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->makeService($this->makeEntityManager(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor),
         ))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)]),
         );
 
         $lead  = $this->persistedOf(ProviderLead::class);
@@ -241,7 +242,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->makeService($this->makeEntityManager(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor, visibleInWedream: false),
         ))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)]),
         );
     }
 
@@ -259,7 +260,7 @@ final class CoupleRegistrationServiceTest extends TestCase
             vendorStatus: VendorStatus::Pending,
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor),
         ))->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)]),
         );
     }
 
@@ -274,8 +275,155 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectExceptionCode(422);
 
         $this->makeService($this->makeEntityManager())->register(
-            $this->makeDto(contactRequest: new ProviderContactRequestDto()),
+            $this->makeDto(contactRequests: [new ProviderContactRequestDto()]),
         );
+    }
+
+    /**
+     * PROVIDER-LEAD-007 : deux photos d'un même prestataire, c'est une seule
+     * mise en relation. La première demande de la liste gagne, avec sa photo —
+     * c'est elle que le prestataire verra, pas la dernière cliquée.
+     */
+    public function test_two_contact_requests_to_the_same_vendor_create_a_single_lead(): void
+    {
+        $vendor = $this->makeVendor(self::VENDOR_ID);
+        $first  = $this->makeCrushPhoto($vendor);
+        $second = $this->makeCrushPhoto($vendor, id: self::SECOND_PHOTO_ID);
+
+        $this->makeService($this->makeEntityManager(
+            vendorsById: $this->byId([$vendor]),
+            imagesById: $this->byId([$first, $second]),
+        ))->register($this->makeDto(contactRequests: [
+            new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID),
+            new ProviderContactRequestDto(portfolioImageId: self::SECOND_PHOTO_ID),
+        ]));
+
+        $leads = $this->allPersistedOf(ProviderLead::class);
+
+        self::assertCount(1, $leads);
+        self::assertSame($vendor, $leads[0]->getVendor());
+        self::assertSame($first, $leads[0]->getPortfolioImage());
+    }
+
+    public function test_two_contact_requests_to_two_vendors_create_two_leads(): void
+    {
+        $vendor      = $this->makeVendor(self::VENDOR_ID);
+        $otherVendor = $this->makeVendor(self::OTHER_VENDOR_ID);
+        $photo       = $this->makeCrushPhoto($vendor);
+        $otherPhoto  = $this->makeCrushPhoto($otherVendor, id: self::OTHER_VENDOR_PHOTO_ID);
+
+        $this->makeService($this->makeEntityManager(
+            vendorsById: $this->byId([$vendor, $otherVendor]),
+            imagesById: $this->byId([$photo, $otherPhoto]),
+        ))->register($this->makeDto(contactRequests: [
+            new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID),
+            new ProviderContactRequestDto(portfolioImageId: self::OTHER_VENDOR_PHOTO_ID),
+        ]));
+
+        $leads = $this->allPersistedOf(ProviderLead::class);
+
+        self::assertCount(2, $leads);
+        self::assertSame([$vendor, $otherVendor], array_map(
+            static fn(ProviderLead $lead): Vendor => $lead->getVendor(),
+            $leads,
+        ));
+    }
+
+    public function test_each_pin_creates_a_couple_pin_attached_to_the_couple(): void
+    {
+        $vendor = $this->makeVendor(self::VENDOR_ID);
+        $first  = $this->makeCrushPhoto($vendor);
+        $second = $this->makeCrushPhoto($vendor, id: self::SECOND_PHOTO_ID);
+
+        $this->makeService($this->makeEntityManager(
+            vendorsById: $this->byId([$vendor]),
+            imagesById: $this->byId([$first, $second]),
+        ))->register($this->makeDto(pins: [self::CRUSH_PHOTO_ID, self::SECOND_PHOTO_ID]));
+
+        $pins   = $this->allPersistedOf(CouplePin::class);
+        $couple = $this->persistedOf(Couple::class);
+
+        self::assertCount(2, $pins);
+        self::assertSame([$first, $second], array_map(
+            static fn(CouplePin $pin): PortfolioImage => $pin->getPortfolioImage(),
+            $pins,
+        ));
+        self::assertSame([$couple, $couple], array_map(
+            static fn(CouplePin $pin): Couple => $pin->getCouple(),
+            $pins,
+        ));
+    }
+
+    /**
+     * Le parcours peut n'avoir rien accumulé : l'inscription reste une
+     * inscription, elle ne dépend d'aucun coup de cœur.
+     */
+    public function test_an_empty_journey_registers_without_a_lead_or_a_pin(): void
+    {
+        $this->makeService($this->makeEntityManager())->register($this->makeDto());
+
+        self::assertSame([], $this->allPersistedOf(ProviderLead::class));
+        self::assertSame([], $this->allPersistedOf(CouplePin::class));
+        self::assertInstanceOf(User::class, $this->persistedOf(User::class));
+    }
+
+    /**
+     * Tout est résolu avant l'ouverture de la transaction : un pin incohérent
+     * sort en 422 sans qu'aucune écriture n'ait commencé. Il n'y a donc rien à
+     * annuler — assertion plus forte qu'un rollback.
+     */
+    public function test_an_unknown_pin_is_refused_before_anything_is_written(): void
+    {
+        $vendor = $this->makeVendor(self::VENDOR_ID);
+        $photo  = $this->makeCrushPhoto($vendor);
+
+        $em = $this->makeEntityManager(
+            strict: true,
+            vendorsById: $this->byId([$vendor]),
+            imagesById: $this->byId([$photo]),
+        );
+        $em->expects($this->never())->method('persist');
+        $em->expects($this->never())->method('beginTransaction');
+        $em->expects($this->never())->method('flush');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+
+        $this->makeService($em)->register(
+            $this->makeDto(pins: [self::CRUSH_PHOTO_ID, self::UNKNOWN_PHOTO_ID]),
+        );
+    }
+
+    /**
+     * TODO WED-152 : ces deux tests couvrent le shim de compatibilité et
+     * disparaîtront avec lui, une fois le frontend basculé sur
+     * `contactRequests`.
+     */
+    public function test_the_legacy_single_contact_request_still_creates_a_lead(): void
+    {
+        $this->makeService($this->makeEntityManager())->register(
+            $this->makeDto(contactRequest: new ProviderContactRequestDto(self::VENDOR_ID)),
+        );
+
+        self::assertCount(1, $this->allPersistedOf(ProviderLead::class));
+    }
+
+    public function test_the_contact_requests_array_wins_over_the_legacy_field(): void
+    {
+        $vendor      = $this->makeVendor(self::VENDOR_ID);
+        $otherVendor = $this->makeVendor(self::OTHER_VENDOR_ID);
+
+        $this->makeService($this->makeEntityManager(
+            vendorsById: $this->byId([$vendor, $otherVendor]),
+        ))->register($this->makeDto(
+            contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID)],
+            contactRequest: new ProviderContactRequestDto(self::OTHER_VENDOR_ID),
+        ));
+
+        $leads = $this->allPersistedOf(ProviderLead::class);
+
+        self::assertCount(1, $leads);
+        self::assertSame($vendor, $leads[0]->getVendor());
     }
 
     public function test_a_failing_flush_rolls_the_transaction_back(): void
@@ -313,6 +461,10 @@ final class CoupleRegistrationServiceTest extends TestCase
 
     private const VENDOR_ID = '0198f1c2-0000-7000-8000-000000000000';
     private const CRUSH_PHOTO_ID = '0198f1c2-0000-7000-8000-000000000001';
+    private const OTHER_VENDOR_ID = '0198f1c2-0000-7000-8000-000000000002';
+    private const SECOND_PHOTO_ID = '0198f1c2-0000-7000-8000-000000000003';
+    private const OTHER_VENDOR_PHOTO_ID = '0198f1c2-0000-7000-8000-000000000004';
+    private const UNKNOWN_PHOTO_ID = '0198f1c2-0000-7000-8000-00000000000f';
 
     /**
      * PHPUnit 12 signale un mock sans attente : les tests qui se contentent
@@ -325,6 +477,8 @@ final class CoupleRegistrationServiceTest extends TestCase
         ?VendorStatus $vendorStatus = VendorStatus::Active,
         bool $strict = false,
         ?callable $configureCrushPhoto = null,
+        array $vendorsById = [],
+        array $imagesById = [],
     ): object {
         $this->persisted = [];
 
@@ -353,12 +507,23 @@ final class CoupleRegistrationServiceTest extends TestCase
             ? $configureCrushPhoto($vendor)
             : null;
 
+        // Les catalogues explicites servent les scénarios à plusieurs
+        // prestataires ou plusieurs photos ; sans eux, le prestataire unique
+        // historique répond à n'importe quel identifiant.
         $vendors = $this->createStub(EntityRepository::class);
-        $vendors->method('find')->willReturn($vendor);
+        $vendors->method('find')->willReturnCallback(
+            static fn(mixed $id) => $vendorsById === []
+                ? $vendor
+                : ($vendorsById[(string) $id] ?? null),
+        );
 
         $portfolioImages = $this->createStub(EntityRepository::class);
         $portfolioImages->method('find')->willReturnCallback(
-            static function (mixed $id) use ($crushPhoto): ?PortfolioImage {
+            static function (mixed $id) use ($crushPhoto, $imagesById): ?PortfolioImage {
+                if ($imagesById !== []) {
+                    return $imagesById[(string) $id] ?? null;
+                }
+
                 if (!$crushPhoto instanceof PortfolioImage) {
                     return null;
                 }
@@ -416,8 +581,11 @@ final class CoupleRegistrationServiceTest extends TestCase
         self::fail(sprintf('Aucune entité %s persistée.', $className));
     }
 
-    private function makeCrushPhoto(Vendor $vendor, bool $visibleInWedream = true): PortfolioImage
-    {
+    private function makeCrushPhoto(
+        Vendor $vendor,
+        bool $visibleInWedream = true,
+        string $id = self::CRUSH_PHOTO_ID,
+    ): PortfolioImage {
         $photo = (new PortfolioImage())
             ->setVendor($vendor)
             ->setUrl('https://cdn.wedly.test/crush.jpg')
@@ -425,9 +593,54 @@ final class CoupleRegistrationServiceTest extends TestCase
             ->setVisibleInWedream($visibleInWedream);
 
         $idReflection = new \ReflectionProperty(PortfolioImage::class, 'id');
-        $idReflection->setValue($photo, UuidV7::fromString(self::CRUSH_PHOTO_ID));
+        $idReflection->setValue($photo, UuidV7::fromString($id));
 
         return $photo;
+    }
+
+    /**
+     * Le dédoublonnage des leads compare des identifiants de prestataire : un
+     * stub sans `id` ne suffit plus, il faut de vraies entités.
+     */
+    private function makeVendor(string $id, VendorStatus $status = VendorStatus::Active): Vendor
+    {
+        $vendor = (new Vendor())->setStatus($status);
+
+        $idReflection = new \ReflectionProperty(Vendor::class, 'id');
+        $idReflection->setValue($vendor, UuidV7::fromString($id));
+
+        return $vendor;
+    }
+
+    /**
+     * @param object[] $entities
+     *
+     * @return array<string, object>
+     */
+    private function byId(array $entities): array
+    {
+        $indexed = [];
+
+        foreach ($entities as $entity) {
+            $indexed[(string) $entity->getId()] = $entity;
+        }
+
+        return $indexed;
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $className
+     *
+     * @return T[]
+     */
+    private function allPersistedOf(string $className): array
+    {
+        return array_values(array_filter(
+            $this->persisted,
+            static fn(object $entity): bool => $entity instanceof $className,
+        ));
     }
 
     private function makeDto(
@@ -436,6 +649,8 @@ final class CoupleRegistrationServiceTest extends TestCase
         bool $sensitiveDataConsent = false,
         array $confessionSlugs = [],
         array $cultureSlugs = [],
+        array $contactRequests = [],
+        array $pins = [],
         ?ProviderContactRequestDto $contactRequest = null,
     ): RegisterCoupleRequestDto {
         return new RegisterCoupleRequestDto(
@@ -451,6 +666,8 @@ final class CoupleRegistrationServiceTest extends TestCase
             sensitiveDataConsent: $sensitiveDataConsent,
             confessionSlugs: $confessionSlugs,
             cultureSlugs: $cultureSlugs,
+            contactRequests: $contactRequests,
+            pins: $pins,
             contactRequest: $contactRequest,
         );
     }
