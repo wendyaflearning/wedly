@@ -42,30 +42,6 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
         </h1>
       </div>
 
-      {/* Info banner */}
-      <div className="relative flex gap-[13px] items-center bg-[rgba(255,246,237,0.07)] md:bg-[rgb(251,239,224)] border border-[rgba(240,168,117,0.28)] md:border-[rgba(157,79,30,0.22)] rounded-[14px] px-[16px] pl-[17px] py-[14px] overflow-hidden">
-        <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-highlight" />
-        <span className="flex-shrink-0 flex items-center justify-center w-[30px] h-[30px] rounded-full bg-highlight">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 1.2c.5 2.9 1.9 4.3 4.8 4.8-2.9.5-4.3 1.9-4.8 4.8-.5-2.9-1.9-4.3-4.8-4.8C6.1 5.5 7.5 4.1 8 1.2Z" fill="#FFF6ED" />
-            <path d="M12.8 9.6c.25 1.45.95 2.15 2.4 2.4-1.45.25-2.15.95-2.4 2.4-.25-1.45-.95-2.15-2.4-2.4 1.45-.25 2.15-.95 2.4-2.4Z" fill="#FFF6ED" opacity="0.7" />
-          </svg>
-        </span>
-        <p className="font-manrope text-[12.5px] font-normal leading-[1.5] text-[rgba(255,246,237,0.78)] md:text-[rgba(41,26,16,0.78)]">
-          {isCoupleLogin ? (
-            <>
-              <span className="font-semibold text-creme md:text-texte">Mon espace Wedly.</span>{' '}
-              Connectez-vous avec l&apos;email et le mot de passe créés lors de votre inscription.
-            </>
-          ) : (
-            <>
-              <span className="font-semibold text-creme md:text-texte">Profil validé par nos équipes.</span>{' '}
-              Connectez-vous avec vos identifiants d&apos;inscription.
-            </>
-          )}
-        </p>
-      </div>
-
       {/* Fields */}
       <div className="flex flex-col gap-[15px]">
         {/* Email */}
