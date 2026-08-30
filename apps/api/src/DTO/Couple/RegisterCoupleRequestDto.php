@@ -21,8 +21,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class RegisterCoupleRequestDto
 {
     /**
-     * @param string[] $confessionSlugs
-     * @param string[] $cultureSlugs
+     * Les types des tableaux ne sont pas décoratifs : `MapRequestPayload` s'appuie
+     * dessus (via property-info) pour dénormaliser chaque entrée de
+     * `contactRequests` en `ProviderContactRequestDto`. Sans eux, le service
+     * recevrait des tableaux bruts et échouerait en 500 au lieu de 422.
+     *
+     * @param string[]                    $confessionSlugs
+     * @param string[]                    $cultureSlugs
+     * @param ProviderContactRequestDto[] $contactRequests
+     * @param string[]                    $pins
      */
     public function __construct(
         #[Assert\NotBlank]
@@ -74,6 +81,24 @@ final readonly class RegisterCoupleRequestDto
         #[Assert\All([new Assert\NotBlank(), new Assert\Length(max: 100)])]
         public array $cultureSlugs = [],
 
+        // Le parcours accumule plusieurs coups de cœur avant l'inscription : la
+        // liste arrive ici d'un coup, comme le reste de l'état client (WED-152).
+        // Assert\Valid cascade nativement sur chaque entrée du tableau.
+        #[Assert\Valid]
+        public array $contactRequests = [],
+
+        // Les photos épinglées ne portent que leur identifiant : le prestataire
+        // s'en déduit côté serveur, comme pour les demandes de contact.
+        #[Assert\All([new Assert\Uuid()])]
+        public array $pins = [],
+
+        /**
+         * @deprecated WED-152 — shim de compatibilité descendante le temps que le
+         *             frontend bascule sur `contactRequests`. Le retirer sans ce
+         *             switch ferait perdre silencieusement toutes les demandes de
+         *             contact de l'écran 7 : la clé serait simplement ignorée à la
+         *             dénormalisation, sans 422 pour le signaler.
+         */
         #[Assert\Valid]
         public ?ProviderContactRequestDto $contactRequest = null,
     ) {}

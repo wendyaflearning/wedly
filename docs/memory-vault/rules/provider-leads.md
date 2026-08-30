@@ -261,3 +261,54 @@ Couverture :
 À auditer : quand US2/US3a seront livrées et que le frontend n'enverra plus
 `vendorId` du tout, revenir ici pour décider si le champ doit rester nullable
 en confort de compatibilité descendante ou être retiré du DTO.
+
+## PROVIDER-LEAD-007 — Un seul lead par couple et par prestataire, premier arrivé gagne
+
+Statut : `active`
+
+Décision verrouillée #3 de WED-49, livrée par WED-152. Le parcours Wedream
+accumule les coups de cœur avant l'inscription : le couple peut demander le
+contact depuis deux photos différentes du même prestataire sans jamais voir
+qu'il s'agit du même. C'est un geste légitime côté couple, pas une erreur à lui
+renvoyer — mais deux mises en relation identiques côté prestataire n'ont aucun
+sens.
+
+La liste `contactRequests` est donc dédoublonnée **par prestataire résolu côté
+serveur**, jamais par un identifiant venu du client (PROVIDER-LEAD-006). La
+première demande du tableau vers un prestataire donné crée le lead, avec **sa**
+photo coup de cœur ; les suivantes vers ce même prestataire sont ignorées en
+silence, sans exception ni log d'erreur. Le prestataire voit donc la photo qui a
+déclenché le premier geste, pas la dernière cliquée.
+
+L'index unique `UNIQ_provider_lead_couple_vendor` sur `provider_lead
+(couple_id, vendor_id)` double la règle en base — même patron que
+`UNIQ_couple_pin_couple_image` sur les épinglés. Le dédoublonnage applicatif
+couvre le parcours nominal, l'index couvre les demandes concurrentes.
+
+Les photos épinglées (`pins`) ne sont **pas** dédoublonnées applicativement :
+non spécifié par le produit, et la contrainte unique de `couple_pin` reste seule
+juge.
+
+Dette assumée, tracée par un TODO dans `CoupleRegistrationService` : le
+`catch (UniqueConstraintViolationException)` de l'inscription suppose encore une
+seule contrainte unique possible (l'email) et répond 409 « email déjà utilisé ».
+Un doublon dans `pins` violerait `UNIQ_couple_pin_couple_image` et serait
+incorrectement mappé sur ce message. Non bloquant — il faut un bug frontend ou
+une course pour y arriver — à traiter si ça remonte en production.
+
+Autre dette assumée, également tracée par un TODO : `contactRequest` (singulier)
+survit à côté de `contactRequests` comme shim de compatibilité descendante. Le
+retirer avant que le frontend n'envoie `contactRequests`/`pins` ferait perdre
+toutes les demandes de contact **en silence** — la clé serait simplement ignorée
+à la dénormalisation, sans 422 pour le signaler. Le tableau prime dès qu'il
+porte quelque chose ; l'ancien champ ne sert que s'il est vide.
+
+Implémentation :
+
+- `apps/api/src/DTO/Couple/RegisterCoupleRequestDto.php`
+- `apps/api/src/Service/Couple/CoupleRegistrationService.php`
+- `apps/api/src/Entity/ProviderLead/ProviderLead.php`
+- `apps/api/migrations/Version20260830091529.php`
+
+À auditer : au moment du switch frontend, retirer le shim `contactRequest` et
+les deux tests qui le couvrent, puis revenir sur le mapping du catch.
