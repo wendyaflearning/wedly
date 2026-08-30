@@ -212,6 +212,72 @@ final class CoupleRegistrationServiceTest extends TestCase
         );
     }
 
+    /**
+     * WED-150 : le parcours cible en réalité une photo, pas un identifiant de
+     * prestataire. Sans `vendorId`, le serveur remonte au prestataire depuis la
+     * photo coup de cœur, et le lead pointe le propriétaire de celle-ci.
+     */
+    public function test_a_contact_request_without_a_vendor_id_resolves_the_vendor_from_the_crush_photo(): void
+    {
+        $this->makeService($this->makeEntityManager(
+            configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor),
+        ))->register(
+            $this->makeDto(contactRequest: new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)),
+        );
+
+        $lead  = $this->persistedOf(ProviderLead::class);
+        $photo = $lead->getPortfolioImage();
+
+        self::assertNotNull($photo);
+        self::assertSame($photo->getVendor(), $lead->getVendor());
+        self::assertSame(ProviderLeadStatus::Pending, $lead->getStatus());
+    }
+
+    public function test_a_crush_photo_not_visible_in_wedream_is_refused_when_it_carries_the_vendor(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+
+        $this->makeService($this->makeEntityManager(
+            configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor, visibleInWedream: false),
+        ))->register(
+            $this->makeDto(contactRequest: new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)),
+        );
+    }
+
+    /**
+     * `isVisibleInWedream` est recalculé au tagging, pas à chaque changement de
+     * statut du prestataire : une photo encore taguée visible ne suffit donc pas
+     * à rendre son propriétaire joignable.
+     */
+    public function test_a_visible_photo_of_an_inactive_vendor_is_refused(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+
+        $this->makeService($this->makeEntityManager(
+            vendorStatus: VendorStatus::Pending,
+            configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor),
+        ))->register(
+            $this->makeDto(contactRequest: new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)),
+        );
+    }
+
+    /**
+     * La contrainte de classe du DTO ferme déjà ce cas en amont (cf.
+     * RegisterCoupleRequestDtoTest) ; le service refuse quand même, il est aussi
+     * appelable sans passer par MapRequestPayload.
+     */
+    public function test_a_contact_request_targeting_nothing_is_refused(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+
+        $this->makeService($this->makeEntityManager())->register(
+            $this->makeDto(contactRequest: new ProviderContactRequestDto()),
+        );
+    }
+
     public function test_a_failing_flush_rolls_the_transaction_back(): void
     {
         $em = $this->makeEntityManager(strict: true);
@@ -288,18 +354,16 @@ final class CoupleRegistrationServiceTest extends TestCase
             : null;
 
         $vendors = $this->createStub(EntityRepository::class);
-        $vendors->method('findOneBy')->willReturn($vendor);
+        $vendors->method('find')->willReturn($vendor);
 
         $portfolioImages = $this->createStub(EntityRepository::class);
-        $portfolioImages->method('findOneBy')->willReturnCallback(
-            static function (array $criteria) use ($crushPhoto): ?PortfolioImage {
+        $portfolioImages->method('find')->willReturnCallback(
+            static function (mixed $id) use ($crushPhoto): ?PortfolioImage {
                 if (!$crushPhoto instanceof PortfolioImage) {
                     return null;
                 }
 
-                return ($criteria['id'] ?? null) === (string) $crushPhoto->getId()
-                    ? $crushPhoto
-                    : null;
+                return $id === (string) $crushPhoto->getId() ? $crushPhoto : null;
             },
         );
 
