@@ -26,10 +26,10 @@ final readonly class CoupleInviteTokenDataDto
                 'date'          => $wedding->getDate()->format('Y-m-d'),
                 'budget_cents'  => $wedding->getBudgetCents(),
                 'location'      => $wedding->getLocation(),
-                'zone'          => $wedding->getZone()->value,
+                'zone'          => $wedding->getZone()?->value,
                 'guest_count'   => $wedding->getGuestCount(),
-                'ambiance'      => $wedding->getAmbiance()->value,
-                'ceremony_type' => $wedding->getCeremonyType()->value,
+                'ambiance'      => $wedding->getAmbiance()?->value,
+                'ceremony_type' => $wedding->getCeremonyType()?->value,
                 'styles'        => array_map(
                     fn(WeddingStyle $s) => ['id' => $s->getId()->toRfc4122(), 'name' => $s->getName()],
                     $wedding->getStyles()->toArray()

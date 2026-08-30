@@ -111,3 +111,28 @@ button:not([disabled]) {
   opacity: 0;
   animation: illustration-in 0.9s ease-out 0.6s forwards;
 }
+
+/* Salve de particules sur l'écran de bienvenue de l'onboarding couple, jouée
+   une fois au montage — chaque particule part du centre de son burst vers
+   (--dx, --dy), fournis en ligne par écran 8 de CoupleOnboarding.tsx. */
+@keyframes firework-particle {
+  0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0.4); opacity: 0; }
+}
+
+.firework-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  animation: firework-particle 1.2s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .firework-particle {
+    display: none;
+  }
+}

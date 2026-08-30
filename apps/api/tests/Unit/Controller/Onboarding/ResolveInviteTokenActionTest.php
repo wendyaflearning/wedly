@@ -11,6 +11,7 @@ use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Wedding\Wedding;
 use App\Enum\Couple\CoupleStatus;
+use App\Enum\Couple\PlanningStage;
 use App\Enum\User\InviteTokenPersona;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\Zone;
@@ -136,7 +137,8 @@ final class ResolveInviteTokenActionTest extends TestCase
         $couple = (new Couple())
             ->setUser((new User())->setFirstName('Alex')->setEmail('alex@example.com'))
             ->setWedding($wedding)
-            ->setStatus(CoupleStatus::Active);
+            ->setStatus(CoupleStatus::Active)
+            ->setPlanningStage(PlanningStage::InProgress);
 
         $id = new \ReflectionProperty(Couple::class, 'id');
         $id->setValue($couple, new UuidV7());

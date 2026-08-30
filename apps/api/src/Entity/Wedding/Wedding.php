@@ -29,7 +29,7 @@ class Wedding
     #[ORM\CustomIdGenerator(class: UuidV7Generator::class)]
     private UuidV7 $id;
 
-    #[ORM\Column(name: 'date', type: 'date')]
+    #[ORM\Column(name: 'date', type: 'date_immutable')]
     private \DateTimeImmutable $date;
 
     #[ORM\Column(name: 'budget_cents', type: 'integer')]
@@ -38,17 +38,17 @@ class Wedding
     #[ORM\Column(name: 'location', length: 255)]
     private string $location;
 
-    #[ORM\Column(name: 'zone', type: 'string', enumType: Zone::class)]
-    private Zone $zone;
+    #[ORM\Column(name: 'zone', type: 'string', enumType: Zone::class, nullable: true)]
+    private ?Zone $zone = null;
 
     #[ORM\Column(name: 'guest_count', type: 'integer')]
     private int $guestCount;
 
-    #[ORM\Column(name: 'ambiance', type: 'string', enumType: Ambiance::class)]
-    private Ambiance $ambiance;
+    #[ORM\Column(name: 'ambiance', type: 'string', enumType: Ambiance::class, nullable: true)]
+    private ?Ambiance $ambiance = null;
 
-    #[ORM\Column(name: 'ceremony_type', type: 'string', enumType: CeremonyType::class)]
-    private CeremonyType $ceremonyType;
+    #[ORM\Column(name: 'ceremony_type', type: 'string', enumType: CeremonyType::class, nullable: true)]
+    private ?CeremonyType $ceremonyType = null;
 
     #[ORM\ManyToMany(targetEntity: WeddingStyle::class)]
     #[ORM\JoinTable(
@@ -122,12 +122,12 @@ class Wedding
         return $this;
     }
 
-    public function getZone(): Zone
+    public function getZone(): ?Zone
     {
         return $this->zone;
     }
 
-    public function setZone(Zone $zone): static
+    public function setZone(?Zone $zone): static
     {
         $this->zone = $zone;
 
@@ -146,24 +146,24 @@ class Wedding
         return $this;
     }
 
-    public function getAmbiance(): Ambiance
+    public function getAmbiance(): ?Ambiance
     {
         return $this->ambiance;
     }
 
-    public function setAmbiance(Ambiance $ambiance): static
+    public function setAmbiance(?Ambiance $ambiance): static
     {
         $this->ambiance = $ambiance;
 
         return $this;
     }
 
-    public function getCeremonyType(): CeremonyType
+    public function getCeremonyType(): ?CeremonyType
     {
         return $this->ceremonyType;
     }
 
-    public function setCeremonyType(CeremonyType $ceremonyType): static
+    public function setCeremonyType(?CeremonyType $ceremonyType): static
     {
         $this->ceremonyType = $ceremonyType;
 
