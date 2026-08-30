@@ -12,15 +12,13 @@ use App\Entity\Couple\CouplePin;
 use App\Entity\Culture\Culture;
 use App\Entity\ProviderLead\ProviderLead;
 use App\Entity\User\User;
-use App\Entity\Vendor\PortfolioImage;
-use App\Entity\Vendor\Vendor;
 use App\Entity\Wedding\Wedding;
 use App\Entity\Wedding\WeddingConsent;
 use App\Enum\Couple\ConsentType;
 use App\Enum\User\Role;
 use App\Enum\User\UserStatus;
-use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\UserRepository;
+use App\Service\Vendor\VendorResolver;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -40,6 +38,7 @@ final readonly class CoupleRegistrationService
         private EntityManagerInterface $em,
         private UserRepository $userRepository,
         private UserPasswordHasherInterface $passwordHasher,
+        private VendorResolver $vendorResolver,
     ) {}
 
     public function register(RegisterCoupleRequestDto $dto): User
@@ -154,7 +153,10 @@ final readonly class CoupleRegistrationService
         $seenVendorIds = [];
 
         foreach ($this->contactRequestsOf($dto) as $contactRequest) {
-            $vendor   = $this->resolveActiveVendor($contactRequest);
+            $vendor   = $this->vendorResolver->resolveActive(
+                $contactRequest->vendorId,
+                $contactRequest->portfolioImageId,
+            );
             $vendorId = (string) $vendor->getId();
 
             if (isset($seenVendorIds[$vendorId])) {
@@ -164,7 +166,7 @@ final readonly class CoupleRegistrationService
             $seenVendorIds[$vendorId] = true;
 
             $crushPhoto = $contactRequest->portfolioImageId !== null
-                ? $this->resolveCrushPhoto($vendor, $contactRequest->portfolioImageId)
+                ? $this->vendorResolver->resolveCrushPhoto($vendor, $contactRequest->portfolioImageId)
                 : null;
 
             $leads[] = new ProviderLead($couple, $vendor, $dto->budgetCents, $crushPhoto);
@@ -208,7 +210,10 @@ final readonly class CoupleRegistrationService
         $pins = [];
 
         foreach ($dto->pins as $portfolioImageId) {
-            $pins[] = new CouplePin($couple, $this->findVisiblePortfolioImage($portfolioImageId));
+            $pins[] = new CouplePin(
+                $couple,
+                $this->vendorResolver->findVisiblePortfolioImage($portfolioImageId),
+            );
         }
 
         return $pins;
@@ -261,76 +266,5 @@ final readonly class CoupleRegistrationService
         }
 
         return $resolved;
-    }
-
-    /**
-     * La demande de contact désigne son prestataire par deux chemins. Le
-     * `vendorId` est le chemin historique, revalidé ici — existence et statut —
-     * pour répondre 422 plutôt que 500 (PROVIDER-LEAD-003). En son absence, le
-     * prestataire est déduit côté serveur de la photo coup de cœur : c'est la
-     * cible réelle du parcours, et le couple n'a jamais eu à connaître son
-     * identifiant (WED-150).
-     *
-     * Le contrôle de statut s'applique aux deux chemins. `isVisibleInWedream`
-     * est recalculé au tagging, pas à chaque changement de statut du
-     * prestataire : une photo encore taguée visible ne dit rien de la
-     * disponibilité actuelle de son propriétaire, et sans ce contrôle un vendor
-     * désactivé resterait joignable par une vieille photo.
-     */
-    private function resolveActiveVendor(ProviderContactRequestDto $contactRequest): Vendor
-    {
-        if ($contactRequest->vendorId !== null) {
-            $vendor = $this->em->getRepository(Vendor::class)->find($contactRequest->vendorId);
-        } elseif ($contactRequest->portfolioImageId !== null) {
-            $vendor = $this->findVisiblePortfolioImage($contactRequest->portfolioImageId)->getVendor();
-        } else {
-            // La contrainte de classe du DTO refuse déjà les deux absences, mais
-            // le service reste le dernier rempart : il est aussi appelé sans
-            // passer par MapRequestPayload.
-            throw new \DomainException('Cette demande de contact ne cible aucun prestataire.', 422);
-        }
-
-        if (!$vendor instanceof Vendor || $vendor->getStatus() !== VendorStatus::Active) {
-            throw new \DomainException('Ce prestataire n\'est pas disponible.', 422);
-        }
-
-        return $vendor;
-    }
-
-    /**
-     * La photo coup de cœur vient elle aussi de l'état client. Elle doit
-     * appartenir au prestataire ciblé — sinon la carte du couple afficherait le
-     * travail d'un tiers — et être publiée dans Wedream, seule galerie où le
-     * couple a pu la voir. Un identifiant qui ne satisfait pas ces deux
-     * conditions est refusé en 422, jamais silencieusement ignoré : c'est un
-     * état client incohérent, pas une absence de photo.
-     */
-    private function resolveCrushPhoto(Vendor $vendor, string $portfolioImageId): PortfolioImage
-    {
-        $image = $this->findVisiblePortfolioImage($portfolioImageId);
-
-        if ($image->getVendor() !== $vendor) {
-            throw new \DomainException('Cette photo n\'est pas disponible.', 422);
-        }
-
-        return $image;
-    }
-
-    /**
-     * Publiée dans Wedream ou rien : la condition est isolée ici parce que les
-     * deux appelants s'appuient dessus — la résolution du prestataire depuis la
-     * photo et la validation de la photo elle-même. `find()` plutôt que
-     * `findOneBy(['id' => …])` pour que le second appel du parcours « photo
-     * seule » retombe sur l'identity map au lieu de refaire la requête.
-     */
-    private function findVisiblePortfolioImage(string $portfolioImageId): PortfolioImage
-    {
-        $image = $this->em->getRepository(PortfolioImage::class)->find($portfolioImageId);
-
-        if (!$image instanceof PortfolioImage || !$image->isVisibleInWedream()) {
-            throw new \DomainException('Cette photo n\'est pas disponible.', 422);
-        }
-
-        return $image;
     }
 }

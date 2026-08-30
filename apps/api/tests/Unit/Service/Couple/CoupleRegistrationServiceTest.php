@@ -24,6 +24,7 @@ use App\Enum\User\UserStatus;
 use App\Enum\Vendor\VendorStatus;
 use App\Repository\User\UserRepository;
 use App\Service\Couple\CoupleRegistrationService;
+use App\Service\Vendor\VendorResolver;
 use Doctrine\DBAL\Driver\Exception as DriverException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -162,7 +163,10 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
 
-        $this->makeService($this->makeEntityManager(vendorStatus: VendorStatus::Pending))->register(
+        $this->makeService(
+            $this->makeEntityManager(),
+            $this->makeVendorResolver(vendorStatus: VendorStatus::Pending),
+        )->register(
             $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID)]),
         );
     }
@@ -172,7 +176,10 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
 
-        $this->makeService($this->makeEntityManager(vendorStatus: null))->register(
+        $this->makeService(
+            $this->makeEntityManager(),
+            $this->makeVendorResolver(vendorStatus: null),
+        )->register(
             $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID)]),
         );
     }
@@ -194,7 +201,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($otherVendor),
         ))->register(
             $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)]),
@@ -206,7 +213,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor, visibleInWedream: false),
         ))->register(
             $this->makeDto(contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID, self::CRUSH_PHOTO_ID)]),
@@ -220,7 +227,7 @@ final class CoupleRegistrationServiceTest extends TestCase
      */
     public function test_a_contact_request_without_a_vendor_id_resolves_the_vendor_from_the_crush_photo(): void
     {
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor),
         ))->register(
             $this->makeDto(contactRequests: [new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)]),
@@ -239,7 +246,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor, visibleInWedream: false),
         ))->register(
             $this->makeDto(contactRequests: [new ProviderContactRequestDto(portfolioImageId: self::CRUSH_PHOTO_ID)]),
@@ -256,7 +263,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             vendorStatus: VendorStatus::Pending,
             configureCrushPhoto: fn (Vendor $vendor) => $this->makeCrushPhoto($vendor),
         ))->register(
@@ -290,7 +297,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $first  = $this->makeCrushPhoto($vendor);
         $second = $this->makeCrushPhoto($vendor, id: self::SECOND_PHOTO_ID);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             vendorsById: $this->byId([$vendor]),
             imagesById: $this->byId([$first, $second]),
         ))->register($this->makeDto(contactRequests: [
@@ -312,7 +319,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $photo       = $this->makeCrushPhoto($vendor);
         $otherPhoto  = $this->makeCrushPhoto($otherVendor, id: self::OTHER_VENDOR_PHOTO_ID);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             vendorsById: $this->byId([$vendor, $otherVendor]),
             imagesById: $this->byId([$photo, $otherPhoto]),
         ))->register($this->makeDto(contactRequests: [
@@ -335,7 +342,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $first  = $this->makeCrushPhoto($vendor);
         $second = $this->makeCrushPhoto($vendor, id: self::SECOND_PHOTO_ID);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             vendorsById: $this->byId([$vendor]),
             imagesById: $this->byId([$first, $second]),
         ))->register($this->makeDto(pins: [self::CRUSH_PHOTO_ID, self::SECOND_PHOTO_ID]));
@@ -377,8 +384,8 @@ final class CoupleRegistrationServiceTest extends TestCase
         $vendor = $this->makeVendor(self::VENDOR_ID);
         $photo  = $this->makeCrushPhoto($vendor);
 
-        $em = $this->makeEntityManager(
-            strict: true,
+        $em             = $this->makeEntityManager(strict: true);
+        $vendorResolver = $this->makeVendorResolver(
             vendorsById: $this->byId([$vendor]),
             imagesById: $this->byId([$photo]),
         );
@@ -389,7 +396,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(422);
 
-        $this->makeService($em)->register(
+        $this->makeService($em, $vendorResolver)->register(
             $this->makeDto(pins: [self::CRUSH_PHOTO_ID, self::UNKNOWN_PHOTO_ID]),
         );
     }
@@ -413,7 +420,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         $vendor      = $this->makeVendor(self::VENDOR_ID);
         $otherVendor = $this->makeVendor(self::OTHER_VENDOR_ID);
 
-        $this->makeService($this->makeEntityManager(
+        $this->makeService($this->makeEntityManager(), $this->makeVendorResolver(
             vendorsById: $this->byId([$vendor, $otherVendor]),
         ))->register($this->makeDto(
             contactRequests: [new ProviderContactRequestDto(self::VENDOR_ID)],
@@ -471,15 +478,12 @@ final class CoupleRegistrationServiceTest extends TestCase
      * d'inspecter les entités persistées reçoivent donc un stub, et seuls ceux
      * qui vérifient la transaction demandent un vrai mock.
      *
-     * @param ?callable(Vendor): ?PortfolioImage $configureCrushPhoto
+     * Depuis WED-153, l'EntityManager ne porte plus que les tables de référence
+     * (Confession, Culture) et la transaction : la résolution prestataire/photo
+     * est passée derrière VendorResolver, montée par makeVendorResolver().
      */
-    private function makeEntityManager(
-        ?VendorStatus $vendorStatus = VendorStatus::Active,
-        bool $strict = false,
-        ?callable $configureCrushPhoto = null,
-        array $vendorsById = [],
-        array $imagesById = [],
-    ): object {
+    private function makeEntityManager(bool $strict = false): object
+    {
         $this->persisted = [];
 
         $confessions = $this->createStub(EntityRepository::class);
@@ -496,6 +500,39 @@ final class CoupleRegistrationServiceTest extends TestCase
                 : null,
         );
 
+        $em = $strict
+            ? $this->createMock(EntityManagerInterface::class)
+            : $this->createStub(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturnCallback(
+            static fn(string $className) => match ($className) {
+                Confession::class => $confessions,
+                Culture::class    => $cultures,
+            },
+        );
+        $em->method('persist')->willReturnCallback(function (object $entity): void {
+            $this->persisted[] = $entity;
+        });
+
+        return $em;
+    }
+
+    /**
+     * WED-153 : le service ne résout plus lui-même le prestataire, il délègue à
+     * VendorResolver — c'est donc lui que ces tests doublent. Le stub rejoue les
+     * mêmes règles à partir des mêmes catalogues, avec les messages et les codes
+     * 422 exacts du service réel ; la couverture de ces règles, elle, vit dans
+     * VendorResolverTest.
+     *
+     * @param ?callable(Vendor): ?PortfolioImage $configureCrushPhoto
+     * @param array<string, Vendor>              $vendorsById
+     * @param array<string, PortfolioImage>      $imagesById
+     */
+    private function makeVendorResolver(
+        ?VendorStatus $vendorStatus = VendorStatus::Active,
+        ?callable $configureCrushPhoto = null,
+        array $vendorsById = [],
+        array $imagesById = [],
+    ): object {
         $vendor = null;
 
         if ($vendorStatus !== null) {
@@ -510,48 +547,65 @@ final class CoupleRegistrationServiceTest extends TestCase
         // Les catalogues explicites servent les scénarios à plusieurs
         // prestataires ou plusieurs photos ; sans eux, le prestataire unique
         // historique répond à n'importe quel identifiant.
-        $vendors = $this->createStub(EntityRepository::class);
-        $vendors->method('find')->willReturnCallback(
-            static fn(mixed $id) => $vendorsById === []
-                ? $vendor
-                : ($vendorsById[(string) $id] ?? null),
+        $findVendor = static fn(mixed $id): ?Vendor => $vendorsById === []
+            ? $vendor
+            : ($vendorsById[(string) $id] ?? null);
+
+        $findVisible = static function (string $portfolioImageId) use ($crushPhoto, $imagesById): PortfolioImage {
+            if ($imagesById !== []) {
+                $image = $imagesById[$portfolioImageId] ?? null;
+            } elseif ($crushPhoto instanceof PortfolioImage && $portfolioImageId === (string) $crushPhoto->getId()) {
+                $image = $crushPhoto;
+            } else {
+                $image = null;
+            }
+
+            if (!$image instanceof PortfolioImage || !$image->isVisibleInWedream()) {
+                throw new \DomainException('Cette photo n\'est pas disponible.', 422);
+            }
+
+            return $image;
+        };
+
+        $resolver = $this->createStub(VendorResolver::class);
+        $resolver->method('findVisiblePortfolioImage')->willReturnCallback($findVisible);
+        $resolver->method('resolveCrushPhoto')->willReturnCallback(
+            static function (Vendor $owner, string $portfolioImageId) use ($findVisible): PortfolioImage {
+                $image = $findVisible($portfolioImageId);
+
+                if ($image->getVendor() !== $owner) {
+                    throw new \DomainException('Cette photo n\'est pas disponible.', 422);
+                }
+
+                return $image;
+            },
         );
-
-        $portfolioImages = $this->createStub(EntityRepository::class);
-        $portfolioImages->method('find')->willReturnCallback(
-            static function (mixed $id) use ($crushPhoto, $imagesById): ?PortfolioImage {
-                if ($imagesById !== []) {
-                    return $imagesById[(string) $id] ?? null;
+        $resolver->method('resolveActive')->willReturnCallback(
+            static function (?string $vendorId, ?string $portfolioImageId) use ($findVendor, $findVisible): Vendor {
+                if ($vendorId !== null) {
+                    $resolved = $findVendor($vendorId);
+                } elseif ($portfolioImageId !== null) {
+                    $resolved = $findVisible($portfolioImageId)->getVendor();
+                } else {
+                    throw new \DomainException('Cette demande de contact ne cible aucun prestataire.', 422);
                 }
 
-                if (!$crushPhoto instanceof PortfolioImage) {
-                    return null;
+                if (!$resolved instanceof Vendor || $resolved->getStatus() !== VendorStatus::Active) {
+                    throw new \DomainException('Ce prestataire n\'est pas disponible.', 422);
                 }
 
-                return $id === (string) $crushPhoto->getId() ? $crushPhoto : null;
+                return $resolved;
             },
         );
 
-        $em = $strict
-            ? $this->createMock(EntityManagerInterface::class)
-            : $this->createStub(EntityManagerInterface::class);
-        $em->method('getRepository')->willReturnCallback(
-            static fn(string $className) => match ($className) {
-                Confession::class     => $confessions,
-                Culture::class        => $cultures,
-                Vendor::class         => $vendors,
-                PortfolioImage::class => $portfolioImages,
-            },
-        );
-        $em->method('persist')->willReturnCallback(function (object $entity): void {
-            $this->persisted[] = $entity;
-        });
-
-        return $em;
+        return $resolver;
     }
 
-    private function makeService(object $em, bool $emailTaken = false): CoupleRegistrationService
-    {
+    private function makeService(
+        object $em,
+        ?object $vendorResolver = null,
+        bool $emailTaken = false,
+    ): CoupleRegistrationService {
         $userRepository = $this->createStub(UserRepository::class);
         $userRepository->method('isEmailTaken')->willReturn($emailTaken);
 
@@ -560,7 +614,12 @@ final class CoupleRegistrationServiceTest extends TestCase
             static fn(object $user, string $plain): string => 'hashed:' . $plain,
         );
 
-        return new CoupleRegistrationService($em, $userRepository, $hasher);
+        return new CoupleRegistrationService(
+            $em,
+            $userRepository,
+            $hasher,
+            $vendorResolver ?? $this->makeVendorResolver(),
+        );
     }
 
     /**
