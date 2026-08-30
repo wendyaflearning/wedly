@@ -55,6 +55,13 @@ class WeddingStyleFixtures extends Fixture
             ['Amérique',      'amerique'],
             ['Moyen-Orient',  'moyen-orient'],
             ['Océanie',       'oceanie'],
+            // Pas un continent au sens strict, mais c'est ainsi que la
+            // migration de seed d'origine (Version20260418160000) l'a
+            // classé, et GET /api/v1/cultures (côté onboarding/profil
+            // vendor, App\Controller\Culture\GetCulturesAction) ne renvoie
+            // que ce type — le fixture doit matcher la prod, pas une
+            // taxonomie idéale.
+            ['Maghreb',       'maghreb'],
         ];
 
         foreach ($continents as [$name, $slug]) {
@@ -63,13 +70,11 @@ class WeddingStyleFixtures extends Fixture
             $manager->persist($culture);
         }
 
-        // Ni continent ni pays : une région à cheval sur plusieurs pays déjà
-        // listés (Maroc, Algérie, Tunisie), et l'option "aucune spécialité" du
-        // parcours couple (WED-107) — toutes deux absentes tant qu'un couple
-        // ne les choisit pas comme un pays ou un continent précis.
+        // L'option "aucune spécialité" du parcours couple (WED-107) : absente
+        // tant qu'un couple ne choisit pas un pays ou un continent précis, et
+        // n'a pas vocation à apparaître dans la liste "continents" ci-dessus.
         $other = [
-            ['Maghreb',                        'maghreb'],
-            ['Aucune spécialité culturelle',    'aucune-specialite-culturelle'],
+            ['Aucune spécialité culturelle', 'aucune-specialite-culturelle'],
         ];
 
         foreach ($other as [$name, $slug]) {
