@@ -119,6 +119,32 @@ final class RegisterCoupleRequestDtoTest extends TestCase
         );
     }
 
+    /**
+     * WED-150 : `vendorId` n'est plus requis isolément — la photo coup de cœur
+     * suffit à désigner le prestataire côté serveur.
+     */
+    public function test_a_contact_request_carrying_only_a_portfolio_image_id_is_accepted(): void
+    {
+        self::assertCount(
+            0,
+            $this->validator->validate($this->makeDto(
+                contactRequest: new ProviderContactRequestDto(
+                    portfolioImageId: '0198f1c2-0000-7000-8000-000000000001',
+                ),
+            )),
+        );
+    }
+
+    public function test_a_contact_request_without_any_target_is_rejected(): void
+    {
+        $violations = $this->validator->validate(
+            $this->makeDto(contactRequest: new ProviderContactRequestDto()),
+        );
+
+        self::assertCount(1, $violations);
+        self::assertSame('contactRequest.vendorId', $violations->get(0)->getPropertyPath());
+    }
+
     private function makeDto(
         string $email = 'camille@example.test',
         string $password = 'motdepasse',
