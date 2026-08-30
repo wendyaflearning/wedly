@@ -52,7 +52,7 @@ class WeddingStyleFixtures extends Fixture
             ['Europe',        'europe'],
             ['Afrique',       'afrique'],
             ['Asie',          'asie'],
-            ['Amériques',     'ameriques'],
+            ['Amérique',      'amerique'],
             ['Moyen-Orient',  'moyen-orient'],
             ['Océanie',       'oceanie'],
         ];
@@ -60,6 +60,21 @@ class WeddingStyleFixtures extends Fixture
         foreach ($continents as [$name, $slug]) {
             $culture = new Culture();
             $culture->setName($name)->setSlug($slug)->setType(CultureType::Continent);
+            $manager->persist($culture);
+        }
+
+        // Ni continent ni pays : une région à cheval sur plusieurs pays déjà
+        // listés (Maroc, Algérie, Tunisie), et l'option "aucune spécialité" du
+        // parcours couple (WED-107) — toutes deux absentes tant qu'un couple
+        // ne les choisit pas comme un pays ou un continent précis.
+        $other = [
+            ['Maghreb',                        'maghreb'],
+            ['Aucune spécialité culturelle',    'aucune-specialite-culturelle'],
+        ];
+
+        foreach ($other as [$name, $slug]) {
+            $culture = new Culture();
+            $culture->setName($name)->setSlug($slug)->setType(CultureType::Autre);
             $manager->persist($culture);
         }
 
@@ -98,6 +113,7 @@ class WeddingStyleFixtures extends Fixture
             ['Bouddhiste',   'bouddhiste'],
             ['Hindou',       'hindou'],
             ['Mixte',        'mixte'],
+            ['Aucune spécialité religieuse', 'aucune-specialite-religieuse'],
         ];
 
         foreach ($confessions as [$name, $slug]) {
