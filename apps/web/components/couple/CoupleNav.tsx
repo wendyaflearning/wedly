@@ -12,8 +12,8 @@ interface CoupleNavProps {
 }
 
 /**
- * Top chrome for Mon espace Wedly — aligned with VendorNav band height and
- * palette, without vendor-only destinations.
+ * Top chrome for Mon espace Wedly — matches VendorNav band height (64px mobile
+ * via h-16, 72px desktop via md:h-18) and palette, without vendor-only destinations.
  */
 export function CoupleNav({ session }: CoupleNavProps) {
   const pathname = usePathname()
@@ -21,7 +21,7 @@ export function CoupleNav({ session }: CoupleNavProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-bordeaux/10 bg-creme font-manrope">
-      <div className="mx-auto flex h-15 max-w-[1280px] items-center justify-between gap-4 px-5 md:h-18 md:px-10">
+      <div className="mx-auto flex h-16 max-w-[1280px] items-center justify-between gap-4 px-5 md:h-18 md:px-10">
         <Link href="/mon-espace" className="shrink-0">
           <Image
             src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_dark_bbyd6m.svg"
