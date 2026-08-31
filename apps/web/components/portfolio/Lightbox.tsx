@@ -2,7 +2,10 @@
 
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Heart, MessageSquare, X } from 'lucide-react'
+import { COUPLE_SPACE_PATH } from '@/lib/couple-space'
+import { ctaConfirmation, type CtaConfirmationStatus } from '@/lib/wedream-cta-confirmation'
 import type { PublicPortfolioImage } from '@/lib/wedream-gallery'
 
 interface LightboxProps {
@@ -10,11 +13,27 @@ interface LightboxProps {
   onClose: () => void
   onPin?: () => void
   onContact?: () => void
+  /** État du geste pour CETTE photo, tenu par l'appelant (WED-158). */
+  pinStatus?: CtaConfirmationStatus
+  contactStatus?: CtaConfirmationStatus
 }
 
 const noop = () => {}
 
-export function Lightbox({ photo, onClose, onPin = noop, onContact = noop }: LightboxProps) {
+const CTA_BASE =
+  'flex items-center justify-center gap-2.5 rounded-full border px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors'
+/** Pas de `hover:` sur l'état confirmé : sur fond plein il ne se verrait pas. */
+const CTA_CONFIRMED = 'border-bordeaux bg-bordeaux text-creme'
+const CTA_IDLE = 'border-bordeaux/30 text-bordeaux hover:bg-bordeaux/5'
+
+export function Lightbox({
+  photo,
+  onClose,
+  onPin = noop,
+  onContact = noop,
+  pinStatus = 'idle',
+  contactStatus = 'idle',
+}: LightboxProps) {
   // La touche Échap doit toujours appeler le dernier onClose reçu, sans pour
   // autant relancer l'effet de scroll-lock ci-dessous (qui restaurerait alors
   // un overflow déjà à 'hidden').
@@ -37,6 +56,10 @@ export function Lightbox({ photo, onClose, onPin = noop, onContact = noop }: Lig
   }, [])
 
   const tagGroups = Object.entries(photo.tagsByGroup).filter(([, values]) => values.length > 0)
+
+  const pinCta = ctaConfirmation('pin', pinStatus)
+  const contactCta = ctaConfirmation('contact', contactStatus)
+  const showsCoupleSpaceLink = pinCta.showsCoupleSpaceLink || contactCta.showsCoupleSpaceLink
 
   return (
     <div
@@ -131,22 +154,36 @@ export function Lightbox({ photo, onClose, onPin = noop, onContact = noop }: Lig
             sous la barre d'accueil ; on le garde pour ne pas casser le jour où
             quelqu'un activera cover. À revoir avec ce changement-là. */}
         <div className="border-bordeaux/10 flex shrink-0 flex-col gap-2.5 border-t px-[22px] pt-3.5 pb-[calc(22px_+_env(safe-area-inset-bottom))] md:px-7 md:pt-[18px] md:pb-[26px]">
+          {/* Les boutons restent cliquables une fois confirmés : les deux
+              écritures sont idempotentes côté backend, et griser le bouton
+              ferait passer une confirmation pour une indisponibilité. */}
           <button
             type="button"
             onClick={onPin}
-            className="border-bordeaux/30 text-bordeaux hover:bg-bordeaux/5 flex items-center justify-center gap-2.5 rounded-full border px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors"
+            className={`${CTA_BASE} ${pinCta.confirmed ? CTA_CONFIRMED : CTA_IDLE}`}
           >
             <Heart size={15} aria-hidden="true" />
-            Épingler
+            {pinCta.label}
           </button>
           <button
             type="button"
             onClick={onContact}
-            className="border-bordeaux/30 text-bordeaux hover:bg-bordeaux/5 flex items-center justify-center gap-2.5 rounded-full border px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors"
+            className={`${CTA_BASE} ${contactCta.confirmed ? CTA_CONFIRMED : CTA_IDLE}`}
           >
             <MessageSquare size={15} aria-hidden="true" />
-            Je veux être mis en relation
+            {contactCta.label}
           </button>
+
+          {/* Seule une écriture réellement passée mène quelque part : sans
+              compte, l'espace perso renverrait le couple vers une connexion. */}
+          {showsCoupleSpaceLink && (
+            <Link
+              href={COUPLE_SPACE_PATH}
+              className="text-bordeaux mt-1 text-center text-[11px] font-medium underline underline-offset-4"
+            >
+              Voir mes coups de cœur et demandes
+            </Link>
+          )}
         </div>
       </div>
     </div>
