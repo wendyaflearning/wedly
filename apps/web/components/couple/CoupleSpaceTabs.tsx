@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { COUPLE_SPACE_TABS } from '@/lib/couple-space'
+import { COUPLE_SPACE_TABS, coupleSpaceTabForPath } from '@/lib/couple-space'
 
 export function CoupleSpaceTabs() {
   const pathname = usePathname()
+  const activeTab = coupleSpaceTabForPath(pathname)
 
   return (
     <nav
@@ -14,12 +15,13 @@ export function CoupleSpaceTabs() {
     >
       <div className="flex gap-0 overflow-x-auto scrollbar-none md:gap-10">
         {COUPLE_SPACE_TABS.map((tab) => {
-          const isActive = pathname === tab.href
+          const isActive = activeTab?.key === tab.key
 
           return (
             <Link
               key={tab.key}
               href={tab.href}
+              aria-current={isActive ? 'page' : undefined}
               className={[
                 'shrink-0 border-b-2 px-1 py-3 text-[13px] font-semibold no-underline transition-colors md:py-4 md:text-[14px]',
                 isActive
