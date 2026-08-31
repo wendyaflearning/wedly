@@ -4,9 +4,13 @@ import {
   formatFromPrice,
   formatRequestedAt,
   fullPriceRange,
+  formatLeadDate,
   isUnlockedLead,
   leadNoticeMessage,
   leadTooltipLines,
+  portfolioLinkLabel,
+  priceAmountRange,
+  unlockedProgressLabel,
   STATUS_FILTER_ORDER,
   STATUS_LABELS,
   vendorTypeLabel,
@@ -168,5 +172,66 @@ describe('leadNoticeMessage', () => {
     expect(leadNoticeMessage(undefined)).toBeNull()
     expect(leadNoticeMessage('')).toBeNull()
     expect(leadNoticeMessage('nimporte-quoi')).toBeNull()
+  })
+})
+
+describe('formatLeadDate', () => {
+  it('renders the bare day, without the « Demandé le » prefix', () => {
+    expect(formatLeadDate('2026-08-12T09:30:00+00:00')).toBe('12 août')
+  })
+
+  it('returns null on an unreadable date', () => {
+    expect(formatLeadDate('pas-une-date')).toBeNull()
+  })
+})
+
+describe('priceAmountRange', () => {
+  it('gives the amount alone, without the price type', () => {
+    expect(norm(priceAmountRange(vendor({ priceMinCents: 220000, priceMaxCents: 420000 }))!)).toBe(
+      '2 200 € – 4 200 €',
+    )
+  })
+
+  it('falls back to a floor price when no upper bound stands above it', () => {
+    expect(norm(priceAmountRange(vendor({ priceMinCents: 220000, priceMaxCents: null }))!)).toBe(
+      'À partir de 2 200 €',
+    )
+  })
+
+  it('returns null without a floor price', () => {
+    expect(priceAmountRange(vendor({ priceMinCents: null, priceMaxCents: null }))).toBeNull()
+  })
+})
+
+describe('portfolioLinkLabel', () => {
+  it('agrees in number', () => {
+    expect(portfolioLinkLabel(24)).toBe('Voir les 24 photos')
+    expect(portfolioLinkLabel(1)).toBe('Voir la photo')
+  })
+
+  it('stays silent on an empty portfolio', () => {
+    expect(portfolioLinkLabel(0)).toBeNull()
+    expect(portfolioLinkLabel(-3)).toBeNull()
+  })
+})
+
+describe('unlockedProgressLabel', () => {
+  it('counts the unlocked requests against the whole list', () => {
+    expect(unlockedProgressLabel({ ALL: 4, EN_ATTENTE: 1, DEBLOQUEE: 2, REFUSEE: 1 })).toBe(
+      '2 sur 4 débloqués',
+    )
+  })
+
+  it('agrees in number on a single unlocked request', () => {
+    expect(unlockedProgressLabel({ ALL: 3, EN_ATTENTE: 1, DEBLOQUEE: 1, REFUSEE: 1 })).toBe(
+      '1 sur 3 débloqué',
+    )
+    expect(unlockedProgressLabel({ ALL: 2, EN_ATTENTE: 2, DEBLOQUEE: 0, REFUSEE: 0 })).toBe(
+      '0 sur 2 débloqué',
+    )
+  })
+
+  it('returns null when the couple has no request at all', () => {
+    expect(unlockedProgressLabel({ ALL: 0, EN_ATTENTE: 0, DEBLOQUEE: 0, REFUSEE: 0 })).toBeNull()
   })
 })

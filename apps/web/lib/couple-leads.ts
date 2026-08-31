@@ -102,14 +102,17 @@ export function formatSlug(slug: string): string {
   return slug.replace(/-/g, ' ').replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
 }
 
-/** « Demandé le 12 août ». Retourne `null` si la date est illisible. */
-export function formatRequestedAt(iso: string): string | null {
+/** « 12 août » — la date nue, pour les libellés qui portent déjà leur préfixe. */
+export function formatLeadDate(iso: string): string | null {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return null
-  return `Demandé le ${new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-  }).format(date)}`
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(date)
+}
+
+/** « Demandé le 12 août ». Retourne `null` si la date est illisible. */
+export function formatRequestedAt(iso: string): string | null {
+  const day = formatLeadDate(iso)
+  return day === null ? null : `Demandé le ${day}`
 }
 
 function formatEuros(cents: number): string {
@@ -136,6 +139,38 @@ export function fullPriceRange(vendor: UnlockedVendor): string | null {
     return `${min} – ${formatEuros(priceMaxCents)}${suffix ? ` ${suffix}` : ''}`
   }
   return `À partir de ${min}${suffix ? ` ${suffix}` : ''}`
+}
+
+/**
+ * « 2 200 € – 4 200 € » — le montant seul, sans le type de prestation. La ligne
+ * Tarifs de l'Écran 4 affiche le libellé à gauche et le montant à droite, là où
+ * `fullPriceRange` colle les deux dans une même phrase.
+ */
+export function priceAmountRange(vendor: UnlockedVendor): string | null {
+  const { priceMinCents, priceMaxCents } = vendor
+  if (typeof priceMinCents !== 'number' || priceMinCents <= 0) return null
+
+  const min = formatEuros(priceMinCents)
+  if (typeof priceMaxCents === 'number' && priceMaxCents > priceMinCents) {
+    return `${min} – ${formatEuros(priceMaxCents)}`
+  }
+  return `À partir de ${min}`
+}
+
+/** « Voir les 24 photos » — `null` quand le portfolio est vide. */
+export function portfolioLinkLabel(count: number): string | null {
+  if (!Number.isFinite(count) || count <= 0) return null
+  return count === 1 ? 'Voir la photo' : `Voir les ${count} photos`
+}
+
+/**
+ * « 2 sur 4 débloqués » — où en est le couple dans ses demandes. Dérivé de la
+ * liste déjà chargée : aucun appel réseau supplémentaire.
+ */
+export function unlockedProgressLabel(counts: StatusCounts): string | null {
+  if (counts.ALL <= 0) return null
+  const accord = counts.DEBLOQUEE > 1 ? 'débloqués' : 'débloqué'
+  return `${counts.DEBLOQUEE} sur ${counts.ALL} ${accord}`
 }
 
 /**

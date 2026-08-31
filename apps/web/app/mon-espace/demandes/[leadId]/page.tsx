@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { ContactRequestsError } from '@/components/couple/contact-requests/ContactRequestsError'
 import { UnlockedVendorSheet } from '@/components/couple/contact-requests/UnlockedVendorSheet'
-import { isUnlockedLead } from '@/lib/couple-leads'
+import { countByStatus, isUnlockedLead } from '@/lib/couple-leads'
 import { fetchCoupleLeads } from '@/lib/couple-leads.server'
 
 export const metadata: Metadata = {
@@ -26,5 +26,7 @@ export default async function UnlockedVendorPage({ params }: PageProps) {
   if (!lead) redirect('/mon-espace/demandes?indisponible=introuvable')
   if (!isUnlockedLead(lead)) redirect('/mon-espace/demandes?indisponible=verrouillee')
 
-  return <UnlockedVendorSheet lead={lead} />
+  // Le hero affiche « X sur Y débloqués » : la liste complète est déjà là,
+  // `fetchCoupleLeads` étant mémoïsé — aucun appel réseau supplémentaire.
+  return <UnlockedVendorSheet lead={lead} counts={countByStatus(result.items)} />
 }
