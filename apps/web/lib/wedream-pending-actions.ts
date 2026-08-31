@@ -74,6 +74,34 @@ function reportStorageFailure(operation: string, error: unknown): void {
   console.warn(`[wedream-pending-actions] ${operation} indisponible :`, error)
 }
 
+/**
+ * Les écrans qui affichent la file — le badge des gestes en attente (WED-161) —
+ * doivent se remettre à jour dès qu'un geste s'y ajoute, sans que la grille qui
+ * écrit ait à les connaître.
+ *
+ * Le canal est volontairement muet sur le contenu : un abonné apprend que la file
+ * a bougé, il la relit lui-même. C'est le contrat de `useSyncExternalStore`, et
+ * ça évite de faire circuler une copie qui divergerait du stockage.
+ *
+ * La portée est l'onglet en cours : un geste posé dans un autre onglet ne
+ * réveille personne ici. C'est suffisant tant que la file ne s'écrit que depuis
+ * la galerie, sur la page qu'on regarde.
+ */
+const subscribers = new Set<() => void>()
+
+/** Rend la fonction de désabonnement, comme l'attend `useSyncExternalStore`. */
+export function subscribeToPendingActions(listener: () => void): () => void {
+  subscribers.add(listener)
+
+  return () => {
+    subscribers.delete(listener)
+  }
+}
+
+function notifySubscribers(): void {
+  for (const listener of subscribers) listener()
+}
+
 function isPendingAction(value: unknown): value is PendingAction {
   if (typeof value !== 'object' || value === null) return false
 
@@ -159,7 +187,12 @@ export function enqueuePendingAction(
     // Quota plein ou stockage refusé : le geste est perdu, mais le couple garde
     // son modal et son parcours. Mieux vaut une file incomplète qu'un clic mort.
     reportStorageFailure('écriture de la file', error)
+    return queue
   }
+
+  // Après l'écriture seulement : un quota plein n'a rien changé au stockage, et
+  // faire recompter une file qui n'a pas bougé afficherait un compteur faux.
+  notifySubscribers()
 
   return queue
 }

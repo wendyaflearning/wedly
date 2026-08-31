@@ -5,6 +5,7 @@ import {
   hasSeenAccountModal,
   loadPendingActions,
   markAccountModalSeen,
+  subscribeToPendingActions,
   WEDREAM_PENDING_ACTIONS_KEY,
   WEDREAM_PENDING_ACTIONS_TTL_MS,
 } from './wedream-pending-actions'
@@ -177,5 +178,69 @@ describe('drapeau du modal de création de compte', () => {
     expect(() => markAccountModalSeen(storage)).not.toThrow()
     expect(hasSeenAccountModal(storage)).toBe(false)
     expect(warn).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('abonnement aux écritures de la file', () => {
+  it('prévient l’abonné dès qu’un geste est mis en file', () => {
+    const storage = createStorage()
+    const listener = vi.fn()
+    const unsubscribe = subscribeToPendingActions(listener)
+
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+
+    expect(listener).toHaveBeenCalledTimes(1)
+    unsubscribe()
+  })
+
+  it('prévient tous les abonnés, pas seulement le dernier', () => {
+    const storage = createStorage()
+    const first = vi.fn()
+    const second = vi.fn()
+    const unsubscribeFirst = subscribeToPendingActions(first)
+    const unsubscribeSecond = subscribeToPendingActions(second)
+
+    enqueuePendingAction(storage, { kind: 'contact', portfolioImageId: PHOTO_A }, 1_000)
+
+    expect(first).toHaveBeenCalledTimes(1)
+    expect(second).toHaveBeenCalledTimes(1)
+    unsubscribeFirst()
+    unsubscribeSecond()
+  })
+
+  it('ne rappelle plus un abonné désabonné', () => {
+    const storage = createStorage()
+    const listener = vi.fn()
+
+    subscribeToPendingActions(listener)()
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('ne prévient personne quand l’écriture a échoué', () => {
+    // Un quota plein n'a rien changé au stockage : relire la file afficherait le
+    // même chiffre qu'avant, autant ne pas déclencher le rendu.
+    silenceWarnings()
+    const listener = vi.fn()
+    const unsubscribe = subscribeToPendingActions(listener)
+
+    enqueuePendingAction(createBrokenStorage(), { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+
+    expect(listener).not.toHaveBeenCalled()
+    unsubscribe()
+  })
+
+  it('ne prévient personne à la simple lecture', () => {
+    const storage = createStorage()
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+
+    const listener = vi.fn()
+    const unsubscribe = subscribeToPendingActions(listener)
+
+    loadPendingActions(storage, 1_000)
+
+    expect(listener).not.toHaveBeenCalled()
+    unsubscribe()
   })
 })
