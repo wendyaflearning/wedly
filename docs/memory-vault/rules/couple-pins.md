@@ -67,3 +67,33 @@ encore. Une réactivation Wedream restitue l'épinglé sans action du couple
 
 L'ordre affiché est « plus récent d'abord », porté par `couple_pin.id DESC`
 (UUIDv7 chronologique), pas par `created_at` seul (précision seconde).
+
+## COUPLE-PIN-004 — Épingler est un geste idempotent, jamais une erreur
+
+Statut : `active`
+
+Décision verrouillée #4 de WED-49, implémentée par `POST /api/v1/couples/me/pins`
+(WED-155).
+
+Le couple connecté épingle en n'envoyant que `portfolioImageId` : le prestataire
+est déduit côté serveur (aucun `vendorId` ne transite, décision #1 de WED-49) et
+le couple est lu dans le JWT, jamais dans l'URL ni dans le corps.
+
+Règles d'écriture :
+
+- la photo doit être publiée dans Wedream au moment de l'épinglage — même porte
+  que le parcours d'inscription (`VendorResolver::findVisiblePortfolioImage()`),
+  sinon 422 ;
+- réépingler une photo déjà épinglée par ce couple est un **no-op silencieux**,
+  pas un conflit : côté couple le cœur est déjà rempli, un 409 ne lui donnerait
+  rien à corriger. `UNIQ_couple_pin_couple_image` (COUPLE-PIN-001) reste le
+  filet contre les requêtes concurrentes ;
+- un compte prestataire est refusé par le contrôle de rôle générique, sans
+  message spécifique (décision #2 de WED-49).
+
+**Why:** le geste « coup de cœur » doit rester sans friction — le couple tape sur
+un cœur, il n'a aucune notion de création de ressource ni de doublon.
+
+**How to apply:** toute future écriture d'épinglé (suppression, épinglage en
+lot, réépinglage depuis un autre parcours) reste idempotente et valide la
+visibilité Wedream de la photo au moment de l'écriture, pas à l'affichage.
