@@ -166,3 +166,22 @@ export function countByStatus(items: CoupleLead[]): StatusCounts {
   for (const lead of items) counts[lead.status] += 1
   return counts
 }
+
+/**
+ * Message affiché quand l'Écran 4 renvoie le couple vers sa liste. Deux causes
+ * distinctes, deux messages — le retour silencieux ne disait rien de ce qui
+ * venait de se passer.
+ *
+ * Aucune énumération possible : la lecture est déjà scopée au couple du JWT
+ * (`/couples/me/provider-leads`), donc le lead d'un autre couple tombe dans
+ * `introuvable`, indiscernable d'un identifiant qui n'a jamais existé.
+ */
+const LEAD_NOTICE_MESSAGES: Record<string, string> = {
+  introuvable: "Cette demande n'existe plus.",
+  verrouillee: "Cette demande n'est pas encore débloquée : le prestataire n'a pas encore répondu.",
+}
+
+export function leadNoticeMessage(code?: string): string | null {
+  // `??` seul ne suffit pas : `'' ?? null` vaut `''`, pas `null`.
+  return code ? (LEAD_NOTICE_MESSAGES[code] ?? null) : null
+}

@@ -37,7 +37,7 @@ function CardInner({ lead }: { lead: CoupleLead }) {
         <img
           src={lead.photoUrl}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] group-focus-visible:scale-[1.03]"
         />
       ) : (
         <PhotoFallback />
@@ -98,7 +98,7 @@ export function ContactRequestCard({ lead }: { lead: CoupleLead }) {
 
       <div
         role="tooltip"
-        className="pointer-events-none absolute left-3 right-3 top-12 hidden rounded-xl border border-bordeaux/20 bg-creme px-4 py-3 opacity-0 shadow-[0_4px_16px_rgba(78,26,50,0.12)] transition-opacity duration-200 group-hover:opacity-100 md:block"
+        className="pointer-events-none absolute left-3 right-3 top-12 hidden rounded-xl border border-bordeaux/20 bg-creme px-4 py-3 opacity-0 shadow-[0_4px_16px_rgba(78,26,50,0.12)] transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 md:block"
       >
         {tooltipLines.map((line, index) => (
           <span

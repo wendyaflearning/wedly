@@ -32,7 +32,28 @@ function EmptyZone() {
   )
 }
 
-export function ContactRequestsZone({ leads }: { leads: CoupleLead[] }) {
+/**
+ * Pourquoi le couple vient d'être renvoyé ici depuis l'Écran 4. `role="status"`
+ * plutôt que `alert` : c'est une explication, pas une erreur bloquante.
+ */
+function Notice({ message }: { message: string }) {
+  return (
+    <p
+      role="status"
+      className="rounded-2xl border border-bordeaux/15 bg-bordeaux/5 px-5 py-4 text-sm leading-relaxed text-texte"
+    >
+      {message}
+    </p>
+  )
+}
+
+export function ContactRequestsZone({
+  leads,
+  notice,
+}: {
+  leads: CoupleLead[]
+  notice?: string | null
+}) {
   const [filter, setFilter] = useState<Filter>('ALL')
 
   const counts = useMemo(() => countByStatus(leads), [leads])
@@ -45,6 +66,7 @@ export function ContactRequestsZone({ leads }: { leads: CoupleLead[] }) {
     return (
       <div className="flex flex-col gap-6">
         <SectionLabel />
+        {notice && <Notice message={notice} />}
         <EmptyZone />
       </div>
     )
@@ -61,6 +83,8 @@ export function ContactRequestsZone({ leads }: { leads: CoupleLead[] }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {notice && <Notice message={notice} />}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <SectionLabel />
 

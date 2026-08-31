@@ -5,6 +5,7 @@ import {
   formatRequestedAt,
   fullPriceRange,
   isUnlockedLead,
+  leadNoticeMessage,
   leadTooltipLines,
   STATUS_FILTER_ORDER,
   STATUS_LABELS,
@@ -154,5 +155,18 @@ describe('countByStatus', () => {
 
   it('is all-zero for an empty list', () => {
     expect(countByStatus([])).toEqual({ ALL: 0, EN_ATTENTE: 0, DEBLOQUEE: 0, REFUSEE: 0 })
+  })
+})
+
+describe('leadNoticeMessage', () => {
+  it('explains each reason the unlocked sheet sent the couple back', () => {
+    expect(leadNoticeMessage('introuvable')).toBe("Cette demande n'existe plus.")
+    expect(leadNoticeMessage('verrouillee')).toContain('pas encore débloquée')
+  })
+
+  it('stays silent on an absent or unknown code', () => {
+    expect(leadNoticeMessage(undefined)).toBeNull()
+    expect(leadNoticeMessage('')).toBeNull()
+    expect(leadNoticeMessage('nimporte-quoi')).toBeNull()
   })
 })

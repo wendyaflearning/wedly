@@ -20,8 +20,11 @@ export default async function UnlockedVendorPage({ params }: PageProps) {
 
   const lead = result.items.find((item) => item.id === leadId)
 
-  // Demande inconnue ou pas encore débloquée : rien à dévoiler, retour à la liste.
-  if (!lead || !isUnlockedLead(lead)) redirect('/mon-espace/demandes')
+  // Rien à dévoiler dans les deux cas, mais le couple mérite de savoir lequel :
+  // le retour muet vers la liste ne disait pas si la demande n'existait plus ou
+  // si le prestataire n'avait simplement pas encore répondu.
+  if (!lead) redirect('/mon-espace/demandes?indisponible=introuvable')
+  if (!isUnlockedLead(lead)) redirect('/mon-espace/demandes?indisponible=verrouillee')
 
   return <UnlockedVendorSheet lead={lead} />
 }
