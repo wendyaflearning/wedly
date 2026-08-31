@@ -121,8 +121,10 @@ export function Lightbox({ photo, onClose, onPin = noop, onContact = noop }: Lig
         </div>
 
         {/* Deux CTA au même niveau visuel : aucune hiérarchie entre épingler et
-            contacter. La logique de clic (auth gate) et la fermeture après
-            action arrivent avec US5 — ici on se contente d'appeler le callback.
+            contacter. La lightbox ne sait rien de l'authentification : elle
+            appelle son callback, et c'est l'appelant qui tranche (US5, WED-157).
+            Elle ne se ferme pas après l'action — la confirmation reste sur
+            l'écran d'origine, aucune redirection forcée.
             TODO(WED-154) : le terme env(safe-area-inset-bottom) vaut 0 tant que
             `viewport` n'expose pas viewportFit:'cover' (app/layout.tsx). Sans
             cover, iOS pose déjà le contenu dans la zone sûre, donc rien ne passe
@@ -143,7 +145,7 @@ export function Lightbox({ photo, onClose, onPin = noop, onContact = noop }: Lig
             className="border-bordeaux/30 text-bordeaux hover:bg-bordeaux/5 flex items-center justify-center gap-2.5 rounded-full border px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors"
           >
             <MessageSquare size={15} aria-hidden="true" />
-            Je veux entrer en contact
+            Je veux être mis en relation
           </button>
         </div>
       </div>
