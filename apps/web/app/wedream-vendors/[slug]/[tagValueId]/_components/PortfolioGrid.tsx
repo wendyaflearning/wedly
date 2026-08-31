@@ -5,6 +5,7 @@ import { Lightbox } from '@/components/portfolio/Lightbox'
 import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
 import { submitCtaAction, type CtaAction, type CtaKind } from '@/lib/wedream-cta'
+import type { CtaConfirmationStatus } from '@/lib/wedream-cta-confirmation'
 import type { PortfolioImagesPage, PublicPortfolioImage } from '@/lib/wedream-gallery'
 
 type PortfolioGridProps = {
@@ -19,6 +20,17 @@ type PortfolioGridProps = {
 const PRELOAD_MARGIN = '400px'
 
 const CONTACT_CONFIRMATION = 'Votre demande de mise en relation est partie. Le prestataire vous recontacte bientôt.'
+
+/**
+ * Les gestes confirmés, photo par photo. La clé est l'id de la photo et non un
+ * état global : le couple qui a épinglé une image ne doit pas retrouver la
+ * suivante déjà marquée.
+ *
+ * Le state vit ici plutôt que dans la lightbox, qui se démonte à chaque
+ * fermeture — rouvrir la même photo dans la session retrouve donc sa
+ * confirmation, sans aucun appel réseau au montage.
+ */
+type CtaStatusesByImage = Record<string, Partial<Record<CtaKind, CtaConfirmationStatus>>>
 
 /**
  * Point d'accroche de US6 (WED-160) : le backend a refusé l'écriture faute de
@@ -49,6 +61,7 @@ export default function PortfolioGrid({
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<PublicPortfolioImage | null>(null)
   const [pendingCta, setPendingCta] = useState<CtaKind | null>(null)
+  const [ctaStatuses, setCtaStatuses] = useState<CtaStatusesByImage>({})
   const { toast, showToast } = useToast()
 
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -118,20 +131,26 @@ export default function PortfolioGrid({
       const outcome = await submitCtaAction({ kind, portfolioImageId })
       setPendingCta(null)
 
-      if (outcome.status === 'auth_required') {
-        requestAccountCreation({ kind, portfolioImageId })
-        return
-      }
-
+      // Une écriture refusée ne confirme rien : seuls le succès et le manque de
+      // session laissent une trace sur le bouton.
       if (outcome.status === 'error') {
         showToast('error', outcome.message)
         return
       }
 
-      // TODO(WED-158 / WED-159) : l'épingle réussie n'a pas encore d'état de
-      // confirmation — l'état CTA de la lightbox appartient à US4a-confirmation
-      // et le cœur rempli de la grille à US4b. Le toast ci-dessous ne couvre que
-      // le contact, seule confirmation que ce ticket possède en propre.
+      setCtaStatuses((current) => ({
+        ...current,
+        [portfolioImageId]: { ...current[portfolioImageId], [kind]: outcome.status },
+      }))
+
+      if (outcome.status === 'auth_required') {
+        requestAccountCreation({ kind, portfolioImageId })
+        return
+      }
+
+      // TODO(WED-159) : le cœur rempli de la grille appartient encore à US4b.
+      // Le toast ci-dessous reste la confirmation immédiate du contact ; le
+      // bouton, lui, en garde la trace tant que la session dure.
       if (kind === 'contact') showToast('success', CONTACT_CONFIRMATION)
     },
     [pendingCta, showToast]
@@ -173,6 +192,8 @@ export default function PortfolioGrid({
           onClose={() => setSelectedImage(null)}
           onPin={() => void runCta('pin', selectedImage.id)}
           onContact={() => void runCta('contact', selectedImage.id)}
+          pinStatus={ctaStatuses[selectedImage.id]?.pin ?? 'idle'}
+          contactStatus={ctaStatuses[selectedImage.id]?.contact ?? 'idle'}
         />
       )}
 
