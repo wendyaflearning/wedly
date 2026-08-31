@@ -4,8 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Heart } from 'lucide-react'
 import { Lightbox } from '@/components/portfolio/Lightbox'
 import { Toast } from '@/components/ui/Toast'
+import { AccountCreationModal } from '@/components/wedream/AccountCreationModal'
 import { useToast } from '@/hooks/useToast'
 import { submitCtaAction, type CtaAction, type CtaKind } from '@/lib/wedream-cta'
+import {
+  browserStorage,
+  enqueuePendingAction,
+  hasSeenAccountModal,
+  markAccountModalSeen,
+} from '@/lib/wedream-pending-actions'
 import type { CtaConfirmationStatus } from '@/lib/wedream-cta-confirmation'
 import type { PortfolioImagesPage, PublicPortfolioImage } from '@/lib/wedream-gallery'
 
@@ -34,21 +41,11 @@ const CONTACT_CONFIRMATION = 'Votre demande de mise en relation est partie. Le p
 type CtaStatusesByImage = Record<string, Partial<Record<CtaKind, CtaConfirmationStatus>>>
 
 /**
- * Point d'accroche de US6 (WED-160) : le backend a refusé l'écriture faute de
- * session, le geste doit être mis en file d'attente puis le modal de création de
- * compte affiché.
- *
- * Il reste vide ici volontairement. Le format de la file et la règle
- * d'affichage du modal sont ce que US6 doit trancher ; les décider depuis US5
- * reviendrait à écrire la conception d'un autre ticket. Le contrat, lui, est
- * stable : quoi que US6 choisisse, il consomme cette `action` sans que US5 bouge.
+ * Le temps que la confirmation du geste se peigne avant que le modal ne la
+ * recouvre : le couple doit voir son cœur se remplir, sinon le modal a l'air de
+ * répondre à côté. Valeur reprise de la maquette Claude Design.
  */
-function requestAccountCreation(action: CtaAction): void {
-  // TODO(WED-160) : mettre l'action en file d'attente localStorage + ouvrir le
-  // modal. Tant que US6 n'a pas atterri, un couple non connecté clique sans
-  // effet visible — c'est la dette assumée de l'ordre des tickets, pas un oubli.
-  void action
-}
+const ACCOUNT_MODAL_DELAY_MS = 550
 
 export default function PortfolioGrid({
   tagValueId,
@@ -65,8 +62,52 @@ export default function PortfolioGrid({
   const [ctaStatuses, setCtaStatuses] = useState<CtaStatusesByImage>({})
   const { toast, showToast } = useToast()
 
+  const [accountModalOpen, setAccountModalOpen] = useState(false)
+
   const sentinelRef = useRef<HTMLDivElement>(null)
   const inFlightRef = useRef(false)
+  // Le drapeau de session vit en sessionStorage, mais un navigateur peut refuser
+  // tout stockage : cette copie en mémoire garantit qu'au pire le modal ne
+  // s'ouvre qu'une fois par page, jamais à chaque clic.
+  const accountModalShownRef = useRef(false)
+  const accountModalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (accountModalTimerRef.current !== null) clearTimeout(accountModalTimerRef.current)
+  }, [])
+
+  /**
+   * Le backend a refusé l'écriture faute de session (US5) : le geste part en file
+   * d'attente, et le modal de création de compte n'est proposé qu'une fois par
+   * session (WED-160).
+   *
+   * La mise en file d'abord, la décision d'affichage ensuite, et jamais l'inverse :
+   * toute action 401/403 doit être retrouvée à l'inscription, que le couple ait vu
+   * le modal ou qu'il l'ait déjà écarté. `enqueuePendingAction` avale ses propres
+   * échecs de stockage — un localStorage refusé fait perdre la file, pas le clic.
+   *
+   * Le drapeau est posé à l'ouverture et non à la fermeture : deux gestes
+   * enchaînés pendant que le modal s'affiche ne peuvent pas le rouvrir derrière.
+   */
+  const requestAccountCreation = useCallback((action: CtaAction) => {
+    const queueStorage = browserStorage('local')
+    if (queueStorage) enqueuePendingAction(queueStorage, action)
+
+    const sessionFlag = browserStorage('session')
+    if (accountModalShownRef.current || (sessionFlag && hasSeenAccountModal(sessionFlag))) return
+
+    accountModalShownRef.current = true
+    if (sessionFlag) markAccountModalSeen(sessionFlag)
+
+    accountModalTimerRef.current = setTimeout(() => {
+      accountModalTimerRef.current = null
+      // La lightbox laisse la place au modal plutôt que de rester dessous : c'est
+      // ce que fait la maquette, et deux verrous de scroll superposés se
+      // marcheraient dessus à la fermeture.
+      setSelectedImage(null)
+      setAccountModalOpen(true)
+    }, ACCOUNT_MODAL_DELAY_MS)
+  }, [])
 
   const loadMore = useCallback(async () => {
     if (inFlightRef.current || !nextCursor) return
@@ -154,7 +195,7 @@ export default function PortfolioGrid({
       // `ctaStatuses`, sur place et pour toute la session.
       if (kind === 'contact') showToast('success', CONTACT_CONFIRMATION)
     },
-    [pendingCta, showToast]
+    [pendingCta, requestAccountCreation, showToast]
   )
 
   return (
@@ -218,6 +259,8 @@ export default function PortfolioGrid({
           </span>
         )}
       </div>
+
+      {accountModalOpen && <AccountCreationModal onClose={() => setAccountModalOpen(false)} />}
 
       {selectedImage && (
         <Lightbox

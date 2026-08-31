@@ -53,7 +53,10 @@ Fonts :
 
 ## ⚠️ Ne jamais faire
 - Hardcoder des couleurs en dehors du design system
-- Utiliser localStorage (pas supporté dans les artifacts)
+- Utiliser localStorage pour des données sensibles (tokens, session, PII)
+  - Exception documentée (WED-160) : queue de pins / demandes de contact pré-inscription
+    → données non sensibles (IDs de photo + type d'action), TTL 30 jours, purgée à
+    l'inscription (US8) ou à la connexion (US9)
 - Modifier globals.css sans vérifier la compatibilité Tailwind v4
 - Committer .env.local
 
