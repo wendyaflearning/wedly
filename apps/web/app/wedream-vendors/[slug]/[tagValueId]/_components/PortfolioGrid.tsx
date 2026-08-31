@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Heart } from 'lucide-react'
 import { Lightbox } from '@/components/portfolio/Lightbox'
 import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
@@ -148,9 +149,9 @@ export default function PortfolioGrid({
         return
       }
 
-      // TODO(WED-159) : le cœur rempli de la grille appartient encore à US4b.
-      // Le toast ci-dessous reste la confirmation immédiate du contact ; le
-      // bouton, lui, en garde la trace tant que la session dure.
+      // Pas de toast sur l'épingle : la trace visuelle suffit — le cœur de la
+      // grille et le bouton de la lightbox se remplissent tous deux depuis
+      // `ctaStatuses`, sur place et pour toute la session.
       if (kind === 'contact') showToast('success', CONTACT_CONFIRMATION)
     },
     [pendingCta, showToast]
@@ -159,23 +160,55 @@ export default function PortfolioGrid({
   return (
     <div>
       <div className="columns-2 gap-4 md:columns-3 lg:columns-4" aria-label={`${initialTotal} photos ${label}`}>
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setSelectedImage(item)}
-            aria-label={`Ouvrir la photo ${label}`}
-            className="mb-4 block w-full overflow-hidden rounded-[5px] break-inside-avoid"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- ratio inconnu à l'avance : next/image imposerait des dimensions qu'on n'a pas. */}
-            <img
-              src={item.url}
-              alt={`Photo ${label}`}
-              loading="lazy"
-              className="w-full transition-transform duration-[450ms] ease-out hover:scale-[1.03]"
-            />
-          </button>
-        ))}
+        {items.map((item) => {
+          // `auth_required` compte comme épinglé au même titre que `done` : le
+          // geste est enregistré ou mis en file, dans les deux cas le couple l'a
+          // bien posé (cf. `ctaConfirmation`, qui les confirme tous les deux).
+          const isPinned = ctaStatuses[item.id]?.pin !== undefined
+
+          return (
+            /* Le cœur est frère du bouton d'ouverture, jamais son enfant : un
+               bouton dans un bouton est un HTML invalide, et le navigateur
+               remonterait le clic vers la lightbox. */
+            <div key={item.id} className="relative mb-4 break-inside-avoid">
+              <button
+                type="button"
+                onClick={() => setSelectedImage(item)}
+                aria-label={`Ouvrir la photo ${label}`}
+                className="block w-full overflow-hidden rounded-[5px]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- ratio inconnu à l'avance : next/image imposerait des dimensions qu'on n'a pas. */}
+                <img
+                  src={item.url}
+                  alt={`Photo ${label}`}
+                  loading="lazy"
+                  className="w-full transition-transform duration-[450ms] ease-out hover:scale-[1.03]"
+                />
+              </button>
+
+              {/* Toujours visible, à toutes les tailles : sans survol sur mobile,
+                  un cœur en `group-hover` serait tout simplement inatteignable.
+                  La pastille crème n'est pas décorative — un contour bordeaux nu
+                  disparaîtrait sur une photo sombre. */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void runCta('pin', item.id)
+                }}
+                aria-label={isPinned ? 'Photo épinglée' : 'Épingler cette photo'}
+                className="bg-creme/85 text-bordeaux absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-[0_1px_4px_rgba(41,26,16,0.18)] transition-transform hover:scale-105"
+              >
+                <Heart
+                  size={16}
+                  strokeWidth={1.8}
+                  className={isPinned ? 'fill-current' : 'fill-none'}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+          )
+        })}
       </div>
 
       <div ref={sentinelRef} className="flex justify-center py-6" aria-hidden={!isLoading}>
