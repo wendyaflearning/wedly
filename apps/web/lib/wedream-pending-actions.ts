@@ -38,7 +38,7 @@ export type PendingAction = {
   timestamp: number
 }
 
-interface StorageLike {
+export interface StorageLike {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
   removeItem(key: string): void
@@ -197,7 +197,22 @@ export function enqueuePendingAction(
   return queue
 }
 
-function removePendingActions(storage: StorageLike): void {
+/**
+ * Volontairement muette envers les abonnés, contrairement à
+ * `enqueuePendingAction` qui les prévient après chaque écriture.
+ *
+ * Le réflexe symétrique serait de notifier ici aussi, pour que le badge des
+ * gestes en attente (WED-161) se rafraîchisse après une purge. Il ne faut pas :
+ * `loadPendingActions` appelle cette fonction quand le contenu stocké est
+ * illisible, et elle est elle-même appelée depuis le `getSnapshot` du provider,
+ * donc **pendant le rendu**. Y déclencher une notification reviendrait à
+ * provoquer un re-render depuis un rendu.
+ *
+ * Aucun écran n'en souffre : les deux purges du flush (WED-162) sont suivies
+ * soit d'un changement d'écran dans le parcours, soit d'une navigation pleine
+ * page, et aucune des deux ne laisse un badge à l'écran.
+ */
+export function removePendingActions(storage: StorageLike): void {
   try {
     storage.removeItem(WEDREAM_PENDING_ACTIONS_KEY)
   } catch (error) {
