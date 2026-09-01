@@ -89,7 +89,13 @@ describe('couple onboarding navigation', () => {
     expect(previousScreen(7, data)).toBe(6)
   })
 
-  it('counts the seven steps the couple fills in, the welcome screen aside', () => {
+  it('never walks back out of the already-registered screen either', () => {
+    // Sans garde, l'arithmétique de previousScreen renverrait 9 sur 8 : l'écran
+    // « votre compte est prêt », pour un compte qui n'a jamais été créé (WED-162).
+    expect(previousScreen(9, data)).toBe(9)
+  })
+
+  it('counts the seven steps the couple fills in, both exit screens aside', () => {
     expect(COUPLE_ONBOARDING_STEPS).toBe(7)
   })
 })
