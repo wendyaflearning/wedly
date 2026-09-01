@@ -61,6 +61,7 @@ final class CoupleProviderLeadResponseDtoAssemblerTest extends TestCase
         self::assertSame('EN_ATTENTE', $dto->status);
         self::assertSame('Photographe', $dto->category);
         self::assertSame(['Occitanie'], $dto->zones);
+        self::assertSame('0198f0a1-0000-7000-8000-0000000000c0', $dto->portfolioImageId);
         self::assertSame('https://cdn.wedly.test/coup-de-coeur.jpg', $dto->photoUrl);
     }
 
@@ -87,9 +88,10 @@ final class CoupleProviderLeadResponseDtoAssemblerTest extends TestCase
         self::assertSame('contact@studio-lumiere.test', $dto->vendor['contact']['email']);
         self::assertSame('0600000000', $dto->vendor['contact']['phone']);
         self::assertSame('12 rue des Lilas', $dto->vendor['contact']['address']);
+        self::assertSame('0198f0a1-0000-7000-8000-0000000000c0', $dto->portfolioImageId);
     }
 
-    public function testALeadWithoutACrushPhotoHasNoPhotoUrl(): void
+    public function testALeadWithoutACrushPhotoHasNeitherPhotoIdNorUrl(): void
     {
         $lead = $this->persisted(new ProviderLead(new Couple(), $this->vendor(), 250_000));
         $lead->setStatus(ProviderLeadStatus::Pending);
@@ -97,6 +99,7 @@ final class CoupleProviderLeadResponseDtoAssemblerTest extends TestCase
         $dto = $this->assembler->assemble($lead);
 
         self::assertInstanceOf(MaskedProviderLeadResponseDto::class, $dto);
+        self::assertNull($dto->portfolioImageId);
         self::assertNull($dto->photoUrl);
     }
 
@@ -145,6 +148,10 @@ final class CoupleProviderLeadResponseDtoAssemblerTest extends TestCase
         return $vendor;
     }
 
+    /**
+     * L'identifiant est posé par Doctrine au flush, comme celui du lead : on le
+     * renseigne ici pour que l'assembler ait la photo qu'il aurait en base.
+     */
     private function crushPhoto(Vendor $vendor): PortfolioImage
     {
         $service = (new Service())
@@ -156,10 +163,16 @@ final class CoupleProviderLeadResponseDtoAssemblerTest extends TestCase
         $tagType = (new TagType())->setService($service)->setLabel('Type')->setIsPrimary(true);
         $tag     = (new TagValue())->setTagType($tagType)->setLabel('Reportage');
 
-        return (new PortfolioImage())
+        $photo = (new PortfolioImage())
             ->setVendor($vendor)
             ->setUrl('https://cdn.wedly.test/coup-de-coeur.jpg')
             ->setSortOrder(0)
             ->addTag($tag);
+
+        (new \ReflectionClass($photo))
+            ->getProperty('id')
+            ->setValue($photo, UuidV7::fromString('0198f0a1-0000-7000-8000-0000000000c0'));
+
+        return $photo;
     }
 }

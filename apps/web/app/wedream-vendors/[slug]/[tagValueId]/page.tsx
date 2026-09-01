@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { fetchInitialCtaStatuses } from '@/lib/couple-cta-status'
 import { fetchTagValuePortfolioImages } from '@/lib/wedream-gallery'
 import { getService } from '../_lib/service'
 import PortfolioGrid from './_components/PortfolioGrid'
@@ -40,7 +41,13 @@ export default async function TagValueGalleryPage({ params }: GalleryPageProps) 
   if (!resolved) notFound()
 
   const { service, tagValue } = resolved
-  const page = await fetchTagValuePortfolioImages(tagValueId, { limit: FIRST_PAGE_SIZE })
+
+  // Les photos ne dépendent pas des gestes déjà posés : les enchaîner ferait
+  // payer deux allers-retours au premier rendu pour rien.
+  const [page, initialCtaStatuses] = await Promise.all([
+    fetchTagValuePortfolioImages(tagValueId, { limit: FIRST_PAGE_SIZE }),
+    fetchInitialCtaStatuses(),
+  ])
 
   return (
     <div className="bg-creme min-h-screen" style={{ fontFamily: 'var(--font-manrope-var)' }}>
@@ -94,6 +101,7 @@ export default async function TagValueGalleryPage({ params }: GalleryPageProps) 
             initialItems={page.items}
             initialNextCursor={page.nextCursor}
             initialTotal={page.total}
+            initialCtaStatuses={initialCtaStatuses}
           />
         ) : (
           <div className="flex flex-1 items-center justify-center py-16">

@@ -64,7 +64,8 @@ final class GetCoupleProviderLeadsActionTest extends WebTestCase
     {
         $couple = $this->couple('camille@example.test');
         $vendor = $this->vendor('studio@example.test', 'Studio Lumière');
-        $this->lead($couple, $vendor, ProviderLeadStatus::Pending, $this->photo($vendor));
+        $photo  = $this->photo($vendor);
+        $this->lead($couple, $vendor, ProviderLeadStatus::Pending, $photo);
         $this->em->flush();
 
         $body = $this->get($couple->getUser());
@@ -77,7 +78,33 @@ final class GetCoupleProviderLeadsActionTest extends WebTestCase
         self::assertArrayNotHasKey('vendor', $item);
         self::assertStringNotContainsString('Studio Lumière', json_encode($body, JSON_THROW_ON_ERROR));
         self::assertStringNotContainsString('studio@example.test', json_encode($body, JSON_THROW_ON_ERROR));
+        self::assertSame($photo->getId()->toRfc4122(), $item['portfolioImageId']);
         self::assertSame('https://cdn.wedly.test/coup-de-coeur.jpg', $item['photoUrl']);
+    }
+
+    /**
+     * La galerie Wedream rattache une vignette à sa demande par cet identifiant
+     * (WED-182). Il sort quel que soit le statut : une photo appartient au
+     * couple qui l'a envoyée, pas au prestataire qui n'a pas encore répondu.
+     */
+    public function test_a_lead_carries_the_id_of_the_photo_it_started_from(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $vendor = $this->vendor('studio@example.test', 'Studio Lumière');
+        $photo  = $this->photo($vendor);
+        $this->lead($couple, $vendor, ProviderLeadStatus::Accepted, $photo);
+        $this->lead($couple, $this->vendor('autre@example.test', 'Autre Studio'), ProviderLeadStatus::Pending);
+        $this->em->flush();
+
+        $body = $this->get($couple->getUser());
+
+        self::assertResponseIsSuccessful();
+
+        $ids = array_column($body['items'], 'portfolioImageId');
+        self::assertContains($photo->getId()->toRfc4122(), $ids);
+        // Une demande envoyée hors galerie n'a aucune photo : la clé existe quand
+        // même, à null, pour que le front n'ait pas à distinguer les deux cas.
+        self::assertContains(null, $ids);
     }
 
     public function test_an_accepted_lead_exposes_the_profile_and_the_contact_details(): void

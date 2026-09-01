@@ -18,6 +18,12 @@ use App\Service\ProviderLead\ProviderLeadCategoryResolver;
  * Point unique où se décide ce qu'un couple voit d'une demande de contact
  * (PROVIDER-LEAD-005). Le masquage est fait ici, jamais côté front : le DTO
  * masqué n'a pas de champ où l'identité du prestataire pourrait passer.
+ *
+ * La photo d'où part la demande sort sous ses deux formes : son identifiant,
+ * que la galerie utilise pour retrouver ses vignettes déjà contactées
+ * (WED-182), et son URL, que « Mes demandes » affiche telle quelle. Aucune des
+ * deux ne dépend du statut — une photo appartient au couple qui l'a envoyée,
+ * pas au prestataire qui n'a pas encore répondu.
  */
 final readonly class CoupleProviderLeadResponseDtoAssembler
 {
@@ -41,30 +47,35 @@ final readonly class CoupleProviderLeadResponseDtoAssembler
         $vendor   = $lead->getVendor();
         $category = $this->categoryResolver->resolve($lead);
 
-        $id          = $lead->getId()->toRfc4122();
-        $requestedAt = $lead->getCreatedAt();
-        $zones       = $this->zonesOf($vendor);
-        $photoUrl    = $lead->getPortfolioImage()?->getUrl();
+        $photo = $lead->getPortfolioImage();
+
+        $id               = $lead->getId()->toRfc4122();
+        $requestedAt      = $lead->getCreatedAt();
+        $zones            = $this->zonesOf($vendor);
+        $portfolioImageId = $photo?->getId()->toRfc4122();
+        $photoUrl         = $photo?->getUrl();
 
         if (!$status->revealsVendorIdentity()) {
             return new MaskedProviderLeadResponseDto(
-                id:          $id,
-                status:      $status,
-                requestedAt: $requestedAt,
-                category:    $category?->getName(),
-                zones:       $zones,
-                photoUrl:    $photoUrl,
+                id:               $id,
+                status:           $status,
+                requestedAt:      $requestedAt,
+                category:         $category?->getName(),
+                zones:            $zones,
+                portfolioImageId: $portfolioImageId,
+                photoUrl:         $photoUrl,
             );
         }
 
         return new UnlockedProviderLeadResponseDto(
-            id:          $id,
-            status:      $status,
-            requestedAt: $requestedAt,
-            category:    $category?->getName(),
-            zones:       $zones,
-            photoUrl:    $photoUrl,
-            vendor:      $this->vendorProfile($vendor),
+            id:               $id,
+            status:           $status,
+            requestedAt:      $requestedAt,
+            category:         $category?->getName(),
+            zones:            $zones,
+            portfolioImageId: $portfolioImageId,
+            photoUrl:         $photoUrl,
+            vendor:           $this->vendorProfile($vendor),
         );
     }
 

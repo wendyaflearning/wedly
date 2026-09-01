@@ -6,6 +6,7 @@ import { Lightbox } from '@/components/portfolio/Lightbox'
 import { Toast } from '@/components/ui/Toast'
 import { AccountCreationModal } from '@/components/wedream/AccountCreationModal'
 import { useToast } from '@/hooks/useToast'
+import type { CtaStatusesByImage } from '@/lib/couple-cta-status'
 import { submitCtaAction, type CtaAction, type CtaKind } from '@/lib/wedream-cta'
 import {
   browserStorage,
@@ -13,7 +14,6 @@ import {
   hasSeenAccountModal,
   markAccountModalSeen,
 } from '@/lib/wedream-pending-actions'
-import type { CtaConfirmationStatus } from '@/lib/wedream-cta-confirmation'
 import type { PortfolioImagesPage, PublicPortfolioImage } from '@/lib/wedream-gallery'
 
 type PortfolioGridProps = {
@@ -22,23 +22,14 @@ type PortfolioGridProps = {
   initialItems: PublicPortfolioImage[]
   initialNextCursor: string | null
   initialTotal: number
+  /** Les gestes déjà posés, lus au rendu serveur (WED-182). */
+  initialCtaStatuses: CtaStatusesByImage
 }
 
 /** On déclenche le chargement avant que la sentinelle soit visible : le scroll reste continu. */
 const PRELOAD_MARGIN = '400px'
 
 const CONTACT_CONFIRMATION = 'Votre demande de mise en relation est partie. Le prestataire vous recontacte bientôt.'
-
-/**
- * Les gestes confirmés, photo par photo. La clé est l'id de la photo et non un
- * état global : le couple qui a épinglé une image ne doit pas retrouver la
- * suivante déjà marquée.
- *
- * Le state vit ici plutôt que dans la lightbox, qui se démonte à chaque
- * fermeture — rouvrir la même photo dans la session retrouve donc sa
- * confirmation, sans aucun appel réseau au montage.
- */
-type CtaStatusesByImage = Record<string, Partial<Record<CtaKind, CtaConfirmationStatus>>>
 
 /**
  * Le temps que la confirmation du geste se peigne avant que le modal ne la
@@ -53,13 +44,21 @@ export default function PortfolioGrid({
   initialItems,
   initialNextCursor,
   initialTotal,
+  initialCtaStatuses,
 }: PortfolioGridProps) {
   const [items, setItems] = useState(initialItems)
   const [nextCursor, setNextCursor] = useState(initialNextCursor)
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<PublicPortfolioImage | null>(null)
   const [pendingCta, setPendingCta] = useState<CtaKind | null>(null)
-  const [ctaStatuses, setCtaStatuses] = useState<CtaStatusesByImage>({})
+  /**
+   * Le state vit ici plutôt que dans la lightbox, qui se démonte à chaque
+   * fermeture — rouvrir la même photo retrouve donc sa confirmation, sans aucun
+   * appel réseau au montage. Il démarre sur ce que le serveur a lu, et non à
+   * vide : un cœur qui se remplirait après le premier rendu serait un
+   * clignotement, et le refresh perdrait les gestes des sessions précédentes.
+   */
+  const [ctaStatuses, setCtaStatuses] = useState<CtaStatusesByImage>(initialCtaStatuses)
   const { toast, showToast } = useToast()
 
   const [accountModalOpen, setAccountModalOpen] = useState(false)
