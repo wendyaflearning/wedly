@@ -3,8 +3,17 @@
 import { useState } from 'react';
 import { isCoupleSpaceRedirect } from '@/lib/auth-redirect';
 import { loginVendor } from '@/lib/auth';
+import { COUPLE_SPACE_DEFAULT_TAB } from '@/lib/couple-space';
+import { browserStorage } from '@/lib/wedream-pending-actions';
+import { flushPendingActions } from '@/lib/wedream-pending-flush';
 
-export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
+export default function LoginForm({
+  redirectTo,
+  shouldFlushPendingActions = false,
+}: {
+  redirectTo?: string;
+  shouldFlushPendingActions?: boolean;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +29,21 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
     setError('');
     const result = await loginVendor(email, password, redirectTo);
     if (result.success) {
+      // `result.redirectTo` sort de `safeRedirectForRole()`, donc du rôle résolu
+      // côté serveur et non de l'URL : un prestataire ou un admin qui arriverait
+      // ici avec le drapeau dans l'adresse est ramené sur son propre espace, et
+      // ce test rend `false`. Le garde-fou de rôle est déjà là, gratuitement.
+      if (shouldFlushPendingActions && isCoupleSpaceRedirect(result.redirectTo)) {
+        const { done } = await flushPendingActions(browserStorage('local'));
+
+        if (done > 0) {
+          window.location.href = `${COUPLE_SPACE_DEFAULT_TAB.href}?coups-de-coeur=${done}`;
+          return;
+        }
+        // Rien n'a abouti : on ne promet pas au couple des coups de cœur qu'il
+        // ne retrouverait pas. Connexion normale, sans confirmation.
+      }
+
       window.location.href = result.redirectTo;
     } else {
       setError(result.error);

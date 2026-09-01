@@ -35,6 +35,8 @@ import {
   saveCoupleOnboarding,
   withSliderDefaults,
 } from '@/lib/couple-onboarding-store'
+import { browserStorage } from '@/lib/wedream-pending-actions'
+import { flushPendingActions } from '@/lib/wedream-pending-flush'
 import {
   buildRegistrationPayload,
   credentialsError,
@@ -470,9 +472,9 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
 
     const result = await registerCouple(buildRegistrationPayload(withSliderDefaults(data), credentials))
 
-    setSubmitting(false)
-
     if (!result.success) {
+      setSubmitting(false)
+
       // Le seul échec qui n'appelle pas une correction sur place : ce couple a
       // déjà un compte, la suite est de s'y connecter (WED-162). Volontairement
       // imbriqué dans la branche d'échec — le `sessionStorage` n'est purgé que
@@ -488,6 +490,19 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
     }
 
     sessionStorage.removeItem(COUPLE_ONBOARDING_STORAGE_KEY)
+
+    // Les gestes posés avant l'inscription rejoignent le compte qui vient de
+    // naître (WED-162 / US8). Le payload d'inscription ne portait qu'une seule
+    // demande de contact : sans ce rejeu, un couple qui a épinglé cinq photos en
+    // perdait quatre sans un mot.
+    //
+    // Attendu, et `submitting` maintenu jusque-là : l'écran 8 propose « se
+    // connecter », et une navigation partie avant la fin annulerait les requêtes
+    // en vol — soit exactement la perte que cette PR répare. C'est aussi ce qui
+    // empêche un second clic sur « créer mon compte » pendant le rejeu.
+    await flushPendingActions(browserStorage('local'))
+
+    setSubmitting(false)
     onStageComplete(data)
     setScreen(8)
   }
