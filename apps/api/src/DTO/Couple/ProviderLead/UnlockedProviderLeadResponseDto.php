@@ -21,6 +21,8 @@ final readonly class UnlockedProviderLeadResponseDto
     public ?string $category;
     /** @var string[] */
     public array $zones;
+    /** Voir MaskedProviderLeadResponseDto : identifiant de la photo, pas du prestataire (WED-182). */
+    public ?string $portfolioImageId;
     public ?string $photoUrl;
     /** @var array<string, mixed> */
     public array $vendor;
@@ -35,15 +37,17 @@ final readonly class UnlockedProviderLeadResponseDto
         \DateTimeImmutable $requestedAt,
         ?string $category,
         array $zones,
+        ?string $portfolioImageId,
         ?string $photoUrl,
         array $vendor,
     ) {
-        $this->id          = $id;
-        $this->status      = $status->value;
-        $this->requestedAt = $requestedAt->format(\DateTimeInterface::ATOM);
-        $this->category    = $category;
-        $this->zones       = $zones;
-        $this->photoUrl    = $photoUrl;
-        $this->vendor      = $vendor;
+        $this->id               = $id;
+        $this->status           = $status->value;
+        $this->requestedAt      = $requestedAt->format(\DateTimeInterface::ATOM);
+        $this->category         = $category;
+        $this->zones            = $zones;
+        $this->portfolioImageId = $portfolioImageId;
+        $this->photoUrl         = $photoUrl;
+        $this->vendor           = $vendor;
     }
 }
