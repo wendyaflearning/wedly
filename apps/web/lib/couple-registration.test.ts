@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import { buildRegistrationPayload, credentialsError, MIN_PASSWORD_LENGTH } from './couple-registration'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  buildRegistrationPayload,
+  credentialsError,
+  EMAIL_ALREADY_USED,
+  MIN_PASSWORD_LENGTH,
+  registerCouple,
+} from './couple-registration'
 import { DEFAULT_BUDGET_CENTS, DEFAULT_GUEST_COUNT, GUEST_COUNT_MAX, MAX_BUDGET_CENTS } from './couple-onboarding-store'
 
 const credentials = {
@@ -142,5 +148,45 @@ describe('registration payload', () => {
 
     expect(payload.firstName).toBe('Camille')
     expect(payload.location).toBe('Lyon')
+  })
+})
+
+describe('remontée du refus d’inscription', () => {
+  function mockFetch(status: number, body: unknown) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: status < 400,
+      status,
+      json: async () => body,
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('remonte le code machine d’un email déjà utilisé', async () => {
+    mockFetch(409, { error: 'Cet email est déjà utilisé.', code: EMAIL_ALREADY_USED })
+
+    const result = await registerCouple(buildRegistrationPayload(onboarding, credentials))
+
+    // C'est sur ce code, et pas sur le message, que le parcours bascule vers
+    // l'écran « vous avez déjà un compte » (WED-162).
+    expect(result).toEqual({
+      success: false,
+      error: 'Cet email est déjà utilisé.',
+      code: EMAIL_ALREADY_USED,
+    })
+  })
+
+  it('laisse le code absent sur les refus que l’API ne nomme pas', async () => {
+    mockFetch(422, { error: 'Données invalides.' })
+
+    const result = await registerCouple(buildRegistrationPayload(onboarding, credentials))
+
+    expect(result.success).toBe(false)
+    expect(result).toMatchObject({ error: 'Données invalides.' })
+    expect((result as { code?: string }).code).toBeUndefined()
   })
 })

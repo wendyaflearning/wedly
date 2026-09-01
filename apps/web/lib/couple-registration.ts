@@ -99,9 +99,16 @@ export function buildRegistrationPayload(
   }
 }
 
+/**
+ * Le code machine que l'API pose sur un email déjà porté par un compte
+ * (WED-162). Le parcours teste cette constante, jamais le message : celui-ci est
+ * de la copie et changera.
+ */
+export const EMAIL_ALREADY_USED = 'EMAIL_ALREADY_USED'
+
 export type CoupleRegistrationResult =
   | { success: true; firstName: string }
-  | { success: false; error: string }
+  | { success: false; error: string; code?: string }
 
 /**
  * Goes through the Next.js route handler rather than the API directly: the JWT
@@ -120,7 +127,13 @@ export async function registerCouple(
     const body = await response.json().catch(() => null)
 
     if (!response.ok) {
-      return { success: false, error: body?.error ?? 'Une erreur est survenue. Réessayez.' }
+      // `code` n'accompagne que les refus que l'API sait nommer : il reste
+      // `undefined` sur tous les autres, et l'appelant retombe sur le message.
+      return {
+        success: false,
+        error: body?.error ?? 'Une erreur est survenue. Réessayez.',
+        code: body?.code,
+      }
     }
 
     return { success: true, firstName: body?.firstName ?? payload.firstName }
