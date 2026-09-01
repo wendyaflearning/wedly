@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPendingActions } from './wedream-pending-flush'
-import {
-  WEDREAM_PENDING_ACTIONS_KEY,
-  type PendingAction,
-  type StorageLike,
-} from './wedream-pending-actions'
+import { type PendingAction, type StorageLike } from './wedream-pending-actions'
 
 const PHOTO_A = '0198a1c0-0000-7000-8000-00000000000a'
 const PHOTO_B = '0198a1c0-0000-7000-8000-00000000000b'
