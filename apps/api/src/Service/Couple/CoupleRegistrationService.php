@@ -17,6 +17,7 @@ use App\Entity\Wedding\WeddingConsent;
 use App\Enum\Couple\ConsentType;
 use App\Enum\User\Role;
 use App\Enum\User\UserStatus;
+use App\Exception\EmailAlreadyUsedException;
 use App\Repository\User\UserRepository;
 use App\Service\Vendor\VendorResolver;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -44,7 +45,7 @@ final readonly class CoupleRegistrationService
     public function register(RegisterCoupleRequestDto $dto): User
     {
         if ($this->userRepository->isEmailTaken($dto->email)) {
-            throw new \DomainException('Cet email est déjà utilisé.', 409);
+            throw new EmailAlreadyUsedException();
         }
 
         // Un refus vide les listes avant toute écriture. Le frontend est censé
@@ -118,12 +119,13 @@ final readonly class CoupleRegistrationService
             // le même email : elles peuvent le franchir toutes les deux avant
             // qu'aucune n'ait committé. La contrainte unique de `app_user.email`
             // est le seul filet qui reste, et c'est aussi la seule contrainte
-            // d'unicité métier de cette transaction — la ramener au même 409 que
-            // le chemin nominal évite un 500 que l'ExceptionListener ne saurait
-            // pas mapper. Même patron que PatchVendorSettingsAction.
+            // d'unicité métier de cette transaction — la ramener à la même
+            // exception que le chemin nominal évite un 500 que l'ExceptionListener
+            // ne saurait pas mapper, et fait sortir les deux chemins avec le même
+            // `code` machine (WED-162). Même patron que PatchVendorSettingsAction.
             $this->em->rollback();
 
-            throw new \DomainException('Cet email est déjà utilisé.', 409);
+            throw new EmailAlreadyUsedException();
         } catch (\Throwable $throwable) {
             $this->em->rollback();
 

@@ -20,6 +20,7 @@ use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorType;
 use App\Enum\Vendor\VendorStatus;
 use App\Enum\Vendor\VenueType;
+use App\Exception\EmailAlreadyUsedException;
 use App\Repository\User\InviteTokenRepository;
 use App\Repository\User\UserRepository;
 use App\Repository\Vendor\VendorAutoTaggedServiceRepository;
@@ -345,7 +346,7 @@ final readonly class AdminVendorDraftService
         }
 
         if ($this->userRepository->findOneBy(['email' => $email]) !== null) {
-            throw new \DomainException('Cet email est déjà utilisé.', 409);
+            throw new EmailAlreadyUsedException();
         }
     }
 
