@@ -8,6 +8,7 @@ use App\Entity\Couple\Couple;
 use App\Entity\User\User;
 use App\Entity\Wedding\Wedding;
 use App\Entity\Wedding\WeddingConsent;
+use App\Exception\EmailAlreadyUsedException;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -96,6 +97,14 @@ final class RegisterActionTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(409);
         self::assertSame($before, $this->countUsers(), 'Aucun compte ne doit avoir été créé.');
+        // Le frontend bascule sur l'écran « vous avez déjà un compte » à partir de
+        // ce code, jamais du message : celui-ci est de la copie, il changera
+        // (WED-162).
+        self::assertSame(
+            EmailAlreadyUsedException::CODE,
+            $this->responseBody()['code'] ?? null,
+            'La réponse doit porter un code machine identifiable.',
+        );
     }
 
     public function test_a_password_shorter_than_eight_characters_is_refused(): void
@@ -163,6 +172,16 @@ final class RegisterActionTest extends WebTestCase
             'confessionSlugs'      => [],
             'cultureSlugs'         => [],
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function responseBody(): array
+    {
+        return json_decode(
+            $this->client->getResponse()->getContent(),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
     }
 
     private function countUsers(): int
