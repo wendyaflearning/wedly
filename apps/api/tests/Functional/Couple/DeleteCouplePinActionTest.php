@@ -104,6 +104,60 @@ final class DeleteCouplePinActionTest extends WebTestCase
         self::assertSame(0, $this->countPins($couple));
     }
 
+    /**
+     * Le prestataire s'est retiré de Wedream après l'épinglage. Le pin sort déjà
+     * des lectures (COUPLE-PIN-003), mais la ligne existe toujours : le couple
+     * doit pouvoir la retirer, sinon son cœur reste bloqué en position remplie
+     * pour une raison qui ne le concerne pas.
+     */
+    public function test_unpinning_works_even_if_the_vendor_left_wedream(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $vendor = $this->vendor();
+        $photo  = $this->photo($vendor);
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $photo->getId()->toRfc4122());
+        self::assertResponseStatusCodeSame(201);
+
+        $vendor->setWedreamEnabled(false);
+        $this->em->flush();
+
+        $this->delete($couple->getUser(), $photo->getId()->toRfc4122());
+
+        self::assertResponseStatusCodeSame(204);
+        self::assertFalse($this->onlyPin($couple)->isActive());
+    }
+
+    /**
+     * Même scénario par l'autre axe — la photo elle-même sort de Wedream — et
+     * c'est ici que se lit la seule différence de comportement entre les deux
+     * services : dans cet état exact épingler est refusé en 422, parce que
+     * CreateCouplePinService passe par VendorResolver, alors que dé-épingler
+     * passe quand même. C'est délibéré : retirer un coup de cœur ne dépend pas
+     * de ce que le prestataire fait de sa galerie.
+     */
+    public function test_unpinning_works_even_if_the_photo_left_wedream(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $photo  = $this->photo($this->vendor());
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $photo->getId()->toRfc4122());
+        self::assertResponseStatusCodeSame(201);
+
+        $photo->setVisibleInWedream(false);
+        $this->em->flush();
+
+        $this->delete($couple->getUser(), $photo->getId()->toRfc4122());
+
+        self::assertResponseStatusCodeSame(204);
+        self::assertFalse($this->onlyPin($couple)->isActive());
+
+        $this->post($couple->getUser(), $photo->getId()->toRfc4122());
+        self::assertResponseStatusCodeSame(422);
+    }
+
     public function test_pinning_again_revives_the_same_row(): void
     {
         $couple = $this->couple('camille@example.test');
