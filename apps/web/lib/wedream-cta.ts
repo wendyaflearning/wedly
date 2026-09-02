@@ -50,6 +50,37 @@ export async function submitCtaAction(action: CtaAction): Promise<CtaOutcome> {
     body: JSON.stringify({ portfolioImageId: action.portfolioImageId }),
   }).catch(() => null)
 
+  return toOutcome(response)
+}
+
+/**
+ * Retire un épinglé déjà enregistré côté backend (WED-183).
+ *
+ * L'identifiant de la photo est dans le chemin et non dans un corps : le DELETE
+ * n'en a pas, et le couple reste celui du cookie, jamais un paramètre.
+ *
+ * Le 204 du backend passe par `response.ok` comme n'importe quel succès — même
+ * lecture de la réponse que l'épinglage, jusqu'au 401/403 qui renvoie le couple
+ * vers une connexion plutôt que vers un message d'erreur. Un dé-épinglage
+ * idempotent (photo jamais épinglée, ou déjà retirée) répond 204 lui aussi :
+ * l'écran n'a aucun cas particulier à traiter.
+ */
+export async function submitUnpinAction(portfolioImageId: string): Promise<CtaOutcome> {
+  const response = await fetch(
+    `${ENDPOINTS.pin}/${encodeURIComponent(portfolioImageId)}`,
+    { method: 'DELETE' },
+  ).catch(() => null)
+
+  return toOutcome(response)
+}
+
+/**
+ * La lecture de la réponse est identique pour les deux sens du geste : c'est le
+ * même contrat de statuts côté Route Handler, et les faire diverger ferait
+ * qu'un 403 signifierait « connecte-toi » en épinglant et « erreur » en
+ * dé-épinglant.
+ */
+async function toOutcome(response: Response | null): Promise<CtaOutcome> {
   if (!response) return { status: 'error', message: FALLBACK_ERROR }
   if (response.ok) return { status: 'done' }
   if (response.status === 401 || response.status === 403) return { status: 'auth_required' }

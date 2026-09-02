@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ACCOUNT_MODAL_SEEN_KEY,
+  dequeuePendingAction,
   enqueuePendingAction,
   hasSeenAccountModal,
   loadPendingActions,
@@ -149,6 +150,50 @@ describe('file des gestes en attente', () => {
   })
 })
 
+describe('retrait d’un geste de la file', () => {
+  it('retire le geste visé et laisse les autres en place', () => {
+    const storage = createStorage()
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_B }, 1_000)
+
+    const queue = dequeuePendingAction(storage, 'pin', PHOTO_A, 2_000)
+
+    expect(queue).toEqual([{ kind: 'pin', portfolioImageId: PHOTO_B, timestamp: 1_000 }])
+    expect(loadPendingActions(storage, 2_000)).toEqual(queue)
+  })
+
+  it('ne retire que le geste demandé : dé-épingler ne décommande pas un contact', () => {
+    const storage = createStorage()
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+    enqueuePendingAction(storage, { kind: 'contact', portfolioImageId: PHOTO_A }, 1_000)
+
+    const queue = dequeuePendingAction(storage, 'pin', PHOTO_A, 2_000)
+
+    expect(queue).toEqual([{ kind: 'contact', portfolioImageId: PHOTO_A, timestamp: 1_000 }])
+  })
+
+  it('est sans effet sur un geste absent de la file', () => {
+    const storage = createStorage()
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+
+    const queue = dequeuePendingAction(storage, 'pin', PHOTO_B, 2_000)
+
+    expect(queue).toEqual([{ kind: 'pin', portfolioImageId: PHOTO_A, timestamp: 1_000 }])
+  })
+
+  it('vide bien la file quand elle ne contenait que ce geste', () => {
+    const storage = createStorage()
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+
+    expect(dequeuePendingAction(storage, 'pin', PHOTO_A, 2_000)).toEqual([])
+    expect(loadPendingActions(storage, 2_000)).toEqual([])
+  })
+
+  it('ne lève jamais quand le stockage est refusé', () => {
+    expect(() => dequeuePendingAction(createBrokenStorage(), 'pin', PHOTO_A, 1_000)).not.toThrow()
+  })
+})
+
 describe('drapeau du modal de création de compte', () => {
   it('n’est pas posé tant que le modal n’a pas été ouvert', () => {
     expect(hasSeenAccountModal(createStorage())).toBe(false)
@@ -226,6 +271,29 @@ describe('abonnement aux écritures de la file', () => {
     const unsubscribe = subscribeToPendingActions(listener)
 
     enqueuePendingAction(createBrokenStorage(), { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+
+    expect(listener).not.toHaveBeenCalled()
+    unsubscribe()
+  })
+
+  it('prévient l’abonné quand un geste sort de la file', () => {
+    const storage = createStorage()
+    enqueuePendingAction(storage, { kind: 'pin', portfolioImageId: PHOTO_A }, 1_000)
+    const listener = vi.fn()
+    const unsubscribe = subscribeToPendingActions(listener)
+
+    dequeuePendingAction(storage, 'pin', PHOTO_A, 2_000)
+
+    expect(listener).toHaveBeenCalledTimes(1)
+    unsubscribe()
+  })
+
+  it('ne prévient personne quand il n’y avait rien à retirer', () => {
+    const storage = createStorage()
+    const listener = vi.fn()
+    const unsubscribe = subscribeToPendingActions(listener)
+
+    dequeuePendingAction(storage, 'pin', PHOTO_A, 1_000)
 
     expect(listener).not.toHaveBeenCalled()
     unsubscribe()

@@ -7,9 +7,15 @@ import { Toast } from '@/components/ui/Toast'
 import { AccountCreationModal } from '@/components/wedream/AccountCreationModal'
 import { useToast } from '@/hooks/useToast'
 import type { CtaStatusesByImage } from '@/lib/couple-cta-status'
-import { submitCtaAction, type CtaAction, type CtaKind } from '@/lib/wedream-cta'
+import {
+  submitCtaAction,
+  submitUnpinAction,
+  type CtaAction,
+  type CtaKind,
+} from '@/lib/wedream-cta'
 import {
   browserStorage,
+  dequeuePendingAction,
   enqueuePendingAction,
   hasSeenAccountModal,
   markAccountModalSeen,
@@ -30,6 +36,16 @@ type PortfolioGridProps = {
 const PRELOAD_MARGIN = '400px'
 
 const CONTACT_CONFIRMATION = 'Votre demande de mise en relation est partie. Le prestataire vous recontacte bientôt.'
+
+/**
+ * Le seul cas où un dé-épinglage échoue sans être une panne : la session a
+ * expiré depuis le chargement de la page. Le cœur reste rempli — il l'est
+ * toujours côté serveur — et le couple sait quoi faire.
+ *
+ * TODO(WED-183, à valider par UX-Wedly) : libellé écrit ici faute d'être couvert
+ * par le prompt reçu. À reprendre si UX tranche autrement.
+ */
+const UNPIN_SESSION_LOST = 'Votre session a expiré. Reconnectez-vous pour retirer ce coup de cœur.'
 
 /**
  * Le temps que la confirmation du geste se peigne avant que le modal ne la
@@ -156,6 +172,69 @@ export default function PortfolioGrid({
   }, [loadMore, nextCursor])
 
   /**
+   * Le cœur redevient vide en **retirant** la clé `pin`, jamais en la passant à
+   * `'idle'` : `isPinned` teste `!== undefined`, donc une clé présente à `'idle'`
+   * laisserait le cœur rempli. L'entrée de la photo survit avec son éventuel
+   * `contact` — dé-épingler ne retire pas une demande de mise en relation.
+   */
+  const clearPinStatus = useCallback((portfolioImageId: string) => {
+    setCtaStatuses((current) => {
+      const entry = current[portfolioImageId]
+      if (entry?.pin === undefined) return current
+
+      const next = { ...entry }
+      delete next.pin
+
+      return { ...current, [portfolioImageId]: next }
+    })
+  }, [])
+
+  /**
+   * Le retour en arrière sur un épinglé (WED-183), par l'un ou l'autre chemin
+   * selon d'où vient l'état.
+   *
+   * `auth_required` veut dire que le geste n'est jamais parti au backend : il
+   * dort dans la file en attendant l'inscription (WED-160). Le retirer de la
+   * file est donc la seule écriture qui existe, et surtout il ne faut pas
+   * l'appeler en réseau — un DELETE sans session répondrait 401 et laisserait
+   * l'entrée en file, rejouée à l'inscription alors que le couple s'est
+   * rétracté.
+   *
+   * `done` est l'autre chemin : la ligne existe côté backend, seul un DELETE la
+   * désactive.
+   */
+  const runUnpin = useCallback(
+    async (portfolioImageId: string, isQueuedOnly: boolean) => {
+      if (isQueuedOnly) {
+        const queueStorage = browserStorage('local')
+        if (queueStorage) dequeuePendingAction(queueStorage, 'pin', portfolioImageId)
+        clearPinStatus(portfolioImageId)
+        return
+      }
+
+      setPendingCta('pin')
+      const outcome = await submitUnpinAction(portfolioImageId)
+      setPendingCta(null)
+
+      // Seul un succès vide le cœur. Une session expirée le viderait à l'écran
+      // alors que l'épinglé est toujours en base : le couple croirait s'être
+      // rétracté sans l'avoir fait.
+      if (outcome.status === 'error') {
+        showToast('error', outcome.message)
+        return
+      }
+
+      if (outcome.status === 'auth_required') {
+        showToast('error', UNPIN_SESSION_LOST)
+        return
+      }
+
+      clearPinStatus(portfolioImageId)
+    },
+    [clearPinStatus, showToast]
+  )
+
+  /**
    * Le clic part sans vérifier la session : c'est la réponse du backend qui dit
    * si le couple était connecté (décision verrouillée #2 de WED-49).
    *
@@ -167,6 +246,16 @@ export default function PortfolioGrid({
       // Un second clic pendant que le premier est en vol n'apporte rien : les
       // deux écritures sont idempotentes côté backend, autant ne pas les lancer.
       if (pendingCta !== null) return
+
+      // Le cœur est un interrupteur : sur une photo déjà épinglée, le même clic
+      // retire l'épinglé au lieu d'en reposer un (WED-183). Le contact, lui,
+      // reste irréversible — un prestataire prévenu ne se dé-prévient pas.
+      const pinStatus = ctaStatuses[portfolioImageId]?.pin
+
+      if (kind === 'pin' && pinStatus !== undefined) {
+        await runUnpin(portfolioImageId, pinStatus === 'auth_required')
+        return
+      }
 
       setPendingCta(kind)
       const outcome = await submitCtaAction({ kind, portfolioImageId })
@@ -194,7 +283,7 @@ export default function PortfolioGrid({
       // `ctaStatuses`, sur place et pour toute la session.
       if (kind === 'contact') showToast('success', CONTACT_CONFIRMATION)
     },
-    [pendingCta, requestAccountCreation, showToast]
+    [ctaStatuses, pendingCta, requestAccountCreation, runUnpin, showToast]
   )
 
   return (
@@ -204,6 +293,7 @@ export default function PortfolioGrid({
           // `auth_required` compte comme épinglé au même titre que `done` : le
           // geste est enregistré ou mis en file, dans les deux cas le couple l'a
           // bien posé (cf. `ctaConfirmation`, qui les confirme tous les deux).
+          // Dé-épingler retire la clé, ce qui repasse bien ce test à faux.
           const isPinned = ctaStatuses[item.id]?.pin !== undefined
 
           return (
@@ -236,7 +326,7 @@ export default function PortfolioGrid({
                   e.stopPropagation()
                   void runCta('pin', item.id)
                 }}
-                aria-label={isPinned ? 'Photo épinglée' : 'Épingler cette photo'}
+                aria-label={isPinned ? 'Dé-épingler cette photo' : 'Épingler cette photo'}
                 className="bg-creme/85 text-bordeaux absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-[0_1px_4px_rgba(41,26,16,0.18)] transition-transform hover:scale-105"
               >
                 <Heart

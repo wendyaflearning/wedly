@@ -133,3 +133,16 @@ toute nouvelle écriture passe par `CouplePin::reactivate()` /
 `deactivate()`, jamais par un `setIsActive(bool)` (patron canonique de soft
 delete, ADR-006).
 
+### Côté galerie — le geste non encore synchronisé se retire en local
+
+Un épinglage posé sans compte n'est jamais parti au backend : il attend
+l'inscription dans la file locale (WED-160). Le dé-épingler ne déclenche donc
+**aucun appel réseau** — il sort de la file, et c'est tout. Un DELETE serait
+refusé faute de session, et l'entrée resterait en file pour être rejouée à
+l'inscription alors que le couple s'est justement rétracté.
+
+Le cœur n'est vidé à l'écran que sur un retrait réellement acquis : file purgée,
+ou 204 du backend. Une session expirée en cours de route laisse le cœur rempli —
+l'épinglé l'est toujours en base, prétendre le contraire ferait croire au couple
+qu'il s'est rétracté.
+
