@@ -149,3 +149,34 @@ ou 204 du backend. Une session expirée en cours de route laisse le cœur rempli
 l'épinglé l'est toujours en base, prétendre le contraire ferait croire au couple
 qu'il s'est rétracté.
 
+## COUPLE-PIN-006 — La grille des épinglés est une vitrine, jamais une porte
+
+Statut : `active`
+
+Zone « Épinglés » de Mon espace Wedly (US-6.6 / WED-135).
+
+La grille affiche **toutes** les photos épinglées : l'épinglage est gratuit et
+sans limite de nombre — aucun quota, aucune pagination, aucun CTA payant.
+
+Aucune vignette n'est cliquable : la carte est un `figure`, pas un lien ni un
+bouton. Le masquage tient donc à deux verrous cumulés — la forme du DTO, qui ne
+peut pas porter d'identité prestataire (COUPLE-PIN-002), et l'absence de tout
+geste menant à une fiche.
+
+Le dépinglage et, plus largement, toute action d'écriture sur un épinglé sont
+hors scope de cette zone : elle est en lecture seule.
+
+Implémentation :
+
+- `apps/web/app/mon-espace/epingles/page.tsx`
+- `apps/web/components/couple/pins/PinnedPhotosZone.tsx`
+- `apps/web/lib/couple-pins.ts` · `apps/web/lib/couple-pins.server.ts`
+
+**Why:** l'épinglé est un carnet d'inspiration, pas un canal de mise en relation
+— seule la demande de contact (PROVIDER-LEAD-001) ouvre l'accès au prestataire,
+et elle passe par son accord explicite.
+
+**How to apply:** toute évolution de la zone (dépinglage, tri, regroupement)
+garde la grille en lecture seule vis-à-vis de l'identité prestataire : ajouter
+un lien sortant vers une fiche est un choix de revue visible, pas un détail
+d'implémentation.
