@@ -97,3 +97,39 @@ un cœur, il n'a aucune notion de création de ressource ni de doublon.
 **How to apply:** toute future écriture d'épinglé (suppression, épinglage en
 lot, réépinglage depuis un autre parcours) reste idempotente et valide la
 visibilité Wedream de la photo au moment de l'écriture, pas à l'affichage.
+
+## COUPLE-PIN-005 — Dé-épingler désactive la ligne, et réépingler la ressuscite
+
+Statut : `active`
+
+Décision produit du 31/08/2026 (WED-183) : le cœur devient un vrai toggle. Un
+couple doit pouvoir se rétracter d'un coup de cœur sans quitter la galerie.
+
+`DELETE /api/v1/couples/me/pins/{portfolioImageId}` ne supprime pas la ligne :
+il passe `couple_pin.is_active` à `false`. `UNIQ_couple_pin_couple_image`
+(COUPLE-PIN-001) n'autorise qu'une ligne par couple et par photo pour toujours,
+donc un réépinglage réactive **cette** ligne au lieu d'en insérer une seconde.
+
+Règles :
+
+- le geste est idempotent dans les trois états de départ — pin actif, pin déjà
+  désactivé, photo jamais épinglée : toujours 204, jamais 404. L'interface
+  rejoue volontiers un DELETE après un retour réseau incertain ;
+- aucun contrôle de visibilité Wedream au dé-épinglage, contrairement à
+  l'épinglage (COUPLE-PIN-004) : un prestataire qui quitte Wedream ne doit pas
+  bloquer le cœur du couple en position remplie ;
+- un pin désactivé disparaît de toutes les lectures (COUPLE-PIN-002 et la
+  lecture SSR de la galerie), qui partagent le même filtre `is_active = true` ;
+- le couple vient du JWT, la photo de l'URL : un compte ne dé-épingle que pour
+  lui-même.
+
+**Why:** un coup de cœur est un geste léger et réversible, pas un engagement —
+un clic accidentel doit se corriger d'un second clic, sans support ni
+formulaire. La désactivation plutôt que la suppression garde l'historique du
+geste et évite de rejouer un INSERT contre la contrainte unique.
+
+**How to apply:** toute nouvelle lecture d'épinglés filtre `is_active = true` ;
+toute nouvelle écriture passe par `CouplePin::reactivate()` /
+`deactivate()`, jamais par un `setIsActive(bool)` (patron canonique de soft
+delete, ADR-006).
+
