@@ -86,6 +86,7 @@ dans les fichiers de règles.
 | `PROVIDER-LEAD-006` | Le prestataire ciblé se résout côté serveur, jamais depuis un `vendorId` de confiance | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-007` | Un seul lead par couple et par prestataire, premier arrivé gagne      | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-008` | Recontacter dit où en est la demande, et un refus est définitif        | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-009` | Un identifiant de corrélation, jamais une identité, relie les photos et les demandes d'un même prestataire | `active` | `rules/provider-leads.md` |
 
 ## Wedream visibility
 

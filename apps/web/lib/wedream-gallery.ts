@@ -6,6 +6,13 @@ export type PublicPortfolioImage = {
   url: string
   /** Clé = label du TagType, valeurs = labels des TagValue de la photo. */
   tagsByGroup: Record<string, string[]>
+  /**
+   * L'identifiant de corrélation du prestataire (WED-195, PROVIDER-LEAD-009) :
+   * un UUID opaque, jamais un nom. C'est la seule chose qui dit que deux photos
+   * viennent du même prestataire — sans lui, la galerie ne peut pas reconnaître
+   * une demande de mise en relation déjà partie depuis une autre photo.
+   */
+  vendorId: string
 }
 
 export type PortfolioImagesPage = {

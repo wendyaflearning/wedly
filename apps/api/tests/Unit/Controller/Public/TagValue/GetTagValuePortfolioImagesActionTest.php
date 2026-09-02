@@ -26,6 +26,8 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
 {
     private const TAG_VALUE_ID = '0198a1c0-0000-7000-8000-0000000000ff';
 
+    private const VENDOR_ID = '0198a1c0-0000-7000-8000-0000000000bb';
+
     public function test_invoke_asks_the_repository_for_one_extra_row(): void
     {
         $cursor = UuidV7::fromString('0198a1c0-0000-7000-8000-000000000009');
@@ -105,7 +107,13 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
             new CursorPagination(),
         );
 
-        $this->assertSame(['id', 'url', 'tagsByGroup'], array_keys($this->payload($response)['items'][0]));
+        $item = $this->payload($response)['items'][0];
+
+        // L'intention du test n'a pas changé : un identifiant opaque, oui ; un
+        // nom, jamais. C'est l'assertion sur la marque qui la porte, pas la
+        // liste de clés (PROVIDER-LEAD-009).
+        $this->assertSame(['id', 'url', 'tagsByGroup', 'vendorId'], array_keys($item));
+        $this->assertSame(self::VENDOR_ID, $item['vendorId']);
         $this->assertStringNotContainsString('Studio Lumiere', (string) $response->getContent());
     }
 
@@ -181,6 +189,12 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
     private function image(string $id, string $url): PortfolioImage
     {
         $vendor = (new Vendor())->setBrandName('Studio Lumiere');
+
+        // Même patron que l'id de la photo : l'id du prestataire est désormais
+        // dans la charge utile, il lui faut donc une valeur déterministe à
+        // assérer plutôt qu'un UUID tiré à la construction.
+        $vendorId = new \ReflectionProperty(Vendor::class, 'id');
+        $vendorId->setValue($vendor, UuidV7::fromString(self::VENDOR_ID));
 
         $image = (new PortfolioImage())
             ->setVendor($vendor)

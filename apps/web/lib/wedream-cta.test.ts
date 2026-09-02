@@ -42,11 +42,35 @@ describe('submitCtaAction', () => {
   })
 
   it('traite le 200 comme un succès au même titre que le 201', async () => {
-    mockFetch({ ok: true, status: 200 })
+    mockFetch({ ok: true, status: 200, json: async () => ({ success: true, status: 'EN_ATTENTE' }) })
 
     const outcome = await submitCtaAction({ kind: 'contact', portfolioImageId: PHOTO_ID })
 
-    expect(outcome).toEqual({ status: 'done' })
+    expect(outcome.status).toBe('done')
+  })
+
+  /**
+   * WED-195 et WED-186 lisent la même réponse et n'y cherchent pas la même
+   * chose : le code HTTP dit si *cette requête-ci* a créé quelque chose, le
+   * corps dit ce que le prestataire a fait de la demande. Un recontact est donc
+   * `created: false` avec un statut bien réel, et les deux doivent tenir
+   * ensemble dans un seul outcome — c'est exactement ce qu'assertent ces deux
+   * cas, mocks compris.
+   */
+  it('ne déclare créé que le 201, jamais le 200, sans perdre le statut du lead', async () => {
+    mockFetch({ ok: true, status: 201, json: async () => ({ success: true, status: 'EN_ATTENTE' }) })
+    expect(await submitCtaAction({ kind: 'contact', portfolioImageId: PHOTO_ID })).toEqual({
+      status: 'done',
+      created: true,
+      leadStatus: 'EN_ATTENTE',
+    })
+
+    mockFetch({ ok: true, status: 200, json: async () => ({ success: true, status: 'EN_ATTENTE' }) })
+    expect(await submitCtaAction({ kind: 'contact', portfolioImageId: PHOTO_ID })).toEqual({
+      status: 'done',
+      created: false,
+      leadStatus: 'EN_ATTENTE',
+    })
   })
 
   it('remonte le statut du lead que le backend renvoie sur un contact déjà posé', async () => {
@@ -54,7 +78,8 @@ describe('submitCtaAction', () => {
 
     const outcome = await submitCtaAction({ kind: 'contact', portfolioImageId: PHOTO_ID })
 
-    expect(outcome).toEqual({ status: 'done', leadStatus: 'REFUSEE' })
+    // Un refus arrive forcément sur un recontact : il n'a rien créé.
+    expect(outcome).toEqual({ status: 'done', created: false, leadStatus: 'REFUSEE' })
   })
 
   it('demande une authentification sur 401', async () => {
@@ -140,10 +165,10 @@ describe('submitUnpinAction', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('/api/couples/me/pins/..%2Fprovider-leads')
   })
 
-  it('traite le 204 comme un succès', async () => {
+  it('traite le 204 comme un succès, sans rien déclarer créé', async () => {
     mockFetch({ ok: true, status: 204 })
 
-    expect(await submitUnpinAction(PHOTO_ID)).toEqual({ status: 'done' })
+    expect(await submitUnpinAction(PHOTO_ID)).toEqual({ status: 'done', created: false })
   })
 
   it('demande une authentification sur 401 et 403, comme l’épinglage', async () => {
