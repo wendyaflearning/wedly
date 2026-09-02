@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { isCoupleSpaceRedirect } from '@/lib/auth-redirect';
 import { loginVendor } from '@/lib/auth';
-import { COUPLE_SPACE_DEFAULT_TAB } from '@/lib/couple-space';
+import { buildCoupleSpaceEntryUrl } from '@/lib/couple-space';
 import { browserStorage } from '@/lib/wedream-pending-actions';
 import { flushPendingActions } from '@/lib/wedream-pending-flush';
 
@@ -36,8 +36,11 @@ export default function LoginForm({
       if (shouldFlushPendingActions && isCoupleSpaceRedirect(result.redirectTo)) {
         const { done } = await flushPendingActions(browserStorage('local'));
 
+        // Le test reste ici et n'entre pas dans `buildCoupleSpaceEntryUrl` :
+        // sans rien de rejoué, la destination n'est pas l'onglet nu mais le
+        // `redirectTo` résolu depuis le rôle, quelques lignes plus bas.
         if (done > 0) {
-          window.location.href = `${COUPLE_SPACE_DEFAULT_TAB.href}?coups-de-coeur=${done}`;
+          window.location.href = buildCoupleSpaceEntryUrl(done);
           return;
         }
         // Rien n'a abouti : on ne promet pas au couple des coups de cœur qu'il

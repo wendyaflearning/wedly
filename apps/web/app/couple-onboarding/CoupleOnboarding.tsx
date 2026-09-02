@@ -35,6 +35,7 @@ import {
   saveCoupleOnboarding,
   withSliderDefaults,
 } from '@/lib/couple-onboarding-store'
+import { buildCoupleSpaceEntryUrl } from '@/lib/couple-space'
 import { browserStorage } from '@/lib/wedream-pending-actions'
 import { flushPendingActions } from '@/lib/wedream-pending-flush'
 import {
@@ -359,6 +360,10 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   // Holds what the server refused — a duplicate email above all, which no
   // browser-side check can anticipate.
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Ce que le rejeu de la file a rattaché au compte qui vient de naître. Porté
+  // en état parce que l'écran 8 s'affiche entre le rejeu et la navigation vers
+  // l'espace, et que c'est cette navigation qui transporte le compte.
+  const [flushedCount, setFlushedCount] = useState(0)
   // Which screens the couple has actually been shown, not just "before the
   // current one": screens 4-5 never happen at all on the refused-consent
   // path, and a step of the progress bar has no business being clickable if
@@ -496,12 +501,13 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
     // demande de contact : sans ce rejeu, un couple qui a épinglé cinq photos en
     // perdait quatre sans un mot.
     //
-    // Attendu, et `submitting` maintenu jusque-là : l'écran 8 propose « se
-    // connecter », et une navigation partie avant la fin annulerait les requêtes
-    // en vol — soit exactement la perte que cette PR répare. C'est aussi ce qui
+    // Attendu, et `submitting` maintenu jusque-là : l'écran 8 mène à l'espace
+    // personnel, et une navigation partie avant la fin annulerait les requêtes
+    // en vol — soit exactement la perte que ce rejeu répare. C'est aussi ce qui
     // empêche un second clic sur « créer mon compte » pendant le rejeu.
-    await flushPendingActions(browserStorage('local'))
+    const { done } = await flushPendingActions(browserStorage('local'))
 
+    setFlushedCount(done)
     setSubmitting(false)
     onStageComplete(data)
     setScreen(8)
@@ -549,9 +555,22 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
           Bienvenue chez Wedly{name ? <>, <em className="font-semibold text-accent not-italic">{name}</em></> : null}.
         </h1>
         <p className="mt-8 text-base leading-7 text-gris">Votre compte est prêt. Vous allez maintenant découvrir vos premiers prestataires.</p>
-        <Link href="/login" className="mt-10 inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent">
-          SE CONNECTER <ChevronRight size={18} aria-hidden="true" />
-        </Link>
+        {/* L'espace personnel directement (WED-187) : l'inscription vient de
+            poser le cookie de session, il n'y a rien à reconnecter — l'ancienne
+            sortie vers `/login` faisait retaper à un couple déjà authentifié le
+            mot de passe créé deux écrans plus tôt.
+
+            Un bouton et non un `Link` : `window.location` force une navigation
+            pleine page, seule façon de garantir que le layout de l'espace — un
+            Server Component qui lit le cookie — reparte du cookie tout juste
+            posé. Même geste que `LoginForm` après connexion. */}
+        <button
+          type="button"
+          onClick={() => { window.location.href = buildCoupleSpaceEntryUrl(flushedCount) }}
+          className="mt-10 inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent"
+        >
+          DÉCOUVRIR MON ESPACE <ChevronRight size={18} aria-hidden="true" />
+        </button>
       </OnboardingExitScreen>
     )
   }
