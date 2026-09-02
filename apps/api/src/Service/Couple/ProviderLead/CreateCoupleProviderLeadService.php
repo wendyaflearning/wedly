@@ -7,10 +7,15 @@ namespace App\Service\Couple\ProviderLead;
 use App\Entity\Couple\Couple;
 use App\Entity\ProviderLead\ProviderLead;
 use App\Enum\Couple\CoupleLeadStatus;
+use App\Event\ProviderLeadCreatedEvent;
 use App\Repository\ProviderLead\ProviderLeadRepository;
+use App\Service\ProviderLead\ProviderLeadCategoryResolver;
+use App\Service\ProviderLead\ProviderLeadSpecialtyTagsResolver;
 use App\Service\Vendor\VendorResolver;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Demande de mise en relation par un couple déjà connecté (WED-156 / US3c).
@@ -28,6 +33,10 @@ final readonly class CreateCoupleProviderLeadService
         private EntityManagerInterface $em,
         private VendorResolver $vendorResolver,
         private ProviderLeadRepository $providerLeadRepository,
+        private EventDispatcherInterface $eventDispatcher,
+        private ProviderLeadCategoryResolver $categoryResolver,
+        private ProviderLeadSpecialtyTagsResolver $specialtyTagsResolver,
+        private LoggerInterface $logger,
     ) {}
 
     /**
@@ -97,10 +106,56 @@ final readonly class CreateCoupleProviderLeadService
             );
         }
 
+        $this->notifyVendor($lead);
+
         return new CreateCoupleProviderLeadResult(
             created: true,
             status: CoupleLeadStatus::fromProviderLeadStatus($lead->getStatus()),
         );
+    }
+
+    /**
+     * Le prestataire n'est prévenu que d'une demande réellement née (WED-51).
+     * Le no-op de recontact n'envoie rien : le prestataire a déjà reçu cet
+     * email, et le couple n'a rien fait de nouveau. Le catch d'unicité non plus,
+     * pour la même raison — la ligne gagnante a déjà déclenché sa notification.
+     *
+     * Le flush a réussi quand on arrive ici : l'échec d'un listener ne doit pas
+     * transformer une demande enregistrée en 500 côté couple, seulement remonter
+     * sur Sentry. Même contrat que `VendorOnboardingStepDispatcher`, et le
+     * listener email porte déjà son propre try/catch — ce filet-ci couvre tout
+     * futur listener qui n'aurait pas cette prudence.
+     *
+     * L'event est construit ici, en scalaires : la catégorie et les tags se
+     * résolvent depuis la photo coup de cœur, et rien de ce qui touche à la
+     * culture ou à la confession du mariage n'entre dans sa forme.
+     */
+    private function notifyVendor(ProviderLead $lead): void
+    {
+        try {
+            $vendor     = $lead->getVendor();
+            $vendorUser = $vendor->getUser();
+            $wedding    = $lead->getCouple()->getWedding();
+
+            $this->eventDispatcher->dispatch(new ProviderLeadCreatedEvent(
+                leadId:          $lead->getId()->toRfc4122(),
+                vendorId:        $vendor->getId()->toRfc4122(),
+                vendorEmail:     $vendorUser->getEmail(),
+                vendorFirstName: $vendorUser->getFirstName(),
+                coupleFirstName: $lead->getCouple()->getUser()->getFirstName(),
+                weddingDate:     $wedding->getDate(),
+                guestCount:      $wedding->getGuestCount(),
+                budgetCents:     $lead->getBudgetCents(),
+                category:        $this->categoryResolver->resolve($lead)?->getName(),
+                specialtyTags:   $this->specialtyTagsResolver->resolve($lead),
+            ));
+        } catch (\Throwable $exception) {
+            $this->logger->error('Échec d\'un listener sur ProviderLeadCreatedEvent', [
+                'leadId'    => $lead->getId()->toRfc4122(),
+                'vendorId'  => $lead->getVendor()->getId()->toRfc4122(),
+                'exception' => $exception,
+            ]);
+        }
     }
 
     /**

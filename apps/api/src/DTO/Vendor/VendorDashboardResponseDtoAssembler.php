@@ -7,12 +7,14 @@ namespace App\DTO\Vendor;
 use App\Entity\User\User;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\VendorType;
+use App\Repository\ProviderLead\ProviderLeadRepository;
 use App\Repository\Vendor\VendorRepository;
 
 final readonly class VendorDashboardResponseDtoAssembler
 {
     public function __construct(
         private VendorRepository $vendorRepository,
+        private ProviderLeadRepository $providerLeadRepository,
     ) {}
 
     public function assemble(Vendor $vendor, User $user): VendorDashboardResponseDto
@@ -53,6 +55,7 @@ final readonly class VendorDashboardResponseDtoAssembler
             vendorServices:          $vendor->resolveVendorServices(),
             wedreamEnabled:          $vendor->isWedreamEnabled(),
             isPublished:             $vendor->isPublished(),
+            pendingLeadsCount:       $this->providerLeadRepository->countPendingByVendor($vendor),
         );
     }
 }
