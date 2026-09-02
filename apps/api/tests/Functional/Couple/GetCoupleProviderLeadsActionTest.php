@@ -78,6 +78,13 @@ final class GetCoupleProviderLeadsActionTest extends WebTestCase
         self::assertArrayNotHasKey('vendor', $item);
         self::assertStringNotContainsString('Studio Lumière', json_encode($body, JSON_THROW_ON_ERROR));
         self::assertStringNotContainsString('studio@example.test', json_encode($body, JSON_THROW_ON_ERROR));
+
+        // Un identifiant de corrélation sort même masqué, un nom jamais
+        // (PROVIDER-LEAD-009). Les deux assertions ci-dessus restent la vraie
+        // garantie : c'est leur voisinage qui dit ce que « masqué » veut dire.
+        self::assertArrayHasKey('vendorId', $item);
+        self::assertSame($vendor->getId()->toRfc4122(), $item['vendorId']);
+
         self::assertSame($photo->getId()->toRfc4122(), $item['portfolioImageId']);
         self::assertSame('https://cdn.wedly.test/coup-de-coeur.jpg', $item['photoUrl']);
     }
