@@ -35,8 +35,7 @@ import {
   saveCoupleOnboarding,
   withSliderDefaults,
 } from '@/lib/couple-onboarding-store'
-import { QUEUE_FLUSH_COUNT_PARAM } from '@/components/couple/QueueFlushBanner'
-import { COUPLE_SPACE_DEFAULT_TAB } from '@/lib/couple-space'
+import { buildCoupleSpaceEntryUrl } from '@/lib/couple-space'
 import { browserStorage } from '@/lib/wedream-pending-actions'
 import { flushPendingActions } from '@/lib/wedream-pending-flush'
 import {
@@ -74,28 +73,6 @@ const FIREWORK_PARTICLE_COUNT = 10
  * connexion réussie. Personne ne le lit encore — c'est PR3 qui le consomme.
  */
 const COUPLE_LOGIN_WITH_QUEUE_FLUSH = '/login?redirect=/mon-espace&flush=pending-actions'
-
-/**
- * La sortie de l'écran 8 (WED-187) : l'espace personnel, directement.
- *
- * L'inscription vient de poser le cookie de session, il n'y a donc rien à
- * reconnecter — l'ancienne sortie vers `/login` faisait retaper à un couple
- * déjà authentifié le mot de passe créé deux écrans plus tôt.
- *
- * On vise le premier onglet plutôt que `/mon-espace`, qui n'est qu'une
- * redirection vers lui : un aller-retour serveur de moins, et c'est déjà ce que
- * fait `LoginForm` après un rejeu de file.
- *
- * `flushed` est le nombre de gestes que le rejeu a réellement abouti à
- * rattacher. Il n'est passé que s'il y en a : `QueueFlushBanner`, monté dans le
- * layout de l'espace, s'en sert pour confirmer au couple que ses coups de cœur
- * l'ont suivi — sans lui, rien ne le lui dirait.
- */
-function coupleSpaceAfterSignup(flushed: number): string {
-  if (flushed <= 0) return COUPLE_SPACE_DEFAULT_TAB.href
-
-  return `${COUPLE_SPACE_DEFAULT_TAB.href}?${QUEUE_FLUSH_COUNT_PARAM}=${flushed}`
-}
 
 /**
  * Le calque décoratif de l'écran 8. Sorti du corps de l'écran pour que la
@@ -578,13 +555,18 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
           Bienvenue chez Wedly{name ? <>, <em className="font-semibold text-accent not-italic">{name}</em></> : null}.
         </h1>
         <p className="mt-8 text-base leading-7 text-gris">Votre compte est prêt. Vous allez maintenant découvrir vos premiers prestataires.</p>
-        {/* Un bouton et non un `Link` : `window.location` force une navigation
+        {/* L'espace personnel directement (WED-187) : l'inscription vient de
+            poser le cookie de session, il n'y a rien à reconnecter — l'ancienne
+            sortie vers `/login` faisait retaper à un couple déjà authentifié le
+            mot de passe créé deux écrans plus tôt.
+
+            Un bouton et non un `Link` : `window.location` force une navigation
             pleine page, seule façon de garantir que le layout de l'espace — un
             Server Component qui lit le cookie — reparte du cookie tout juste
-            posé par l'inscription. Même geste que `LoginForm` après connexion. */}
+            posé. Même geste que `LoginForm` après connexion. */}
         <button
           type="button"
-          onClick={() => { window.location.href = coupleSpaceAfterSignup(flushedCount) }}
+          onClick={() => { window.location.href = buildCoupleSpaceEntryUrl(flushedCount) }}
           className="mt-10 inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent"
         >
           DÉCOUVRIR MON ESPACE <ChevronRight size={18} aria-hidden="true" />

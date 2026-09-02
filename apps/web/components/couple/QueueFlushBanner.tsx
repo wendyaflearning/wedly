@@ -1,6 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
+import { QUEUE_FLUSH_COUNT_PARAM } from '@/lib/couple-space'
 
 /**
  * La confirmation de la bascule inscription → connexion (WED-162 / US9).
@@ -14,8 +15,6 @@ import { useSearchParams } from 'next/navigation'
  * en mémoire ne lui survit. C'est aussi ce qui rend la bannière naturellement
  * éphémère : elle disparaît au premier changement d'onglet.
  */
-export const QUEUE_FLUSH_COUNT_PARAM = 'coups-de-coeur'
-
 export default function QueueFlushBanner() {
   const searchParams = useSearchParams()
   const raw = searchParams.get(QUEUE_FLUSH_COUNT_PARAM)
