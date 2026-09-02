@@ -7,11 +7,15 @@ describe('ctaConfirmation', () => {
       label: 'Épingler',
       confirmed: false,
       showsCoupleSpaceLink: false,
+      disabled: false,
+      showsDiscoveryPrompt: false,
     })
     expect(ctaConfirmation('contact', 'idle')).toEqual({
       label: 'Je veux être mis en relation',
       confirmed: false,
       showsCoupleSpaceLink: false,
+      disabled: false,
+      showsDiscoveryPrompt: false,
     })
   })
 
@@ -20,6 +24,8 @@ describe('ctaConfirmation', () => {
       label: 'Épinglé',
       confirmed: true,
       showsCoupleSpaceLink: true,
+      disabled: false,
+      showsDiscoveryPrompt: false,
     })
   })
 
@@ -28,6 +34,8 @@ describe('ctaConfirmation', () => {
       label: 'Épinglé',
       confirmed: true,
       showsCoupleSpaceLink: false,
+      disabled: false,
+      showsDiscoveryPrompt: false,
     })
   })
 
@@ -36,6 +44,8 @@ describe('ctaConfirmation', () => {
       label: 'Demande envoyée',
       confirmed: true,
       showsCoupleSpaceLink: true,
+      disabled: false,
+      showsDiscoveryPrompt: false,
     })
   })
 
@@ -44,6 +54,8 @@ describe('ctaConfirmation', () => {
       label: 'Demande en attente',
       confirmed: true,
       showsCoupleSpaceLink: false,
+      disabled: false,
+      showsDiscoveryPrompt: false,
     })
   })
 
@@ -54,6 +66,49 @@ describe('ctaConfirmation', () => {
 
     for (const label of labels) {
       expect(label.toLowerCase()).not.toContain('envoy')
+    }
+  })
+
+  it('dit au couple que sa demande attend toujours une réponse du prestataire', () => {
+    expect(ctaConfirmation('contact', 'done', 'EN_ATTENTE')).toEqual({
+      label: 'Demande envoyée — en attente',
+      confirmed: false,
+      showsCoupleSpaceLink: false,
+      disabled: true,
+      showsDiscoveryPrompt: false,
+    })
+  })
+
+  it('renvoie vers l’espace perso quand le prestataire a accepté', () => {
+    expect(ctaConfirmation('contact', 'done', 'DEBLOQUEE')).toEqual({
+      label: 'Vous êtes déjà en contact',
+      confirmed: true,
+      showsCoupleSpaceLink: true,
+      disabled: false,
+      showsDiscoveryPrompt: false,
+    })
+  })
+
+  it('éteint le bouton sur un refus et propose d’aller voir ailleurs, sans retry', () => {
+    expect(ctaConfirmation('contact', 'done', 'REFUSEE')).toEqual({
+      label: 'Demande non retenue',
+      confirmed: false,
+      showsCoupleSpaceLink: false,
+      disabled: true,
+      showsDiscoveryPrompt: true,
+    })
+  })
+
+  it('ne laisse actif que le statut qui mène quelque part', () => {
+    const leadStatuses = ['EN_ATTENTE', 'DEBLOQUEE', 'REFUSEE'] as const
+
+    for (const leadStatus of leadStatuses) {
+      const cta = ctaConfirmation('contact', 'done', leadStatus)
+      expect(cta.disabled).toBe(leadStatus !== 'DEBLOQUEE')
+      // Un bouton éteint ne doit jamais être peint comme une confirmation :
+      // les deux drapeaux pilotent des fonds opposés, ils ne peuvent pas être
+      // vrais ensemble.
+      expect(cta.confirmed && cta.disabled).toBe(false)
     }
   })
 

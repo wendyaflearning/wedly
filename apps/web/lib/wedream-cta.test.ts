@@ -49,6 +49,14 @@ describe('submitCtaAction', () => {
     expect(outcome).toEqual({ status: 'done' })
   })
 
+  it('remonte le statut du lead que le backend renvoie sur un contact déjà posé', async () => {
+    mockFetch({ ok: true, status: 200, json: async () => ({ success: true, status: 'REFUSEE' }) })
+
+    const outcome = await submitCtaAction({ kind: 'contact', portfolioImageId: PHOTO_ID })
+
+    expect(outcome).toEqual({ status: 'done', leadStatus: 'REFUSEE' })
+  })
+
   it('demande une authentification sur 401', async () => {
     mockFetch({ ok: false, status: 401, json: async () => ({ error: 'unauthorized' }) })
 

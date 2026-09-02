@@ -84,6 +84,8 @@ dans les fichiers de règles.
 | `PROVIDER-LEAD-004` | La photo coup de cœur est portée par le lead, la catégorie en est dérivée | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-005` | Un couple ne voit la fiche prestataire qu'après acceptation            | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-006` | Le prestataire ciblé se résout côté serveur, jamais depuis un `vendorId` de confiance | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-007` | Un seul lead par couple et par prestataire, premier arrivé gagne      | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-008` | Recontacter dit où en est la demande, et un refus est définitif        | `active` | `rules/provider-leads.md` |
 
 ## Wedream visibility
 

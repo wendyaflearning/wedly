@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
+import type { CoupleLeadStatus } from './couple-lead-status'
 import type { CtaKind } from './wedream-cta'
 import type { CtaConfirmationStatus } from './wedream-cta-confirmation'
 
@@ -13,13 +14,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL
  * Le type vit ici plutôt que dans PortfolioGrid parce que le serveur le
  * construit et le client le consomme (WED-182).
  */
-export type CtaStatusesByImage = Record<string, Partial<Record<CtaKind, CtaConfirmationStatus>>>
+export type CtaStatusesByImage = Record<
+  string,
+  Partial<Record<CtaKind, CtaConfirmationStatus>> & { contactLeadStatus?: CoupleLeadStatus }
+>
 
 /** Ce que la galerie retient d'un épinglé : la photo, rien d'autre. */
 type CouplePin = { portfolioImageId: string }
 
 /** Une demande partie hors galerie n'a pas de photo — d'où le null. */
-type CoupleProviderLead = { portfolioImageId: string | null }
+type CoupleProviderLead = { portfolioImageId: string | null; status: string }
 
 /**
  * Un endpoint muet ou en erreur rend une liste vide plutôt que de remonter
@@ -81,14 +85,25 @@ export const fetchInitialCtaStatuses = cache(async (): Promise<CtaStatusesByImag
   }
 
   /**
-   * Le statut métier de la demande (EN_ATTENTE, REFUSEE, DEBLOQUEE) ne change
-   * rien ici : le bouton dit « Demande envoyée » dès qu'une demande existe,
-   * exactement comme après un clic réussi dans la session (WED-158). Le triage
-   * par statut est le sujet de « Mes demandes », pas celui de la galerie.
+   * Le statut métier de la demande est retenu en plus du simple « une demande
+   * existe » : la lightbox en a besoin dès le premier rendu (WED-186), pas
+   * seulement au clic. Sans lui, un couple qui rouvre la galerie relit
+   * « Demande envoyée » sur un prestataire qui vient de refuser, jusqu'à ce
+   * qu'il reclique — c'est-à-dire le bug que WED-186 corrige, réintroduit par
+   * le chemin du rendu serveur.
+   *
+   * Le cast est volontairement nu : `status` vient de notre propre backend, où
+   * il est sérialisé depuis `CoupleLeadStatus` et ne peut donc valoir que l'une
+   * des trois valeurs. Valider ici dupliquerait ce contrat, et une valeur
+   * inconnue ne trouverait de toute façon pas de libellé à afficher.
    */
   for (const lead of leads) {
     if (!lead.portfolioImageId) continue
-    statuses[lead.portfolioImageId] = { ...statuses[lead.portfolioImageId], contact: 'done' }
+    statuses[lead.portfolioImageId] = {
+      ...statuses[lead.portfolioImageId],
+      contact: 'done',
+      contactLeadStatus: lead.status as CoupleLeadStatus,
+    }
   }
 
   return statuses
