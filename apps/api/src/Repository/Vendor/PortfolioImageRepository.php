@@ -33,6 +33,33 @@ class PortfolioImageRepository extends ServiceEntityRepository
     }
 
     /**
+     * La photo derrière un geste d'écriture Wedream — épingle (COUPLE-PIN-004),
+     * demande de contact — si et seulement si elle est publiée dans Wedream au
+     * sens de WedreamVisibilityCriteria : les trois mêmes conditions que la
+     * galerie publique et que la lecture des épinglés.
+     *
+     * `null` quand l'identifiant est inconnu ou quand l'une des trois conditions
+     * est retombée depuis que le couple a vu la photo — un prestataire qui a
+     * coupé Wedream entre le browse et le clic (WED-193). L'appelant en tire un
+     * 422 ; la ligne d'écriture ne naît jamais invisible.
+     *
+     * Requête plutôt que `find()` : c'est le prix d'une définition unique
+     * partagée. Un SELECT indexé de plus par écriture, sur un chemin déjà en
+     * écriture.
+     */
+    public function findWedreamVisibleById(string $id): ?PortfolioImage
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->innerJoin('p.vendor', 'v')
+            ->where('p.id = :id')
+            ->setParameter('id', $id, 'uuid');
+
+        WedreamVisibilityCriteria::apply($qb, 'p', 'v');
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
      * Page publique de la galerie Wedream pour un sous-style donné.
      *
      * Une photo n'est publiée que si le prestataire a activé sa visibilité Wedream
@@ -51,12 +78,11 @@ class PortfolioImageRepository extends ServiceEntityRepository
             ->innerJoin('p.vendor', 'v')
             ->innerJoin('p.tags', 't')
             ->where('t = :tagValue')
-            ->andWhere('v.isPublished = true')
-            ->andWhere('v.wedreamEnabled = true')
-            ->andWhere('p.isVisibleInWedream = true')
             ->setParameter('tagValue', $tagValue)
             ->orderBy('p.id', 'DESC')
             ->setMaxResults($limit);
+
+        WedreamVisibilityCriteria::apply($qb, 'p', 'v');
 
         if ($cursor !== null) {
             $qb->andWhere('p.id < :cursor')
@@ -73,17 +99,16 @@ class PortfolioImageRepository extends ServiceEntityRepository
 
     public function countByTagValue(TagValue $tagValue): int
     {
-        return (int) $this->createQueryBuilder('p')
+        $qb = $this->createQueryBuilder('p')
             ->select('COUNT(DISTINCT p.id)')
             ->innerJoin('p.vendor', 'v')
             ->innerJoin('p.tags', 't')
             ->where('t = :tagValue')
-            ->andWhere('v.isPublished = true')
-            ->andWhere('v.wedreamEnabled = true')
-            ->andWhere('p.isVisibleInWedream = true')
-            ->setParameter('tagValue', $tagValue)
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->setParameter('tagValue', $tagValue);
+
+        WedreamVisibilityCriteria::apply($qb, 'p', 'v');
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     /**

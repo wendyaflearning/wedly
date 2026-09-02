@@ -402,6 +402,31 @@ final class CoupleRegistrationServiceTest extends TestCase
     }
 
     /**
+     * WED-193 : le prestataire a coupé sa vitrine Wedream entre le browse et
+     * l'envoi du formulaire d'inscription. Le pin posé à l'inscription passe par
+     * la même porte que les autres chemins — il est refusé en 422, aucune ligne
+     * `couple_pin` invisible n'est créée.
+     */
+    public function test_a_pin_whose_vendor_left_wedream_is_refused_before_anything_is_written(): void
+    {
+        $vendor = $this->makeVendor(self::VENDOR_ID)->setWedreamEnabled(false);
+        $photo  = $this->makeCrushPhoto($vendor);
+
+        $em             = $this->makeEntityManager(strict: true);
+        $vendorResolver = $this->makeVendorResolver(imagesById: $this->byId([$photo]));
+        $em->expects($this->never())->method('persist');
+        $em->expects($this->never())->method('beginTransaction');
+        $em->expects($this->never())->method('flush');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+
+        $this->makeService($em, $vendorResolver)->register(
+            $this->makeDto(pins: [self::CRUSH_PHOTO_ID]),
+        );
+    }
+
+    /**
      * TODO WED-152 : ces deux tests couvrent le shim de compatibilité et
      * disparaîtront avec lui, une fois le frontend basculé sur
      * `contactRequests`.
@@ -532,12 +557,16 @@ final class CoupleRegistrationServiceTest extends TestCase
         ?callable $configureCrushPhoto = null,
         array $vendorsById = [],
         array $imagesById = [],
+        bool $vendorPublished = true,
+        bool $vendorWedreamEnabled = true,
     ): object {
         $vendor = null;
 
         if ($vendorStatus !== null) {
             $vendor = $this->createStub(Vendor::class);
             $vendor->method('getStatus')->willReturn($vendorStatus);
+            $vendor->method('isPublished')->willReturn($vendorPublished);
+            $vendor->method('isWedreamEnabled')->willReturn($vendorWedreamEnabled);
         }
 
         $crushPhoto = $vendor !== null && $configureCrushPhoto !== null
@@ -560,7 +589,14 @@ final class CoupleRegistrationServiceTest extends TestCase
                 $image = null;
             }
 
-            if (!$image instanceof PortfolioImage || !$image->isVisibleInWedream()) {
+            // WED-193 : « publiée dans Wedream » = les trois conditions
+            // ensemble, comme dans VendorResolver réel.
+            if (
+                !$image instanceof PortfolioImage
+                || !$image->isVisibleInWedream()
+                || !$image->getVendor()->isPublished()
+                || !$image->getVendor()->isWedreamEnabled()
+            ) {
                 throw new \DomainException('Cette photo n\'est pas disponible.', 422);
             }
 
@@ -590,7 +626,12 @@ final class CoupleRegistrationServiceTest extends TestCase
                     throw new \DomainException('Cette demande de contact ne cible aucun prestataire.', 422);
                 }
 
-                if (!$resolved instanceof Vendor || $resolved->getStatus() !== VendorStatus::Active) {
+                if (
+                    !$resolved instanceof Vendor
+                    || $resolved->getStatus() !== VendorStatus::Active
+                    || !$resolved->isPublished()
+                    || !$resolved->isWedreamEnabled()
+                ) {
                     throw new \DomainException('Ce prestataire n\'est pas disponible.', 422);
                 }
 
@@ -663,7 +704,10 @@ final class CoupleRegistrationServiceTest extends TestCase
      */
     private function makeVendor(string $id, VendorStatus $status = VendorStatus::Active): Vendor
     {
-        $vendor = (new Vendor())->setStatus($status);
+        $vendor = (new Vendor())
+            ->setStatus($status)
+            ->setIsPublished(true)
+            ->setWedreamEnabled(true);
 
         $idReflection = new \ReflectionProperty(Vendor::class, 'id');
         $idReflection->setValue($vendor, UuidV7::fromString($id));

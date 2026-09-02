@@ -34,18 +34,20 @@ class VendorResolver
 
     /**
      * Le prestataire est désigné par deux chemins. Le `vendorId` est le chemin
-     * historique, revalidé ici — existence et statut — pour répondre 422 plutôt
-     * que 500 (PROVIDER-LEAD-003). En son absence, le prestataire est déduit
-     * côté serveur de la photo : c'est la cible réelle du parcours, et le couple
-     * n'a jamais eu à connaître son identifiant (WED-150).
+     * historique, revalidé ici — existence et disponibilité — pour répondre 422
+     * plutôt que 500 (PROVIDER-LEAD-003). En son absence, le prestataire est
+     * déduit côté serveur de la photo : c'est la cible réelle du parcours, et le
+     * couple n'a jamais eu à connaître son identifiant (WED-150).
      *
-     * Le contrôle de statut s'applique aux deux chemins. `isVisibleInWedream`
-     * est recalculé au tagging, pas à chaque changement de statut du
-     * prestataire : une photo encore taguée visible ne dit rien de la
-     * disponibilité actuelle de son propriétaire, et sans ce contrôle un vendor
-     * désactivé resterait joignable par une vieille photo.
+     * « Joignable dans Wedream » a une seule définition pour les deux chemins
+     * (WED-193) : le compte est actif, la fiche est publiée et la vitrine
+     * Wedream est active. Le chemin photo hérite déjà des deux dernières
+     * conditions de `findVisiblePortfolioImage()` ; on les revérifie ici pour
+     * que le chemin `vendorId` — la demande de contact posée à l'inscription
+     * avec un identifiant de prestataire — n'ouvre pas une porte plus large que
+     * le reste du parcours.
      *
-     * @throws \DomainException 422 si aucune cible n'est fournie, si le prestataire est inconnu ou s'il n'est pas actif
+     * @throws \DomainException 422 si aucune cible n'est fournie, si le prestataire est inconnu ou s'il n'est pas joignable dans Wedream
      */
     public function resolveActive(?string $vendorId, ?string $portfolioImageId): Vendor
     {
@@ -60,7 +62,12 @@ class VendorResolver
             throw new \DomainException('Cette demande de contact ne cible aucun prestataire.', 422);
         }
 
-        if (!$vendor instanceof Vendor || $vendor->getStatus() !== VendorStatus::Active) {
+        if (
+            !$vendor instanceof Vendor
+            || $vendor->getStatus() !== VendorStatus::Active
+            || !$vendor->isPublished()
+            || !$vendor->isWedreamEnabled()
+        ) {
             throw new \DomainException('Ce prestataire n\'est pas disponible.', 422);
         }
 
@@ -75,7 +82,7 @@ class VendorResolver
      * conditions est refusé en 422, jamais silencieusement ignoré : c'est un
      * état client incohérent, pas une absence de photo.
      *
-     * @throws \DomainException 422 si la photo est inconnue, masquée dans Wedream ou appartient à un autre prestataire
+     * @throws \DomainException 422 si la photo est inconnue, plus publiée dans Wedream ou appartient à un autre prestataire
      */
     public function resolveCrushPhoto(Vendor $vendor, string $portfolioImageId): PortfolioImage
     {
@@ -89,20 +96,26 @@ class VendorResolver
     }
 
     /**
-     * Publiée dans Wedream ou rien : la condition est isolée ici parce que les
-     * appelants s'appuient tous dessus — la résolution du prestataire depuis la
-     * photo, la validation de la photo coup de cœur, et l'épinglage qui ne cible
-     * aucun prestataire. `find()` plutôt que `findOneBy(['id' => …])` pour que le
-     * second appel du parcours « photo seule » retombe sur l'identity map au lieu
-     * de refaire la requête.
+     * « Publiée dans Wedream » ou rien. La condition est isolée ici parce que
+     * les appelants s'appuient tous dessus — la résolution du prestataire depuis
+     * la photo, la validation de la photo coup de cœur, l'épinglage qui ne cible
+     * aucun prestataire (COUPLE-PIN-004) et le pin posé à l'inscription.
      *
-     * @throws \DomainException 422 si la photo est inconnue ou masquée dans Wedream
+     * Depuis WED-193 la définition est unique : `findWedreamVisibleById()`
+     * applique les trois mêmes conditions que la galerie publique et que la
+     * lecture des épinglés (WedreamVisibilityCriteria) — fiche publiée, vitrine
+     * Wedream active, photo taguée visible. Un prestataire qui coupe Wedream
+     * entre le browse et le clic fait donc échouer l'écriture en 422 ; plus
+     * aucune ligne ne peut naître invisible. Le coût : un SELECT au lieu d'un
+     * hit d'identity map sur le second appel du parcours « photo seule ».
+     *
+     * @throws \DomainException 422 si la photo est inconnue ou n'est plus publiée dans Wedream
      */
     public function findVisiblePortfolioImage(string $portfolioImageId): PortfolioImage
     {
-        $image = $this->portfolioImageRepository->find($portfolioImageId);
+        $image = $this->portfolioImageRepository->findWedreamVisibleById($portfolioImageId);
 
-        if (!$image instanceof PortfolioImage || !$image->isVisibleInWedream()) {
+        if (!$image instanceof PortfolioImage) {
             throw new \DomainException('Cette photo n\'est pas disponible.', 422);
         }
 

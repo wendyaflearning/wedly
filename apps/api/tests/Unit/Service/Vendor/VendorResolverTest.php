@@ -91,6 +91,40 @@ final class VendorResolverTest extends TestCase
     }
 
     /**
+     * WED-193 : « joignable » a une seule définition sur les deux chemins. Un
+     * prestataire actif mais dont la fiche n'est pas publiée n'est pas plus
+     * joignable par son identifiant qu'il ne l'est par une de ses photos.
+     */
+    public function test_an_unpublished_vendor_is_refused(): void
+    {
+        $vendor = $this->makeVendor(published: false);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Ce prestataire n\'est pas disponible.');
+
+        $this->makeResolver(vendorsById: [self::VENDOR_ID => $vendor])
+            ->resolveActive(self::VENDOR_ID, null);
+    }
+
+    /**
+     * WED-193 : un prestataire qui a coupé sa vitrine Wedream n'est plus
+     * joignable, y compris par le chemin `vendorId` de la demande de contact
+     * posée à l'inscription.
+     */
+    public function test_a_vendor_who_left_wedream_is_refused(): void
+    {
+        $vendor = $this->makeVendor(wedreamEnabled: false);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Ce prestataire n\'est pas disponible.');
+
+        $this->makeResolver(vendorsById: [self::VENDOR_ID => $vendor])
+            ->resolveActive(self::VENDOR_ID, null);
+    }
+
+    /**
      * `isVisibleInWedream` est recalculé au tagging, pas à chaque changement de
      * statut du prestataire : une photo encore taguée visible ne suffit donc pas
      * à rendre son propriétaire joignable.
@@ -207,6 +241,57 @@ final class VendorResolverTest extends TestCase
     }
 
     /**
+     * WED-193 : la photo est toujours taguée visible, mais son prestataire a
+     * dépublié sa fiche depuis. « Publiée dans Wedream » exige les trois
+     * conditions ensemble — c'est la même définition que la galerie et que la
+     * lecture des épinglés (COUPLE-PIN-003).
+     */
+    public function test_a_photo_whose_vendor_is_unpublished_is_refused(): void
+    {
+        $photo = $this->makePhoto($this->makeVendor(published: false));
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Cette photo n\'est pas disponible.');
+
+        $this->makeResolver(imagesById: [self::PHOTO_ID => $photo])
+            ->findVisiblePortfolioImage(self::PHOTO_ID);
+    }
+
+    /**
+     * WED-193 : le cas central du ticket — le prestataire coupe Wedream entre
+     * le moment où le couple voit la photo et celui où il l'épingle. L'écriture
+     * échoue, aucune ligne invisible n'est créée.
+     */
+    public function test_a_photo_whose_vendor_left_wedream_is_refused(): void
+    {
+        $photo = $this->makePhoto($this->makeVendor(wedreamEnabled: false));
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Cette photo n\'est pas disponible.');
+
+        $this->makeResolver(imagesById: [self::PHOTO_ID => $photo])
+            ->findVisiblePortfolioImage(self::PHOTO_ID);
+    }
+
+    /**
+     * Le même verrou protège la photo coup de cœur d'une demande de contact.
+     */
+    public function test_a_crush_photo_whose_vendor_left_wedream_is_refused(): void
+    {
+        $vendor = $this->makeVendor(wedreamEnabled: false);
+        $photo  = $this->makePhoto($vendor);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('Cette photo n\'est pas disponible.');
+
+        $this->makeResolver(imagesById: [self::PHOTO_ID => $photo])
+            ->resolveCrushPhoto($vendor, self::PHOTO_ID);
+    }
+
+    /**
      * @param array<string, Vendor>         $vendorsById
      * @param array<string, PortfolioImage> $imagesById
      */
@@ -217,17 +302,40 @@ final class VendorResolverTest extends TestCase
             static fn(mixed $id): ?Vendor => $vendorsById[(string) $id] ?? null,
         );
 
+        // Le repository ne rend la photo que si les trois conditions Wedream
+        // sont vraies ensemble (WedreamVisibilityCriteria) : le stub rejoue ce
+        // filtre pour que le test décrive l'état des entités en base, pas une
+        // photo déjà triée.
         $images = $this->createStub(PortfolioImageRepository::class);
-        $images->method('find')->willReturnCallback(
-            static fn(mixed $id): ?PortfolioImage => $imagesById[(string) $id] ?? null,
+        $images->method('findWedreamVisibleById')->willReturnCallback(
+            static function (mixed $id) use ($imagesById): ?PortfolioImage {
+                $image = $imagesById[(string) $id] ?? null;
+
+                if (
+                    !$image instanceof PortfolioImage
+                    || !$image->isVisibleInWedream()
+                    || !$image->getVendor()->isPublished()
+                    || !$image->getVendor()->isWedreamEnabled()
+                ) {
+                    return null;
+                }
+
+                return $image;
+            },
         );
 
         return new VendorResolver($vendors, $images);
     }
 
-    private function makeVendor(VendorStatus $status = VendorStatus::Active): Vendor
-    {
-        return (new Vendor())->setStatus($status);
+    private function makeVendor(
+        VendorStatus $status = VendorStatus::Active,
+        bool $published = true,
+        bool $wedreamEnabled = true,
+    ): Vendor {
+        return (new Vendor())
+            ->setStatus($status)
+            ->setIsPublished($published)
+            ->setWedreamEnabled($wedreamEnabled);
     }
 
     private function makePhoto(Vendor $vendor, bool $visibleInWedream = true): PortfolioImage

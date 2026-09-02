@@ -6,6 +6,7 @@ namespace App\Repository\Couple;
 
 use App\Entity\Couple\Couple;
 use App\Entity\Couple\CouplePin;
+use App\Repository\Vendor\WedreamVisibilityCriteria;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -25,9 +26,10 @@ class CouplePinRepository extends ServiceEntityRepository
      * The portfolio image is joined because the assembler reads its URL for every
      * pin — without this, a list of ten pins would trigger ten extra queries.
      *
-     * Only Wedream-visible photos are returned (COUPLE-PIN-003): same three
-     * conditions as the public gallery, so a vendor opt-out stops serving the
-     * image even if the couple_pin row still exists.
+     * Only Wedream-visible photos are returned (COUPLE-PIN-003): the exact same
+     * clause as the public gallery and as the write path, through the single
+     * WedreamVisibilityCriteria definition (WED-193), so a vendor opt-out stops
+     * serving the image even if the couple_pin row still exists.
      *
      * Pin ids are UUIDv7, so ordering on pin.id DESC is chronological and
      * avoids the second-precision tie on created_at (PortfolioImageRepository
@@ -41,19 +43,18 @@ class CouplePinRepository extends ServiceEntityRepository
      */
     public function findByCouple(Couple $couple): array
     {
-        return $this->createQueryBuilder('pin')
+        $qb = $this->createQueryBuilder('pin')
             ->addSelect('photo')
             ->join('pin.portfolioImage', 'photo')
             ->innerJoin('photo.vendor', 'vendor')
             ->where('pin.couple = :couple')
             ->andWhere('pin.isActive = true')
-            ->andWhere('vendor.isPublished = true')
-            ->andWhere('vendor.wedreamEnabled = true')
-            ->andWhere('photo.isVisibleInWedream = true')
             ->setParameter('couple', $couple)
-            ->orderBy('pin.id', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('pin.id', 'DESC');
+
+        WedreamVisibilityCriteria::apply($qb, 'photo', 'vendor');
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
