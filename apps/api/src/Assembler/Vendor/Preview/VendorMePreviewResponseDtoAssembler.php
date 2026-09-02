@@ -42,7 +42,8 @@ final readonly class VendorMePreviewResponseDtoAssembler
             priceMinCents:   $vendor->getPriceMinCents(),
             priceMaxCents:   $vendor->getPriceMaxCents(),
             priceType:       $vendor->getPriceType()->value,
-            completion:      $this->completionService->check($vendor, $bookingBlockers),
+            completion:      $this->completionService->checkForPublish($vendor),
+            isPublished:     $vendor->isPublished(),
         );
     }
 }
