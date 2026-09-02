@@ -33,6 +33,15 @@ class CouplePin
     #[ORM\JoinColumn(name: 'portfolio_image_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private PortfolioImage $portfolioImage;
 
+    /**
+     * Dé-épingler désactive la ligne au lieu de la supprimer (WED-183) : la
+     * contrainte unique couple_id + portfolio_image_id reste tenue par une seule
+     * ligne pour toute la vie du couple, et réépingler la réactive au lieu de
+     * rejouer un INSERT contre cette contrainte.
+     */
+    #[ORM\Column(name: 'is_active', type: 'boolean', options: ['default' => true])]
+    private bool $isActive = true;
+
     public function __construct(Couple $couple, PortfolioImage $portfolioImage)
     {
         $this->couple = $couple;
@@ -52,5 +61,26 @@ class CouplePin
     public function getPortfolioImage(): PortfolioImage
     {
         return $this->portfolioImage;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    /**
+     * Deux verbes métier plutôt qu'un setIsActive(bool) : côté appelant,
+     * `deactivate()` dit ce qui se passe, `setIsActive(false)` demande au lecteur
+     * de le déduire. Déviation assumée du patron TagValue / Plan, documentée
+     * dans ADR-006.
+     */
+    public function reactivate(): void
+    {
+        $this->isActive = true;
+    }
+
+    public function deactivate(): void
+    {
+        $this->isActive = false;
     }
 }
