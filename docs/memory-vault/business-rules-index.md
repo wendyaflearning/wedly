@@ -53,6 +53,7 @@ dans les fichiers de règles.
 | `COUPLE-ONBOARDING-007` | La date et le lieu bloquent l'écran 2 | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-008` | L'avancement de l'organisation est présélectionné, pas bloquant | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-009` | L'inscription du couple est email + mot de passe, en un seul appel | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-010` | Le téléphone du couple est optionnel à la saisie, normalisé en `+33` à l'écriture | `active` | `rules/couple-onboarding.md` |
 
 ## Data and schema
 
@@ -87,6 +88,8 @@ dans les fichiers de règles.
 | `PROVIDER-LEAD-007` | Un seul lead par couple et par prestataire, premier arrivé gagne      | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-008` | Recontacter dit où en est la demande, et un refus est définitif        | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-009` | Un identifiant de corrélation, jamais une identité, relie les photos et les demandes d'un même prestataire | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-010` | La décision du prestataire est ce qui dévoile les coordonnées du couple | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-011` | Culture et confession ne franchissent jamais la frontière prestataire | `active` | `rules/provider-leads.md` |
 
 ## Wedream visibility
 
@@ -105,6 +108,7 @@ dans les fichiers de règles.
 | `COUPLE-PIN-003` | Un épinglé n'est lisible que tant que la photo reste Wedream-visible | `active` | `rules/couple-pins.md`  |
 | `COUPLE-PIN-004` | Épingler est un geste idempotent, jamais une erreur                 | `active` | `rules/couple-pins.md`  |
 | `COUPLE-PIN-005` | Dé-épingler désactive la ligne, et réépingler la ressuscite         | `active` | `rules/couple-pins.md`  |
+| `COUPLE-PIN-006` | La grille des épinglés est une vitrine, jamais une porte            | `active` | `rules/couple-pins.md`  |
 
 ## À ajouter lors des prochains tickets
 

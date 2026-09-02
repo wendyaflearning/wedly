@@ -84,6 +84,35 @@ final class CoupleRegistrationServiceTest extends TestCase
         self::assertSame('Lyon', $this->persistedOf(Wedding::class)->getLocation());
     }
 
+    /**
+     * WED-216 : sans cette écriture le téléphone est validé puis jeté — le
+     * champ existerait en base sans jamais être rempli.
+     */
+    public function test_it_persists_the_phone_number_in_its_international_form(): void
+    {
+        $this->makeService($this->makeEntityManager())->register($this->makeDto(phone: '0612345678'));
+
+        self::assertSame('+33612345678', $this->persistedOf(Couple::class)->getPhone());
+    }
+
+    public function test_a_phone_number_already_international_is_stored_as_is(): void
+    {
+        $this->makeService($this->makeEntityManager())->register($this->makeDto(phone: '+33612345678'));
+
+        self::assertSame('+33612345678', $this->persistedOf(Couple::class)->getPhone());
+    }
+
+    /**
+     * Le téléphone reste optionnel : pas de chaîne vide en base pour une
+     * question à laquelle le couple n'a pas répondu.
+     */
+    public function test_a_registration_without_a_phone_number_leaves_it_null(): void
+    {
+        $this->makeService($this->makeEntityManager())->register($this->makeDto());
+
+        self::assertNull($this->persistedOf(Couple::class)->getPhone());
+    }
+
     public function test_a_taken_email_is_refused_without_writing_anything(): void
     {
         $em = $this->makeEntityManager(strict: true);
@@ -755,6 +784,7 @@ final class CoupleRegistrationServiceTest extends TestCase
         array $contactRequests = [],
         array $pins = [],
         ?ProviderContactRequestDto $contactRequest = null,
+        ?string $phone = null,
     ): RegisterCoupleRequestDto {
         return new RegisterCoupleRequestDto(
             email: 'camille@example.test',
@@ -772,6 +802,7 @@ final class CoupleRegistrationServiceTest extends TestCase
             contactRequests: $contactRequests,
             pins: $pins,
             contactRequest: $contactRequest,
+            phone: $phone,
         );
     }
 }

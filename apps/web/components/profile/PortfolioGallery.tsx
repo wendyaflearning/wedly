@@ -24,9 +24,14 @@ type EditableProps = {
 export function PortfolioGallery({
   images,
   editable,
+  onTileClick,
 }: {
   images: PortfolioImage[]
   editable?: EditableProps
+  /** Hors mode édition : clic sur une tuile *taguée* (fiche prestataire admin en
+   *  lecture seule). Les tuiles non taguées gardent la lightbox interne. Ignoré
+   *  quand `editable` est fourni — `editable.onTileClick` prend alors le relais. */
+  onTileClick?: (imageId: string) => void
 }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
@@ -52,6 +57,8 @@ export function PortfolioGallery({
                 onClick={() => {
                   if (editable?.onTileClick) {
                     editable.onTileClick(image.id)
+                  } else if (onTileClick && image.tags.length > 0) {
+                    onTileClick(image.id)
                   } else {
                     setActiveIndex(index)
                   }

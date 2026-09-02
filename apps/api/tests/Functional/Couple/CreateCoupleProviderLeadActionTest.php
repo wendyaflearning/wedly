@@ -251,6 +251,53 @@ final class CreateCoupleProviderLeadActionTest extends WebTestCase
         self::assertResponseStatusCodeSame(401);
     }
 
+    /**
+     * Le prestataire est prévenu d'une demande réellement née (WED-51). Le test
+     * s'arrête au mail parti plutôt qu'à l'event dispatché : c'est la chaîne
+     * complète — service, dispatch, listener, template — qui doit tenir, et un
+     * event dispatché dans le vide n'a jamais prévenu personne.
+     */
+    public function test_a_new_lead_notifies_the_vendor(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $vendor = $this->vendor();
+        $photo  = $this->photo($vendor);
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $photo->getId()->toRfc4122());
+
+        self::assertResponseStatusCodeSame(201);
+        self::assertEmailCount(1);
+
+        $email = self::getMailerMessage();
+        self::assertSame('studio@example.test', $email->getTo()[0]->getAddress());
+        self::assertStringContainsString('Camille', $email->getHtmlBody());
+    }
+
+    /**
+     * Recontacter n'est pas une nouvelle demande : le prestataire a déjà reçu
+     * cet email, et le lui renvoyer transformerait un aller-retour du couple
+     * dans la galerie en spam.
+     */
+    public function test_recontacting_the_same_vendor_notifies_nobody(): void
+    {
+        $couple      = $this->couple('camille@example.test');
+        $vendor      = $this->vendor();
+        $firstPhoto  = $this->photo($vendor);
+        $secondPhoto = $this->photo($vendor, sortOrder: 1);
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $firstPhoto->getId()->toRfc4122());
+        self::assertEmailCount(1);
+
+        $this->post($couple->getUser(), $secondPhoto->getId()->toRfc4122());
+
+        self::assertResponseStatusCodeSame(200);
+        // Le compteur porte sur la dernière requête : 0 dit que le recontact
+        // n'a rien envoyé, alors que le premier appel avait bien envoyé son mail.
+        self::assertEmailCount(0);
+    }
+
     private function post(User $user, string $portfolioImageId): void
     {
         $this->client->request(
