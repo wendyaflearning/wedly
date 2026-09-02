@@ -22,6 +22,7 @@ final readonly class VendorDashboardResponseDto
     public ?string $bio;
     public array $vendorServices;
     public bool $wedream_enabled;
+    public bool $is_published;
 
     public function __construct(
         string $id,
@@ -40,6 +41,7 @@ final readonly class VendorDashboardResponseDto
         ?string $bio,
         array $vendorServices,
         bool $wedreamEnabled,
+        bool $isPublished,
     ) {
         $this->id                          = $id;
         $this->firstName                   = $firstName;
@@ -57,5 +59,6 @@ final readonly class VendorDashboardResponseDto
         $this->bio                         = $bio;
         $this->vendorServices              = $vendorServices;
         $this->wedream_enabled             = $wedreamEnabled;
+        $this->is_published                = $isPublished;
     }
 }
