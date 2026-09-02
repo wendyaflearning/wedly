@@ -198,6 +198,47 @@ export function enqueuePendingAction(
 }
 
 /**
+ * Retire un geste de la file et rend la file telle qu'elle est désormais
+ * stockée — le miroir exact d'`enqueuePendingAction` (WED-183).
+ *
+ * Le cas d'usage est le dé-épinglage d'une photo épinglée sans compte : le geste
+ * n'est jamais parti au backend, il n'attend que l'inscription. Le retirer de la
+ * file est donc la seule écriture nécessaire, et il ne doit surtout pas être
+ * rejoué à l'inscription (US8) alors que le couple s'est rétracté entre-temps.
+ *
+ * Rien à retirer : on ne réécrit pas et on ne prévient personne. Réécrire une
+ * file identique ferait recompter le badge (WED-161) pour un contenu inchangé,
+ * et exposerait au passage à un quota plein sans aucune raison.
+ */
+export function dequeuePendingAction(
+  storage: StorageLike,
+  kind: CtaKind,
+  portfolioImageId: string,
+  now = Date.now(),
+): PendingAction[] {
+  const queue = loadPendingActions(storage, now)
+  const kept = queue.filter(
+    (entry) => entry.kind !== kind || entry.portfolioImageId !== portfolioImageId,
+  )
+
+  if (kept.length === queue.length) return queue
+
+  try {
+    storage.setItem(WEDREAM_PENDING_ACTIONS_KEY, JSON.stringify(kept))
+  } catch (error) {
+    // Comme à l'écriture : le geste reste en file, mais le couple garde son
+    // parcours. Une file en trop vaut mieux qu'un clic mort.
+    reportStorageFailure('retrait dans la file', error)
+    return queue
+  }
+
+  // Après l'écriture seulement, pour la même raison qu'`enqueuePendingAction`.
+  notifySubscribers()
+
+  return kept
+}
+
+/**
  * Volontairement muette envers les abonnés, contrairement à
  * `enqueuePendingAction` qui les prévient après chaque écriture.
  *

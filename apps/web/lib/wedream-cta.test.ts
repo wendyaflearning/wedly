@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { submitCtaAction } from './wedream-cta'
+import { submitCtaAction, submitUnpinAction } from './wedream-cta'
 
 const PHOTO_ID = '0198a1c0-0000-7000-8000-000000000001'
 
@@ -100,5 +100,71 @@ describe('submitCtaAction', () => {
     const outcome = await submitCtaAction({ kind: 'pin', portfolioImageId: PHOTO_ID })
 
     expect(outcome).toEqual({ status: 'error', message: 'Une erreur est survenue. Réessayez.' })
+  })
+})
+
+describe('submitUnpinAction', () => {
+  it('appelle le Route Handler des pins en DELETE, la photo dans le chemin', async () => {
+    const fetchMock = mockFetch({ ok: true, status: 204 })
+
+    await submitUnpinAction(PHOTO_ID)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/couples/me/pins/${PHOTO_ID}`,
+      expect.anything(),
+    )
+    expect(fetchMock.mock.calls[0][1].method).toBe('DELETE')
+  })
+
+  it('n’envoie aucun corps : un DELETE n’en a pas', async () => {
+    const fetchMock = mockFetch({ ok: true, status: 204 })
+
+    await submitUnpinAction(PHOTO_ID)
+
+    expect(fetchMock.mock.calls[0][1].body).toBeUndefined()
+  })
+
+  it('échappe l’identifiant plutôt que de le concaténer tel quel', async () => {
+    const fetchMock = mockFetch({ ok: true, status: 204 })
+
+    await submitUnpinAction('../provider-leads')
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/couples/me/pins/..%2Fprovider-leads')
+  })
+
+  it('traite le 204 comme un succès', async () => {
+    mockFetch({ ok: true, status: 204 })
+
+    expect(await submitUnpinAction(PHOTO_ID)).toEqual({ status: 'done' })
+  })
+
+  it('demande une authentification sur 401 et 403, comme l’épinglage', async () => {
+    mockFetch({ ok: false, status: 401, json: async () => ({ error: 'unauthorized' }) })
+    expect(await submitUnpinAction(PHOTO_ID)).toEqual({ status: 'auth_required' })
+
+    mockFetch({ ok: false, status: 403, json: async () => ({ error: 'Access Denied.' }) })
+    expect(await submitUnpinAction(PHOTO_ID)).toEqual({ status: 'auth_required' })
+  })
+
+  it('remonte le message du backend sur une erreur métier', async () => {
+    mockFetch({
+      ok: false,
+      status: 404,
+      json: async () => ({ error: 'No couple associated with this account.' }),
+    })
+
+    expect(await submitUnpinAction(PHOTO_ID)).toEqual({
+      status: 'error',
+      message: 'No couple associated with this account.',
+    })
+  })
+
+  it('traite une coupure réseau comme une erreur, pas comme une session manquante', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+
+    expect(await submitUnpinAction(PHOTO_ID)).toEqual({
+      status: 'error',
+      message: 'Une erreur est survenue. Réessayez.',
+    })
   })
 })
