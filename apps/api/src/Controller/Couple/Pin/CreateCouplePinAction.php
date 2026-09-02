@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Controller\Couple\Pin;
 
 use App\DTO\Couple\Pin\CreateCouplePinRequestDto;
-use App\Entity\User\User;
-use App\Repository\Couple\CoupleRepository;
+use App\Service\Couple\CoupleFromJwtResolver;
 use App\Service\Couple\Pin\CreateCouplePinService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,16 +29,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class CreateCouplePinAction extends AbstractController
 {
     public function __construct(
-        private readonly Security                $security,
-        private readonly CoupleRepository        $coupleRepository,
+        private readonly CoupleFromJwtResolver   $coupleResolver,
         private readonly CreateCouplePinService  $createCouplePinService,
     ) {}
 
     public function __invoke(#[MapRequestPayload] CreateCouplePinRequestDto $dto): JsonResponse
     {
-        /** @var User $user */
-        $user   = $this->security->getUser();
-        $couple = $this->coupleRepository->findOneByUser($user);
+        $couple = $this->coupleResolver->resolve();
 
         if ($couple === null) {
             return new JsonResponse(['error' => 'No couple associated with this account.'], 404);
