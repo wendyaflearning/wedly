@@ -109,6 +109,27 @@ final class CreateCouplePinActionTest extends WebTestCase
         self::assertSame(0, $this->countPins($couple));
     }
 
+    /**
+     * WED-193 : le prestataire coupe sa vitrine Wedream entre le moment où le
+     * couple voit la photo et le clic sur le cœur (fenêtre élargie par la file
+     * locale, WED-160). L'épingle est refusé et aucune ligne `couple_pin`
+     * n'est créée — la définition d'écriture rejoint celle de la lecture
+     * (COUPLE-PIN-003).
+     */
+    public function test_a_photo_whose_vendor_left_wedream_cannot_be_pinned(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $vendor = $this->vendor();
+        $photo  = $this->photo($vendor);
+        $vendor->setWedreamEnabled(false);
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $photo->getId()->toRfc4122());
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(0, $this->countPins($couple));
+    }
+
     public function test_a_couple_account_without_a_couple_profile_gets_a_404(): void
     {
         $user  = $this->user('camille@example.test', Role::Couple);

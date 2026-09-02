@@ -81,9 +81,12 @@ le couple est lu dans le JWT, jamais dans l'URL ni dans le corps.
 
 Règles d'écriture :
 
-- la photo doit être publiée dans Wedream au moment de l'épinglage — même porte
-  que le parcours d'inscription (`VendorResolver::findVisiblePortfolioImage()`),
-  sinon 422 ;
+- la photo doit être publiée dans Wedream au moment de l'épinglage — les trois
+  conditions de WEDREAM-VISIBILITY-003 ensemble (fiche publiée, vitrine Wedream
+  active, photo taguée visible), même porte que le parcours d'inscription
+  (`VendorResolver::findVisiblePortfolioImage()`), sinon 422. Depuis WED-193
+  cette porte est exactement la même que la lecture (COUPLE-PIN-003) : aucune
+  ligne `couple_pin` ne peut naître invisible ;
 - réépingler une photo déjà épinglée par ce couple est un **no-op silencieux**,
   pas un conflit : côté couple le cœur est déjà rempli, un 409 ne lui donnerait
   rien à corriger. `UNIQ_couple_pin_couple_image` (COUPLE-PIN-001) reste le

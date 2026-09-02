@@ -197,6 +197,26 @@ final class CreateCoupleProviderLeadActionTest extends WebTestCase
         self::assertSame(0, $this->countLeads($couple));
     }
 
+    /**
+     * WED-193 : le prestataire coupe sa vitrine Wedream entre le browse et le
+     * clic. La demande de contact est refusée, aucun lead n'est créé — le
+     * chemin partage la même définition de « joignable dans Wedream » que
+     * l'épingle et que la galerie.
+     */
+    public function test_a_photo_whose_vendor_left_wedream_cannot_start_a_contact_request(): void
+    {
+        $couple = $this->couple('camille@example.test');
+        $vendor = $this->vendor();
+        $photo  = $this->photo($vendor);
+        $vendor->setWedreamEnabled(false);
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $photo->getId()->toRfc4122());
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(0, $this->countLeads($couple));
+    }
+
     public function test_a_couple_account_without_a_couple_profile_gets_a_404(): void
     {
         $user  = $this->user('camille@example.test', Role::Couple);

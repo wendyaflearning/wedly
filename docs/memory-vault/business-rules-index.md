@@ -94,6 +94,7 @@ dans les fichiers de règles.
 | ------------------------- | ---------------------------------------------------------------------------- | -------- | ----------------------------- |
 | `WEDREAM-VISIBILITY-001`  | La publication publique exige un opt-in explicite du prestataire             | `active` | `rules/wedream-visibility.md` |
 | `WEDREAM-VISIBILITY-002`  | La désactivation coupe la lecture publique sans toucher photos ni tags       | `active` | `rules/wedream-visibility.md` |
+| `WEDREAM-VISIBILITY-003`  | Une seule définition de « publié dans Wedream », lecture comme écriture       | `active` | `rules/wedream-visibility.md` |
 
 ## Couple pins
 

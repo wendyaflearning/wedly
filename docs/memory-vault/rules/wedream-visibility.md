@@ -11,6 +11,8 @@ Code principal :
 - `apps/api/src/Service/Vendor/VendorWedreamVisibilityService.php`
 - `apps/api/src/Controller/Vendor/Dashboard/PatchVendorDashboardWedreamVisibilityAction.php`
 - `apps/api/src/Repository/Vendor/PortfolioImageRepository.php`
+- `apps/api/src/Repository/Vendor/WedreamVisibilityCriteria.php` (définition unique)
+- `apps/api/src/Service/Vendor/VendorResolver.php`
 
 ## WEDREAM-VISIBILITY-001 — La publication publique exige un opt-in explicite du prestataire
 
@@ -77,3 +79,57 @@ E2E attendu :
 - prestataire publié : activer la visibilité, vérifier l'apparition dans la
 galerie, désactiver, vérifier la disparition puis la réapparition après
 réactivation sans re-tagging
+
+## WEDREAM-VISIBILITY-003 — Une seule définition de « publié dans Wedream », lecture comme écriture
+
+Statut : `active`
+
+Décision produit du 02/09/2026 (WED-193).
+
+Les trois conditions de WEDREAM-VISIBILITY-001 (`vendor.is_published`,
+`vendor.wedream_enabled`, `portfolio_image.is_visible_in_wedream`) forment une
+définition unique, partagée par **tous** les points d'entrée — lecture publique
+de la galerie, lecture des épinglés d'un couple (COUPLE-PIN-003) et écriture
+(épingle, demande de contact, pin posé à l'inscription).
+
+Avant WED-193, `VendorResolver::findVisiblePortfolioImage()` ne vérifiait que
+`is_visible_in_wedream`. Un couple pouvait donc créer une ligne `couple_pin` ou
+un `provider_lead` pointant une photo dont le prestataire avait coupé Wedream
+entre le browse et le clic — ligne jamais servie ensuite par aucune lecture.
+
+Raison produit :
+
+- une écriture ne doit jamais créer une donnée que la lecture masquera aussitôt
+- fenêtre d'incohérence élargie par la file locale (localStorage, TTL 30 jours,
+WED-160) qui rejoue un geste plusieurs jours après le clic d'origine
+
+Implémentation actuelle :
+
+- `WedreamVisibilityCriteria::apply()` — la clause DQL, un seul endroit
+- consommée par `PortfolioImageRepository::findPublicByTagValue()`,
+`::countByTagValue()`, `::findWedreamVisibleById()` et
+`CouplePinRepository::findByCouple()`
+- `VendorResolver::findVisiblePortfolioImage()` s'appuie sur
+`findWedreamVisibleById()` ; `VendorResolver::resolveActive()` applique les
+mêmes trois conditions au chemin `vendorId` (demande de contact à
+l'inscription) pour ne pas ouvrir une porte plus large
+
+Contrat attendu :
+
+- toute nouvelle requête, lecture ou écriture, qui touche la visibilité Wedream
+d'une photo passe par `WedreamVisibilityCriteria`, jamais par un filtre partiel
+- un prestataire hors Wedream fait échouer l'écriture en 422
+(`« Cette photo n'est pas disponible. »` / `« Ce prestataire n'est pas
+disponible. »`), il ne la laisse pas passer silencieusement
+
+Hors périmètre :
+
+- `DeleteCouplePinService` (dé-épinglage) reste sans contrôle de visibilité
+Wedream (COUPLE-PIN-005) — décision inverse, déjà tranchée
+
+Couverture existante :
+
+- `tests/Unit/Service/Vendor/VendorResolverTest.php`
+- `tests/Functional/Couple/CreateCouplePinActionTest.php`
+- `tests/Functional/Couple/CreateCoupleProviderLeadActionTest.php`
+- `tests/Unit/Service/Couple/CoupleRegistrationServiceTest.php`
