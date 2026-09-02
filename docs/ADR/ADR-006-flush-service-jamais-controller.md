@@ -79,3 +79,29 @@ Références d'implémentation :
 - `src/Service/Couple/CoupleRegistrationService.php` (WED-109)
 - `src/Service/Vendor/AdminVendorDraftService.php::create` (précédent
   antérieur, déjà conforme à ce patron)
+
+## Révision — septembre 2026 (WED-183)
+
+Le dé-épinglage a introduit un troisième cas : une entité dont on inverse
+l'état d'activité au lieu de la supprimer. `CouplePin` expose
+`reactivate()` / `deactivate()` et **pas** de `setIsActive(bool)`.
+
+**Décision** : pour toute entité en soft delete, deux verbes métier
+plutôt qu'un setter booléen. `deactivate()` dit ce qui se passe côté
+appelant ; `setIsActive(false)` demande au lecteur de le déduire, et
+laisse la porte ouverte à un booléen calculé ailleurs dans le code.
+C'est désormais le patron canonique pour les nouvelles entités.
+
+`TagValue` et `Plan` restent sur `setIsActive()` : ils sont pilotés par
+des formulaires d'administration qui passent un booléen déjà décidé en
+amont, et les migrer ne réglerait aucun problème réel. Pas de
+réécriture rétroactive.
+
+Le flush reste dans le service : `DeleteCouplePinService::delete()`
+appelle `deactivate()` puis `flush()`, l'Action ne fait que résoudre le
+couple depuis le JWT et renvoyer 204.
+
+Référence d'implémentation :
+
+- `src/Entity/Couple/CouplePin.php` et
+  `src/Service/Couple/Pin/DeleteCouplePinService.php` (WED-183)
