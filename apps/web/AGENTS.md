@@ -24,6 +24,7 @@ Couleurs (classes Tailwind) :
 - bg-accent / text-accent : #9D4F1E (CTA, boutons)
 - bg-highlight / text-highlight : #E35704 (icônes, séparateurs)
 - text-gris : #9E8E85 (textes secondaires)
+- bg-muted / text-muted : #F3E9DC (fonds neutres, états désactivés)
 
 Fonts :
 - font-cormorant : Cormorant Garamond (titres, italic)

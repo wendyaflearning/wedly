@@ -312,3 +312,46 @@ Implémentation :
 
 À auditer : au moment du switch frontend, retirer le shim `contactRequest` et
 les deux tests qui le couvrent, puis revenir sur le mapping du catch.
+
+---
+
+## PROVIDER-LEAD-008 — Recontacter dit où en est la demande, et un refus est définitif
+
+Statut : `active`
+
+Livré par WED-186. Recontacter un prestataire déjà en lead reste le no-op
+silencieux de `PROVIDER-LEAD-007`, mais il n'est plus muet : `POST
+/api/v1/couples/me/provider-leads` renvoie le `CoupleLeadStatus` du lead
+réellement en base, en plus du code HTTP.
+
+Le code seul ne suffisait pas. 201 et 200 disent « une ressource est née » ou
+« elle existait déjà » — pas si le prestataire a répondu. Un couple recliquant
+sur une photo relisait donc « Demande envoyée » alors que le prestataire venait
+de refuser : le même texte pour trois situations qu'il ne vit pas de la même
+façon.
+
+Le statut est **projeté à la lecture** (`PROVIDER-LEAD-005`), jamais persisté
+côté couple. La branche concurrente relit la ligne gagnante avant de répondre :
+la requête qui perd la course contre `UNIQ_provider_lead_couple_vendor` n'a
+aucune raison de savoir ce que l'autre a écrit, et supposer « en attente » y
+serait faux dès que WED-113 posera des décisions.
+
+**Un refus est définitif.** Aucun mécanisme de recontact n'est offert depuis ce
+bouton : le couple est renvoyé vers d'autres profils. Rouvrir une fenêtre de
+recontact après refus est une question produit distincte, explicitement hors
+scope de WED-186 — la trancher avant de rendre le geste à nouveau disponible.
+
+Conséquence côté lecture : `GET /provider-leads` porte déjà ce statut
+(`PROVIDER-LEAD-005`), et la galerie s'en sert dès le rendu serveur. Un statut
+connu pour une photo n'est jamais redemandé au réseau — le clic ne fait que
+raffiner ce que la lecture initiale n'avait pas.
+
+Implémentation :
+
+- `apps/api/src/Service/Couple/ProviderLead/CreateCoupleProviderLeadResult.php`
+- `apps/api/src/Service/Couple/ProviderLead/CreateCoupleProviderLeadService.php`
+- `apps/api/src/Controller/Couple/ProviderLead/CreateCoupleProviderLeadAction.php`
+
+À auditer : quand WED-113 sortira de pause, vérifier sur des leads réellement
+acceptés/refusés — tant qu'il est en pause, seul `EN_ATTENTE` existe en base et
+les deux autres branches ne sont couvertes que par les tests.

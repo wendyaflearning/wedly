@@ -62,7 +62,41 @@ describe('fetchInitialCtaStatuses', () => {
 
     await expect(fetchStatuses()).resolves.toEqual({
       'photo-1': { pin: 'done' },
-      'photo-2': { contact: 'done' },
+      'photo-2': { contact: 'done', contactLeadStatus: 'EN_ATTENTE' },
+    })
+  })
+
+  /**
+   * Les deux statuts qui changent ce que la lightbox affiche (WED-186). Ils
+   * doivent arriver dès le rendu serveur : sinon le couple qui rouvre la galerie
+   * relit « Demande envoyée » sur un prestataire qui a déjà tranché, jusqu'à ce
+   * qu'il reclique.
+   */
+  it('retient un refus dès la lecture serveur', async () => {
+    cookieGet.mockReturnValue({ value: 'jwt' })
+    vi.stubGlobal(
+      'fetch',
+      respondBy({
+        [LEADS]: jsonResponse({ items: [{ portfolioImageId: 'photo-3', status: 'REFUSEE' }] }),
+      })
+    )
+
+    await expect(fetchStatuses()).resolves.toEqual({
+      'photo-3': { contact: 'done', contactLeadStatus: 'REFUSEE' },
+    })
+  })
+
+  it('retient une demande débloquée dès la lecture serveur', async () => {
+    cookieGet.mockReturnValue({ value: 'jwt' })
+    vi.stubGlobal(
+      'fetch',
+      respondBy({
+        [LEADS]: jsonResponse({ items: [{ portfolioImageId: 'photo-3', status: 'DEBLOQUEE' }] }),
+      })
+    )
+
+    await expect(fetchStatuses()).resolves.toEqual({
+      'photo-3': { contact: 'done', contactLeadStatus: 'DEBLOQUEE' },
     })
   })
 

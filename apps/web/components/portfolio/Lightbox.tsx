@@ -3,7 +3,8 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart, MessageSquare, X } from 'lucide-react'
+import { Clock, Heart, MessageSquare, X } from 'lucide-react'
+import type { CoupleLeadStatus } from '@/lib/couple-lead-status'
 import { COUPLE_SPACE_PATH } from '@/lib/couple-space'
 import { ctaConfirmation, type CtaConfirmationStatus } from '@/lib/wedream-cta-confirmation'
 import type { PublicPortfolioImage } from '@/lib/wedream-gallery'
@@ -16,6 +17,15 @@ interface LightboxProps {
   /** État du geste pour CETTE photo, tenu par l'appelant (WED-158). */
   pinStatus?: CtaConfirmationStatus
   contactStatus?: CtaConfirmationStatus
+  /**
+   * Le statut réel de la demande (WED-186). Il arrive soit dès le rendu serveur
+   * quand le couple avait déjà contacté ce prestataire (WED-182), soit au retour
+   * du clic qui vient de créer ou de retrouver le lead.
+   *
+   * Absent tant qu'aucune demande n'existe pour cette photo : le bouton garde
+   * alors son libellé générique.
+   */
+  contactLeadStatus?: CoupleLeadStatus
 }
 
 const noop = () => {}
@@ -25,6 +35,18 @@ const CTA_BASE =
 /** Pas de `hover:` sur l'état confirmé : sur fond plein il ne se verrait pas. */
 const CTA_CONFIRMED = 'border-bordeaux bg-bordeaux text-creme'
 const CTA_IDLE = 'border-bordeaux/30 text-bordeaux hover:bg-bordeaux/5'
+/**
+ * Un constat, pas une action : fond neutre, pas de bordure, pas de curseur
+ * cliquable. La maquette peint ainsi la demande en attente comme la demande
+ * refusée — c'est le même « il n'y a rien à faire ici ».
+ */
+const CTA_MUTED = 'border-transparent bg-muted text-texte cursor-default'
+/**
+ * Le refus va un cran plus loin et éteint tout le bouton, icône comprise
+ * (opacity 0.55 dans la maquette) : c'est la seule fin de parcours du lot, et
+ * elle ne doit pas peser autant à l'œil qu'une attente encore vivante.
+ */
+const CTA_REFUSED = `${CTA_MUTED} opacity-55`
 
 export function Lightbox({
   photo,
@@ -33,6 +55,7 @@ export function Lightbox({
   onContact = noop,
   pinStatus = 'idle',
   contactStatus = 'idle',
+  contactLeadStatus,
 }: LightboxProps) {
   // La touche Échap doit toujours appeler le dernier onClose reçu, sans pour
   // autant relancer l'effet de scroll-lock ci-dessous (qui restaurerait alors
@@ -58,7 +81,19 @@ export function Lightbox({
   const tagGroups = Object.entries(photo.tagsByGroup).filter(([, values]) => values.length > 0)
 
   const pinCta = ctaConfirmation('pin', pinStatus)
-  const contactCta = ctaConfirmation('contact', contactStatus)
+  const contactCta = ctaConfirmation('contact', contactStatus, contactLeadStatus)
+  // Le refus est le seul statut qui change à la fois le fond et l'icône : il
+  // pilote les deux depuis la même variable, plutôt que de déduire l'un du
+  // drapeau qui sert à l'autre.
+  const isContactRefused = contactLeadStatus === 'REFUSEE'
+  // L'icône suit le statut plutôt que le geste : une horloge pour l'attente, et
+  // rien du tout sur un refus — l'enveloppe « demande envoyée » y raconterait un
+  // envoi qui vient d'être clos.
+  const ContactIcon = isContactRefused
+    ? null
+    : contactLeadStatus === 'EN_ATTENTE'
+      ? Clock
+      : MessageSquare
   const showsCoupleSpaceLink = pinCta.showsCoupleSpaceLink || contactCta.showsCoupleSpaceLink
 
   return (
@@ -154,9 +189,11 @@ export function Lightbox({
             sous la barre d'accueil ; on le garde pour ne pas casser le jour où
             quelqu'un activera cover. À revoir avec ce changement-là. */}
         <div className="border-bordeaux/10 flex shrink-0 flex-col gap-2.5 border-t px-[22px] pt-3.5 pb-[calc(22px_+_env(safe-area-inset-bottom))] md:px-7 md:pt-[18px] md:pb-[26px]">
-          {/* Les boutons restent cliquables une fois confirmés : les deux
-              écritures sont idempotentes côté backend, et griser le bouton
-              ferait passer une confirmation pour une indisponibilité. */}
+          {/* Le bouton reste cliquable une fois confirmé : les deux écritures
+              sont idempotentes côté backend, et griser une confirmation la
+              ferait passer pour une indisponibilité. Le contact fait exception
+              dès que le statut réel du lead est connu (WED-186) — attente et
+              refus sont des constats, il n'y a plus rien à rejouer. */}
           <button
             type="button"
             onClick={onPin}
@@ -168,9 +205,18 @@ export function Lightbox({
           <button
             type="button"
             onClick={onContact}
-            className={`${CTA_BASE} ${contactCta.confirmed ? CTA_CONFIRMED : CTA_IDLE}`}
+            disabled={contactCta.disabled}
+            className={`${CTA_BASE} ${
+              isContactRefused
+                ? CTA_REFUSED
+                : contactCta.disabled
+                  ? CTA_MUTED
+                  : contactCta.confirmed
+                    ? CTA_CONFIRMED
+                    : CTA_IDLE
+            }`}
           >
-            <MessageSquare size={15} aria-hidden="true" />
+            {ContactIcon && <ContactIcon size={15} aria-hidden="true" />}
             {contactCta.label}
           </button>
 
@@ -183,6 +229,20 @@ export function Lightbox({
             >
               Voir mes coups de cœur et demandes
             </Link>
+          )}
+
+          {/* L'alternative au refus, jamais en même temps que le lien ci-dessus :
+              `showsDiscoveryPrompt` et `showsCoupleSpaceLink` du contact sont
+              exclusifs par construction (REFUSEE contre DEBLOQUEE). Fermer la
+              lightbox suffit — la galerie est déjà derrière. */}
+          {contactCta.showsDiscoveryPrompt && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-accent mt-0.5 text-center text-[12px] font-semibold underline underline-offset-4"
+            >
+              Découvrir d&apos;autres profils
+            </button>
           )}
         </div>
       </div>

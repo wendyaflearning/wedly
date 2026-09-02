@@ -27,6 +27,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * le geste a abouti dans les deux cas, seul le fait qu'une ressource soit née
  * les distingue. C'est le service qui le sait, l'Action ne fait que le traduire.
  *
+ * Le corps porte en plus le statut du lead (WED-186) : un 200 ne dit pas au
+ * couple si le prestataire n'a pas encore répondu, a accepté, ou a refusé, et
+ * l'écran ne peut pas le deviner du code HTTP seul.
+ *
  * Aucun try/catch ici — la photo refusée par VendorResolver (422) et l'échec
  * d'unicité traité dans le service remontent tels quels à l'ExceptionListener,
  * seul endroit où le mapping HTTP est décidé.
@@ -51,8 +55,11 @@ final class CreateCoupleProviderLeadAction extends AbstractController
             return new JsonResponse(['error' => 'No couple associated with this account.'], 404);
         }
 
-        $created = $this->createCoupleProviderLeadService->create($couple, $dto->portfolioImageId);
+        $result = $this->createCoupleProviderLeadService->create($couple, $dto->portfolioImageId);
 
-        return new JsonResponse(['success' => true], $created ? 201 : 200);
+        return new JsonResponse(
+            ['success' => true, 'status' => $result->status->value],
+            $result->created ? 201 : 200,
+        );
     }
 }

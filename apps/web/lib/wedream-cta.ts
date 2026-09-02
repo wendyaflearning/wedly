@@ -1,3 +1,5 @@
+import type { CoupleLeadStatus } from './couple-lead-status'
+
 /** Les deux gestes d'intérêt d'un couple sur une photo Wedream. */
 export type CtaKind = 'pin' | 'contact'
 
@@ -16,7 +18,7 @@ export type CtaAction = {
  * logique de rôle dans un écran public qui n'a pas à en avoir.
  */
 export type CtaOutcome =
-  | { status: 'done' }
+  | { status: 'done'; leadStatus?: CoupleLeadStatus }
   | { status: 'auth_required' }
   | { status: 'error'; message: string }
 
@@ -36,7 +38,9 @@ const FALLBACK_ERROR = 'Une erreur est survenue. Réessayez.'
  *
  * 200 et 201 sont deux succès — réépingler une photo déjà épinglée ou
  * recontacter un prestataire déjà contacté sont des no-op côté backend, pas des
- * erreurs à faire remonter à l'écran.
+ * erreurs à faire remonter à l'écran. Le corps du succès porte en plus, sur le
+ * contact, le statut du lead déjà en base (WED-186) : c'est lui, et pas le code
+ * HTTP, qui dit si le prestataire a répondu.
  *
  * Tout ce qui n'est ni un succès ni un 401/403 est une erreur métier : une photo
  * masquée dans Wedream ou un prestataire inactif remontent en 422, et se
@@ -82,7 +86,18 @@ export async function submitUnpinAction(portfolioImageId: string): Promise<CtaOu
  */
 async function toOutcome(response: Response | null): Promise<CtaOutcome> {
   if (!response) return { status: 'error', message: FALLBACK_ERROR }
-  if (response.ok) return { status: 'done' }
+
+  if (response.ok) {
+    // Seul le POST de contact renvoie un statut de lead (WED-186) ; l'épinglage
+    // et le 204 du dé-épinglage n'en ont pas, et `leadStatus` reste alors
+    // absent — c'est ce qui fait que ces boutons gardent leur libellé générique.
+    // L'optionnel sur `.json` court-circuite toute la chaîne : une réponse
+    // simulée sans cette méthode ne doit pas transformer un succès en erreur.
+    const body = await response.json?.().catch(() => null)
+
+    return { status: 'done', leadStatus: body?.status }
+  }
+
   if (response.status === 401 || response.status === 403) return { status: 'auth_required' }
 
   const data: { error?: string } | null = await response.json().catch(() => null)

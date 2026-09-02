@@ -11,6 +11,7 @@ use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
 use App\Entity\Wedding\Wedding;
 use App\Enum\Couple\PlanningStage;
+use App\Enum\ProviderLead\ProviderLeadStatus;
 use App\Enum\User\Role;
 use App\Enum\User\UserStatus;
 use App\Enum\Vendor\PriceType;
@@ -73,6 +74,7 @@ final class CreateCoupleProviderLeadActionTest extends WebTestCase
         $this->post($couple->getUser(), $photo->getId()->toRfc4122());
 
         self::assertResponseStatusCodeSame(201);
+        self::assertSame('EN_ATTENTE', $this->responseStatus());
         self::assertSame(1, $this->countLeads($couple));
 
         $lead = $this->onlyLead($couple);
@@ -116,11 +118,60 @@ final class CreateCoupleProviderLeadActionTest extends WebTestCase
         $this->post($couple->getUser(), $secondPhoto->getId()->toRfc4122());
 
         self::assertResponseStatusCodeSame(200);
+        self::assertSame('EN_ATTENTE', $this->responseStatus());
         self::assertSame(1, $this->countLeads($couple));
         self::assertSame(
             $firstPhoto->getId()->toRfc4122(),
             $this->onlyLead($couple)->getPortfolioImage()->getId()->toRfc4122(),
         );
+    }
+
+    /**
+     * Un prestataire qui a refusé (WED-186) : le geste aboutit toujours en 200,
+     * mais le corps ne peut pas laisser croire qu'une demande vient de partir.
+     * Le statut est écrit ici à la main parce que l'action prestataire est
+     * encore en pause (WED-113) — c'est elle qui le posera en vrai.
+     */
+    public function test_recontacting_a_vendor_who_refused_reports_the_refusal(): void
+    {
+        self::assertSame('REFUSEE', $this->statusAfterRecontacting(ProviderLeadStatus::Refused));
+    }
+
+    /**
+     * Le pendant du refus : une acceptation débloque la fiche, et le couple doit
+     * lire qu'il est déjà en contact plutôt qu'une énième demande envoyée.
+     */
+    public function test_recontacting_a_vendor_who_accepted_reports_the_unlocked_lead(): void
+    {
+        self::assertSame('DEBLOQUEE', $this->statusAfterRecontacting(ProviderLeadStatus::Accepted));
+    }
+
+    /**
+     * Premier contact, décision du prestataire posée en base, puis re-clic
+     * depuis une autre photo du même prestataire — le chemin exact du couple qui
+     * revient sur la galerie. Renvoie le `status` lu dans le corps du second
+     * appel, dont le code est vérifié au passage.
+     */
+    private function statusAfterRecontacting(ProviderLeadStatus $decision): string
+    {
+        $couple      = $this->couple('camille@example.test');
+        $vendor      = $this->vendor();
+        $firstPhoto  = $this->photo($vendor);
+        $secondPhoto = $this->photo($vendor, sortOrder: 1);
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $firstPhoto->getId()->toRfc4122());
+        self::assertResponseStatusCodeSame(201);
+
+        $this->onlyLead($couple)->setStatus($decision);
+        $this->em->flush();
+
+        $this->post($couple->getUser(), $secondPhoto->getId()->toRfc4122());
+
+        self::assertResponseStatusCodeSame(200);
+        self::assertSame(1, $this->countLeads($couple));
+
+        return $this->responseStatus();
     }
 
     public function test_an_unknown_photo_is_rejected(): void
@@ -191,6 +242,17 @@ final class CreateCoupleProviderLeadActionTest extends WebTestCase
             ],
             content: json_encode(['portfolioImageId' => $portfolioImageId], JSON_THROW_ON_ERROR),
         );
+    }
+
+    /**
+     * Le statut du lead tel que l'écran le lira : c'est lui, et pas le code
+     * HTTP, qui distingue une demande en attente d'un refus (WED-186).
+     */
+    private function responseStatus(): string
+    {
+        $body = json_decode($this->client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        return $body['status'];
     }
 
     private function countLeads(Couple $couple): int

@@ -6,6 +6,7 @@ import { Lightbox } from '@/components/portfolio/Lightbox'
 import { Toast } from '@/components/ui/Toast'
 import { AccountCreationModal } from '@/components/wedream/AccountCreationModal'
 import { useToast } from '@/hooks/useToast'
+import type { CoupleLeadStatus } from '@/lib/couple-lead-status'
 import type { CtaStatusesByImage } from '@/lib/couple-cta-status'
 import {
   submitCtaAction,
@@ -75,6 +76,23 @@ export default function PortfolioGrid({
    * clignotement, et le refresh perdrait les gestes des sessions précédentes.
    */
   const [ctaStatuses, setCtaStatuses] = useState<CtaStatusesByImage>(initialCtaStatuses)
+  /**
+   * Le statut réel des demandes (WED-186). Il démarre sur ce que le serveur a lu
+   * (WED-182) : la galerie rouverte affiche donc d'emblée « demande non retenue »
+   * plutôt que « demande envoyée », sans attendre un clic. Le clic ne fait plus
+   * que raffiner un statut parfois déjà connu — c'est la source initiale qui
+   * change, pas la logique. CA5 couvre les deux chemins tel quel : dès qu'une
+   * photo a son statut, d'où qu'il vienne, plus aucun appel ne part.
+   */
+  const [leadStatuses, setLeadStatuses] = useState<Record<string, CoupleLeadStatus>>(() => {
+    const initial: Record<string, CoupleLeadStatus> = {}
+
+    for (const [photoId, status] of Object.entries(initialCtaStatuses)) {
+      if (status.contactLeadStatus !== undefined) initial[photoId] = status.contactLeadStatus
+    }
+
+    return initial
+  })
   const { toast, showToast } = useToast()
 
   const [accountModalOpen, setAccountModalOpen] = useState(false)
@@ -257,6 +275,20 @@ export default function PortfolioGrid({
         return
       }
 
+      // Statut déjà connu pour cette photo : le backend redonnerait le même, et
+      // le bouton l'affiche déjà (CA5). En pratique seule `DEBLOQUEE` arrive
+      // jusqu'ici — attente et refus désactivent le bouton, donc rien ne part de
+      // la lightbox. Le garde-fou reste : il ne dépend pas de ce que le rendu
+      // choisit de désactiver, et c'est lui qui tient la garantie « aucun appel
+      // réseau pour un statut déjà connu ».
+      if (kind === 'contact' && leadStatuses[portfolioImageId] !== undefined) return
+
+      // Lu avant l'appel : `ctaStatuses` aura déjà la clé `contact` au moment où
+      // le toast se décide, et on ne peut plus distinguer un premier envoi d'un
+      // re-clic. Or seul le premier a réellement prévenu le prestataire.
+      const wasAlreadyContacted =
+        kind === 'contact' && ctaStatuses[portfolioImageId]?.contact !== undefined
+
       setPendingCta(kind)
       const outcome = await submitCtaAction({ kind, portfolioImageId })
       setPendingCta(null)
@@ -273,6 +305,10 @@ export default function PortfolioGrid({
         [portfolioImageId]: { ...current[portfolioImageId], [kind]: outcome.status },
       }))
 
+      if (kind === 'contact' && outcome.status === 'done' && outcome.leadStatus !== undefined) {
+        setLeadStatuses((current) => ({ ...current, [portfolioImageId]: outcome.leadStatus! }))
+      }
+
       if (outcome.status === 'auth_required') {
         requestAccountCreation({ kind, portfolioImageId })
         return
@@ -281,9 +317,11 @@ export default function PortfolioGrid({
       // Pas de toast sur l'épingle : la trace visuelle suffit — le cœur de la
       // grille et le bouton de la lightbox se remplissent tous deux depuis
       // `ctaStatuses`, sur place et pour toute la session.
-      if (kind === 'contact') showToast('success', CONTACT_CONFIRMATION)
+      // « Votre demande est partie » n'est vrai qu'au premier envoi : sur un
+      // re-clic, c'est le libellé du bouton qui dit où en est la demande.
+      if (kind === 'contact' && !wasAlreadyContacted) showToast('success', CONTACT_CONFIRMATION)
     },
-    [ctaStatuses, pendingCta, requestAccountCreation, runUnpin, showToast]
+    [ctaStatuses, leadStatuses, pendingCta, requestAccountCreation, runUnpin, showToast]
   )
 
   return (
@@ -359,6 +397,7 @@ export default function PortfolioGrid({
           onContact={() => void runCta('contact', selectedImage.id)}
           pinStatus={ctaStatuses[selectedImage.id]?.pin ?? 'idle'}
           contactStatus={ctaStatuses[selectedImage.id]?.contact ?? 'idle'}
+          contactLeadStatus={leadStatuses[selectedImage.id]}
         />
       )}
 
