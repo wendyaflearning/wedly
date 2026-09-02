@@ -7,7 +7,6 @@ namespace App\Tests\Unit\Vendor;
 use App\Entity\Vendor\Vendor;
 use App\Handler\Vendor\Onboarding\PortfolioStepHandler;
 use App\Handler\Vendor\Onboarding\ZonesPricingStepHandler;
-use App\Repository\Vendor\VendorRepository;
 use App\Service\Vendor\VendorProfileCompletionService;
 use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit\Framework\TestCase;
@@ -15,15 +14,13 @@ use PHPUnit\Framework\TestCase;
 final class VendorProfileCompletionServiceTest extends TestCase
 {
     private function makeService(
-        ?VendorRepository $repository = null,
         ?PortfolioStepHandler $portfolioHandler = null,
         ?ZonesPricingStepHandler $zonesHandler = null,
     ): VendorProfileCompletionService {
-        $repository      ??= $this->createStub(VendorRepository::class);
         $portfolioHandler ??= $this->createStub(PortfolioStepHandler::class);
-        $zonesHandler    ??= $this->createStub(ZonesPricingStepHandler::class);
+        $zonesHandler     ??= $this->createStub(ZonesPricingStepHandler::class);
 
-        return new VendorProfileCompletionService($repository, $portfolioHandler, $zonesHandler);
+        return new VendorProfileCompletionService($portfolioHandler, $zonesHandler);
     }
 
     private function makeVendor(?string $bio = null): Vendor
@@ -40,7 +37,7 @@ final class VendorProfileCompletionServiceTest extends TestCase
         $service = $this->makeService();
         $vendor  = $this->makeVendor(bio: 'Une belle bio');
 
-        $result = $service->check($vendor, []);
+        $result = $service->check($vendor);
 
         $this->assertTrue($result['bio']);
     }
@@ -50,7 +47,7 @@ final class VendorProfileCompletionServiceTest extends TestCase
         $service = $this->makeService();
         $vendor  = $this->makeVendor(bio: null);
 
-        $result = $service->check($vendor, []);
+        $result = $service->check($vendor);
 
         $this->assertFalse($result['bio']);
     }
@@ -60,36 +57,32 @@ final class VendorProfileCompletionServiceTest extends TestCase
         $service = $this->makeService();
         $vendor  = $this->makeVendor(bio: '   ');
 
-        $result = $service->check($vendor, []);
+        $result = $service->check($vendor);
 
         $this->assertFalse($result['bio']);
     }
 
-    public function test_check_uses_preloaded_booking_blockers_and_skips_repository(): void
+    public function test_check_considers_disponibilites_filled_without_any_booking_blocker(): void
     {
-        $repository = $this->createMock(VendorRepository::class);
-        $repository->expects($this->never())->method('countBookingBlockersByVendor');
-
-        $service = $this->makeService(repository: $repository);
+        $service = $this->makeService();
         $vendor  = $this->makeVendor();
 
-        $result = $service->check($vendor, [new \stdClass()]);
+        $result = $service->check($vendor);
 
-        $this->assertTrue($result['disponibilites']);
+        $this->assertTrue(
+            $result['disponibilites'],
+            'Aucune indisponibilité déclarée signifie disponible partout — le critère est satisfait.',
+        );
     }
 
-    public function test_check_calls_repository_when_preloaded_blockers_is_null(): void
+    public function test_check_for_publish_does_not_block_on_disponibilites(): void
     {
-        $repository = $this->createMock(VendorRepository::class);
-        $repository->expects($this->once())
-            ->method('countBookingBlockersByVendor')
-            ->willReturn(2);
+        $service = $this->makeService();
+        $vendor  = $this->makeVendor(bio: 'Bio');
 
-        $service = $this->makeService(repository: $repository);
-        $vendor  = $this->makeVendor();
+        $result = $service->checkForPublish($vendor);
 
-        $result = $service->check($vendor, null);
-
+        $this->assertArrayHasKey('disponibilites', $result);
         $this->assertTrue($result['disponibilites']);
     }
 
@@ -106,5 +99,21 @@ final class VendorProfileCompletionServiceTest extends TestCase
         $this->assertArrayHasKey('disponibilites', $result);
         $this->assertArrayHasKey('zone', $result);
         $this->assertArrayHasKey('tarifs', $result);
+    }
+
+    public function test_check_for_publish_is_true_everywhere_on_a_complete_profile(): void
+    {
+        $portfolioHandler = $this->createStub(PortfolioStepHandler::class);
+        $portfolioHandler->method('isFilled')->willReturn(true);
+
+        $zonesHandler = $this->createStub(ZonesPricingStepHandler::class);
+        $zonesHandler->method('isFilled')->willReturn(true);
+
+        $service = $this->makeService($portfolioHandler, $zonesHandler);
+        $vendor  = $this->makeVendor(bio: 'Une belle bio');
+
+        $result = $service->checkForPublish($vendor);
+
+        $this->assertNotContains(false, $result, 'Un profil complet sans styles ni indisponibilités doit pouvoir publier.');
     }
 }
