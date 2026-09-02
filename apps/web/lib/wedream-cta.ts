@@ -18,7 +18,27 @@ export type CtaAction = {
  * logique de rôle dans un écran public qui n'a pas à en avoir.
  */
 export type CtaOutcome =
-  | { status: 'done'; leadStatus?: CoupleLeadStatus }
+  | {
+      status: 'done'
+      /**
+       * Vrai uniquement sur un 201, donc sur une ressource réellement née
+       * (WED-195). Un 200 est un succès tout autant, mais un succès qui n'a rien
+       * changé : recontacter un prestataire déjà en lead est absorbé côté
+       * backend, et confirmer « votre demande est partie » sur ce cas-là fait
+       * croire au couple qu'une seconde demande vient de partir.
+       */
+      created: boolean
+      /**
+       * Où en est la demande côté prestataire (WED-186). Absent partout ailleurs
+       * que sur le POST de contact : l'épinglage n'a pas de statut à porter.
+       *
+       * Les deux champs répondent à deux questions différentes et se lisent
+       * ensemble : `created` dit si *cette requête-ci* a fait naître quelque
+       * chose, `leadStatus` dit ce que le prestataire en a fait. Un recontact
+       * arrive donc en `created: false` avec un statut bien réel.
+       */
+      leadStatus?: CoupleLeadStatus
+    }
   | { status: 'auth_required' }
   | { status: 'error'; message: string }
 
@@ -40,7 +60,8 @@ const FALLBACK_ERROR = 'Une erreur est survenue. Réessayez.'
  * recontacter un prestataire déjà contacté sont des no-op côté backend, pas des
  * erreurs à faire remonter à l'écran. Le corps du succès porte en plus, sur le
  * contact, le statut du lead déjà en base (WED-186) : c'est lui, et pas le code
- * HTTP, qui dit si le prestataire a répondu.
+ * HTTP, qui dit si le prestataire a répondu. Et `created` distingue quand même
+ * les deux codes, pour l'appelant qui a une confirmation à afficher (WED-195).
  *
  * Tout ce qui n'est ni un succès ni un 401/403 est une erreur métier : une photo
  * masquée dans Wedream ou un prestataire inactif remontent en 422, et se
@@ -95,7 +116,10 @@ async function toOutcome(response: Response | null): Promise<CtaOutcome> {
     // simulée sans cette méthode ne doit pas transformer un succès en erreur.
     const body = await response.json?.().catch(() => null)
 
-    return { status: 'done', leadStatus: body?.status }
+    // Le 204 du dé-épinglage passe ici comme les autres succès : rien n'y naît,
+    // il est donc `created: false`, et aucun appelant ne lui demande de
+    // confirmation.
+    return { status: 'done', created: response.status === 201, leadStatus: body?.status }
   }
 
   if (response.status === 401 || response.status === 403) return { status: 'auth_required' }

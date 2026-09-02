@@ -59,6 +59,7 @@ final readonly class CoupleProviderLeadResponseDtoAssembler
             return new MaskedProviderLeadResponseDto(
                 id:               $id,
                 status:           $status,
+                vendorId:         $vendor->getId()->toRfc4122(),
                 requestedAt:      $requestedAt,
                 category:         $category?->getName(),
                 zones:            $zones,
@@ -70,6 +71,7 @@ final readonly class CoupleProviderLeadResponseDtoAssembler
         return new UnlockedProviderLeadResponseDto(
             id:               $id,
             status:           $status,
+            vendorId:         $vendor->getId()->toRfc4122(),
             requestedAt:      $requestedAt,
             category:         $category?->getName(),
             zones:            $zones,

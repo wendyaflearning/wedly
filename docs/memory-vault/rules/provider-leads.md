@@ -355,3 +355,52 @@ Implémentation :
 À auditer : quand WED-113 sortira de pause, vérifier sur des leads réellement
 acceptés/refusés — tant qu'il est en pause, seul `EN_ATTENTE` existe en base et
 les deux autres branches ne sont couvertes que par les tests.
+
+---
+
+## PROVIDER-LEAD-009 — Un identifiant de corrélation, jamais une identité
+
+Statut : `active`
+
+Livré par WED-195. Les photos publiques de Wedream et les demandes de contact
+d'un couple portent le même `vendorId` : un UUID opaque, qui dit seulement que
+deux objets viennent du même prestataire.
+
+Le besoin vient de `PROVIDER-LEAD-007` : un lead est unique par couple **et par
+prestataire**, quelle que soit la photo d'où part le clic. Sans identifiant
+partagé, le frontend n'avait que la photo de départ pour reconnaître une demande
+déjà envoyée — donc deux photos du même prestataire étaient deux inconnus. Le
+couple relisait « Je veux être mise en relation » sur la seconde, et son clic
+tombait dans le no-op silencieux de `PROVIDER-LEAD-007`, confirmé par un toast
+qui affirmait qu'une demande venait de partir.
+
+C'est un **assouplissement délibéré** de `PROVIDER-LEAD-005`, pas une brèche :
+l'identifiant ne devient un nom nulle part. Résoudre un prestataire par son id
+est réservé à l'admin et au prestataire lui-même ; pour un visiteur anonyme,
+`vendorId` ne fait que regrouper des photos publiques par un prestataire dont il
+ignore tout. Le masquage de la forme masquée reste entier : aucun nom, aucune
+bio, aucune coordonnée.
+
+`PROVIDER-LEAD-006` n'est pas contredit non plus. Exposer un `vendorId` **en
+lecture** ne le rend pas acceptable **en écriture** : la demande de contact
+continue de n'envoyer que `portfolioImageId`, et le prestataire ciblé se résout
+côté serveur depuis la photo. Un `vendorId` reçu d'un client resterait un
+identifiant de confiance, ce qu'il n'est pas.
+
+Corollaire côté écran, la contrepartie de `PROVIDER-LEAD-008` : le code HTTP et
+le statut du lead répondent à deux questions distinctes. 201 contre 200 dit si
+*cette requête-ci* a créé quelque chose — donc si une confirmation « votre
+demande est partie » a le droit de s'afficher ; le `CoupleLeadStatus` du corps
+dit ce que le prestataire en a fait. Un recontact arrive en 200 avec un statut
+bien réel : confirmer sur un 200 mentirait, ignorer le statut aussi.
+
+Implémentation :
+
+- `apps/api/src/DTO/Public/PortfolioImage/PublicPortfolioImageResponseDto.php`
+- `apps/api/src/DTO/Couple/ProviderLead/MaskedProviderLeadResponseDto.php`
+- `apps/api/src/DTO/Couple/ProviderLead/UnlockedProviderLeadResponseDto.php`
+- `apps/web/lib/couple-cta-status.ts`
+
+À auditer : toute route publique nouvelle qui accepterait un `vendorId` en
+entrée, ou tout endpoint qui traduirait un `vendorId` en nom sans contrôle de
+rôle — c'est là, et seulement là, que l'assouplissement cesserait de tenir.

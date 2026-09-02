@@ -1,29 +1,73 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
 import type { CoupleLeadStatus } from './couple-lead-status'
-import type { CtaKind } from './wedream-cta'
 import type { CtaConfirmationStatus } from './wedream-cta-confirmation'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 /**
- * Les gestes déjà posés par le couple, photo par photo. La clé est l'id de la
- * photo et non un état global : le couple qui a épinglé une image ne doit pas
- * retrouver la suivante déjà marquée.
+ * Les gestes déjà posés par le couple, tels que la galerie doit les relire.
+ *
+ * Deux clés différentes, parce que les deux gestes ne portent pas sur la même
+ * chose (WED-195) :
+ *
+ * - un coup de cœur porte sur **une photo** — épingler une image ne dit rien de
+ *   la suivante, du même prestataire ou non ;
+ * - une demande de mise en relation porte sur **un prestataire** — c'est ce que
+ *   garantit `UNIQ_provider_lead_couple_vendor` côté backend : un seul lead par
+ *   couple et par prestataire, quelle que soit la photo d'où part le clic.
+ *
+ * Les indexer pareil était le bug : une demande retenue par sa photo de départ
+ * laissait la deuxième photo du même prestataire à l'état neuf, et le couple
+ * relançait un geste déjà fait pour recevoir « votre demande est partie » sur un
+ * no-op silencieux.
  *
  * Le type vit ici plutôt que dans PortfolioGrid parce que le serveur le
  * construit et le client le consomme (WED-182).
  */
-export type CtaStatusesByImage = Record<
-  string,
-  Partial<Record<CtaKind, CtaConfirmationStatus>> & { contactLeadStatus?: CoupleLeadStatus }
->
+/**
+ * Ce qu'une demande de mise en relation laisse sur les boutons : qu'elle existe,
+ * et où elle en est.
+ *
+ * Les deux ne se déduisent pas l'un de l'autre. `status` dit si le couple a posé
+ * le geste — il vaut `auth_required` tant qu'il n'a pas de compte, et la demande
+ * n'est alors jamais partie. `leadStatus` n'existe que quand elle est réellement
+ * en base, et dit ce que le prestataire en a fait (WED-186).
+ */
+export type ContactCtaState = {
+  status: CtaConfirmationStatus
+  leadStatus?: CoupleLeadStatus
+}
+
+export type CoupleCtaStatuses = {
+  /** Clé = id de la photo. */
+  pins: Record<string, CtaConfirmationStatus>
+  /** Clé = `vendorId`, l'identifiant de corrélation opaque porté par les photos. */
+  contacts: Record<string, ContactCtaState>
+}
+
+/**
+ * Un objet neuf à chaque appel, jamais une constante partagée : la valeur part
+ * dans un `useState` côté client, et deux rendus ne doivent pas se retrouver à
+ * pointer sur la même référence.
+ */
+function emptyStatuses(): CoupleCtaStatuses {
+  return { pins: {}, contacts: {} }
+}
 
 /** Ce que la galerie retient d'un épinglé : la photo, rien d'autre. */
 type CouplePin = { portfolioImageId: string }
 
-/** Une demande partie hors galerie n'a pas de photo — d'où le null. */
-type CoupleProviderLead = { portfolioImageId: string | null; status: string }
+/**
+ * Ce que la galerie retient d'une demande : le prestataire, et où elle en est.
+ *
+ * `portfolioImageId` est toujours dans la réponse et n'est plus lu ici — la
+ * photo de départ appartient à « Mes demandes », qui la montre au couple. La
+ * galerie, elle, n'a besoin que de savoir *qui* a déjà été contacté. Au passage,
+ * une demande partie hors galerie (photo nulle) marque désormais les photos de
+ * son prestataire, alors qu'elle était simplement ignorée avant.
+ */
+type CoupleProviderLead = { vendorId?: string; status: string }
 
 /**
  * Un endpoint muet ou en erreur rend une liste vide plutôt que de remonter
@@ -68,20 +112,21 @@ async function fetchItems<T>(path: string, token: string): Promise<T[]> {
  * en vient à rappeler cette lecture dans le même arbre de rendu, elle ne repart
  * pas sur le réseau.
  */
-export const fetchInitialCtaStatuses = cache(async (): Promise<CtaStatusesByImage> => {
+export const fetchInitialCtaStatuses = cache(async (): Promise<CoupleCtaStatuses> => {
   const cookieStore = await cookies()
   const token = cookieStore.get('jwt_token')
-  if (!token) return {}
+  if (!token) return emptyStatuses()
 
-  const [pins, leads] = await Promise.all([
+  const [pinItems, leadItems] = await Promise.all([
     fetchItems<CouplePin>('/api/v1/couples/me/pins', token.value),
     fetchItems<CoupleProviderLead>('/api/v1/couples/me/provider-leads', token.value),
   ])
 
-  const statuses: CtaStatusesByImage = {}
+  const pins: CoupleCtaStatuses['pins'] = {}
+  const contacts: CoupleCtaStatuses['contacts'] = {}
 
-  for (const pin of pins) {
-    statuses[pin.portfolioImageId] = { ...statuses[pin.portfolioImageId], pin: 'done' }
+  for (const pin of pinItems) {
+    if (pin.portfolioImageId) pins[pin.portfolioImageId] = 'done'
   }
 
   /**
@@ -96,15 +141,18 @@ export const fetchInitialCtaStatuses = cache(async (): Promise<CtaStatusesByImag
    * il est sérialisé depuis `CoupleLeadStatus` et ne peut donc valoir que l'une
    * des trois valeurs. Valider ici dupliquerait ce contrat, et une valeur
    * inconnue ne trouverait de toute façon pas de libellé à afficher.
+   *
+   * L'entrée est posée sous le prestataire et non sous la photo de départ
+   * (WED-195) : c'est ce qui fait que toutes ses photos s'ouvrent sur le même
+   * statut, celle d'où la demande est partie comme les autres.
+   *
+   * Une demande sans `vendorId` est ignorée plutôt que devinée : sur un backend
+   * antérieur à WED-195, une clé `undefined` marquerait sinon toutes les photos.
    */
-  for (const lead of leads) {
-    if (!lead.portfolioImageId) continue
-    statuses[lead.portfolioImageId] = {
-      ...statuses[lead.portfolioImageId],
-      contact: 'done',
-      contactLeadStatus: lead.status as CoupleLeadStatus,
-    }
+  for (const lead of leadItems) {
+    if (!lead.vendorId) continue
+    contacts[lead.vendorId] = { status: 'done', leadStatus: lead.status as CoupleLeadStatus }
   }
 
-  return statuses
+  return { pins, contacts }
 })

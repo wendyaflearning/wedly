@@ -6,8 +6,7 @@ import { Lightbox } from '@/components/portfolio/Lightbox'
 import { Toast } from '@/components/ui/Toast'
 import { AccountCreationModal } from '@/components/wedream/AccountCreationModal'
 import { useToast } from '@/hooks/useToast'
-import type { CoupleLeadStatus } from '@/lib/couple-lead-status'
-import type { CtaStatusesByImage } from '@/lib/couple-cta-status'
+import type { CoupleCtaStatuses } from '@/lib/couple-cta-status'
 import {
   submitCtaAction,
   submitUnpinAction,
@@ -30,7 +29,7 @@ type PortfolioGridProps = {
   initialNextCursor: string | null
   initialTotal: number
   /** Les gestes déjà posés, lus au rendu serveur (WED-182). */
-  initialCtaStatuses: CtaStatusesByImage
+  initialCtaStatuses: CoupleCtaStatuses
 }
 
 /** On déclenche le chargement avant que la sentinelle soit visible : le scroll reste continu. */
@@ -75,24 +74,15 @@ export default function PortfolioGrid({
    * vide : un cœur qui se remplirait après le premier rendu serait un
    * clignotement, et le refresh perdrait les gestes des sessions précédentes.
    */
-  const [ctaStatuses, setCtaStatuses] = useState<CtaStatusesByImage>(initialCtaStatuses)
   /**
-   * Le statut réel des demandes (WED-186). Il démarre sur ce que le serveur a lu
-   * (WED-182) : la galerie rouverte affiche donc d'emblée « demande non retenue »
-   * plutôt que « demande envoyée », sans attendre un clic. Le clic ne fait plus
-   * que raffiner un statut parfois déjà connu — c'est la source initiale qui
-   * change, pas la logique. CA5 couvre les deux chemins tel quel : dès qu'une
-   * photo a son statut, d'où qu'il vienne, plus aucun appel ne part.
+   * Le statut réel des demandes (WED-186) vit dans `contacts`, à côté du fait
+   * qu'un geste a été posé, et non plus dans un état parallèle indexé par photo :
+   * les deux répondent au même prestataire, les séparer les ferait diverger.
+   * Il démarre lui aussi sur ce que le serveur a lu (WED-182) — la galerie
+   * rouverte affiche donc d'emblée « demande non retenue » plutôt que « demande
+   * envoyée », sans attendre un clic.
    */
-  const [leadStatuses, setLeadStatuses] = useState<Record<string, CoupleLeadStatus>>(() => {
-    const initial: Record<string, CoupleLeadStatus> = {}
-
-    for (const [photoId, status] of Object.entries(initialCtaStatuses)) {
-      if (status.contactLeadStatus !== undefined) initial[photoId] = status.contactLeadStatus
-    }
-
-    return initial
-  })
+  const [ctaStatuses, setCtaStatuses] = useState<CoupleCtaStatuses>(initialCtaStatuses)
   const { toast, showToast } = useToast()
 
   const [accountModalOpen, setAccountModalOpen] = useState(false)
@@ -190,20 +180,19 @@ export default function PortfolioGrid({
   }, [loadMore, nextCursor])
 
   /**
-   * Le cœur redevient vide en **retirant** la clé `pin`, jamais en la passant à
-   * `'idle'` : `isPinned` teste `!== undefined`, donc une clé présente à `'idle'`
-   * laisserait le cœur rempli. L'entrée de la photo survit avec son éventuel
-   * `contact` — dé-épingler ne retire pas une demande de mise en relation.
+   * Le cœur redevient vide en **retirant** la clé de la photo, jamais en la
+   * passant à `'idle'` : `isPinned` teste `!== undefined`, donc une clé présente
+   * à `'idle'` laisserait le cœur rempli. `contacts` n'est pas touché —
+   * dé-épingler ne retire pas une demande de mise en relation.
    */
   const clearPinStatus = useCallback((portfolioImageId: string) => {
     setCtaStatuses((current) => {
-      const entry = current[portfolioImageId]
-      if (entry?.pin === undefined) return current
+      if (current.pins[portfolioImageId] === undefined) return current
 
-      const next = { ...entry }
-      delete next.pin
+      const pins = { ...current.pins }
+      delete pins[portfolioImageId]
 
-      return { ...current, [portfolioImageId]: next }
+      return { ...current, pins }
     })
   }, [])
 
@@ -260,7 +249,9 @@ export default function PortfolioGrid({
    * son intérêt ne doit pas éjecter le couple de la photo qu'il regardait.
    */
   const runCta = useCallback(
-    async (kind: CtaKind, portfolioImageId: string) => {
+    async (kind: CtaKind, photo: PublicPortfolioImage) => {
+      const portfolioImageId = photo.id
+
       // Un second clic pendant que le premier est en vol n'apporte rien : les
       // deux écritures sont idempotentes côté backend, autant ne pas les lancer.
       if (pendingCta !== null) return
@@ -268,26 +259,24 @@ export default function PortfolioGrid({
       // Le cœur est un interrupteur : sur une photo déjà épinglée, le même clic
       // retire l'épinglé au lieu d'en reposer un (WED-183). Le contact, lui,
       // reste irréversible — un prestataire prévenu ne se dé-prévient pas.
-      const pinStatus = ctaStatuses[portfolioImageId]?.pin
+      const pinStatus = ctaStatuses.pins[portfolioImageId]
 
       if (kind === 'pin' && pinStatus !== undefined) {
         await runUnpin(portfolioImageId, pinStatus === 'auth_required')
         return
       }
 
-      // Statut déjà connu pour cette photo : le backend redonnerait le même, et
-      // le bouton l'affiche déjà (CA5). En pratique seule `DEBLOQUEE` arrive
-      // jusqu'ici — attente et refus désactivent le bouton, donc rien ne part de
-      // la lightbox. Le garde-fou reste : il ne dépend pas de ce que le rendu
-      // choisit de désactiver, et c'est lui qui tient la garantie « aucun appel
-      // réseau pour un statut déjà connu ».
-      if (kind === 'contact' && leadStatuses[portfolioImageId] !== undefined) return
-
-      // Lu avant l'appel : `ctaStatuses` aura déjà la clé `contact` au moment où
-      // le toast se décide, et on ne peut plus distinguer un premier envoi d'un
-      // re-clic. Or seul le premier a réellement prévenu le prestataire.
-      const wasAlreadyContacted =
-        kind === 'contact' && ctaStatuses[portfolioImageId]?.contact !== undefined
+      // Statut déjà connu pour ce **prestataire** : le backend redonnerait le
+      // même, et le bouton l'affiche déjà (CA5). Par prestataire et non par
+      // photo depuis WED-195 — sinon la deuxième photo d'un prestataire déjà
+      // contacté relançait l'appel que ce garde-fou existe justement pour
+      // éviter. En pratique seule `DEBLOQUEE` arrive jusqu'ici : attente et
+      // refus désactivent le bouton, donc rien ne part de la lightbox. Le
+      // garde-fou reste, parce qu'il ne dépend pas de ce que le rendu choisit
+      // de désactiver.
+      if (kind === 'contact' && ctaStatuses.contacts[photo.vendorId]?.leadStatus !== undefined) {
+        return
+      }
 
       setPendingCta(kind)
       const outcome = await submitCtaAction({ kind, portfolioImageId })
@@ -300,14 +289,27 @@ export default function PortfolioGrid({
         return
       }
 
-      setCtaStatuses((current) => ({
-        ...current,
-        [portfolioImageId]: { ...current[portfolioImageId], [kind]: outcome.status },
-      }))
+      // Narrowing avant le setState : un `auth_required` n'a pas de statut de
+      // lead à porter — la demande n'est même jamais partie — et l'union ne se
+      // laisse pas lire à l'intérieur du updater.
+      const leadStatus = outcome.status === 'done' ? outcome.leadStatus : undefined
 
-      if (kind === 'contact' && outcome.status === 'done' && outcome.leadStatus !== undefined) {
-        setLeadStatuses((current) => ({ ...current, [portfolioImageId]: outcome.leadStatus! }))
-      }
+      // Le contact se retient par prestataire et l'épingle par photo, exactement
+      // comme au rendu serveur : les autres photos du même prestataire, déjà
+      // chargées ou arrivées plus tard au scroll, se marquent donc toutes seules
+      // (WED-195, CA2) — et avec le statut réel de la demande, pas seulement le
+      // fait qu'elle existe (WED-186).
+      setCtaStatuses((current) =>
+        kind === 'pin'
+          ? { ...current, pins: { ...current.pins, [portfolioImageId]: outcome.status } }
+          : {
+              ...current,
+              contacts: {
+                ...current.contacts,
+                [photo.vendorId]: { status: outcome.status, leadStatus },
+              },
+            }
+      )
 
       if (outcome.status === 'auth_required') {
         requestAccountCreation({ kind, portfolioImageId })
@@ -317,11 +319,14 @@ export default function PortfolioGrid({
       // Pas de toast sur l'épingle : la trace visuelle suffit — le cœur de la
       // grille et le bouton de la lightbox se remplissent tous deux depuis
       // `ctaStatuses`, sur place et pour toute la session.
-      // « Votre demande est partie » n'est vrai qu'au premier envoi : sur un
-      // re-clic, c'est le libellé du bouton qui dit où en est la demande.
-      if (kind === 'contact' && !wasAlreadyContacted) showToast('success', CONTACT_CONFIRMATION)
+      //
+      // Et pas de toast non plus sur un contact qui n'a rien créé (200) : le
+      // prestataire était déjà contacté depuis une autre photo, rien n'est
+      // reparti, l'affirmer serait faux (WED-195, CA3). Le bouton passe quand
+      // même à « Demande envoyée » — c'est vrai, lui.
+      if (kind === 'contact' && outcome.created) showToast('success', CONTACT_CONFIRMATION)
     },
-    [ctaStatuses, leadStatuses, pendingCta, requestAccountCreation, runUnpin, showToast]
+    [ctaStatuses, pendingCta, requestAccountCreation, runUnpin, showToast]
   )
 
   return (
@@ -332,7 +337,7 @@ export default function PortfolioGrid({
           // geste est enregistré ou mis en file, dans les deux cas le couple l'a
           // bien posé (cf. `ctaConfirmation`, qui les confirme tous les deux).
           // Dé-épingler retire la clé, ce qui repasse bien ce test à faux.
-          const isPinned = ctaStatuses[item.id]?.pin !== undefined
+          const isPinned = ctaStatuses.pins[item.id] !== undefined
 
           return (
             /* Le cœur est frère du bouton d'ouverture, jamais son enfant : un
@@ -362,7 +367,7 @@ export default function PortfolioGrid({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  void runCta('pin', item.id)
+                  void runCta('pin', item)
                 }}
                 aria-label={isPinned ? 'Dé-épingler cette photo' : 'Épingler cette photo'}
                 className="bg-creme/85 text-bordeaux absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-[0_1px_4px_rgba(41,26,16,0.18)] transition-transform hover:scale-105"
@@ -393,11 +398,11 @@ export default function PortfolioGrid({
         <Lightbox
           photo={selectedImage}
           onClose={() => setSelectedImage(null)}
-          onPin={() => void runCta('pin', selectedImage.id)}
-          onContact={() => void runCta('contact', selectedImage.id)}
-          pinStatus={ctaStatuses[selectedImage.id]?.pin ?? 'idle'}
-          contactStatus={ctaStatuses[selectedImage.id]?.contact ?? 'idle'}
-          contactLeadStatus={leadStatuses[selectedImage.id]}
+          onPin={() => void runCta('pin', selectedImage)}
+          onContact={() => void runCta('contact', selectedImage)}
+          pinStatus={ctaStatuses.pins[selectedImage.id] ?? 'idle'}
+          contactStatus={ctaStatuses.contacts[selectedImage.vendorId]?.status ?? 'idle'}
+          contactLeadStatus={ctaStatuses.contacts[selectedImage.vendorId]?.leadStatus}
         />
       )}
 
