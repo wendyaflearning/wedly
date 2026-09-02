@@ -44,13 +44,31 @@ final readonly class CreateCouplePinService
      * préalable, chaque réépingle ferait remonter une erreur SQL et fermerait
      * l'EntityManager pour un geste parfaitement banal.
      *
+     * Depuis WED-183 le dé-épinglage désactive la ligne au lieu de la supprimer.
+     * La lecture préalable la retrouve donc dans les deux états : active, c'est
+     * le no-op ci-dessus ; inactive, on la réactive. Réinsérer serait de toute
+     * façon impossible — la contrainte unique tient toujours sur la ligne
+     * désactivée.
+     *
      * @throws \DomainException 422 si la photo est inconnue ou masquée dans Wedream
      */
     public function create(Couple $couple, string $portfolioImageId): void
     {
         $image = $this->vendorResolver->findVisiblePortfolioImage($portfolioImageId);
 
-        if ($this->couplePinRepository->findOneBy(['couple' => $couple, 'portfolioImage' => $image]) !== null) {
+        $existing = $this->couplePinRepository->findOneByCoupleAndPortfolioImageId(
+            $couple,
+            $image->getId()->toRfc4122(),
+        );
+
+        if ($existing !== null) {
+            if ($existing->isActive()) {
+                return;
+            }
+
+            $existing->reactivate();
+            $this->em->flush();
+
             return;
         }
 

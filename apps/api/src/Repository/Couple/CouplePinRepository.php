@@ -33,6 +33,10 @@ class CouplePinRepository extends ServiceEntityRepository
      * avoids the second-precision tie on created_at (PortfolioImageRepository
      * uses the same idiom).
      *
+     * Unpinned rows are filtered out (WED-183). This method feeds both « Mes
+     * épinglés » and the gallery's SSR read, so a photo the couple unpinned
+     * disappears from the two at once.
+     *
      * @return CouplePin[]
      */
     public function findByCouple(Couple $couple): array
@@ -42,6 +46,7 @@ class CouplePinRepository extends ServiceEntityRepository
             ->join('pin.portfolioImage', 'photo')
             ->innerJoin('photo.vendor', 'vendor')
             ->where('pin.couple = :couple')
+            ->andWhere('pin.isActive = true')
             ->andWhere('vendor.isPublished = true')
             ->andWhere('vendor.wedreamEnabled = true')
             ->andWhere('photo.isVisibleInWedream = true')
@@ -49,5 +54,23 @@ class CouplePinRepository extends ServiceEntityRepository
             ->orderBy('pin.id', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * The one row a couple can hold for a photo, active or not (WED-183).
+     *
+     * Deliberately unfiltered on isActive: the unique constraint allows a single
+     * row per (couple, photo) for good, so re-pinning has to find the deactivated
+     * row to revive it, and DELETE has to find it to stay idempotent.
+     */
+    public function findOneByCoupleAndPortfolioImageId(Couple $couple, string $portfolioImageId): ?CouplePin
+    {
+        return $this->createQueryBuilder('pin')
+            ->where('pin.couple = :couple')
+            ->andWhere('pin.portfolioImage = :portfolioImage')
+            ->setParameter('couple', $couple)
+            ->setParameter('portfolioImage', $portfolioImageId, 'uuid')
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }
