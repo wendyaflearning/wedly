@@ -27,6 +27,18 @@ describe('couple space routes', () => {
     expect(coupleSpaceTabForPath('/mon-espace/accompagnement')?.key).toBe('accompagnement')
   })
 
+  it('keeps the owning tab on nested routes', () => {
+    // L'Écran 4 vit sous l'onglet « Demandes de contact » : sans ça, la barre
+    // d'onglets est entièrement grise sur /mon-espace/demandes/[leadId].
+    expect(isCoupleSpaceTabPath('/mon-espace/demandes/abc-123')).toBe(true)
+    expect(coupleSpaceTabForPath('/mon-espace/demandes/abc-123')?.key).toBe('demandes')
+  })
+
+  it('does not match a sibling route that merely shares a prefix', () => {
+    expect(isCoupleSpaceTabPath('/mon-espace/demandes-archivees')).toBe(false)
+    expect(coupleSpaceTabForPath('/mon-espace/demandes-archivees')).toBeUndefined()
+  })
+
   it('anchors the shell on /mon-espace', () => {
     expect(COUPLE_SPACE_PATH).toBe('/mon-espace')
   })

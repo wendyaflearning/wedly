@@ -19,10 +19,18 @@ export const COUPLE_SPACE_TABS: CoupleSpaceTab[] = [
 
 export const COUPLE_SPACE_DEFAULT_TAB = COUPLE_SPACE_TABS[0]
 
-export function isCoupleSpaceTabPath(pathname: string): boolean {
-  return COUPLE_SPACE_TABS.some((tab) => pathname === tab.href)
+/**
+ * Le tab qui possède `pathname`, sous-routes comprises : l'Écran 4
+ * (`/mon-espace/demandes/[leadId]`) appartient à « Demandes de contact ».
+ * Le `/` du préfixe est délibéré : `/mon-espace/demandes-archivees` ne doit pas
+ * matcher `demandes`.
+ */
+export function coupleSpaceTabForPath(pathname: string): CoupleSpaceTab | undefined {
+  return COUPLE_SPACE_TABS.find(
+    (tab) => pathname === tab.href || pathname.startsWith(`${tab.href}/`),
+  )
 }
 
-export function coupleSpaceTabForPath(pathname: string): CoupleSpaceTab | undefined {
-  return COUPLE_SPACE_TABS.find((tab) => pathname === tab.href)
+export function isCoupleSpaceTabPath(pathname: string): boolean {
+  return coupleSpaceTabForPath(pathname) !== undefined
 }

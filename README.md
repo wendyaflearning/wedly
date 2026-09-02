@@ -57,6 +57,30 @@ php bin/console doctrine:migrations:migrate
 symfony server:start --no-tls
 ```
 
+### Jeu de données de dev
+
+Les fixtures de référentiel (régions, services, styles, plans) n'appartiennent à
+aucun groupe : `--group` seul ne les charge pas, il faut donc un premier passage
+sans filtre.
+
+```bash
+php bin/console doctrine:fixtures:load                       # référentiels — PURGE la base
+php bin/console doctrine:fixtures:load --group=dev --append  # prestataires, couple de test, demandes de contact
+```
+
+`--append` ajoute sans purger. Attention : `VendorDevFixtures` recrée ses trois
+prestataires à chaque passage, donc rejouer `--group=dev --append` les duplique.
+Le groupe `couple-leads` est lui idempotent et peut être rejoué seul :
+
+```bash
+php bin/console doctrine:fixtures:load --group=couple-leads --append
+```
+
+Comptes de test créés : `admin@wedly.fr` / `admin1234`, les prestataires en
+`vendor1234`, et le couple `couple@wedly.test` / `couple1234` — c'est lui qui
+porte un lead dans chacun des trois statuts (`EN_ATTENTE`, `DEBLOQUEE`,
+`REFUSEE`) visibles sur `/mon-espace/demandes`.
+
 Points utiles :
 
 - La configuration par défaut utilise PostgreSQL sur `127.0.0.1:5432`.
