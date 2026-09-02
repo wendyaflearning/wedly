@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller\Couple\Pin;
 
-use App\Entity\User\User;
-use App\Repository\Couple\CoupleRepository;
+use App\Service\Couple\CoupleFromJwtResolver;
 use App\Service\Couple\Pin\DeleteCouplePinService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -34,16 +32,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class DeleteCouplePinAction extends AbstractController
 {
     public function __construct(
-        private readonly Security               $security,
-        private readonly CoupleRepository       $coupleRepository,
+        private readonly CoupleFromJwtResolver  $coupleResolver,
         private readonly DeleteCouplePinService $deleteCouplePinService,
     ) {}
 
     public function __invoke(string $portfolioImageId): JsonResponse
     {
-        /** @var User $user */
-        $user   = $this->security->getUser();
-        $couple = $this->coupleRepository->findOneByUser($user);
+        $couple = $this->coupleResolver->resolve();
 
         if ($couple === null) {
             return new JsonResponse(['error' => 'No couple associated with this account.'], 404);
