@@ -19,6 +19,7 @@ final readonly class VendorMePreviewResponseDto
     public int     $price_max_cents;
     public string  $price_type;
     public array   $completion;
+    public bool    $is_published;
 
     public function __construct(
         string  $id,
@@ -34,6 +35,7 @@ final readonly class VendorMePreviewResponseDto
         int     $priceMaxCents,
         string  $priceType,
         array   $completion,
+        bool    $isPublished,
     ) {
         $this->id               = $id;
         $this->brand_name       = $brandName;
@@ -48,5 +50,6 @@ final readonly class VendorMePreviewResponseDto
         $this->price_max_cents  = $priceMaxCents;
         $this->price_type       = $priceType;
         $this->completion       = $completion;
+        $this->is_published     = $isPublished;
     }
 }
