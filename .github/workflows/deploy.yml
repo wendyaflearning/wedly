@@ -8,6 +8,7 @@ on:
       - '.github/workflows/**'
       - 'composer.json'
       - 'composer.lock'
+  workflow_dispatch:
 
 jobs:
   deploy:
