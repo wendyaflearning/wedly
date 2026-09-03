@@ -21,3 +21,34 @@ when@prod:
                 $hub: '@Sentry\State\HubInterface'
                 $level: !php/const Monolog\Logger::ERROR
                 $fillExtraContext: true
+
+# Symfony's when@ directive doesn't support multiple environments in one block
+# (no `when@prod,staging:`) — same config repeated per environment.
+when@staging:
+    sentry:
+        dsn: '%env(SENTRY_DSN)%'
+        options:
+            ignore_exceptions:
+                - 'Symfony\Component\ErrorHandler\Error\FatalError'
+                - 'Symfony\Component\Debug\Exception\FatalErrorException'
+                - 'App\Exception\ValidationException'
+        # true (the bundle default) here, unlike prod: without it, Sentry\SentryBundle\EventListener\ErrorListener
+        # is never registered, so nothing reaches Sentry except what already hits the Monolog "sentry" handler at
+        # ERROR+. App\EventListener\ExceptionListener converts DomainException (e.g. duplicate email, 409) straight
+        # to a JSON response without logging it, so that whole category was invisible in Sentry — this restores it.
+        # Kept false on prod for now: same fix candidate, rolling out on staging first to check event volume/signal.
+        register_error_listener: true
+        register_error_handler: false
+
+    monolog:
+        handlers:
+            sentry:
+                type: service
+                id: Sentry\Monolog\Handler
+
+    services:
+        Sentry\Monolog\Handler:
+            arguments:
+                $hub: '@Sentry\State\HubInterface'
+                $level: !php/const Monolog\Logger::ERROR
+                $fillExtraContext: true
