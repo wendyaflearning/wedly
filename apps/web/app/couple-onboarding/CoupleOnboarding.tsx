@@ -3,17 +3,16 @@
 import { ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import ProgressIndicator from './ProgressIndicator'
+import OnboardingHeader from './OnboardingHeader'
 
 /**
- * Same wordmarks VendorNav uses for its light/dark topbars — transparent SVGs
- * that already carry the right ink color for each background, unlike the
- * square badge PNGs in /public (their own baked-in background) or logo.svg
- * (fixed bordeaux fill, unreadable once the screen goes dark).
+ * Same wordmark VendorNav uses on its light topbar — a transparent SVG that
+ * already carries the right ink color for the crème background of screen 8,
+ * unlike the square badge PNGs in /public or the fixed-fill logo.svg.
  */
 const LOGO_ON_CREME = 'https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_dark_bbyd6m.svg'
-const LOGO_ON_BORDEAUX = 'https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg'
 import { canGoToPreviousMonth, isSelectableWeddingDate, selectableWeddingYears, setCalendarMonth, startOfDay } from './calendar'
 import { COUPLE_ONBOARDING_STEPS, canContinue, getContinueAction, previousScreen, type CoupleOnboardingContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
@@ -259,6 +258,7 @@ function emitOnboardingComplete(data: CoupleOnboardingData) {
 }
 
 export default function CoupleOnboarding({ onStageComplete = emitOnboardingComplete }: CoupleOnboardingProps) {
+  const router = useRouter()
   const [screen, setScreen] = useState<CoupleOnboardingScreen>(1)
   const [data, setData] = useState<CoupleOnboardingData>({})
   const [hydrated, setHydrated] = useState(false)
@@ -390,6 +390,14 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   }
 
   function goBack() {
+    // The brand header keeps the same shape on every screen (WED-125): « Retour »
+    // never disappears, so screen 1 — which has no previous step — leads out of
+    // the journey, the same destination as the logo.
+    if (screen === 1) {
+      router.push('/')
+      return
+    }
+
     setScreen(previousScreen(screen, commitBudget()))
   }
 
@@ -460,20 +468,18 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
 
   const isDark = SCREEN_THEME[screen] === 'bordeaux'
   const heading = isDark ? 'text-creme' : 'text-texte'
-  const accentColor = isDark ? 'text-dore' : 'text-accent'
 
   return (
-    <main className={`min-h-screen px-6 py-8 transition-colors sm:px-12 lg:px-20 ${isDark ? 'bg-bordeaux' : 'bg-creme'}`}>
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col">
-        <header className="mb-8 flex items-center justify-between sm:mb-0">
-          <div className="flex items-center gap-4">
-            <Link href="/" aria-label="Retour à l'accueil Wedly">
-              <Image src={isDark ? LOGO_ON_BORDEAUX : LOGO_ON_CREME} alt="Wedly" width={0} height={0} sizes="120px" style={{ height: '40px', width: 'auto' }} priority />
-            </Link>
-            <ProgressIndicator currentStep={screen} totalSteps={COUPLE_ONBOARDING_STEPS} dark={isDark} visitedSteps={visitedScreens} onStepClick={goToScreen} />
-          </div>
-          {screen > 1 && <button type="button" onClick={goBack} className={`inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline ${accentColor}`}><ChevronLeft size={16} />Retour</button>}
-        </header>
+    <main className={`flex min-h-screen flex-col transition-colors ${isDark ? 'bg-bordeaux' : 'bg-creme'}`}>
+      <OnboardingHeader
+        currentStep={screen}
+        totalSteps={COUPLE_ONBOARDING_STEPS}
+        isDark={isDark}
+        visitedSteps={visitedScreens}
+        onStepClick={goToScreen}
+        onBack={goBack}
+      />
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col px-6 py-8 sm:px-12 lg:px-20">
 
         {screen === 1 ? (
           <section className="m-auto w-full text-center">
