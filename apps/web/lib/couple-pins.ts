@@ -50,3 +50,20 @@ export function pinnedCountLabel(count: number): string | null {
   if (!Number.isFinite(count) || count <= 0) return null
   return count === 1 ? '1 photo épinglée' : `${count} photos épinglées`
 }
+
+// --- Écriture ---------------------------------------------------------------
+
+/**
+ * Retire une photo de la liste affichée, sans toucher au tableau reçu.
+ *
+ * Le filtre porte sur `portfolioImageId` et non sur `id` : c'est la photo que le
+ * backend identifie au dé-épinglage (`DELETE /couples/me/pins/{portfolioImageId}`),
+ * et raisonner sur deux clés différentes selon l'étape est le meilleur moyen de
+ * retirer la mauvaise vignette.
+ *
+ * Un identifiant inconnu ne fait rien — le dé-épinglage est idempotent côté
+ * backend (COUPLE-PIN-005), l'écran l'est aussi.
+ */
+export function removePin(pins: CouplePin[], portfolioImageId: string): CouplePin[] {
+  return pins.filter((pin) => pin.portfolioImageId !== portfolioImageId)
+}

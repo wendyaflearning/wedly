@@ -158,25 +158,41 @@ Zone « Épinglés » de Mon espace Wedly (US-6.6 / WED-135).
 La grille affiche **toutes** les photos épinglées : l'épinglage est gratuit et
 sans limite de nombre — aucun quota, aucune pagination, aucun CTA payant.
 
-Aucune vignette n'est cliquable : la carte est un `figure`, pas un lien ni un
-bouton. Le masquage tient donc à deux verrous cumulés — la forme du DTO, qui ne
-peut pas porter d'identité prestataire (COUPLE-PIN-002), et l'absence de tout
-geste menant à une fiche.
+Aucune vignette ne mène ailleurs : ni lien, ni ouverture de fiche. Le masquage
+tient à deux verrous cumulés — la forme du DTO, qui ne peut pas porter d'identité
+prestataire (COUPLE-PIN-002), et l'absence de tout geste sortant.
 
-Le dépinglage et, plus largement, toute action d'écriture sur un épinglé sont
-hors scope de cette zone : elle est en lecture seule.
+Le seul geste ouvert sur une vignette est le retrait de son propre épinglé
+(décision produit du 03/09/2026 — le geste était hors scope de WED-135 comme de
+WED-183, la zone a été rouverte pour l'accueillir) :
+
+- il est **confirmé sur la vignette** avant d'être envoyé. Le cœur de la galerie
+  se contente de se vider, ici la photo quitte la liste : à l'échelle d'un
+  carnet, le geste mérite une seconde intention ;
+- la vignette ne part de l'écran que sur un 204 acquis, jamais par anticipation
+  (même règle que la galerie, COUPLE-PIN-005). Session expirée ou panne : la
+  photo reste, un message explique — la prétendre retirée ferait croire au couple
+  qu'il s'est rétracté ;
+- il ne dévoile toujours rien. Retirer un épinglé agit sur les données du couple,
+  pas sur celles du prestataire : l'invariante protégée par cette règle est
+  intacte.
 
 Implémentation :
 
 - `apps/web/app/mon-espace/epingles/page.tsx`
-- `apps/web/components/couple/pins/PinnedPhotosZone.tsx`
+- `apps/web/components/couple/pins/PinnedPhotosZone.tsx` (état de la liste)
+- `apps/web/components/couple/pins/PinnedPhotoCard.tsx` (vignette + confirmation)
 - `apps/web/lib/couple-pins.ts` · `apps/web/lib/couple-pins.server.ts`
+- `apps/web/lib/wedream-cta.ts` (`submitUnpinAction`, partagé avec la galerie)
 
 **Why:** l'épinglé est un carnet d'inspiration, pas un canal de mise en relation
 — seule la demande de contact (PROVIDER-LEAD-001) ouvre l'accès au prestataire,
-et elle passe par son accord explicite.
+et elle passe par son accord explicite. Et un carnet se tient à jour là où on le
+consulte : renvoyer le couple dans la galerie pour retirer une photo, c'est lui
+demander de gérer sa liste ailleurs que là où elle existe.
 
-**How to apply:** toute évolution de la zone (dépinglage, tri, regroupement)
-garde la grille en lecture seule vis-à-vis de l'identité prestataire : ajouter
-un lien sortant vers une fiche est un choix de revue visible, pas un détail
-d'implémentation.
+**How to apply:** toute évolution de la zone (tri, regroupement, partage) garde
+la grille muette sur l'identité prestataire — ajouter un lien sortant vers une
+fiche est un choix de revue visible, pas un détail d'implémentation. Les
+écritures, elles, restent bornées aux données du couple, et confirmées dès
+qu'elles retirent quelque chose de l'écran.
