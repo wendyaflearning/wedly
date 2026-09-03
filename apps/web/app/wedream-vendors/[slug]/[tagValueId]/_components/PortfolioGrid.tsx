@@ -10,6 +10,7 @@ import type { CoupleCtaStatuses } from '@/lib/couple-cta-status'
 import {
   submitCtaAction,
   submitUnpinAction,
+  UNPIN_SESSION_LOST,
   type CtaAction,
   type CtaKind,
 } from '@/lib/wedream-cta'
@@ -36,16 +37,6 @@ type PortfolioGridProps = {
 const PRELOAD_MARGIN = '400px'
 
 const CONTACT_CONFIRMATION = 'Votre demande de mise en relation est partie. Le prestataire vous recontacte bientôt.'
-
-/**
- * Le seul cas où un dé-épinglage échoue sans être une panne : la session a
- * expiré depuis le chargement de la page. Le cœur reste rempli — il l'est
- * toujours côté serveur — et le couple sait quoi faire.
- *
- * TODO(WED-183, à valider par UX-Wedly) : libellé écrit ici faute d'être couvert
- * par le prompt reçu. À reprendre si UX tranche autrement.
- */
-const UNPIN_SESSION_LOST = 'Votre session a expiré. Reconnectez-vous pour retirer ce coup de cœur.'
 
 /**
  * Le temps que la confirmation du geste se peigne avant que le modal ne la

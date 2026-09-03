@@ -105,6 +105,7 @@ dans les fichiers de règles.
 | `COUPLE-PIN-003` | Un épinglé n'est lisible que tant que la photo reste Wedream-visible | `active` | `rules/couple-pins.md`  |
 | `COUPLE-PIN-004` | Épingler est un geste idempotent, jamais une erreur                 | `active` | `rules/couple-pins.md`  |
 | `COUPLE-PIN-005` | Dé-épingler désactive la ligne, et réépingler la ressuscite         | `active` | `rules/couple-pins.md`  |
+| `COUPLE-PIN-006` | La grille des épinglés est une vitrine, jamais une porte            | `active` | `rules/couple-pins.md`  |
 
 ## À ajouter lors des prochains tickets
 
