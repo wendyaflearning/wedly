@@ -53,6 +53,7 @@ dans les fichiers de règles.
 | `COUPLE-ONBOARDING-007` | La date et le lieu bloquent l'écran 2 | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-008` | L'avancement de l'organisation est présélectionné, pas bloquant | `active` | `rules/couple-onboarding.md` |
 | `COUPLE-ONBOARDING-009` | L'inscription du couple est email + mot de passe, en un seul appel | `active` | `rules/couple-onboarding.md` |
+| `COUPLE-ONBOARDING-010` | Le téléphone du couple est optionnel à la saisie, normalisé en `+33` à l'écriture | `active` | `rules/couple-onboarding.md` |
 
 ## Data and schema
 

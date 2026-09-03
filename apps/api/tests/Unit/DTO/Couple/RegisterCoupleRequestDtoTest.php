@@ -8,6 +8,7 @@ use App\DTO\Couple\ProviderContactRequestDto;
 use App\DTO\Couple\RegisterCoupleRequestDto;
 use App\Entity\ProviderLead\ProviderLead;
 use App\Enum\Couple\PlanningStage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -176,6 +177,42 @@ final class RegisterCoupleRequestDtoTest extends TestCase
         self::assertSame('contactRequest.vendorId', $violations->get(0)->getPropertyPath());
     }
 
+    /**
+     * Le téléphone de l'écran 7 est optionnel : ne rien saisir reste un
+     * parcours valide (WED-216).
+     */
+    public function test_a_registration_without_a_phone_number_has_no_violations(): void
+    {
+        self::assertCount(0, $this->validator->validate($this->makeDto(phone: null)));
+    }
+
+    #[DataProvider('acceptedPhoneProvider')]
+    public function test_a_valid_phone_number_is_accepted(string $phone): void
+    {
+        self::assertCount(0, $this->validator->validate($this->makeDto(phone: $phone)));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function acceptedPhoneProvider(): iterable
+    {
+        yield 'format national'      => ['0612345678'];
+        yield 'format international' => ['+33612345678'];
+    }
+
+    public function test_an_invalid_phone_number_is_rejected_with_the_shared_message(): void
+    {
+        $violations = $this->validator->validate($this->makeDto(phone: '0012345678'));
+
+        self::assertCount(1, $violations);
+        self::assertSame('phone', $violations->get(0)->getPropertyPath());
+        self::assertSame(
+            'Le numéro de téléphone est invalide (ex : 0612345678 ou +33612345678).',
+            $violations->get(0)->getMessage(),
+        );
+    }
+
     private function makeDto(
         string $email = 'camille@example.test',
         string $password = 'motdepasse',
@@ -192,6 +229,7 @@ final class RegisterCoupleRequestDtoTest extends TestCase
         array $contactRequests = [],
         array $pins = [],
         ?ProviderContactRequestDto $contactRequest = null,
+        ?string $phone = null,
     ): RegisterCoupleRequestDto {
         return new RegisterCoupleRequestDto(
             email: $email,
@@ -209,6 +247,7 @@ final class RegisterCoupleRequestDtoTest extends TestCase
             contactRequests: $contactRequests,
             pins: $pins,
             contactRequest: $contactRequest,
+            phone: $phone,
         );
     }
 }
