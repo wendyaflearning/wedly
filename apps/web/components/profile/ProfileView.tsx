@@ -1,7 +1,7 @@
 'use client'
 
 import type { AdminVendorProfile } from '@/lib/admin-types'
-import { PortfolioGallery } from './PortfolioGallery'
+import { PortfolioTagViewer } from './PortfolioTagViewer'
 
 function formatMoney(cents: number) {
   return new Intl.NumberFormat('fr-FR', {
@@ -175,7 +175,11 @@ export function ProfileView({ profile }: { profile: AdminVendorProfile }) {
       </Section>
 
       <Section title="Portfolio" isEmpty={profile.portfolio.length === 0}>
-        <PortfolioGallery images={profile.portfolio} />
+        <PortfolioTagViewer
+          images={profile.portfolio}
+          serviceId={profile.profession.services[0]?.id ?? null}
+          serviceLabel={profile.profession.services[0]?.name ?? 'métier non défini'}
+        />
       </Section>
 
       <Section title="Informations légales" isEmpty={legalEmpty}>

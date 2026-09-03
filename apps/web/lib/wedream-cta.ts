@@ -79,6 +79,22 @@ export async function submitCtaAction(action: CtaAction): Promise<CtaOutcome> {
 }
 
 /**
+ * Le seul cas où un dé-épinglage échoue sans être une panne : la session a
+ * expiré depuis le chargement de la page. Le geste n'a pas eu lieu côté
+ * serveur, et l'écran doit le montrer tel quel — cœur toujours rempli dans la
+ * galerie, vignette toujours en place dans « Mon espace ».
+ *
+ * Vit ici, à côté de `submitUnpinAction`, parce que les deux écrans qui
+ * dé-épinglent doivent dire la même chose : un libellé recopié divergerait à la
+ * première reformulation.
+ *
+ * TODO(WED-183, à valider par UX-Wedly) : libellé écrit faute d'être couvert par
+ * le prompt reçu. À reprendre si UX tranche autrement.
+ */
+export const UNPIN_SESSION_LOST =
+  'Votre session a expiré. Reconnectez-vous pour retirer ce coup de cœur.'
+
+/**
  * Retire un épinglé déjà enregistré côté backend (WED-183).
  *
  * L'identifiant de la photo est dans le chemin et non dans un corps : le DELETE
