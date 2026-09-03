@@ -1,15 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import { Lightbox } from '@/components/portfolio/Lightbox'
 import { Toast } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
-import { pinnedCountLabel, removePin, type CouplePin } from '@/lib/couple-pins'
-import { submitUnpinAction, UNPIN_SESSION_LOST } from '@/lib/wedream-cta'
+import type { CoupleCtaStatuses } from '@/lib/couple-cta-status'
+import {
+  pinnedCountLabel,
+  pinToPublicImage,
+  removePin,
+  type CouplePin,
+} from '@/lib/couple-pins'
+import { submitCtaAction, submitUnpinAction, UNPIN_SESSION_LOST } from '@/lib/wedream-cta'
 import { PinnedPhotoCard } from './PinnedPhotoCard'
 
 const SectionLabel = () => (
   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">Épinglés</p>
 )
+
+const CONTACT_CONFIRMATION =
+  'Votre demande de mise en relation est partie. Le prestataire vous recontacte bientôt.'
 
 function EmptyZone() {
   return (
@@ -25,48 +35,86 @@ function EmptyZone() {
   )
 }
 
+type PinnedPhotosZoneProps = {
+  pins: CouplePin[]
+  initialCtaStatuses: CoupleCtaStatuses
+}
+
 /**
- * Zone « Épinglés » de Mon espace Wedly (US-6.6 / WED-135) : la grille des
- * photos épinglées depuis la galerie WedDream, gratuite et illimitée, et le
- * retrait d'un coup de cœur sans quitter la page.
- *
- * La liste arrive triée « plus récent d'abord » par l'API (COUPLE-PIN-003) ;
- * elle passe en état local parce qu'elle rétrécit sous le doigt du couple. Ni
- * `router.refresh()` ni revalidation : rien d'autre dans l'espace couple ne
- * compte ces photos, et un aller-retour serveur ferait clignoter la grille pour
- * un résultat qu'on connaît déjà.
+ * Zone « Épinglés » de Mon espace Wedly (WED-135, WED-197) : grille gratuite et
+ * illimitée, dé-épinglage confirmé sur vignette, Lightbox et demande de contact
+ * sans quitter l'espace couple.
  */
-export function PinnedPhotosZone({ pins: initialPins }: { pins: CouplePin[] }) {
+export function PinnedPhotosZone({ pins: initialPins, initialCtaStatuses }: PinnedPhotosZoneProps) {
   const [pins, setPins] = useState(initialPins)
+  const [selectedPin, setSelectedPin] = useState<CouplePin | null>(null)
+  const [ctaStatuses, setCtaStatuses] = useState<CoupleCtaStatuses>(initialCtaStatuses)
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [pendingContact, setPendingContact] = useState(false)
   const { toast, showToast } = useToast()
 
-  async function confirmUnpin(portfolioImageId: string) {
-    if (pendingId !== null) return
+  const confirmUnpin = useCallback(
+    async (portfolioImageId: string) => {
+      if (pendingId !== null) return
 
-    setPendingId(portfolioImageId)
-    const outcome = await submitUnpinAction(portfolioImageId)
-    setPendingId(null)
+      setPendingId(portfolioImageId)
+      const outcome = await submitUnpinAction(portfolioImageId)
+      setPendingId(null)
 
-    // La vignette ne part de l'écran que sur un retrait réellement acquis
-    // (COUPLE-PIN-005). Une session expirée ou une panne laissent la photo en
-    // place : elle est toujours épinglée en base, la faire disparaître ferait
-    // croire au couple qu'il s'est rétracté. La confirmation reste ouverte,
-    // le geste est donc rejouable d'un clic.
-    if (outcome.status === 'error') {
-      showToast('error', outcome.message)
-      return
-    }
+      if (outcome.status === 'error') {
+        showToast('error', outcome.message)
+        return
+      }
 
-    if (outcome.status === 'auth_required') {
-      showToast('error', UNPIN_SESSION_LOST)
-      return
-    }
+      if (outcome.status === 'auth_required') {
+        showToast('error', UNPIN_SESSION_LOST)
+        return
+      }
 
-    setPins((current) => removePin(current, portfolioImageId))
-    setConfirmingId(null)
-  }
+      setPins((current) => removePin(current, portfolioImageId))
+      setConfirmingId(null)
+      setSelectedPin((current) =>
+        current?.portfolioImageId === portfolioImageId ? null : current
+      )
+    },
+    [pendingId, showToast]
+  )
+
+  const runContact = useCallback(
+    async (pin: CouplePin) => {
+      if (pendingContact || pendingId !== null) return
+
+      if (ctaStatuses.contacts[pin.vendorId]?.leadStatus !== undefined) return
+
+      setPendingContact(true)
+      const outcome = await submitCtaAction({
+        kind: 'contact',
+        portfolioImageId: pin.portfolioImageId,
+      })
+      setPendingContact(false)
+
+      if (outcome.status === 'error') {
+        showToast('error', outcome.message)
+        return
+      }
+
+      const leadStatus = outcome.status === 'done' ? outcome.leadStatus : undefined
+
+      setCtaStatuses((current) => ({
+        ...current,
+        contacts: {
+          ...current.contacts,
+          [pin.vendorId]: { status: outcome.status, leadStatus },
+        },
+      }))
+
+      if (outcome.status === 'done' && outcome.created) {
+        showToast('success', CONTACT_CONFIRMATION)
+      }
+    },
+    [ctaStatuses.contacts, pendingContact, pendingId, showToast]
+  )
 
   if (pins.length === 0) {
     return (
@@ -91,6 +139,7 @@ export function PinnedPhotosZone({ pins: initialPins }: { pins: CouplePin[] }) {
               pin={pin}
               isConfirming={confirmingId === pin.portfolioImageId}
               isPending={pendingId === pin.portfolioImageId}
+              onOpen={() => setSelectedPin(pin)}
               onAskConfirm={() => setConfirmingId(pin.portfolioImageId)}
               onCancel={() => setConfirmingId(null)}
               onConfirm={() => void confirmUnpin(pin.portfolioImageId)}
@@ -99,7 +148,21 @@ export function PinnedPhotosZone({ pins: initialPins }: { pins: CouplePin[] }) {
         ))}
       </ul>
 
-      <Toast toast={toast} />
+      {selectedPin && (
+        <Lightbox
+          photo={pinToPublicImage(selectedPin)}
+          onClose={() => setSelectedPin(null)}
+          onPin={() => void confirmUnpin(selectedPin.portfolioImageId)}
+          onContact={() => void runContact(selectedPin)}
+          pinStatus="done"
+          contactStatus={ctaStatuses.contacts[selectedPin.vendorId]?.status ?? 'idle'}
+          contactLeadStatus={ctaStatuses.contacts[selectedPin.vendorId]?.leadStatus}
+        />
+      )}
+
+      <div className="relative z-[70]">
+        <Toast toast={toast} />
+      </div>
     </div>
   )
 }

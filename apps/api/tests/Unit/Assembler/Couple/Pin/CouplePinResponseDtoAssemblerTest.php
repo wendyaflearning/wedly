@@ -9,6 +9,8 @@ use App\Entity\Couple\Couple;
 use App\Entity\Couple\CouplePin;
 use App\Entity\User\User;
 use App\Entity\Vendor\PortfolioImage;
+use App\Entity\Vendor\TagType;
+use App\Entity\Vendor\TagValue;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\PriceType;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +29,7 @@ final class CouplePinResponseDtoAssemblerTest extends TestCase
         $this->assembler = new CouplePinResponseDtoAssembler();
     }
 
-    public function test_it_projects_only_the_image_url_and_pin_metadata(): void
+    public function test_it_projects_pin_metadata_and_correlation_fields_without_vendor_identity(): void
     {
         $pin = $this->pin();
 
@@ -36,6 +38,14 @@ final class CouplePinResponseDtoAssemblerTest extends TestCase
         $json = json_encode($dto, JSON_THROW_ON_ERROR);
         self::assertSame($this->cloudinaryUrl(), $dto->photoUrl);
         self::assertSame(self::PHOTO_ID, $dto->portfolioImageId);
+        self::assertSame(self::VENDOR_ID, $dto->vendorId);
+        self::assertSame(
+            [
+                'Sous-style' => ['Bohème'],
+                'Ambiance'   => ['Intimiste'],
+            ],
+            $dto->tagsByGroup,
+        );
         self::assertStringNotContainsString('Studio Lumière', $json);
         self::assertStringNotContainsString('contact@studio-lumiere.test', $json);
         self::assertStringNotContainsString('0600000000', $json);
@@ -76,6 +86,11 @@ final class CouplePinResponseDtoAssemblerTest extends TestCase
             ->setVendor($vendor)
             ->setUrl($this->cloudinaryUrl())
             ->setSortOrder(0);
+
+        $sousStyle = (new TagType())->setLabel('Sous-style');
+        $ambiance  = (new TagType())->setLabel('Ambiance');
+        $photo->addTag((new TagValue())->setLabel('Bohème')->setTagType($sousStyle));
+        $photo->addTag((new TagValue())->setLabel('Intimiste')->setTagType($ambiance));
 
         $photoId = new \ReflectionProperty(PortfolioImage::class, 'id');
         $photoId->setValue($photo, UuidV7::fromString(self::PHOTO_ID));
