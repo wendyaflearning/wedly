@@ -47,11 +47,12 @@ final class PortfolioServiceTest extends TestCase
         EntityManagerInterface $em,
         LoggerInterface $logger,
         UploadApi $uploadApi,
+        string $environment = 'test',
     ): PortfolioService {
         $cloudinary = $this->createStub(Cloudinary::class);
         $cloudinary->method('uploadApi')->willReturn($uploadApi);
 
-        return new PortfolioService($cloudinary, $em, $this->repository, $logger, $this->specialtyRepository, $this->tagValueRepository);
+        return new PortfolioService($cloudinary, $em, $this->repository, $logger, $this->specialtyRepository, $this->tagValueRepository, $environment);
     }
 
     private function makeSpecialty(Service $service): Specialty&Stub
@@ -121,7 +122,7 @@ final class PortfolioServiceTest extends TestCase
                 '/tmp/photo.jpg',
                 $this->callback(function (array $options): bool {
                     return isset($options['folder'], $options['quality'], $options['fetch_format'], $options['width'], $options['crop'])
-                        && str_starts_with($options['folder'], 'wedly/vendors/')
+                        && str_starts_with($options['folder'], 'wedly-test/vendors/')
                         && $options['quality'] === 'auto:good'
                         && $options['fetch_format'] === 'auto'
                         && $options['width'] === 2500
@@ -131,6 +132,38 @@ final class PortfolioServiceTest extends TestCase
             ->willReturn($this->makeCloudinaryResponse());
 
         $this->makeService($em, $this->createStub(LoggerInterface::class), $uploadApi)
+            ->uploadPhoto($vendor, $this->makeFile(), 0);
+    }
+
+    public function test_uploadPhoto_namespaces_the_folder_by_environment(): void
+    {
+        $vendor = $this->createStub(Vendor::class);
+        $vendor->method('getId')->willReturn(\Symfony\Component\Uid\Uuid::fromString('01930000-0000-7000-8000-000000000001'));
+        $em     = $this->createStub(EntityManagerInterface::class);
+
+        $stagingUpload = $this->createMock(UploadApi::class);
+        $stagingUpload->expects($this->once())
+            ->method('upload')
+            ->with('/tmp/photo.jpg', $this->callback(
+                fn (array $options): bool => str_starts_with($options['folder'], 'wedly-staging/vendors/01930000'),
+            ))
+            ->willReturn($this->makeCloudinaryResponse());
+
+        $this->makeService($em, $this->createStub(LoggerInterface::class), $stagingUpload, 'staging')
+            ->uploadPhoto($vendor, $this->makeFile(), 0);
+
+        // Prod keeps its historical, unprefixed path: existing images are
+        // addressed by the public_id Cloudinary returned at upload time, so
+        // moving prod's folder would strand every image uploaded before this.
+        $prodUpload = $this->createMock(UploadApi::class);
+        $prodUpload->expects($this->once())
+            ->method('upload')
+            ->with('/tmp/photo.jpg', $this->callback(
+                fn (array $options): bool => $options['folder'] === 'wedly/vendors/01930000-0000-7000-8000-000000000001',
+            ))
+            ->willReturn($this->makeCloudinaryResponse());
+
+        $this->makeService($em, $this->createStub(LoggerInterface::class), $prodUpload, 'prod')
             ->uploadPhoto($vendor, $this->makeFile(), 0);
     }
 

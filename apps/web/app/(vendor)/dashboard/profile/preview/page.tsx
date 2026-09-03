@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { fetchVendorPreview } from '@/lib/vendor'
 import IncompleteBadge from './_components/IncompleteBadge'
+import PublishButton from './_components/PublishButton'
 
 const VENDOR_TYPE_LABELS: Record<string, string> = {
   freelance: 'Prestataire',
@@ -87,15 +88,7 @@ export default async function VendorPreviewPage() {
             </svg>
             <span className="hidden sm:inline">Modifier mon profil</span>
           </Link>
-          <button
-            disabled
-            className="hidden sm:flex font-manrope text-[11px] font-semibold tracking-[0.12em] uppercase bg-bordeaux text-creme px-5 py-2.5 rounded-full opacity-40 cursor-not-allowed items-center gap-1.5"
-          >
-            Publier mon profil
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </button>
+          <PublishButton completion={completion} isPublished={preview.is_published} />
         </div>
       </div>
 

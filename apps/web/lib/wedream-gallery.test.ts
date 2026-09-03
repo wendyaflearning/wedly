@@ -9,6 +9,7 @@ const PAGE: PortfolioImagesPage = {
       id: '0198a1c0-0000-7000-8000-000000000001',
       url: 'https://res.cloudinary.com/demo/image/upload/1.jpg',
       tagsByGroup: { 'Type de lieu': ['Domaine'], Ambiance: ['Intimiste'] },
+      vendorId: '0198a1c0-0000-7000-8000-0000000000bb',
     },
   ],
   nextCursor: '0198a1c0-0000-7000-8000-000000000001',
@@ -51,6 +52,8 @@ describe('fetchTagValuePortfolioImages', () => {
     expect(page.nextCursor).toBe('0198a1c0-0000-7000-8000-000000000001')
     expect(page.items).toHaveLength(1)
     expect(page.items[0].tagsByGroup['Type de lieu']).toEqual(['Domaine'])
+    // Sans lui, deux photos du même prestataire sont deux inconnus (WED-195).
+    expect(page.items[0].vendorId).toBe('0198a1c0-0000-7000-8000-0000000000bb')
   })
 
   it('appelle l’API sans query string quand aucun paramètre n’est fourni', async () => {

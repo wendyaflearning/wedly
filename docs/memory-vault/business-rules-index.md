@@ -73,8 +73,6 @@ dans les fichiers de règles.
 | `TAG-TAXONOMY-003` | Unicité du label par catégorie, insensible à la casse | `active` | `rules/tag-taxonomy.md` |
 | `TAG-TAXONOMY-004` | Un TagValue ne peut être créé sous une catégorie inactive | `active` | `rules/tag-taxonomy.md` |
 | `TAG-TAXONOMY-005` | Désactivation sans cascade sur portfolio_image_tag | `active` | `rules/tag-taxonomy.md` |
-| `TAG-TAXONOMY-006` | Catégorie principale non désactivable | `active` | `rules/tag-taxonomy.md` |
-| `TAG-TAXONOMY-007` | Réactivation de TagType et TagValue | `active` | `rules/tag-taxonomy.md` |
 
 ## Provider leads
 
@@ -83,6 +81,30 @@ dans les fichiers de règles.
 | `PROVIDER-LEAD-001` | Un lead appartient à un couple et cible un prestataire précis         | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-002` | Le budget d'un lead est le budget global du mariage, figé à la création | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-003` | Le budget est borné à 1 000 000 €                                     | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-004` | La photo coup de cœur est portée par le lead, la catégorie en est dérivée | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-005` | Un couple ne voit la fiche prestataire qu'après acceptation            | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-006` | Le prestataire ciblé se résout côté serveur, jamais depuis un `vendorId` de confiance | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-007` | Un seul lead par couple et par prestataire, premier arrivé gagne      | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-008` | Recontacter dit où en est la demande, et un refus est définitif        | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-009` | Un identifiant de corrélation, jamais une identité, relie les photos et les demandes d'un même prestataire | `active` | `rules/provider-leads.md` |
+
+## Wedream visibility
+
+| ID                        | Règle                                                                        | Statut   | Fichier                       |
+| ------------------------- | ---------------------------------------------------------------------------- | -------- | ----------------------------- |
+| `WEDREAM-VISIBILITY-001`  | La publication publique exige un opt-in explicite du prestataire             | `active` | `rules/wedream-visibility.md` |
+| `WEDREAM-VISIBILITY-002`  | La désactivation coupe la lecture publique sans toucher photos ni tags       | `active` | `rules/wedream-visibility.md` |
+| `WEDREAM-VISIBILITY-003`  | Une seule définition de « publié dans Wedream », lecture comme écriture       | `active` | `rules/wedream-visibility.md` |
+
+## Couple pins
+
+| ID               | Règle                                                              | Statut   | Fichier                 |
+| ---------------- | ------------------------------------------------------------------ | -------- | ----------------------- |
+| `COUPLE-PIN-001` | Un épinglé relie un couple à une photo de portfolio                | `active` | `rules/couple-pins.md`  |
+| `COUPLE-PIN-002` | Le couple ne voit que l'image, jamais le prestataire               | `active` | `rules/couple-pins.md`  |
+| `COUPLE-PIN-003` | Un épinglé n'est lisible que tant que la photo reste Wedream-visible | `active` | `rules/couple-pins.md`  |
+| `COUPLE-PIN-004` | Épingler est un geste idempotent, jamais une erreur                 | `active` | `rules/couple-pins.md`  |
+| `COUPLE-PIN-005` | Dé-épingler désactive la ligne, et réépingler la ressuscite         | `active` | `rules/couple-pins.md`  |
 
 ## À ajouter lors des prochains tickets
 

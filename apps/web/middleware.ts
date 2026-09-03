@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const PROTECTED_ROUTES = [
   '/dashboard',
   '/admin',
+  '/mon-espace',
 ]
 
 export function middleware(request: NextRequest) {

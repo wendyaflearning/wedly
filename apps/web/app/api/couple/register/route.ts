@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   });
 
   const text = await res.text();
-  let data: { error?: string; detail?: string; firstName?: string } | null = null;
+  let data: { error?: string; code?: string; detail?: string; firstName?: string } | null = null;
   try {
     data = JSON.parse(text);
   } catch {
@@ -25,8 +25,15 @@ export async function POST(request: NextRequest) {
 
   if (!res.ok) {
     if (data) console.error('[couple/register] erreur Symfony :', res.status, data);
+    // `code` est relayé tel quel quand l'API en pose un : c'est la seule chose
+    // qui permet au parcours de distinguer « cet email a déjà un compte » d'une
+    // autre erreur sans comparer une phrase en français (WED-162). Absent des
+    // autres erreurs, il reste simplement absent de la réponse.
     return NextResponse.json(
-      { error: data?.error ?? data?.detail ?? 'Une erreur est survenue. Réessayez.' },
+      {
+        error: data?.error ?? data?.detail ?? 'Une erreur est survenue. Réessayez.',
+        ...(data?.code ? { code: data.code } : {}),
+      },
       { status: res.status },
     );
   }

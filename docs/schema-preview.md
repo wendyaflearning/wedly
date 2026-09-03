@@ -38,6 +38,11 @@ erDiagram
     VENDOR ||--o| VENDOR_ANIMATION_DETAILS : vendor
     VENDOR ||--o| VENDOR_CREATOR_DETAILS : vendor
     VENDOR_CREATOR_DETAILS }o--o{ CREATOR_VALUE : creator_values
+    COUPLE ||--o{ COUPLE_PIN : couple
+    PORTFOLIO_IMAGE ||--o{ COUPLE_PIN : portfolio_image
+    COUPLE ||--o{ PROVIDER_LEAD : couple
+    VENDOR ||--o{ PROVIDER_LEAD : vendor
+    PORTFOLIO_IMAGE ||--o{ PROVIDER_LEAD : portfolio_image
     SERVICE ||--o{ SPECIALTY : service
     SERVICE ||--o{ TAG_TYPE : service
     TAG_TYPE ||--o{ TAG_VALUE : tag_type
@@ -45,6 +50,7 @@ erDiagram
     SERVICE ||--o{ VENDOR_AUTO_TAGGED_SERVICE : service
     VENDOR ||--o{ VENDOR_CONSENT : vendor
     VENDOR ||--o{ VENDOR_EMAIL_LOG : vendor
+    WEDDING ||--o{ WEDDING_CONSENT : wedding
 
     USER {
         uuid id
@@ -54,6 +60,7 @@ erDiagram
         string first_name
         string last_name
         string status
+        datetime_immutable unsubscribed_at
         datetime_immutable created_at
         datetime_immutable updated_at
     }
@@ -94,13 +101,14 @@ erDiagram
         uuid user_id
         uuid wedding_id
         string status
+        string planning_stage
         datetime_immutable created_at
         datetime_immutable updated_at
     }
 
     WEDDING {
         uuid id
-        date date
+        date_immutable date
         int budget_cents
         string location
         string zone
@@ -299,6 +307,26 @@ erDiagram
         datetime_immutable updated_at
     }
 
+    COUPLE_PIN {
+        uuid id
+        uuid couple_id
+        uuid portfolio_image_id
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    PROVIDER_LEAD {
+        uuid id
+        uuid couple_id
+        uuid vendor_id
+        uuid portfolio_image_id
+        int budget_cents
+        string status
+        string origin
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
     SPECIALTY {
         uuid id
         uuid service_id
@@ -355,6 +383,15 @@ erDiagram
         string type
         string status
         text error_message
+        datetime_immutable created_at
+        datetime_immutable updated_at
+    }
+
+    WEDDING_CONSENT {
+        uuid id
+        uuid wedding_id
+        string consent_type
+        boolean granted
         datetime_immutable created_at
         datetime_immutable updated_at
     }

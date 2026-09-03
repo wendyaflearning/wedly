@@ -1,11 +1,13 @@
 import type { CoupleOnboardingData } from '@/lib/couple-onboarding-store'
 
-export type CoupleOnboardingScreen = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+export type CoupleOnboardingScreen = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
 /**
  * The progress indicator counts the seven steps the couple actually fills in.
- * Screen 8 is the welcome screen shown once the account exists (7bis in the
- * deck): it is past the journey, so it carries no step of its own.
+ * Screens 8 and 9 are the two ways out of the journey — the welcome screen once
+ * the account exists (7bis in the deck), and the "you already have an account"
+ * screen when the email turns out to be taken (WED-162). Both are past the
+ * journey, so neither carries a step of its own.
  */
 export const COUPLE_ONBOARDING_STEPS = 7
 
@@ -47,6 +49,10 @@ export function getContinueAction(
       return { type: 'show_account_creation' }
     case 7:
     case 8:
+    // Screen 9 has no "Continuer" button of its own — it is an exit screen, and
+    // its two ways out are links. The case exists because the switch is
+    // exhaustive over the union, not because anything reaches it.
+    case 9:
       return { type: 'complete_onboarding', data }
   }
 }
@@ -61,8 +67,11 @@ export function previousScreen(
   data: CoupleOnboardingData,
 ): CoupleOnboardingScreen {
   if (screen === 6 && !data.sensitiveDataConsent) return 3
-  // The account exists once screen 8 is reached: there is nothing to walk back to.
-  if (screen === 8) return 8
+  // Nothing to walk back to from either exit screen: screen 8 is reached once the
+  // account exists, and screen 9 once it turns out to already exist. Without this
+  // guard the arithmetic below would send screen 9 back to 8 — the "your account
+  // is ready" screen, for an account that was never created (WED-162).
+  if (screen === 8 || screen === 9) return screen
 
   return (screen - 1) as CoupleOnboardingScreen
 }

@@ -9,8 +9,8 @@ portfolio prestataire.
 Code principal :
 
 - `apps/api/src/Service/Vendor/AdminTagTypeService.php`
-- `apps/api/src/Service/Vendor/AdminTagValueService.php`
 - `apps/api/src/Repository/Vendor/TagTypeRepository.php`
+- `apps/api/src/Service/Vendor/AdminTagValueService.php`
 - `apps/api/src/Repository/Vendor/TagValueRepository.php`
 
 Tests existants :

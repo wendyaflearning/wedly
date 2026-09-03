@@ -28,12 +28,8 @@ final readonly class UpdateVendorDraftAction
             return new JsonResponse(['error' => 'Prestataire introuvable.'], 404);
         }
 
-        try {
-            $body = json_decode($request->getContent(), true) ?? [];
+        $body = json_decode($request->getContent(), true) ?? [];
 
-            return new JsonResponse($this->draftService->update($vendor, AdminVendorDraftRequestDto::fromArray($body)));
-        } catch (\DomainException $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], $exception->getCode());
-        }
+        return new JsonResponse($this->draftService->update($vendor, AdminVendorDraftRequestDto::fromArray($body)));
     }
 }
