@@ -1,0 +1,281 @@
+import type { CtaAction, CtaKind } from './wedream-cta'
+
+/**
+ * La file des gestes posés sans compte, en attente d'une inscription (WED-160).
+ *
+ * Deux stockages, deux durées de vie, et surtout deux clés : le brouillon du
+ * formulaire d'inscription reste en sessionStorage pour 30 minutes
+ * (`couple-onboarding-store`), la file vit en localStorage pour 30 jours. Un
+ * couple qui épingle une photo un soir doit retrouver son geste en revenant
+ * créer son compte la semaine suivante, alors qu'un brouillon de formulaire
+ * vieux d'une semaine n'a plus de sens.
+ *
+ * L'exception à la règle « pas de localStorage » de `AGENTS.md` est assumée et
+ * documentée là-bas : rien de sensible ici, des ids de photo et un type de
+ * geste, purgés à l'inscription (US8) ou à la connexion (US9).
+ */
+export const WEDREAM_PENDING_ACTIONS_KEY = 'wedly-wedream-pending-actions'
+
+export const WEDREAM_PENDING_ACTIONS_TTL_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * Le modal ne s'ouvre qu'une fois par session, quel que soit le geste qui l'a
+ * déclenché. Le drapeau est en sessionStorage et non en localStorage : refuser
+ * la création de compte un jour ne doit pas priver le couple de la proposition
+ * un mois plus tard.
+ */
+export const ACCOUNT_MODAL_SEEN_KEY = 'wedly-account-modal-seen'
+
+/**
+ * Une entrée par geste, pas un objet unique : un couple épingle plusieurs
+ * photos et demande plusieurs mises en relation avant de s'inscrire, et US8 doit
+ * pouvoir toutes les rejouer.
+ */
+export type PendingAction = {
+  kind: CtaKind
+  portfolioImageId: string
+  /** Date d'écriture, en ms — c'est la lecture qui en déduit l'expiration. */
+  timestamp: number
+}
+
+export interface StorageLike {
+  getItem(key: string): string | null
+  setItem(key: string, value: string): void
+  removeItem(key: string): void
+}
+
+/**
+ * `window.localStorage` peut lever à l'accès même — Safari en navigation privée,
+ * cookies tiers bloqués, quota plein. Aucun de ces cas ne doit casser le
+ * parcours : on rend `null` et l'appelant continue sans file.
+ */
+export function browserStorage(kind: 'local' | 'session'): StorageLike | null {
+  try {
+    return kind === 'local' ? window.localStorage : window.sessionStorage
+  } catch (error) {
+    reportStorageFailure(`accès à ${kind}Storage`, error)
+    return null
+  }
+}
+
+/**
+ * Un stockage refusé n'est jamais fatal ici, mais il reste anormal : sans trace,
+ * un couple qui perd systématiquement sa file (Safari privé, quota plein, mode
+ * kiosque) ne produirait aucun signal.
+ *
+ * TODO(observabilité front) : Sentry n'existe aujourd'hui que côté Symfony
+ * (`sentry/sentry-symfony`, DSN injecté par deploy.yml) — pas de
+ * `@sentry/nextjs`, pas d'`instrumentation.ts`, pas de DSN public. En attendant
+ * ce câblage, la console est le seul canal disponible. Ce point de passage est
+ * unique et volontairement centralisé : brancher Sentry se fera ici, en une
+ * ligne, sans toucher aux appelants.
+ */
+function reportStorageFailure(operation: string, error: unknown): void {
+  console.warn(`[wedream-pending-actions] ${operation} indisponible :`, error)
+}
+
+/**
+ * Les écrans qui affichent la file — le badge des gestes en attente (WED-161) —
+ * doivent se remettre à jour dès qu'un geste s'y ajoute, sans que la grille qui
+ * écrit ait à les connaître.
+ *
+ * Le canal est volontairement muet sur le contenu : un abonné apprend que la file
+ * a bougé, il la relit lui-même. C'est le contrat de `useSyncExternalStore`, et
+ * ça évite de faire circuler une copie qui divergerait du stockage.
+ *
+ * La portée est l'onglet en cours : un geste posé dans un autre onglet ne
+ * réveille personne ici. C'est suffisant tant que la file ne s'écrit que depuis
+ * la galerie, sur la page qu'on regarde.
+ */
+const subscribers = new Set<() => void>()
+
+/** Rend la fonction de désabonnement, comme l'attend `useSyncExternalStore`. */
+export function subscribeToPendingActions(listener: () => void): () => void {
+  subscribers.add(listener)
+
+  return () => {
+    subscribers.delete(listener)
+  }
+}
+
+function notifySubscribers(): void {
+  for (const listener of subscribers) listener()
+}
+
+function isPendingAction(value: unknown): value is PendingAction {
+  if (typeof value !== 'object' || value === null) return false
+
+  const entry = value as Partial<PendingAction>
+
+  return (
+    (entry.kind === 'pin' || entry.kind === 'contact') &&
+    typeof entry.portfolioImageId === 'string' &&
+    entry.portfolioImageId !== '' &&
+    typeof entry.timestamp === 'number' &&
+    Number.isFinite(entry.timestamp)
+  )
+}
+
+/**
+ * La file telle qu'elle est vraiment utilisable : entrées expirées retirées,
+ * entrées malformées ignorées.
+ *
+ * Le contenu est réécrit par l'utilisateur à volonté — c'est du localStorage —
+ * donc chaque entrée est validée plutôt que castée. Une file entièrement
+ * illisible est effacée : la garder ferait échouer la même lecture pendant 30
+ * jours.
+ */
+export function loadPendingActions(
+  storage: StorageLike,
+  now = Date.now(),
+): PendingAction[] {
+  let stored: string | null = null
+
+  try {
+    stored = storage.getItem(WEDREAM_PENDING_ACTIONS_KEY)
+  } catch (error) {
+    reportStorageFailure('lecture de la file', error)
+    return []
+  }
+
+  if (!stored) return []
+
+  let parsed: unknown
+
+  try {
+    parsed = JSON.parse(stored)
+  } catch {
+    removePendingActions(storage)
+    return []
+  }
+
+  if (!Array.isArray(parsed)) {
+    removePendingActions(storage)
+    return []
+  }
+
+  return parsed
+    .filter(isPendingAction)
+    .filter((entry) => now - entry.timestamp < WEDREAM_PENDING_ACTIONS_TTL_MS)
+}
+
+/**
+ * Ajoute un geste à la file et rend la file telle qu'elle est désormais stockée.
+ *
+ * La purge se fait ici aussi, pas seulement à la lecture : sans elle, un couple
+ * qui revient tous les mois verrait la file grossir indéfiniment sans que
+ * personne ne la lise jamais entre deux visites.
+ *
+ * Deux clics « épingler » sur la même photo ne font qu'une entrée, avec le
+ * timestamp rafraîchi : US8 rejouerait sinon deux POST strictement identiques,
+ * idempotents côté backend mais inutiles.
+ */
+export function enqueuePendingAction(
+  storage: StorageLike,
+  action: CtaAction,
+  now = Date.now(),
+): PendingAction[] {
+  const kept = loadPendingActions(storage, now).filter(
+    (entry) => entry.kind !== action.kind || entry.portfolioImageId !== action.portfolioImageId,
+  )
+
+  const queue = [...kept, { ...action, timestamp: now }]
+
+  try {
+    storage.setItem(WEDREAM_PENDING_ACTIONS_KEY, JSON.stringify(queue))
+  } catch (error) {
+    // Quota plein ou stockage refusé : le geste est perdu, mais le couple garde
+    // son modal et son parcours. Mieux vaut une file incomplète qu'un clic mort.
+    reportStorageFailure('écriture de la file', error)
+    return queue
+  }
+
+  // Après l'écriture seulement : un quota plein n'a rien changé au stockage, et
+  // faire recompter une file qui n'a pas bougé afficherait un compteur faux.
+  notifySubscribers()
+
+  return queue
+}
+
+/**
+ * Retire un geste de la file et rend la file telle qu'elle est désormais
+ * stockée — le miroir exact d'`enqueuePendingAction` (WED-183).
+ *
+ * Le cas d'usage est le dé-épinglage d'une photo épinglée sans compte : le geste
+ * n'est jamais parti au backend, il n'attend que l'inscription. Le retirer de la
+ * file est donc la seule écriture nécessaire, et il ne doit surtout pas être
+ * rejoué à l'inscription (US8) alors que le couple s'est rétracté entre-temps.
+ *
+ * Rien à retirer : on ne réécrit pas et on ne prévient personne. Réécrire une
+ * file identique ferait recompter le badge (WED-161) pour un contenu inchangé,
+ * et exposerait au passage à un quota plein sans aucune raison.
+ */
+export function dequeuePendingAction(
+  storage: StorageLike,
+  kind: CtaKind,
+  portfolioImageId: string,
+  now = Date.now(),
+): PendingAction[] {
+  const queue = loadPendingActions(storage, now)
+  const kept = queue.filter(
+    (entry) => entry.kind !== kind || entry.portfolioImageId !== portfolioImageId,
+  )
+
+  if (kept.length === queue.length) return queue
+
+  try {
+    storage.setItem(WEDREAM_PENDING_ACTIONS_KEY, JSON.stringify(kept))
+  } catch (error) {
+    // Comme à l'écriture : le geste reste en file, mais le couple garde son
+    // parcours. Une file en trop vaut mieux qu'un clic mort.
+    reportStorageFailure('retrait dans la file', error)
+    return queue
+  }
+
+  // Après l'écriture seulement, pour la même raison qu'`enqueuePendingAction`.
+  notifySubscribers()
+
+  return kept
+}
+
+/**
+ * Volontairement muette envers les abonnés, contrairement à
+ * `enqueuePendingAction` qui les prévient après chaque écriture.
+ *
+ * Le réflexe symétrique serait de notifier ici aussi, pour que le badge des
+ * gestes en attente (WED-161) se rafraîchisse après une purge. Il ne faut pas :
+ * `loadPendingActions` appelle cette fonction quand le contenu stocké est
+ * illisible, et elle est elle-même appelée depuis le `getSnapshot` du provider,
+ * donc **pendant le rendu**. Y déclencher une notification reviendrait à
+ * provoquer un re-render depuis un rendu.
+ *
+ * Aucun écran n'en souffre : les deux purges du flush (WED-162) sont suivies
+ * soit d'un changement d'écran dans le parcours, soit d'une navigation pleine
+ * page, et aucune des deux ne laisse un badge à l'écran.
+ */
+export function removePendingActions(storage: StorageLike): void {
+  try {
+    storage.removeItem(WEDREAM_PENDING_ACTIONS_KEY)
+  } catch (error) {
+    // Rien à faire de plus : la lecture suivante retombera sur le même vide.
+    reportStorageFailure('purge de la file', error)
+  }
+}
+
+export function hasSeenAccountModal(storage: StorageLike): boolean {
+  try {
+    return storage.getItem(ACCOUNT_MODAL_SEEN_KEY) !== null
+  } catch (error) {
+    reportStorageFailure('lecture du drapeau modal', error)
+    return false
+  }
+}
+
+export function markAccountModalSeen(storage: StorageLike): void {
+  try {
+    storage.setItem(ACCOUNT_MODAL_SEEN_KEY, '1')
+  } catch (error) {
+    // Le drapeau en mémoire de l'écran prend le relais pour la page en cours.
+    reportStorageFailure('écriture du drapeau modal', error)
+  }
+}

@@ -35,9 +35,13 @@ import {
   saveCoupleOnboarding,
   withSliderDefaults,
 } from '@/lib/couple-onboarding-store'
+import { buildCoupleSpaceEntryUrl } from '@/lib/couple-space'
+import { browserStorage } from '@/lib/wedream-pending-actions'
+import { flushPendingActions } from '@/lib/wedream-pending-flush'
 import {
   buildRegistrationPayload,
   credentialsError,
+  EMAIL_ALREADY_USED,
   MIN_PASSWORD_LENGTH,
   registerCouple,
   type CoupleCredentials,
@@ -56,6 +60,86 @@ const FIREWORK_BURSTS = [
   { top: '32%', left: '50%', delay: 0.36, radius: 85 },
 ]
 const FIREWORK_PARTICLE_COUNT = 10
+
+/**
+ * La sortie « je me connecte » de l'écran 9.
+ *
+ * `redirect` est explicite bien que `/mon-espace` soit déjà la destination par
+ * défaut d'un couple : `LoginForm` lit le même paramètre pour choisir entre
+ * l'habillage couple et l'habillage prestataire, et l'omettre enverrait le
+ * couple sur un écran titré « Espace prestataire ».
+ *
+ * `flush` signale qu'il faudra vider la file de gestes en attente une fois la
+ * connexion réussie. Personne ne le lit encore — c'est PR3 qui le consomme.
+ */
+const COUPLE_LOGIN_WITH_QUEUE_FLUSH = '/login?redirect=/mon-espace&flush=pending-actions'
+
+/**
+ * Le calque décoratif de l'écran 8. Sorti du corps de l'écran pour que la
+ * coquille partagée ci-dessous n'ait pas à le connaître : célébrer un compte qui
+ * vient de naître n'a de sens que là.
+ */
+function FireworkLayer() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      {FIREWORK_BURSTS.map((burst, burstIndex) => (
+        <div key={burstIndex} className="absolute" style={{ top: burst.top, left: burst.left }}>
+          {Array.from({ length: FIREWORK_PARTICLE_COUNT }, (_, particleIndex) => {
+            const angle = (particleIndex / FIREWORK_PARTICLE_COUNT) * 2 * Math.PI
+            const dx = Math.round(Math.cos(angle) * burst.radius)
+            const dy = Math.round(Math.sin(angle) * burst.radius)
+            return (
+              <span
+                key={particleIndex}
+                className="firework-particle"
+                style={{
+                  backgroundColor: FIREWORK_COLORS[(burstIndex + particleIndex) % FIREWORK_COLORS.length],
+                  animationDelay: `${burst.delay}s`,
+                  '--dx': `${dx}px`,
+                  '--dy': `${dy}px`,
+                } as React.CSSProperties}
+              />
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * La chrome des écrans de sortie du parcours : l'écran 8 quand le compte vient
+ * d'être créé, l'écran 9 quand il existait déjà (WED-162).
+ *
+ * Ce qu'elle porte, c'est l'invariant commun aux deux : on est sorti du tunnel,
+ * donc pas d'`OnboardingHeader` et pas de stepper — seulement le logo, qui ramène
+ * à l'accueil. Un composant nommé le dit ; deux copies du même JSX le laisseraient
+ * au hasard du copier-coller, et le prochain écran de sortie repartirait d'une
+ * troisième copie.
+ *
+ * `decoration` est rendu dans le `main` et non dans la `section` : le calque des
+ * feux d'artifice est positionné en absolu sur toute la page, pas dans le
+ * contenu centré.
+ */
+function OnboardingExitScreen({ decoration, children }: { decoration?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-creme px-6 py-8 text-texte sm:px-12 lg:px-20">
+      {decoration}
+
+      <header className="relative">
+        <Link href="/" aria-label="Retour à l'accueil Wedly">
+          <Image src={LOGO_ON_CREME} alt="Wedly" width={0} height={0} sizes="160px" style={{ height: '40px', width: 'auto' }} priority />
+        </Link>
+      </header>
+
+      <div className="relative grid min-h-[calc(100vh-8rem)] place-items-center">
+        <section className="w-full max-w-2xl text-center">
+          {children}
+        </section>
+      </div>
+    </main>
+  )
+}
 
 const PLANNING_STAGES: Array<{ value: PlanningStage; label: string }> = [
   { value: 'just_started', label: 'On vient de commencer' },
@@ -86,6 +170,9 @@ const SCREEN_THEME: Record<CoupleOnboardingScreen, 'creme' | 'bordeaux'> = {
   6: 'creme',
   7: 'creme',
   8: 'creme',
+  // Jamais lue : les deux écrans de sortie rendent leur propre `main` avant que
+  // le thème ne soit consulté. Le Record exige l'entrée, pas l'inverse.
+  9: 'creme',
 }
 
 const formatter = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -273,6 +360,10 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   // Holds what the server refused — a duplicate email above all, which no
   // browser-side check can anticipate.
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Ce que le rejeu de la file a rattaché au compte qui vient de naître. Porté
+  // en état parce que l'écran 8 s'affiche entre le rejeu et la navigation vers
+  // l'espace, et que c'est cette navigation qui transporte le compte.
+  const [flushedCount, setFlushedCount] = useState(0)
   // Which screens the couple has actually been shown, not just "before the
   // current one": screens 4-5 never happen at all on the refused-consent
   // path, and a step of the progress bar has no business being clickable if
@@ -316,6 +407,21 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
   function updateCredentials<K extends keyof CoupleCredentials>(key: K, value: string) {
     setSubmitError(null)
     setCredentials((current) => ({ ...current, [key]: value }))
+  }
+
+  /**
+   * « Ce n'est pas moi » : seul l'email est faux, tout le reste a été saisi par
+   * la bonne personne. On revient donc à l'écran 7 en ne vidant que ce champ —
+   * mot de passe, confirmation et parcours restent en l'état, le composant n'a
+   * jamais été démonté.
+   *
+   * Passe par `updateCredentials` et non par `setCredentials` : c'est lui qui
+   * remet `submitError` à zéro, et le formulaire doit se retrouver vierge de
+   * toute erreur.
+   */
+  function restartWithAnotherEmail() {
+    updateCredentials('email', '')
+    setScreen(7)
   }
 
   function continueOnboarding(nextData = withSliderDefaults(data)) {
@@ -371,14 +477,38 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
 
     const result = await registerCouple(buildRegistrationPayload(withSliderDefaults(data), credentials))
 
-    setSubmitting(false)
-
     if (!result.success) {
+      setSubmitting(false)
+
+      // Le seul échec qui n'appelle pas une correction sur place : ce couple a
+      // déjà un compte, la suite est de s'y connecter (WED-162). Volontairement
+      // imbriqué dans la branche d'échec — le `sessionStorage` n'est purgé que
+      // par le chemin de succès, et le parcours doit rester entier pour un
+      // retour par « ce n'est pas moi ».
+      if (result.code === EMAIL_ALREADY_USED) {
+        setScreen(9)
+        return
+      }
+
       setSubmitError(result.error)
       return
     }
 
     sessionStorage.removeItem(COUPLE_ONBOARDING_STORAGE_KEY)
+
+    // Les gestes posés avant l'inscription rejoignent le compte qui vient de
+    // naître (WED-162 / US8). Le payload d'inscription ne portait qu'une seule
+    // demande de contact : sans ce rejeu, un couple qui a épinglé cinq photos en
+    // perdait quatre sans un mot.
+    //
+    // Attendu, et `submitting` maintenu jusque-là : l'écran 8 mène à l'espace
+    // personnel, et une navigation partie avant la fin annulerait les requêtes
+    // en vol — soit exactement la perte que ce rejeu répare. C'est aussi ce qui
+    // empêche un second clic sur « créer mon compte » pendant le rejeu.
+    const { done } = await flushPendingActions(browserStorage('local'))
+
+    setFlushedCount(done)
+    setSubmitting(false)
     onStageComplete(data)
     setScreen(8)
   }
@@ -420,49 +550,66 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
 
   if (screen === 8) {
     return (
-      <main className="relative min-h-screen overflow-hidden bg-creme px-6 py-8 text-texte sm:px-12 lg:px-20">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          {FIREWORK_BURSTS.map((burst, burstIndex) => (
-            <div key={burstIndex} className="absolute" style={{ top: burst.top, left: burst.left }}>
-              {Array.from({ length: FIREWORK_PARTICLE_COUNT }, (_, particleIndex) => {
-                const angle = (particleIndex / FIREWORK_PARTICLE_COUNT) * 2 * Math.PI
-                const dx = Math.round(Math.cos(angle) * burst.radius)
-                const dy = Math.round(Math.sin(angle) * burst.radius)
-                return (
-                  <span
-                    key={particleIndex}
-                    className="firework-particle"
-                    style={{
-                      backgroundColor: FIREWORK_COLORS[(burstIndex + particleIndex) % FIREWORK_COLORS.length],
-                      animationDelay: `${burst.delay}s`,
-                      '--dx': `${dx}px`,
-                      '--dy': `${dy}px`,
-                    } as React.CSSProperties}
-                  />
-                )
-              })}
-            </div>
-          ))}
-        </div>
+      <OnboardingExitScreen decoration={<FireworkLayer />}>
+        <h1 className="font-cormorant text-4xl font-medium tracking-tight sm:text-5xl lg:text-6xl">
+          Bienvenue chez Wedly{name ? <>, <em className="font-semibold text-accent not-italic">{name}</em></> : null}.
+        </h1>
+        <p className="mt-8 text-base leading-7 text-gris">Votre compte est prêt. Vous allez maintenant découvrir vos premiers prestataires.</p>
+        {/* L'espace personnel directement (WED-187) : l'inscription vient de
+            poser le cookie de session, il n'y a rien à reconnecter — l'ancienne
+            sortie vers `/login` faisait retaper à un couple déjà authentifié le
+            mot de passe créé deux écrans plus tôt.
 
-        <header className="relative">
-          <Link href="/" aria-label="Retour à l'accueil Wedly">
-            <Image src={LOGO_ON_CREME} alt="Wedly" width={0} height={0} sizes="160px" style={{ height: '40px', width: 'auto' }} priority />
-          </Link>
-        </header>
+            Un bouton et non un `Link` : `window.location` force une navigation
+            pleine page, seule façon de garantir que le layout de l'espace — un
+            Server Component qui lit le cookie — reparte du cookie tout juste
+            posé. Même geste que `LoginForm` après connexion. */}
+        <button
+          type="button"
+          onClick={() => { window.location.href = buildCoupleSpaceEntryUrl(flushedCount) }}
+          className="mt-10 inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent"
+        >
+          DÉCOUVRIR MON ESPACE <ChevronRight size={18} aria-hidden="true" />
+        </button>
+      </OnboardingExitScreen>
+    )
+  }
 
-        <div className="relative grid min-h-[calc(100vh-8rem)] place-items-center">
-          <section className="w-full max-w-2xl text-center">
-            <h1 className="font-cormorant text-4xl font-medium tracking-tight sm:text-5xl lg:text-6xl">
-              Bienvenue chez Wedly{name ? <>, <em className="font-semibold text-accent not-italic">{name}</em></> : null}.
-            </h1>
-            <p className="mt-8 text-base leading-7 text-gris">Votre compte est prêt. Vous allez maintenant découvrir vos premiers prestataires.</p>
-            <Link href="/login" className="mt-10 inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent">
-              SE CONNECTER <ChevronRight size={18} aria-hidden="true" />
-            </Link>
-          </section>
+  /**
+   * L'email saisi porte déjà un compte (WED-162). Un écran à part et non le
+   * message inline de l'écran 7 : rien n'est à corriger dans le formulaire, la
+   * suite du parcours est ailleurs — se connecter.
+   *
+   * Le CTA emporte `redirect=/mon-espace` alors que c'est déjà la destination par
+   * défaut d'un couple : `LoginForm` s'en sert aussi pour choisir son habillage,
+   * et sans lui il annoncerait « Espace prestataire ». `flush=pending-actions`
+   * n'est lu par personne pour l'instant — c'est PR3 qui le consommera.
+   */
+  if (screen === 9) {
+    return (
+      <OnboardingExitScreen>
+        <h1 className="font-cormorant text-4xl font-medium tracking-tight sm:text-5xl lg:text-6xl">
+          Vous avez déjà un compte avec cet email
+        </h1>
+        <p className="mt-8 text-base leading-7 text-gris">
+          Connectez-vous pour retrouver votre espace : vos coups de cœur en attente y seront ajoutés.
+        </p>
+        <Link
+          href={COUPLE_LOGIN_WITH_QUEUE_FLUSH}
+          className="mt-10 inline-flex items-center gap-2 rounded-full bg-highlight px-9 py-4 text-sm font-bold tracking-[0.13em] text-creme shadow-lg transition hover:bg-accent"
+        >
+          SE CONNECTER <ChevronRight size={18} aria-hidden="true" />
+        </Link>
+        <div className="mt-8">
+          <button
+            type="button"
+            onClick={restartWithAnotherEmail}
+            className="text-sm text-bordeaux underline underline-offset-4 hover:text-accent"
+          >
+            Ce n&apos;est pas moi, utiliser un autre email
+          </button>
         </div>
-      </main>
+      </OnboardingExitScreen>
     )
   }
 

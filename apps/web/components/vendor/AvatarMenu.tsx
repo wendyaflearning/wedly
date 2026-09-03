@@ -5,24 +5,27 @@ import { useEffect, useRef, useState } from 'react'
 
 interface AvatarMenuProps {
   firstName: string
-  lastName: string
+  lastName?: string | null
   email?: string
   status?: string
   direction?: 'down' | 'up'
   variant?: 'light' | 'dark'
+  /** Vendor account links (profil, paramètres). Couple shell hides them until US-6.5+. */
+  showAccountLinks?: boolean
 }
 
 export function AvatarMenu({
   firstName,
-  lastName,
+  lastName = '',
   email,
   status,
   direction = 'down',
   variant = 'light',
+  showAccountLinks = true,
 }: AvatarMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase()
+  const initials = `${firstName[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
 
   useEffect(() => {
@@ -106,39 +109,45 @@ export function AvatarMenu({
             )}
           </div>
 
-          <hr className="border-0 h-px bg-bordeaux/10 mx-0" />
+          {showAccountLinks && (
+            <>
+              <hr className="border-0 h-px bg-bordeaux/10 mx-0" />
 
-          {/* Liens navigation */}
-          <div className="py-1.5">
-            <Link
-              href="/profil"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-5 py-[11px] text-[13px] font-medium text-texte no-underline hover:bg-bordeaux/5 transition-colors"
-              style={{ fontFamily: 'var(--font-manrope-var)' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="5.5" r="2.75" stroke="#291A10" strokeWidth="1.3" />
-                <path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#291A10" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-              Mon profil
-            </Link>
+              {/* Liens navigation */}
+              <div className="py-1.5">
+                <Link
+                  href="/profil"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-5 py-[11px] text-[13px] font-medium text-texte no-underline hover:bg-bordeaux/5 transition-colors"
+                  style={{ fontFamily: 'var(--font-manrope-var)' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="5.5" r="2.75" stroke="#291A10" strokeWidth="1.3" />
+                    <path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#291A10" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                  Mon profil
+                </Link>
 
-            <Link
-              href="/parametres"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-5 py-[11px] text-[13px] font-medium text-texte no-underline hover:bg-bordeaux/5 transition-colors"
-              style={{ fontFamily: 'var(--font-manrope-var)' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="2.25" stroke="#291A10" strokeWidth="1.3" />
-                <path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5" stroke="#291A10" strokeWidth="1.3" strokeLinecap="round" />
-                <path d="M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="#291A10" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-              Paramètres
-            </Link>
-          </div>
+                <Link
+                  href="/parametres"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-5 py-[11px] text-[13px] font-medium text-texte no-underline hover:bg-bordeaux/5 transition-colors"
+                  style={{ fontFamily: 'var(--font-manrope-var)' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="2.25" stroke="#291A10" strokeWidth="1.3" />
+                    <path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5" stroke="#291A10" strokeWidth="1.3" strokeLinecap="round" />
+                    <path d="M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="#291A10" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                  Paramètres
+                </Link>
+              </div>
 
-          <hr className="border-0 h-px bg-bordeaux/10 mx-0" />
+              <hr className="border-0 h-px bg-bordeaux/10 mx-0" />
+            </>
+          )}
+
+          {!showAccountLinks && <hr className="border-0 h-px bg-bordeaux/10 mx-0" />}
 
           {/* Déconnexion */}
           <div className="py-1.5">

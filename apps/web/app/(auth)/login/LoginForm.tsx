@@ -1,9 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { isCoupleSpaceRedirect } from '@/lib/auth-redirect';
 import { loginVendor } from '@/lib/auth';
+import { buildCoupleSpaceEntryUrl } from '@/lib/couple-space';
+import { browserStorage } from '@/lib/wedream-pending-actions';
+import { flushPendingActions } from '@/lib/wedream-pending-flush';
 
-export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
+export default function LoginForm({
+  redirectTo,
+  shouldFlushPendingActions = false,
+}: {
+  redirectTo?: string;
+  shouldFlushPendingActions?: boolean;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -11,6 +21,7 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [error, setError] = useState('');
 
   const isEmailValid = email.includes('@') && email.includes('.');
+  const isCoupleLogin = isCoupleSpaceRedirect(redirectTo);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,6 +29,24 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
     setError('');
     const result = await loginVendor(email, password, redirectTo);
     if (result.success) {
+      // `result.redirectTo` sort de `safeRedirectForRole()`, donc du rôle résolu
+      // côté serveur et non de l'URL : un prestataire ou un admin qui arriverait
+      // ici avec le drapeau dans l'adresse est ramené sur son propre espace, et
+      // ce test rend `false`. Le garde-fou de rôle est déjà là, gratuitement.
+      if (shouldFlushPendingActions && isCoupleSpaceRedirect(result.redirectTo)) {
+        const { done } = await flushPendingActions(browserStorage('local'));
+
+        // Le test reste ici et n'entre pas dans `buildCoupleSpaceEntryUrl` :
+        // sans rien de rejoué, la destination n'est pas l'onglet nu mais le
+        // `redirectTo` résolu depuis le rôle, quelques lignes plus bas.
+        if (done > 0) {
+          window.location.href = buildCoupleSpaceEntryUrl(done);
+          return;
+        }
+        // Rien n'a abouti : on ne promet pas au couple des coups de cœur qu'il
+        // ne retrouverait pas. Connexion normale, sans confirmation.
+      }
+
       window.location.href = result.redirectTo;
     } else {
       setError(result.error);
@@ -30,29 +59,14 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
       {/* Header */}
       <div className="flex flex-col gap-[9px]">
         <span className="font-manrope text-[10.5px] font-bold tracking-[0.18em] uppercase text-[rgb(240,168,117)] md:text-highlight">
-          Espace prestataire
+          {isCoupleLogin ? 'Espace couple' : 'Espace prestataire'}
         </span>
         <h1 className="font-cormorant font-medium text-[30px] leading-[1.1] text-creme tracking-[0.005em] md:hidden">
           Connexion
         </h1>
         <h1 className="hidden md:block font-cormorant font-medium text-[38px] leading-[1.1] text-texte tracking-[0.005em]">
-          Bienvenue sur Wedly
+          {isCoupleLogin ? 'Retrouvez votre espace' : 'Bienvenue sur Wedly'}
         </h1>
-      </div>
-
-      {/* Info banner */}
-      <div className="relative flex gap-[13px] items-center bg-[rgba(255,246,237,0.07)] md:bg-[rgb(251,239,224)] border border-[rgba(240,168,117,0.28)] md:border-[rgba(157,79,30,0.22)] rounded-[14px] px-[16px] pl-[17px] py-[14px] overflow-hidden">
-        <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-highlight" />
-        <span className="flex-shrink-0 flex items-center justify-center w-[30px] h-[30px] rounded-full bg-highlight">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 1.2c.5 2.9 1.9 4.3 4.8 4.8-2.9.5-4.3 1.9-4.8 4.8-.5-2.9-1.9-4.3-4.8-4.8C6.1 5.5 7.5 4.1 8 1.2Z" fill="#FFF6ED" />
-            <path d="M12.8 9.6c.25 1.45.95 2.15 2.4 2.4-1.45.25-2.15.95-2.4 2.4-.25-1.45-.95-2.15-2.4-2.4 1.45-.25 2.15-.95 2.4-2.4Z" fill="#FFF6ED" opacity="0.7" />
-          </svg>
-        </span>
-        <p className="font-manrope text-[12.5px] font-normal leading-[1.5] text-[rgba(255,246,237,0.78)] md:text-[rgba(41,26,16,0.78)]">
-          <span className="font-semibold text-creme md:text-texte">Profil validé par nos équipes.</span>{' '}
-          Connectez-vous avec vos identifiants d&apos;inscription.
-        </p>
       </div>
 
       {/* Fields */}

@@ -76,11 +76,13 @@ export function TaxonomyDetailClient({
 
   const [addingValueForTagTypeId, setAddingValueForTagTypeId] = useState<string | null>(null)
   const [addValueDraft, setAddValueDraft] = useState('')
+  const [addValueVignetteDraft, setAddValueVignetteDraft] = useState('')
   const [addValueError, setAddValueError] = useState<string | null>(null)
   const [addValuePending, setAddValuePending] = useState(false)
 
   const [editingValueId, setEditingValueId] = useState<string | null>(null)
   const [editValueDraft, setEditValueDraft] = useState('')
+  const [editValueVignetteDraft, setEditValueVignetteDraft] = useState('')
   const [editValueError, setEditValueError] = useState<string | null>(null)
   const [editValuePending, setEditValuePending] = useState(false)
 
@@ -103,12 +105,14 @@ export function TaxonomyDetailClient({
   function openAddValue(tagTypeId: string) {
     setAddingValueForTagTypeId(tagTypeId)
     setAddValueDraft('')
+    setAddValueVignetteDraft('')
     setAddValueError(null)
   }
 
   function cancelAddValue() {
     setAddingValueForTagTypeId(null)
     setAddValueDraft('')
+    setAddValueVignetteDraft('')
     setAddValueError(null)
   }
 
@@ -122,9 +126,16 @@ export function TaxonomyDetailClient({
       await apiFetch('/api/admin/tag-values', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tagTypeId, label } satisfies CreateTagValuePayload),
+        body: JSON.stringify({
+          tagTypeId,
+          label,
+          // Champ vide => clé absente du JSON : le back ne sait pas effacer une
+          // vignette, on ne lui envoie donc jamais de valeur vide.
+          vignetteUrl: addValueVignetteDraft.trim() || undefined,
+        } satisfies CreateTagValuePayload),
       })
       setAddValueDraft('')
+      setAddValueVignetteDraft('')
       router.refresh()
     } catch (err) {
       setAddValueError(err instanceof Error ? err.message : 'Une erreur est survenue.')
@@ -136,12 +147,14 @@ export function TaxonomyDetailClient({
   function openEditValue(tagValue: AdminTagValue) {
     setEditingValueId(tagValue.id)
     setEditValueDraft(tagValue.label)
+    setEditValueVignetteDraft(tagValue.vignetteUrl ?? '')
     setEditValueError(null)
   }
 
   function cancelEditValue() {
     setEditingValueId(null)
     setEditValueDraft('')
+    setEditValueVignetteDraft('')
     setEditValueError(null)
   }
 
@@ -159,7 +172,10 @@ export function TaxonomyDetailClient({
       await apiFetch(`/api/admin/tag-values/${editingValueId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label } satisfies UpdateTagValuePayload),
+        body: JSON.stringify({
+          label,
+          vignetteUrl: editValueVignetteDraft.trim() || undefined,
+        } satisfies UpdateTagValuePayload),
       })
       setEditingValueId(null)
       router.refresh()
@@ -356,20 +372,33 @@ export function TaxonomyDetailClient({
                                 filteredValues.map((tagValue) =>
                                   editingValueId === tagValue.id ? (
                                     <div key={tagValue.id} className="flex flex-col gap-1.5">
-                                      <div className="flex items-center gap-2">
-                                        <input
-                                          autoFocus
-                                          type="text"
-                                          value={editValueDraft}
-                                          onChange={(event) => setEditValueDraft(event.target.value)}
-                                          onKeyDown={(event) => {
-                                            if (event.key === 'Enter') submitEditValue()
-                                            if (event.key === 'Escape') cancelEditValue()
-                                          }}
-                                          className={`flex-1 rounded-md border bg-white px-3 py-2 text-sm text-texte outline-none ${
-                                            editValueError ? 'border-danger' : 'border-accent'
-                                          }`}
-                                        />
+                                      <div className="flex items-start gap-2">
+                                        <div className="flex flex-1 flex-col gap-1.5">
+                                          <input
+                                            autoFocus
+                                            type="text"
+                                            value={editValueDraft}
+                                            onChange={(event) => setEditValueDraft(event.target.value)}
+                                            onKeyDown={(event) => {
+                                              if (event.key === 'Enter') submitEditValue()
+                                              if (event.key === 'Escape') cancelEditValue()
+                                            }}
+                                            className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-texte outline-none ${
+                                              editValueError ? 'border-danger' : 'border-accent'
+                                            }`}
+                                          />
+                                          <input
+                                            type="text"
+                                            placeholder="URL vignette (optionnel)"
+                                            value={editValueVignetteDraft}
+                                            onChange={(event) => setEditValueVignetteDraft(event.target.value)}
+                                            onKeyDown={(event) => {
+                                              if (event.key === 'Enter') submitEditValue()
+                                              if (event.key === 'Escape') cancelEditValue()
+                                            }}
+                                            className="w-full rounded-md border border-accent bg-white px-3 py-2 text-sm text-texte outline-none"
+                                          />
+                                        </div>
                                         <button
                                           type="button"
                                           onClick={submitEditValue}
@@ -399,8 +428,19 @@ export function TaxonomyDetailClient({
                                       key={tagValue.id}
                                       className="flex items-center justify-between gap-3 rounded-md px-3 py-2 hover:bg-white"
                                     >
-                                      <span className="text-sm font-medium text-texte">
-                                        {tagValue.label}
+                                      <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-texte">
+                                        {tagValue.vignetteUrl && (
+                                          // eslint-disable-next-line @next/next/no-img-element -- miniature admin 24px, URL arbitraire hors remotePatterns
+                                          <img
+                                            src={tagValue.vignetteUrl}
+                                            alt=""
+                                            className="h-6 w-6 flex-shrink-0 rounded object-cover"
+                                            onError={(event) => {
+                                              event.currentTarget.style.display = 'none'
+                                            }}
+                                          />
+                                        )}
+                                        <span className="truncate">{tagValue.label}</span>
                                       </span>
                                       <div className="flex items-center gap-3">
                                         <StatusBadge isActive={tagValue.isActive} />
@@ -420,21 +460,34 @@ export function TaxonomyDetailClient({
 
                               {addingValueForTagTypeId === tagType.id ? (
                                 <div className="flex flex-col gap-1.5">
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      autoFocus
-                                      type="text"
-                                      placeholder="Nom du tag"
-                                      value={addValueDraft}
-                                      onChange={(event) => setAddValueDraft(event.target.value)}
-                                      onKeyDown={(event) => {
-                                        if (event.key === 'Enter') submitAddValue(tagType.id)
-                                        if (event.key === 'Escape') cancelAddValue()
-                                      }}
-                                      className={`flex-1 rounded-md border bg-white px-3 py-2 text-sm text-texte outline-none ${
-                                        addValueError ? 'border-danger' : 'border-accent'
-                                      }`}
-                                    />
+                                  <div className="flex items-start gap-2">
+                                    <div className="flex flex-1 flex-col gap-1.5">
+                                      <input
+                                        autoFocus
+                                        type="text"
+                                        placeholder="Nom du tag"
+                                        value={addValueDraft}
+                                        onChange={(event) => setAddValueDraft(event.target.value)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter') submitAddValue(tagType.id)
+                                          if (event.key === 'Escape') cancelAddValue()
+                                        }}
+                                        className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-texte outline-none ${
+                                          addValueError ? 'border-danger' : 'border-accent'
+                                        }`}
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="URL vignette (optionnel)"
+                                        value={addValueVignetteDraft}
+                                        onChange={(event) => setAddValueVignetteDraft(event.target.value)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Enter') submitAddValue(tagType.id)
+                                          if (event.key === 'Escape') cancelAddValue()
+                                        }}
+                                        className="w-full rounded-md border border-accent bg-white px-3 py-2 text-sm text-texte outline-none"
+                                      />
+                                    </div>
                                     <button
                                       type="button"
                                       onClick={() => submitAddValue(tagType.id)}

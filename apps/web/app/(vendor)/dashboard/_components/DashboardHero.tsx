@@ -2,11 +2,16 @@ import type { ReactNode } from 'react'
 
 interface DashboardHeroProps {
   firstName: string
+  isPublished: boolean
   guideButton?: ReactNode
   desktopGuideButton?: ReactNode
 }
 
-export function DashboardHero({ firstName, guideButton, desktopGuideButton }: DashboardHeroProps) {
+export function DashboardHero({ firstName, isPublished, guideButton, desktopGuideButton }: DashboardHeroProps) {
+  const mobileEyebrow = isPublished ? 'Tableau de bord' : 'Premier accès'
+  const desktopEyebrow = isPublished ? 'Tableau de bord' : 'Tableau de bord · Premier accès'
+  const statusLabel = isPublished ? 'Profil publié' : 'Profil en préparation'
+
   return (
     <section className="bg-bordeaux text-creme px-5 pt-6 pb-7 md:px-[72px] md:pt-12 md:pb-14 relative overflow-hidden">
       {/* Cercles décoratifs */}
@@ -18,10 +23,10 @@ export function DashboardHero({ firstName, guideButton, desktopGuideButton }: Da
         <div>
           {/* Eyebrow — deux variantes */}
           <span className="md:hidden font-manrope text-[10px] font-medium tracking-[0.22em] uppercase text-creme/55">
-            Premier accès
+            {mobileEyebrow}
           </span>
           <span className="hidden md:inline font-manrope text-[11px] font-medium tracking-[0.22em] uppercase text-creme/55">
-            Tableau de bord · Premier accès
+            {desktopEyebrow}
           </span>
 
           <h1 className="font-cormorant font-light text-[34px] md:text-[56px] leading-none tracking-[-0.015em] text-creme mt-2.5 mb-[18px] md:mt-3.5 md:mb-0">
@@ -32,8 +37,8 @@ export function DashboardHero({ firstName, guideButton, desktopGuideButton }: Da
           {/* Badge mobile + bouton guide côte à côte */}
           <div className="md:hidden flex items-center gap-2 flex-wrap">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-creme/[0.22] font-manrope text-[10px] font-medium tracking-[0.12em] uppercase text-creme">
-              <span className="w-[5px] h-[5px] rounded-full bg-dore" />
-              Profil en préparation
+              <span className={`w-[5px] h-[5px] rounded-full ${isPublished ? 'bg-highlight' : 'bg-dore'}`} />
+              {statusLabel}
             </div>
             {guideButton}
           </div>
@@ -43,7 +48,7 @@ export function DashboardHero({ firstName, guideButton, desktopGuideButton }: Da
         <div className="hidden md:flex items-center gap-3">
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-creme/[0.22] font-manrope text-xs font-medium tracking-[0.12em] uppercase text-creme">
             <span className="w-1.5 h-1.5 rounded-full bg-highlight" />
-            Profil en préparation
+            {statusLabel}
           </div>
           {desktopGuideButton}
         </div>

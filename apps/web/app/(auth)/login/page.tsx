@@ -3,12 +3,17 @@ import LoginForm from './LoginForm';
 type LoginPageProps = {
   searchParams?: Promise<{
     redirect?: string | string[];
+    flush?: string | string[];
   }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const redirectTo = typeof params?.redirect === 'string' ? params.redirect : undefined;
+  // Posé par l'écran « vous avez déjà un compte » du parcours d'inscription
+  // (WED-162) : ce couple a des gestes en attente à rejouer une fois connecté.
+  // Toute autre connexion arrive sans ce drapeau et n'est pas concernée.
+  const shouldFlushPendingActions = params?.flush === 'pending-actions';
 
   return (
     <div className="min-h-screen relative flex flex-col md:flex-row bg-bordeaux md:bg-creme md:[background-image:none]">
@@ -88,7 +93,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       {/* ── Panneau formulaire ────────────────────────────────────────── */}
       <div className="relative z-10 flex-1 flex flex-col justify-end md:justify-center md:items-center md:bg-creme px-[22px] pb-[36px] md:p-0">
         <div className="w-full md:max-w-[400px] md:w-[400px] rounded-[26px] border border-[rgba(255,246,237,0.16)] bg-[rgba(46,18,32,0.52)] [backdrop-filter:blur(30px)_saturate(1.1)] shadow-[0px_28px_70px_rgba(15,6,11,0.5),inset_0px_1px_0px_rgba(255,246,237,0.14)] p-[28px_24px] md:rounded-none md:border-0 md:bg-transparent md:[backdrop-filter:none] md:shadow-none md:p-0">
-          <LoginForm redirectTo={redirectTo} />
+          <LoginForm redirectTo={redirectTo} shouldFlushPendingActions={shouldFlushPendingActions} />
         </div>
       </div>
     </div>

@@ -27,6 +27,7 @@ export type VendorDashboard = {
   booking_blockers_count: number
   booking_blockers_updated_at: string | null
   wedream_enabled: boolean
+  is_published: boolean
 }
 
 export const fetchVendorDashboard = cache(async (): Promise<VendorDashboard | null> => {
@@ -49,6 +50,19 @@ export const fetchVendorDashboard = cache(async (): Promise<VendorDashboard | nu
   }
 })
 
+/**
+ * Les sections qui conditionnent la publication, telles que renvoyées par
+ * `GET /vendors/me/preview`. Le backend les produit avec `checkForPublish()` :
+ * cette forme doit rester le miroir exact de sa sortie, `styles` exclus (WED-19).
+ */
+export type ProfileCompletion = {
+  bio: boolean
+  portfolio: boolean
+  disponibilites: boolean
+  zone: boolean
+  tarifs: boolean
+}
+
 export type VendorPreview = {
   id: string
   brand_name: string
@@ -63,14 +77,8 @@ export type VendorPreview = {
   price_min_cents: number
   price_max_cents: number
   price_type: 'per_service' | 'per_person' | 'per_hour'
-  completion: {
-    bio: boolean
-    styles: boolean
-    portfolio: boolean
-    disponibilites: boolean
-    zone: boolean
-    tarifs: boolean
-  }
+  completion: ProfileCompletion
+  is_published: boolean
 }
 
 export const fetchVendorPreview = cache(async (): Promise<VendorPreview | null> => {

@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Home, Sparkles, MessageSquare, User } from 'lucide-react'
+import { Home, Heart, MessageSquare, User } from 'lucide-react'
 import { AvatarMenu } from './AvatarMenu'
 import { MobileNavSheet } from './MobileNavSheet'
 
@@ -124,10 +124,19 @@ export function VendorNav({ vendorFirstName, vendorLastName, vendorEmail, vendor
           <span className="text-[10px] font-semibold tracking-[0.02em]">Accueil</span>
         </Link>
 
-        <div className="flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg text-texte/55 cursor-default">
-          <Sparkles size={20} strokeWidth={1.4} />
-          <span className="text-[10px] font-medium tracking-[0.02em]">Wedmatch</span>
-        </div>
+        <Link
+          href="/dashboard/wedream"
+          className={`relative flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg no-underline ${isActive('/dashboard/wedream') ? 'text-accent' : 'text-texte/55'}`}
+        >
+          {isActive('/dashboard/wedream') && (
+            <span
+              className="absolute top-0 w-[22px] h-0.5 bg-accent rounded-full"
+              style={{ transform: 'translateY(-9px)' }}
+            />
+          )}
+          <Heart size={20} strokeWidth={1.4} />
+          <span className="text-[10px] font-medium tracking-[0.02em]">WedDream</span>
+        </Link>
 
         <div className="flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg text-texte/55 cursor-default">
           <MessageSquare size={20} strokeWidth={1.4} />

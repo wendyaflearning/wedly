@@ -6,15 +6,21 @@ namespace App\Entity\ProviderLead;
 
 use App\Doctrine\UuidV7Generator;
 use App\Entity\Couple\Couple;
+use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\Vendor;
 use App\Enum\ProviderLead\ProviderLeadOrigin;
 use App\Enum\ProviderLead\ProviderLeadStatus;
+use App\Repository\ProviderLead\ProviderLeadRepository;
 use App\Trait\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\UuidV7;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: ProviderLeadRepository::class)]
 #[ORM\Table(name: 'provider_lead')]
+// PROVIDER-LEAD-007 : un couple n'a qu'un lead par prestataire. Le service
+// dédoublonne déjà à l'inscription ; l'index reste le dernier rempart contre
+// deux demandes concurrentes vers le même prestataire.
+#[ORM\UniqueConstraint(name: 'UNIQ_provider_lead_couple_vendor', columns: ['couple_id', 'vendor_id'])]
 #[ORM\HasLifecycleCallbacks]
 class ProviderLead
 {
@@ -60,8 +66,26 @@ class ProviderLead
     #[ORM\Column(type: 'string', length: 20, enumType: ProviderLeadOrigin::class, options: ['default' => 'wedream'])]
     private ProviderLeadOrigin $origin = ProviderLeadOrigin::Wedream;
 
-    public function __construct(Couple $couple, Vendor $vendor, int $budgetCents)
-    {
+    /**
+     * La photo « coup de cœur » : celle sur laquelle le couple a cliqué dans la
+     * galerie Wedream avant de demander la mise en relation. Elle est portée par
+     * le lead parce qu'elle n'est déductible de rien d'autre — un prestataire a
+     * plusieurs photos, et sa photo de couverture n'est pas celle que le couple
+     * a choisie (PROVIDER-LEAD-004).
+     *
+     * Nullable : les leads créés avant WED-131 n'en ont pas, et le parcours peut
+     * partir d'une demande de contact sans photo.
+     */
+    #[ORM\ManyToOne(targetEntity: PortfolioImage::class)]
+    #[ORM\JoinColumn(name: 'portfolio_image_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?PortfolioImage $portfolioImage = null;
+
+    public function __construct(
+        Couple $couple,
+        Vendor $vendor,
+        int $budgetCents,
+        ?PortfolioImage $portfolioImage = null,
+    ) {
         if ($budgetCents < 0 || $budgetCents > self::MAX_BUDGET_CENTS) {
             throw new \InvalidArgumentException(sprintf(
                 'A provider lead budget must be between 0 and %d cents, %d given.',
@@ -70,9 +94,19 @@ class ProviderLead
             ));
         }
 
+        // Une photo appartenant à un autre prestataire rendrait la carte du
+        // couple incohérente et, une fois la fiche dévoilée, afficherait le
+        // travail d'un tiers sous le nom du prestataire contacté.
+        if ($portfolioImage !== null && $portfolioImage->getVendor() !== $vendor) {
+            throw new \InvalidArgumentException(
+                'A provider lead photo must belong to the targeted vendor.',
+            );
+        }
+
         $this->couple = $couple;
         $this->vendor = $vendor;
         $this->budgetCents = $budgetCents;
+        $this->portfolioImage = $portfolioImage;
     }
 
     public function getId(): UuidV7
@@ -110,5 +144,10 @@ class ProviderLead
     public function getOrigin(): ProviderLeadOrigin
     {
         return $this->origin;
+    }
+
+    public function getPortfolioImage(): ?PortfolioImage
+    {
+        return $this->portfolioImage;
     }
 }

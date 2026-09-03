@@ -21,17 +21,6 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: 'Wedmatch',
-    href: null,
-    locked: true,
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <circle cx="6.5" cy="9" r="4" stroke="currentColor" strokeWidth="1.35" />
-        <circle cx="11.5" cy="9" r="4" stroke="currentColor" strokeWidth="1.35" />
-      </svg>
-    ),
-  },
-  {
     label: 'WedDream',
     href: '/dashboard/wedream',
     locked: false,

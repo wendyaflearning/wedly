@@ -7,6 +7,7 @@
   --color-accent: #9D4F1E;
   --color-highlight: #E35704;
   --color-gris: #9E8E85;
+  --color-muted: #F3E9DC;
   --color-dore: #E8A87C;
   --color-success: #286342;
   --color-success-soft: #f4fbf6;
@@ -110,6 +111,60 @@ button:not([disabled]) {
 .illustration-animate {
   opacity: 0;
   animation: illustration-in 0.9s ease-out 0.6s forwards;
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-up {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 900ms ease, transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes scroll-line {
+  0% { opacity: 0.25; transform: scaleY(0.35); }
+  50% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0.25; transform: scaleY(0.35); }
+}
+
+.scroll-line {
+  transform-origin: top;
+  animation: scroll-line 2.2s ease-in-out infinite;
+}
+
+/* Pulse cœur de la phase « galerie » du WedreamJourneyPreview : rejoué à chaque
+   passage de la phase grâce au data-active posé par l'orchestrateur. */
+@keyframes wedream-heart-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.wedream-heart-pop {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.7);
+}
+
+.wedream-journey-phase[data-active='true'] .wedream-heart-pop {
+  animation: wedream-heart-pop 0.4s ease 0.2s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedream-heart-pop {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .wedream-journey-phase[data-active='true'] .wedream-heart-pop {
+    animation: none;
+  }
 }
 
 /* Salve de particules sur l'écran de bienvenue de l'onboarding couple, jouée
