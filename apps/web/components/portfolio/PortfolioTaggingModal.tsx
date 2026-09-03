@@ -14,8 +14,12 @@ interface PortfolioTaggingModalProps {
   initialTagValueIds: string[]
   queuePosition: number
   queueTotal: number
-  onConfirm: (tagValueIds: string[]) => Promise<void>
-  onCancel: () => Promise<void>
+  onConfirm?: (tagValueIds: string[]) => Promise<void>
+  onCancel?: () => Promise<void>
+  /** Mode lecture seule (fiche prestataire admin) : chips non interactifs, pas de
+   *  file d'attente, footer réduit à « Fermer ». `onConfirm`/`onCancel` inutiles. */
+  readOnly?: boolean
+  onClose?: () => void
   theme?: 'light' | 'dark'
 }
 
@@ -30,6 +34,8 @@ export function PortfolioTaggingModal({
   queueTotal,
   onConfirm,
   onCancel,
+  readOnly = false,
+  onClose,
   theme = 'light',
 }: PortfolioTaggingModalProps) {
   const isDark = theme === 'dark'
@@ -48,7 +54,9 @@ export function PortfolioTaggingModal({
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') void handleCancel()
+      if (e.key !== 'Escape') return
+      if (readOnly) onClose?.()
+      else void handleCancel()
     }
     document.addEventListener('keydown', handleKey)
     const prevOverflow = document.body.style.overflow
@@ -86,7 +94,7 @@ export function PortfolioTaggingModal({
   }
 
   async function handleConfirm() {
-    if (primaryId === null || busy || tagTypesLoading) return
+    if (primaryId === null || busy || tagTypesLoading || !onConfirm) return
 
     setSubmitting(true)
     setError(null)
@@ -99,7 +107,7 @@ export function PortfolioTaggingModal({
   }
 
   async function handleCancel() {
-    if (busy) return
+    if (busy || !onCancel) return
     setCancelling(true)
     setError(null)
     try {
@@ -119,6 +127,37 @@ export function PortfolioTaggingModal({
     size: 'md' | 'sm' = 'md'
   ) {
     const darkSelectedBg = size === 'md' ? '#E35704' : 'rgba(227,87,4,0.18)'
+    const sizeClasses = size === 'md' ? 'px-3.5 py-1.5 text-[13px]' : 'px-3 py-1 text-[12px]'
+
+    if (readOnly) {
+      // Lecture seule : un simple libellé, pas un bouton désactivé — le chip
+      // sélectionné reste mis en avant, les autres valeurs de l'axe restent
+      // lisibles en sourdine pour le contexte.
+      return (
+        <span
+          key={id}
+          className={`inline-block rounded-full border font-manrope font-medium ${sizeClasses} ${
+            isDark
+              ? ''
+              : selected
+                ? 'border-bordeaux bg-bordeaux text-creme'
+                : 'border-[#eaded2] bg-white text-texte/40'
+          }`}
+          style={
+            isDark
+              ? {
+                  borderColor: selected ? '#E35704' : 'rgba(255,246,237,0.3)',
+                  background: selected ? darkSelectedBg : 'transparent',
+                  color: selected ? '#FFF6ED' : 'rgba(255,246,237,0.6)',
+                }
+              : undefined
+          }
+        >
+          {label}
+        </span>
+      )
+    }
+
     return (
       <button
         key={id}
@@ -153,7 +192,10 @@ export function PortfolioTaggingModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-texte/40 p-0 md:p-8">
-      <div className="absolute inset-0" onClick={() => void handleCancel()} />
+      <div
+        className="absolute inset-0"
+        onClick={() => (readOnly ? onClose?.() : void handleCancel())}
+      />
 
       <div
         role="dialog"
@@ -171,9 +213,11 @@ export function PortfolioTaggingModal({
         >
           <Image src={photoUrl} alt="" fill sizes="(min-width: 768px) 55vw, 100vw" className="object-cover" unoptimized />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-texte/50 to-transparent" />
-          <p className="absolute bottom-4 left-5 font-manrope text-[10px] font-medium tracking-[0.18em] text-creme/90 uppercase">
-            {queuePosition} / {queueTotal}
-          </p>
+          {!readOnly && (
+            <p className="absolute bottom-4 left-5 font-manrope text-[10px] font-medium tracking-[0.18em] text-creme/90 uppercase">
+              {queuePosition} / {queueTotal}
+            </p>
+          )}
           {cancelling && (
             <div className="absolute inset-0 flex items-center justify-center bg-texte/40">
               <Loader2 size={28} className="animate-spin text-creme" aria-hidden="true" />
@@ -189,13 +233,13 @@ export function PortfolioTaggingModal({
                 className="font-manrope text-[11px] font-medium tracking-[0.22em] uppercase"
                 style={{ color: isDark ? 'rgba(255,246,237,0.5)' : 'var(--color-accent)' }}
               >
-                Tagging portfolio · {serviceLabel.toUpperCase()}
+                {readOnly ? 'Tags de la photo' : 'Tagging portfolio'} · {serviceLabel.toUpperCase()}
               </span>
               <button
                 type="button"
-                onClick={() => void handleCancel()}
-                disabled={busy}
-                aria-label="Annuler"
+                onClick={() => (readOnly ? onClose?.() : void handleCancel())}
+                disabled={!readOnly && busy}
+                aria-label="Fermer"
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-40 ${
                   isDark ? '' : 'text-texte/60 hover:bg-texte/5'
                 }`}
@@ -204,15 +248,17 @@ export function PortfolioTaggingModal({
                 <X size={18} aria-hidden="true" />
               </button>
             </div>
-            <div
-              className={`mt-3.5 h-[3px] w-full rounded-full ${isDark ? '' : 'bg-bordeaux/10'}`}
-              style={isDark ? { background: 'rgba(255,246,237,0.15)' } : undefined}
-            >
+            {!readOnly && (
               <div
-                className={`h-full rounded-full transition-all duration-500 ${isDark ? '' : 'bg-accent'}`}
-                style={{ width: `${(queuePosition / queueTotal) * 100}%`, background: isDark ? '#E35704' : undefined }}
-              />
-            </div>
+                className={`mt-3.5 h-[3px] w-full rounded-full ${isDark ? '' : 'bg-bordeaux/10'}`}
+                style={isDark ? { background: 'rgba(255,246,237,0.15)' } : undefined}
+              >
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${isDark ? '' : 'bg-accent'}`}
+                  style={{ width: `${(queuePosition / queueTotal) * 100}%`, background: isDark ? '#E35704' : undefined }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4 md:px-8">
@@ -303,21 +349,38 @@ export function PortfolioTaggingModal({
               <p className="mb-4 rounded-md bg-danger-soft px-3 py-2 text-sm font-semibold text-danger">{error}</p>
             )}
 
-            <button
-              type="button"
-              onClick={handleConfirm}
-              disabled={primaryId === null || busy || tagTypesLoading}
-              className={`w-full rounded-xl px-4 py-3.5 font-manrope text-[11px] font-semibold tracking-[0.18em] uppercase transition-opacity disabled:cursor-not-allowed disabled:opacity-40 ${
-                isDark ? 'text-[#FFF6ED]' : 'bg-bordeaux text-creme'
-              }`}
-              style={
-                isDark
-                  ? { background: 'linear-gradient(135deg,#E35704,#F58324)', boxShadow: '0 14px 32px rgba(227,87,4,0.42)' }
-                  : undefined
-              }
-            >
-              {submitting ? 'Enregistrement…' : isLastInQueue ? 'Terminer' : 'Suivant'}
-            </button>
+            {readOnly ? (
+              <button
+                type="button"
+                onClick={() => onClose?.()}
+                className={`w-full rounded-xl px-4 py-3.5 font-manrope text-[11px] font-semibold tracking-[0.18em] uppercase transition-opacity ${
+                  isDark ? 'text-[#FFF6ED]' : 'bg-bordeaux text-creme'
+                }`}
+                style={
+                  isDark
+                    ? { background: 'linear-gradient(135deg,#E35704,#F58324)', boxShadow: '0 14px 32px rgba(227,87,4,0.42)' }
+                    : undefined
+                }
+              >
+                Fermer
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={primaryId === null || busy || tagTypesLoading}
+                className={`w-full rounded-xl px-4 py-3.5 font-manrope text-[11px] font-semibold tracking-[0.18em] uppercase transition-opacity disabled:cursor-not-allowed disabled:opacity-40 ${
+                  isDark ? 'text-[#FFF6ED]' : 'bg-bordeaux text-creme'
+                }`}
+                style={
+                  isDark
+                    ? { background: 'linear-gradient(135deg,#E35704,#F58324)', boxShadow: '0 14px 32px rgba(227,87,4,0.42)' }
+                    : undefined
+                }
+              >
+                {submitting ? 'Enregistrement…' : isLastInQueue ? 'Terminer' : 'Suivant'}
+              </button>
+            )}
           </div>
         </div>
       </div>
