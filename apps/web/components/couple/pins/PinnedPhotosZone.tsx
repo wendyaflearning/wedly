@@ -1,4 +1,11 @@
-import { formatPinnedAt, pinnedCountLabel, type CouplePin } from '@/lib/couple-pins'
+'use client'
+
+import { useState } from 'react'
+import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/hooks/useToast'
+import { pinnedCountLabel, removePin, type CouplePin } from '@/lib/couple-pins'
+import { submitUnpinAction, UNPIN_SESSION_LOST } from '@/lib/wedream-cta'
+import { PinnedPhotoCard } from './PinnedPhotoCard'
 
 const SectionLabel = () => (
   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">Épinglés</p>
@@ -18,40 +25,49 @@ function EmptyZone() {
   )
 }
 
-function PinnedPhoto({ pin }: { pin: CouplePin }) {
-  const pinnedAt = formatPinnedAt(pin.pinnedAt)
-
-  return (
-    // `figure` et non `a`/`button` : la grille est délibérément non cliquable,
-    // aucun geste ne doit mener vers un profil prestataire (US-6.6). Dépingler
-    // est hors scope de ce ticket.
-    <figure className="relative aspect-square overflow-hidden rounded-2xl border border-bordeaux/10 bg-bordeaux/5">
-      {/* eslint-disable-next-line @next/next/no-img-element -- ratio inconnu, next/image imposerait des dimensions absentes ici (cf. galerie WedDream). */}
-      <img src={pin.photoUrl} alt="Photo épinglée" className="h-full w-full object-cover" />
-
-      {pinnedAt && (
-        <>
-          <div
-            className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-texte/80 to-transparent"
-            aria-hidden="true"
-          />
-          <figcaption className="absolute inset-x-0 bottom-0 p-3 text-[11px] text-white/80">
-            {pinnedAt}
-          </figcaption>
-        </>
-      )}
-    </figure>
-  )
-}
-
 /**
  * Zone « Épinglés » de Mon espace Wedly (US-6.6 / WED-135) : la grille des
- * photos épinglées depuis la galerie WedDream, gratuite et illimitée.
+ * photos épinglées depuis la galerie WedDream, gratuite et illimitée, et le
+ * retrait d'un coup de cœur sans quitter la page.
  *
- * Composant serveur — aucun état local, aucun filtre : la liste arrive déjà
- * triée « plus récent d'abord » par l'API (COUPLE-PIN-003).
+ * La liste arrive triée « plus récent d'abord » par l'API (COUPLE-PIN-003) ;
+ * elle passe en état local parce qu'elle rétrécit sous le doigt du couple. Ni
+ * `router.refresh()` ni revalidation : rien d'autre dans l'espace couple ne
+ * compte ces photos, et un aller-retour serveur ferait clignoter la grille pour
+ * un résultat qu'on connaît déjà.
  */
-export function PinnedPhotosZone({ pins }: { pins: CouplePin[] }) {
+export function PinnedPhotosZone({ pins: initialPins }: { pins: CouplePin[] }) {
+  const [pins, setPins] = useState(initialPins)
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [pendingId, setPendingId] = useState<string | null>(null)
+  const { toast, showToast } = useToast()
+
+  async function confirmUnpin(portfolioImageId: string) {
+    if (pendingId !== null) return
+
+    setPendingId(portfolioImageId)
+    const outcome = await submitUnpinAction(portfolioImageId)
+    setPendingId(null)
+
+    // La vignette ne part de l'écran que sur un retrait réellement acquis
+    // (COUPLE-PIN-005). Une session expirée ou une panne laissent la photo en
+    // place : elle est toujours épinglée en base, la faire disparaître ferait
+    // croire au couple qu'il s'est rétracté. La confirmation reste ouverte,
+    // le geste est donc rejouable d'un clic.
+    if (outcome.status === 'error') {
+      showToast('error', outcome.message)
+      return
+    }
+
+    if (outcome.status === 'auth_required') {
+      showToast('error', UNPIN_SESSION_LOST)
+      return
+    }
+
+    setPins((current) => removePin(current, portfolioImageId))
+    setConfirmingId(null)
+  }
+
   if (pins.length === 0) {
     return (
       <div className="flex flex-col gap-6">
@@ -71,10 +87,19 @@ export function PinnedPhotosZone({ pins }: { pins: CouplePin[] }) {
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {pins.map((pin) => (
           <li key={pin.id}>
-            <PinnedPhoto pin={pin} />
+            <PinnedPhotoCard
+              pin={pin}
+              isConfirming={confirmingId === pin.portfolioImageId}
+              isPending={pendingId === pin.portfolioImageId}
+              onAskConfirm={() => setConfirmingId(pin.portfolioImageId)}
+              onCancel={() => setConfirmingId(null)}
+              onConfirm={() => void confirmUnpin(pin.portfolioImageId)}
+            />
           </li>
         ))}
       </ul>
+
+      <Toast toast={toast} />
     </div>
   )
 }

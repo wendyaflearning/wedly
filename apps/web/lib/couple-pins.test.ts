@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatPinnedAt, pinnedCountLabel } from './couple-pins'
+import { formatPinnedAt, pinnedCountLabel, removePin, type CouplePin } from './couple-pins'
 
 /** `Intl` fr-FR insère des espaces fines/insécables ; on les normalise pour des assertions stables. */
 const norm = (value: string): string => value.replace(/\s/g, ' ')
@@ -25,5 +25,42 @@ describe('pinnedCountLabel', () => {
     expect(pinnedCountLabel(0)).toBeNull()
     expect(pinnedCountLabel(-3)).toBeNull()
     expect(pinnedCountLabel(Number.NaN)).toBeNull()
+  })
+})
+
+describe('removePin', () => {
+  const pin = (portfolioImageId: string): CouplePin => ({
+    id: `pin-${portfolioImageId}`,
+    portfolioImageId,
+    photoUrl: `https://cdn.example/${portfolioImageId}.jpg`,
+    pinnedAt: '2026-08-12T09:00:00+00:00',
+  })
+
+  it('drops the photo that was unpinned and keeps the others in order', () => {
+    const pins = [pin('a'), pin('b'), pin('c')]
+
+    expect(removePin(pins, 'b').map((item) => item.portfolioImageId)).toEqual(['a', 'c'])
+  })
+
+  it('matches on the photo id, not on the pin id', () => {
+    const pins = [pin('a')]
+
+    // `pin-a` est l'id de l'épinglé : le confondre avec celui de la photo
+    // retirerait la mauvaise vignette, ou aucune.
+    expect(removePin(pins, 'pin-a')).toHaveLength(1)
+  })
+
+  it('leaves the list untouched for an unknown photo', () => {
+    const pins = [pin('a'), pin('b')]
+
+    expect(removePin(pins, 'inconnue')).toHaveLength(2)
+  })
+
+  it('never mutates the list it was given', () => {
+    const pins = [pin('a'), pin('b')]
+
+    removePin(pins, 'a')
+
+    expect(pins).toHaveLength(2)
   })
 })

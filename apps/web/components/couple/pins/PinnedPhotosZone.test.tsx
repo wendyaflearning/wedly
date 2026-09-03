@@ -4,20 +4,26 @@ import type { CouplePin } from '@/lib/couple-pins'
 import { PinnedPhotosZone } from './PinnedPhotosZone'
 
 /**
- * La zone est un composant serveur sans état : on lui passe des pins et on lit
- * le balisage rendu. Rendu statique, comme `PendingActionsBadge.test.tsx` —
- * pas de DOM à monter pour vérifier ce que le CA demande.
+ * La zone porte désormais un état (la liste rétrécit quand on dé-épingle), mais
+ * son rendu initial reste celui de ses props : `renderToStaticMarkup` suffit à
+ * vérifier ce que le CA demande, sans DOM à monter. Le cycle clic →
+ * confirmation → retrait, lui, n'est pas couvert ici — le repo n'a pas de
+ * moteur d'interaction React.
  */
 const render = (pins: CouplePin[]): string =>
   renderToStaticMarkup(<PinnedPhotosZone pins={pins} />)
 
-const pin = (over: Partial<CouplePin> = {}): CouplePin => ({
-  id: 'pin-1',
-  portfolioImageId: 'img-1',
-  photoUrl: 'https://cdn.example/photo-1.jpg',
-  pinnedAt: '2026-08-12T09:00:00+00:00',
-  ...over,
-})
+const pin = (over: Partial<CouplePin> = {}): CouplePin => {
+  const id = over.id ?? 'pin-1'
+
+  return {
+    id,
+    portfolioImageId: `img-${id}`,
+    photoUrl: 'https://cdn.example/photo-1.jpg',
+    pinnedAt: '2026-08-12T09:00:00+00:00',
+    ...over,
+  }
+}
 
 describe('PinnedPhotosZone', () => {
   it('montre l’état vide quand aucune photo n’est épinglée', () => {
@@ -42,13 +48,24 @@ describe('PinnedPhotosZone', () => {
     expect(html).toContain('2 photos épinglées')
   })
 
-  it('n’expose jamais de geste cliquable : ni lien, ni bouton', () => {
-    const html = render([pin(), pin({ id: 'pin-2' })])
+  it('n’expose qu’un seul geste par vignette : retirer son propre épinglé', () => {
+    const html = render([pin({ id: 'a' }), pin({ id: 'b' })])
 
+    // Aucun lien : rien dans la grille ne mène ailleurs, et surtout pas vers une
+    // fiche prestataire (CA « aucun clic ne dévoile un profil prestataire »).
     // Le `<link rel="preload">` que React 19 émet pour l'`<img>` n'est pas un
-    // geste : on vise les seuls éléments interactifs, `<a>` et `<button>`.
+    // geste, d'où la cible sur `<a ` et non sur `link`.
     expect(html).not.toContain('<a ')
-    expect(html).not.toContain('<button')
+
+    // Un bouton par vignette, et un seul : le cœur de dé-épinglage.
+    expect(html.match(/<button/g)).toHaveLength(2)
+    expect(html.match(/aria-label="Dé-épingler cette photo"/g)).toHaveLength(2)
+  })
+
+  it('ne demande confirmation qu’après un clic, jamais au chargement', () => {
+    const html = render([pin()])
+
+    expect(html).not.toContain('Retirer ce coup de cœur ?')
   })
 
   it('garde la vignette même quand la date est illisible, sans légende', () => {
