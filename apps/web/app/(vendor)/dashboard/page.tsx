@@ -36,6 +36,7 @@ export default async function DashboardPage({
         {showPasswordBanner && <PasswordResetBanner />}
         <DashboardHero
           firstName={data.firstName}
+          isPublished={data.is_published}
           guideButton={mobileTrigger}
           desktopGuideButton={desktopTrigger}
         />

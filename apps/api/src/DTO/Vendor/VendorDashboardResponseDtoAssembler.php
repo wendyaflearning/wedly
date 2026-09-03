@@ -52,6 +52,7 @@ final readonly class VendorDashboardResponseDtoAssembler
             bio:                     $vendor->getBio(),
             vendorServices:          $vendor->resolveVendorServices(),
             wedreamEnabled:          $vendor->isWedreamEnabled(),
+            isPublished:             $vendor->isPublished(),
         );
     }
 }
