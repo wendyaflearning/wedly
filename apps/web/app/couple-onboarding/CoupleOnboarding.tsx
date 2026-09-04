@@ -706,6 +706,14 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
                 Votre adresse email
                 <input id="couple-email" type="email" autoComplete="email" value={credentials.email} onChange={(event) => updateCredentials('email', event.target.value)} placeholder="camille@exemple.fr" className="rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-base outline-none placeholder:text-gris focus:border-bordeaux" />
               </label>
+              {/* Facultatif, et dit comme tel : c'est ce que le prestataire lira si
+                  le couple accepte une mise en relation, pas une donnée exigée
+                  pour créer le compte (COUPLE-ONBOARDING-010). */}
+              <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="couple-phone">
+                Votre numéro de téléphone <span className="font-normal text-gris">(facultatif)</span>
+                <input id="couple-phone" type="tel" autoComplete="tel" inputMode="tel" value={credentials.phone} onChange={(event) => updateCredentials('phone', event.target.value)} placeholder="06 12 34 56 78" aria-describedby="couple-phone-hint" className="rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-base outline-none placeholder:text-gris focus:border-bordeaux" />
+                <span id="couple-phone-hint" className="text-xs font-normal text-gris">Transmis à un prestataire uniquement s&apos;il accepte votre demande de mise en relation.</span>
+              </label>
               <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="couple-password">
                 Votre mot de passe
                 <span className="relative flex items-center">
@@ -724,14 +732,6 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
                     {confirmPwdVisible ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </span>
-              </label>
-              {/* Facultatif, et dit comme tel : c'est ce que le prestataire lira si
-                  le couple accepte une mise en relation, pas une donnée exigée
-                  pour créer le compte (COUPLE-ONBOARDING-010). */}
-              <label className="flex flex-col gap-2 text-sm font-medium" htmlFor="couple-phone">
-                Votre numéro de téléphone <span className="font-normal text-gris">(facultatif)</span>
-                <input id="couple-phone" type="tel" autoComplete="tel" inputMode="tel" value={credentials.phone} onChange={(event) => updateCredentials('phone', event.target.value)} placeholder="06 12 34 56 78" aria-describedby="couple-phone-hint" className="rounded-xl border border-bordeaux/20 bg-transparent px-4 py-3 text-base outline-none placeholder:text-gris focus:border-bordeaux" />
-                <span id="couple-phone-hint" className="text-xs font-normal text-gris">Transmis à un prestataire uniquement s&apos;il accepte votre demande de mise en relation.</span>
               </label>
               {submitError && <p role="alert" className="text-sm font-medium text-highlight">{submitError}</p>}
             </div>
