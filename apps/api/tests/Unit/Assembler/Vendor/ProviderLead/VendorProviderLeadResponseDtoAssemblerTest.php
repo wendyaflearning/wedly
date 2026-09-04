@@ -175,6 +175,30 @@ final class VendorProviderLeadResponseDtoAssemblerTest extends TestCase
     }
 
     /**
+     * La photo coup de cœur est le point de départ de la demande : elle sort
+     * dans les deux formes, et son absence ne casse pas la lecture (les leads
+     * antérieurs à WED-135 n'en portent pas).
+     */
+    public function testTheCrushPhotoIsExposedWhateverTheDecision(): void
+    {
+        foreach ([ProviderLeadStatus::Pending, ProviderLeadStatus::Accepted, ProviderLeadStatus::Refused] as $status) {
+            self::assertSame(
+                'https://res.cloudinary.com/wedly/image/upload/v1/coup-de-coeur.jpg',
+                $this->assembler->assemble($this->lead($status))->photoUrl,
+                sprintf('Statut « %s » : la photo coup de cœur doit rester lisible.', $status->value),
+            );
+        }
+    }
+
+    public function testALeadWithoutACrushPhotoIsStillReadable(): void
+    {
+        $lead = $this->lead(ProviderLeadStatus::Pending);
+        (new \ReflectionClass($lead))->getProperty('portfolioImage')->setValue($lead, null);
+
+        self::assertNull($this->assembler->assemble($lead)->photoUrl);
+    }
+
+    /**
      * @return string[]
      */
     private function keysOf(object $dto): array

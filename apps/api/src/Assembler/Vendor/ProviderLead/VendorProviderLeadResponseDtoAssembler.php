@@ -54,6 +54,10 @@ final readonly class VendorProviderLeadResponseDtoAssembler
         $category      = $this->categoryResolver->resolve($lead)?->getName();
         $specialtyTags = $this->specialtyTagsResolver->resolve($lead);
         $requestedAt   = $lead->getCreatedAt();
+        // La photo d'où part la demande, comme côté couple : elle est le « pourquoi »
+        // du lead, et elle ne dépend pas du statut — un refus n'efface pas le fait que
+        // le couple a craqué sur cette image-là (WED-52).
+        $photoUrl      = $lead->getPortfolioImage()?->getUrl();
 
         if (!$this->isUnlocked($lead)) {
             return new MaskedVendorProviderLeadResponseDto(
@@ -66,6 +70,7 @@ final readonly class VendorProviderLeadResponseDtoAssembler
                 category:           $category,
                 specialtyTags:      $specialtyTags,
                 requestedAt:        $requestedAt,
+                photoUrl:           $photoUrl,
             );
         }
 
@@ -79,6 +84,7 @@ final readonly class VendorProviderLeadResponseDtoAssembler
             category:           $category,
             specialtyTags:      $specialtyTags,
             requestedAt:        $requestedAt,
+            photoUrl:           $photoUrl,
             lastName:           $coupleUser->getLastName(),
             email:              $coupleUser->getEmail(),
             phone:              $couple->getPhone(),

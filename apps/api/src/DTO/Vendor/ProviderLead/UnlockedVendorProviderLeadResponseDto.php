@@ -34,6 +34,11 @@ final readonly class UnlockedVendorProviderLeadResponseDto
     /** @var string[] */
     public array $specialtyTags;
     public string $requestedAt;
+    /**
+     * La photo du portfolio d'où part la demande — le « coup de cœur » du
+     * couple. Nullable : les leads antérieurs à WED-135 n'en portent pas.
+     */
+    public ?string $photoUrl;
     /** Les trois lignes que la forme masquée retient. */
     public ?string $lastName;
     public string $email;
@@ -55,6 +60,7 @@ final readonly class UnlockedVendorProviderLeadResponseDto
         ?string $lastName,
         string $email,
         ?string $phone,
+        ?string $photoUrl = null,
     ) {
         $this->id                 = $id;
         $this->status             = $status->value;
@@ -65,6 +71,7 @@ final readonly class UnlockedVendorProviderLeadResponseDto
         $this->category           = $category;
         $this->specialtyTags      = $specialtyTags;
         $this->requestedAt        = $requestedAt->format(\DateTimeInterface::ATOM);
+        $this->photoUrl           = $photoUrl;
         $this->lastName           = $lastName;
         $this->email              = $email;
         $this->phone              = $phone;

@@ -35,6 +35,11 @@ final readonly class MaskedVendorProviderLeadResponseDto
     /** @var string[] */
     public array $specialtyTags;
     public string $requestedAt;
+    /**
+     * La photo du portfolio d'où part la demande — le « coup de cœur » du
+     * couple. Nullable : les leads antérieurs à WED-135 n'en portent pas.
+     */
+    public ?string $photoUrl;
 
     /**
      * @param string[] $specialtyTags
@@ -49,6 +54,7 @@ final readonly class MaskedVendorProviderLeadResponseDto
         ?string $category,
         array $specialtyTags,
         \DateTimeImmutable $requestedAt,
+        ?string $photoUrl = null,
     ) {
         $this->id                 = $id;
         $this->status             = $status->value;
@@ -59,5 +65,6 @@ final readonly class MaskedVendorProviderLeadResponseDto
         $this->category           = $category;
         $this->specialtyTags      = $specialtyTags;
         $this->requestedAt        = $requestedAt->format(\DateTimeInterface::ATOM);
+        $this->photoUrl           = $photoUrl;
     }
 }
