@@ -88,6 +88,8 @@ dans les fichiers de règles.
 | `PROVIDER-LEAD-007` | Un seul lead par couple et par prestataire, premier arrivé gagne      | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-008` | Recontacter dit où en est la demande, et un refus est définitif        | `active` | `rules/provider-leads.md` |
 | `PROVIDER-LEAD-009` | Un identifiant de corrélation, jamais une identité, relie les photos et les demandes d'un même prestataire | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-010` | La décision du prestataire est ce qui dévoile les coordonnées du couple | `active` | `rules/provider-leads.md` |
+| `PROVIDER-LEAD-011` | Culture et confession ne franchissent jamais la frontière prestataire | `active` | `rules/provider-leads.md` |
 
 ## Wedream visibility
 
