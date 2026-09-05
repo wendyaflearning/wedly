@@ -26,6 +26,12 @@ interface LightboxProps {
    * alors son libellé générique.
    */
   contactLeadStatus?: CoupleLeadStatus
+  /**
+   * Hide the "Voir mes coups de cœur et demandes" link. Used from Mon espace
+   * itself (WED-197): the couple is already there, and `pinStatus="done"`
+   * would otherwise always show that link.
+   */
+  hideCoupleSpaceLink?: boolean
 }
 
 const noop = () => {}
@@ -56,6 +62,7 @@ export function Lightbox({
   pinStatus = 'idle',
   contactStatus = 'idle',
   contactLeadStatus,
+  hideCoupleSpaceLink = false,
 }: LightboxProps) {
   // La touche Échap doit toujours appeler le dernier onClose reçu, sans pour
   // autant relancer l'effet de scroll-lock ci-dessous (qui restaurerait alors
@@ -94,7 +101,8 @@ export function Lightbox({
     : contactLeadStatus === 'EN_ATTENTE'
       ? Clock
       : MessageSquare
-  const showsCoupleSpaceLink = pinCta.showsCoupleSpaceLink || contactCta.showsCoupleSpaceLink
+  const showsCoupleSpaceLink =
+    !hideCoupleSpaceLink && (pinCta.showsCoupleSpaceLink || contactCta.showsCoupleSpaceLink)
 
   return (
     <div

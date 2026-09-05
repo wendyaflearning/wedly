@@ -11,7 +11,12 @@ import {
   removePin,
   type CouplePin,
 } from '@/lib/couple-pins'
-import { submitCtaAction, submitUnpinAction, UNPIN_SESSION_LOST } from '@/lib/wedream-cta'
+import {
+  CONTACT_SESSION_LOST,
+  submitCtaAction,
+  submitUnpinAction,
+  UNPIN_SESSION_LOST,
+} from '@/lib/wedream-cta'
 import { PinnedPhotoCard } from './PinnedPhotoCard'
 
 const SectionLabel = () => (
@@ -99,17 +104,23 @@ export function PinnedPhotosZone({ pins: initialPins, initialCtaStatuses }: Pinn
         return
       }
 
-      const leadStatus = outcome.status === 'done' ? outcome.leadStatus : undefined
+      // Same branch as confirmUnpin: a 401/403 means the request never left.
+      // Writing `auth_required` into ctaStatuses would paint "Demande en
+      // attente" on a lead that does not exist (PR #187 review).
+      if (outcome.status === 'auth_required') {
+        showToast('error', CONTACT_SESSION_LOST)
+        return
+      }
 
       setCtaStatuses((current) => ({
         ...current,
         contacts: {
           ...current.contacts,
-          [pin.vendorId]: { status: outcome.status, leadStatus },
+          [pin.vendorId]: { status: outcome.status, leadStatus: outcome.leadStatus },
         },
       }))
 
-      if (outcome.status === 'done' && outcome.created) {
+      if (outcome.created) {
         showToast('success', CONTACT_CONFIRMATION)
       }
     },
@@ -155,6 +166,7 @@ export function PinnedPhotosZone({ pins: initialPins, initialCtaStatuses }: Pinn
           onPin={() => void confirmUnpin(selectedPin.portfolioImageId)}
           onContact={() => void runContact(selectedPin)}
           pinStatus="done"
+          hideCoupleSpaceLink
           contactStatus={ctaStatuses.contacts[selectedPin.vendorId]?.status ?? 'idle'}
           contactLeadStatus={ctaStatuses.contacts[selectedPin.vendorId]?.leadStatus}
         />
