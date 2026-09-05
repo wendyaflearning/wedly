@@ -77,6 +77,10 @@ final class GetCouplePinsActionTest extends WebTestCase
         self::assertSame($photo->getId()->toRfc4122(), $item['portfolioImageId']);
         self::assertArrayHasKey('pinnedAt', $item);
         self::assertArrayHasKey('id', $item);
+        self::assertArrayHasKey('vendorId', $item);
+        self::assertArrayHasKey('tagsByGroup', $item);
+        self::assertSame(self::VENDOR_ID, $item['vendorId']);
+        self::assertIsArray($item['tagsByGroup']);
         self::assertStringNotContainsString('Studio Lumière', json_encode($body, JSON_THROW_ON_ERROR));
         self::assertStringNotContainsString('studio@example.test', json_encode($body, JSON_THROW_ON_ERROR));
     }

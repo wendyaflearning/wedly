@@ -10,26 +10,22 @@ type PinnedPhotoCardProps = {
   isConfirming: boolean
   /** Le DELETE est parti : plus aucun geste tant qu'on ne sait pas s'il a abouti. */
   isPending: boolean
+  onOpen: () => void
   onAskConfirm: () => void
   onCancel: () => void
   onConfirm: () => void
 }
 
 /**
- * Une photo épinglée, et le seul geste que la zone autorise : la retirer.
- *
- * La vignette n'est toujours pas un lien — rien ici ne mène à une fiche
- * prestataire (COUPLE-PIN-006). Le bouton cœur ne dévoile rien : il retire un
- * épinglé du couple, sur ses propres données.
- *
- * Le retrait passe par une confirmation posée sur la vignette elle-même plutôt
- * que par une modale : la photo qu'on s'apprête à retirer reste sous les yeux,
- * et le reste de la grille ne bouge pas.
+ * Une photo épinglée : ouverture en Lightbox (WED-197) et retrait via le cœur
+ * (WED-135). Le cœur et l'image sont frères, jamais imbriqués — un bouton dans
+ * un bouton est un HTML invalide et le navigateur remonterait le clic.
  */
 export function PinnedPhotoCard({
   pin,
   isConfirming,
   isPending,
+  onOpen,
   onAskConfirm,
   onCancel,
   onConfirm,
@@ -41,10 +37,6 @@ export function PinnedPhotoCard({
   const confirmRef = useRef<HTMLButtonElement>(null)
   const wasConfirming = useRef(false)
 
-  // Le focus suit le geste : il entre dans la confirmation à l'ouverture, et
-  // revient au cœur si le couple renonce. Sans ça, un renoncement au clavier
-  // laisserait le focus sur un bouton qui vient de disparaître, donc sur le
-  // `body`, et la navigation repartirait du haut de la page.
   useEffect(() => {
     if (isConfirming && !wasConfirming.current) confirmRef.current?.focus()
     if (!isConfirming && wasConfirming.current) heartRef.current?.focus()
@@ -53,16 +45,24 @@ export function PinnedPhotoCard({
 
   return (
     <figure className="relative aspect-square overflow-hidden rounded-2xl border border-bordeaux/10 bg-bordeaux/5">
-      {/* eslint-disable-next-line @next/next/no-img-element -- ratio inconnu, next/image imposerait des dimensions absentes ici (cf. galerie WedDream). */}
-      <img src={pin.photoUrl} alt="Photo épinglée" className="h-full w-full object-cover" />
+      <button
+        type="button"
+        onClick={onOpen}
+        disabled={isPending}
+        aria-label="Ouvrir la photo épinglée"
+        className="block h-full w-full disabled:cursor-not-allowed disabled:opacity-45"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- ratio inconnu, next/image imposerait des dimensions absentes ici (cf. galerie WedDream). */}
+        <img src={pin.photoUrl} alt="" className="h-full w-full object-cover" />
+      </button>
 
       {pinnedAt && (
         <>
           <div
-            className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-texte/80 to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-texte/80 to-transparent"
             aria-hidden="true"
           />
-          <figcaption className="absolute inset-x-0 bottom-0 p-3 text-[11px] text-white/80">
+          <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-[11px] text-white/80">
             {pinnedAt}
           </figcaption>
         </>
@@ -103,13 +103,13 @@ export function PinnedPhotoCard({
           </div>
         </div>
       ) : (
-        // Toujours visible, à toutes les tailles : sans survol sur mobile, un
-        // cœur en `group-hover` serait inatteignable. Même pastille crème que la
-        // galerie — un contour bordeaux nu disparaîtrait sur une photo sombre.
         <button
           ref={heartRef}
           type="button"
-          onClick={onAskConfirm}
+          onClick={(event) => {
+            event.stopPropagation()
+            onAskConfirm()
+          }}
           disabled={isPending}
           aria-label="Dé-épingler cette photo"
           className="absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-creme/85 text-bordeaux shadow-[0_1px_4px_rgba(41,26,16,0.18)] transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-45"

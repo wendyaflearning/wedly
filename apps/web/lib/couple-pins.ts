@@ -1,15 +1,11 @@
 /**
- * Zone « Épinglés » de Mon espace Wedly (US-6.6 / WED-135).
+ * Zone « Épinglés » de Mon espace Wedly (US-6.6 / WED-135, WED-197).
  *
  * Types + helpers d'affichage, sans dépendance serveur — le fetch authentifié
  * vit dans `couple-pins.server.ts`, comme pour la zone « Demandes de contact ».
- *
- * Le DTO renvoyé par `GET /api/v1/couples/me/pins` (US-6.2 / WED-132) est
- * volontairement minimal : il n'a aucun champ capable de porter l'identité du
- * prestataire (COUPLE-PIN-002). Le front n'a donc rien à masquer, et la grille
- * n'ouvre aucune fiche : c'est le critère « aucun clic ne dévoile un profil
- * prestataire ».
  */
+
+import type { PublicPortfolioImage } from './wedream-gallery'
 
 export type CouplePin = {
   id: string
@@ -17,6 +13,10 @@ export type CouplePin = {
   portfolioImageId: string
   photoUrl: string
   pinnedAt: string
+  /** Identifiant opaque de corrélation — jamais un nom prestataire (WED-197). */
+  vendorId: string
+  /** Clé = label du TagType, valeurs = labels des TagValue de la photo. */
+  tagsByGroup: Record<string, string[]>
 }
 
 /**
@@ -66,4 +66,14 @@ export function pinnedCountLabel(count: number): string | null {
  */
 export function removePin(pins: CouplePin[], portfolioImageId: string): CouplePin[] {
   return pins.filter((pin) => pin.portfolioImageId !== portfolioImageId)
+}
+
+/** Shape attendue par `Lightbox` — même contrat que la galerie WedDream. */
+export function pinToPublicImage(pin: CouplePin): PublicPortfolioImage {
+  return {
+    id: pin.portfolioImageId,
+    url: pin.photoUrl,
+    tagsByGroup: pin.tagsByGroup,
+    vendorId: pin.vendorId,
+  }
 }
