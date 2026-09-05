@@ -9,6 +9,7 @@ use App\DTO\Public\PortfolioImage\PublicPortfolioImageResponseDto;
 use App\Entity\Vendor\PortfolioImage;
 use App\Entity\Vendor\TagValue;
 use App\Repository\Vendor\PortfolioImageRepository;
+use App\Service\Vendor\Portfolio\PortfolioImageCategoryResolver;
 use App\ValueObject\CursorPagination;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,7 @@ final readonly class GetTagValuePortfolioImagesAction
 {
     public function __construct(
         private PortfolioImageRepository $portfolioImageRepository,
+        private PortfolioImageCategoryResolver $categoryResolver,
     ) {}
 
     #[Route(
@@ -49,7 +51,10 @@ final readonly class GetTagValuePortfolioImagesAction
 
         return new JsonResponse([
             'items' => array_map(
-                static fn(PortfolioImage $image) => new PublicPortfolioImageResponseDto($image),
+                fn(PortfolioImage $image) => new PublicPortfolioImageResponseDto(
+                    $image,
+                    $this->categoryResolver->resolve($image)?->getName(),
+                ),
                 $images,
             ),
             'nextCursor' => $hasMore && $lastImage !== false ? $lastImage->getId()->toRfc4122() : null,

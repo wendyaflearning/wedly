@@ -37,11 +37,19 @@ final readonly class PublicPortfolioImageResponseDto
     /** Identifiant opaque de corrélation — voir le docblock de la classe. */
     public string $vendorId;
 
-    public function __construct(PortfolioImage $image)
+    /**
+     * Métier du prestataire (ex. « Photographe »), déduit par
+     * `PortfolioImageCategoryResolver` — voir son docblock pour la règle.
+     * Absent quand aucun tag primaire ne le détermine.
+     */
+    public ?string $category;
+
+    public function __construct(PortfolioImage $image, ?string $category = null)
     {
         $this->id  = $image->getId()->toRfc4122();
         $this->url = $image->getUrl();
         $this->vendorId = $image->getVendor()->getId()->toRfc4122();
+        $this->category = $category;
 
         $tagsByGroup = [];
         /** @var TagValue $tag */
