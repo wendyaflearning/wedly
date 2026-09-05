@@ -72,19 +72,6 @@ export default function CategoriesHero() {
           </span>
         </h1>
 
-        <p
-          className="max-w-[520px]"
-          style={{
-            fontFamily: "var(--font-manrope-var)",
-            fontSize: "15px",
-            lineHeight: 1.5,
-            color: "rgba(78,26,50,0.72)",
-          }}
-        >
-          Des châteaux aux costumes sur-mesure, autant de savoir-faire qu&apos;il en
-          faut pour dire oui.
-        </p>
-
         <div className="mt-2 flex flex-col items-center gap-2">
           <span
             style={{
