@@ -176,6 +176,17 @@ export function Lightbox({
           onClick={(e) => e.stopPropagation()}
         />
 
+        {/* Même bande que le bouton fermer, côté opposé : la catégorie vit à
+            l'entête sur les deux mises en page, jamais dans le volet détail
+            qui défile (WED-220). */}
+        {photo.category && (
+          <span
+            className="bg-texte/45 text-creme absolute top-4 left-4 flex h-[34px] items-center rounded-full px-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] lg:hidden"
+          >
+            {photo.category}
+          </span>
+        )}
+
         {/* Sur mobile le bouton fermer passe en overlay sur la photo : le volet
             détail n'a plus d'en-tête à cette taille. Un seul des deux boutons
             est rendu à la fois (display:none), pas de doublon d'accessibilité. */}
@@ -204,7 +215,20 @@ export function Lightbox({
           1024px : le chevauchement n'existe plus, et le laisser positionné
           décalait d'un pixel l'anticrénelage du bord de la photo. */}
       <div className="bg-creme shadow-[0_-6px_18px_rgba(41,26,16,0.08)] relative -mt-3.5 flex min-h-0 flex-1 flex-col rounded-t-[18px] lg:static lg:mt-0 lg:h-full lg:w-[min(38vw,440px)] lg:flex-none lg:rounded-none lg:shadow-none">
-        <div className="border-bordeaux/10 hidden shrink-0 items-start justify-end border-b px-7 pt-7 pb-[18px] lg:flex">
+        {/* Même entête que le mobile, juste un bouton bordé plutôt qu'un
+            overlay sur photo : la catégorie prend la place laissée par
+            l'ancien `justify-end`, jamais dans le volet qui défile plus bas
+            (WED-220). `justify-between` a besoin de deux enfants pour pousser
+            le bouton à droite — d'où le `span` vide quand il n'y a pas de
+            catégorie, plutôt qu'un retour silencieux à `justify-end`. */}
+        <div className="border-bordeaux/10 hidden shrink-0 items-start justify-between border-b px-7 pt-7 pb-[18px] lg:flex">
+          {photo.category ? (
+            <p className="text-accent m-0 self-center text-[11px] font-semibold uppercase tracking-[0.18em]">
+              {photo.category}
+            </p>
+          ) : (
+            <span aria-hidden="true" />
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -216,16 +240,6 @@ export function Lightbox({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-[22px] py-5 lg:gap-[22px] lg:px-7 lg:py-[22px]">
-          {/* Le métier n'est plus donné par le fil de navigation quand la photo
-              vient de la vitrine de la home (pas de bulle de catégorie cliquée
-              avant d'arriver ici) : sans lui, une photo de château et une photo
-              de bouquet se lisaient à égalité (WED-220). */}
-          {photo.category && (
-            <p className="text-accent m-0 text-[11px] font-semibold uppercase tracking-[0.18em]">
-              {photo.category}
-            </p>
-          )}
-
           {tagGroups.map(([group, values]) => (
             <div key={group} className="flex flex-col gap-2.5">
               <p className="text-gris m-0 text-[10px] font-semibold uppercase tracking-[0.2em]">
