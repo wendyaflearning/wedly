@@ -97,6 +97,36 @@ class PortfolioImageRepository extends ServiceEntityRepository
         return $images;
     }
 
+    /**
+     * Échantillon de la vitrine Wedream affichée sur la home publique : les
+     * photos les plus récentes visibles dans Wedream, toutes catégories
+     * confondues (pas de filtre par service/style, contrairement à
+     * `findPublicByTagValue`).
+     *
+     * Même définition de « visible » (WedreamVisibilityCriteria), même tri
+     * chronologique par id (UUIDv7). Pas de garantie de diversité entre
+     * prestataires ou catégories : un tri simple suffit pour un teaser de
+     * lancement, ce n'est pas une curation éditoriale.
+     *
+     * @return PortfolioImage[]
+     */
+    public function findWedreamShowcase(int $limit): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->innerJoin('p.vendor', 'v')
+            ->orderBy('p.id', 'DESC')
+            ->setMaxResults($limit);
+
+        WedreamVisibilityCriteria::apply($qb, 'p', 'v');
+
+        /** @var PortfolioImage[] $images */
+        $images = $qb->getQuery()->getResult();
+
+        $this->hydrateTags($images);
+
+        return $images;
+    }
+
     public function countByTagValue(TagValue $tagValue): int
     {
         $qb = $this->createQueryBuilder('p')

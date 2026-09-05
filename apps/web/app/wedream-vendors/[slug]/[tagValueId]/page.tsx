@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { fetchInitialCtaStatuses } from '@/lib/couple-cta-status'
 import { fetchTagValuePortfolioImages } from '@/lib/wedream-gallery'
+import Navbar from '../../../_components/Navbar'
+import Footer from '../../../_components/Footer'
 import { getService } from '../_lib/service'
 import PortfolioGrid from './_components/PortfolioGrid'
 
@@ -51,6 +53,7 @@ export default async function TagValueGalleryPage({ params }: GalleryPageProps) 
 
   return (
     <div className="bg-creme min-h-screen" style={{ fontFamily: 'var(--font-manrope-var)' }}>
+      <Navbar />
       <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-[22px] px-6 pt-7 pb-9 md:px-8">
         <div className="flex flex-col gap-[22px]">
           <div className="flex items-center gap-[9px]">
@@ -111,6 +114,7 @@ export default async function TagValueGalleryPage({ params }: GalleryPageProps) 
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

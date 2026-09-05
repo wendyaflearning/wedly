@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { useState } from "react";
 
 interface AnimatedLineProps {
   words: string[];
@@ -38,7 +40,26 @@ const line1 = ["Le", "grand", "jour", "mérite"];
 const line2 = ["plus", "qu'une", "checklist"];
 const line3 = ["il", "vous", "mérite,", "vous."];
 
-export default function HeroSection() {
+type Audience = "couple" | "prestataire";
+
+const COPY: Record<Audience, { subtext: string; ctaLabel: string; ctaHref: string }> = {
+  couple: {
+    subtext: "Votre univers servi par les meilleurs.",
+    ctaLabel: "Commencer mon mariage",
+    ctaHref: "/couple-onboarding",
+  },
+  prestataire: {
+    subtext: "Votre talent est vu avant même de vous rencontrer.",
+    ctaLabel: "Rejoindre Wedly",
+    ctaHref: "/devenir-prestataire",
+  },
+};
+
+export default function Hero() {
+  const [audience, setAudience] = useState<Audience>("couple");
+  const isCouple = audience === "couple";
+  const copy = COPY[audience];
+
   const line2Start = line1.length;
   const line3Start = line1.length + line2.length;
 
@@ -65,24 +86,8 @@ export default function HeroSection() {
       <div className="w-full px-6 md:px-20 pt-8 md:pt-16 pb-4 md:pb-10 order-2 md:order-1">
         <div className="md:max-w-[75%] mx-auto md:text-center">
 
-          {/* Mobile eyebrow */}
+          {/* Eyebrow — mêmes 3 mots sur mobile et desktop */}
           <p
-            className="block md:hidden"
-            style={{
-              fontFamily: "var(--font-dm-sans-var)",
-              fontSize: "11px",
-              letterSpacing: "0.14em",
-              color: "rgba(41, 26, 16, 0.5)",
-              textTransform: "uppercase",
-              marginBottom: "1.25rem",
-            }}
-          >
-            Planification · Budget · Prestataires
-          </p>
-
-          {/* Desktop eyebrow */}
-          <p
-            className="hidden md:block"
             style={{
               fontFamily: "var(--font-dm-sans-var)",
               fontSize: "11px",
@@ -95,96 +100,99 @@ export default function HeroSection() {
             Inspiration · Expérience · Qualité
           </p>
 
-          {/* H1 */}
+          {/* H1 — bordeaux plutôt que le noir d'origine */}
           <h1 style={{ fontFamily: "var(--font-cormorant-var)", fontWeight: 300, fontSize: "clamp(2.6rem, 6vw, 5.5rem)", lineHeight: 1.05, margin: 0 }}>
-            <AnimatedLine words={line1} startIndex={0} className="text-texte" />
+            <AnimatedLine words={line1} startIndex={0} wordStyle={{ color: "var(--color-bordeaux)" }} />
             <AnimatedLine
               words={line2}
               startIndex={line2Start}
               className="italic"
               wordStyle={{ color: "var(--color-accent)" }}
             />
-            <AnimatedLine words={line3} startIndex={line3Start} className="text-texte" />
+            <AnimatedLine words={line3} startIndex={line3Start} wordStyle={{ color: "var(--color-bordeaux)" }} />
           </h1>
 
         </div>
       </div>
 
-      {/* Bottom block — subtitle + CTAs */}
+      {/* Bottom block — toggle couple/prestataire + CTA (reprend la mécanique de /devenir-prestataire et /wedream-vendors) */}
       <div className="w-full px-6 md:px-20 pt-6 md:pt-12 pb-14 md:pb-20 order-3">
         <div className="md:max-w-[75%] mx-auto md:text-center flex flex-col md:items-center gap-6">
 
-          {/* Subtitle */}
+          <div className="flex items-stretch gap-2.5 w-full md:w-auto" style={revealStyle(120)}>
+            <button
+              type="button"
+              onClick={() => setAudience("couple")}
+              className="cursor-pointer flex-1 md:flex-none text-center"
+              style={{
+                fontFamily: "var(--font-dm-sans-var)",
+                fontWeight: 500,
+                fontSize: "11px",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                padding: "12px 14px",
+                borderRadius: "8px",
+                backgroundColor: "var(--color-bordeaux)",
+                color: "var(--color-creme)",
+                opacity: isCouple ? 1 : 0.55,
+              }}
+            >
+              Je suis un couple
+            </button>
+            <button
+              type="button"
+              onClick={() => setAudience("prestataire")}
+              className="cursor-pointer flex-1 md:flex-none text-center"
+              style={{
+                fontFamily: "var(--font-dm-sans-var)",
+                fontWeight: 600,
+                fontSize: "11px",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                padding: "12px 14px",
+                borderRadius: "8px",
+                backgroundColor: "var(--color-accent)",
+                color: "var(--color-creme)",
+                opacity: !isCouple ? 1 : 0.55,
+              }}
+            >
+              Je suis prestataire
+            </button>
+          </div>
+
           <p
             className="text-[15px] md:text-[18px]"
             style={{
-              fontFamily: "var(--font-dm-sans-var)",
-              lineHeight: 1.65,
+              fontFamily: "var(--font-cormorant-var)",
+              fontStyle: "italic",
+              fontWeight: 300,
+              lineHeight: 1.5,
               color: "rgba(41, 26, 16, 0.7)",
-              maxWidth: "560px",
-              fontWeight: 400,
-              ...revealStyle(120),
+              ...revealStyle(220),
             }}
           >
-            Ici commence une histoire pensée pour vous : planning, budget et rencontres, autour de votre univers, que vous cherchiez le bon prestataire, ou soyez celui qu&apos;on cherche.
+            {copy.subtext}
           </p>
 
-          {/* Mobile CTA — single full-width button */}
-          <a
-            href="#couples"
-            className="block md:hidden w-full text-center"
+          <Link
+            href={copy.ctaHref}
+            className="text-creme hover:opacity-90 transition-opacity self-center inline-flex items-center justify-center"
             style={{
               fontFamily: "var(--font-dm-sans-var)",
               fontSize: "11px",
-              letterSpacing: "0.13em",
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
               fontWeight: 500,
               backgroundColor: "var(--color-accent)",
-              color: "var(--color-creme)",
-              padding: "18px 24px",
-              borderRadius: "12px",
+              padding: "14px 28px",
+              borderRadius: "8px",
               textDecoration: "none",
-              ...revealStyle(200),
+              width: "fit-content",
+              ...revealStyle(340),
             }}
           >
-            Découvrir Wedly →
-          </a>
-
-          {/* Desktop CTAs — button + text link */}
-          <div
-            className="hidden md:flex flex-col items-center gap-4 md:flex-row md:justify-center md:gap-6"
-            style={revealStyle(340)}
-          >
-            <a
-              href="#couples"
-              className="text-creme rounded-full hover:opacity-90 transition-opacity"
-              style={{
-                fontFamily: "var(--font-dm-sans-var)",
-                fontSize: "11px",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                fontWeight: 500,
-                backgroundColor: "var(--color-accent)",
-                padding: "14px 28px",
-                textDecoration: "none",
-              }}
-            >
-              Découvrir Wedly <span>→</span>
-            </a>
-            <a
-              href="#how"
-              style={{
-                fontFamily: "var(--font-cormorant-var)",
-                fontStyle: "italic",
-                fontSize: "15px",
-                color: "var(--color-bordeaux)",
-                padding: "14px 6px",
-                textDecoration: "none",
-              }}
-            >
-              Voir comment ça marche
-            </a>
-          </div>
+            {copy.ctaLabel} <span>→</span>
+          </Link>
 
         </div>
       </div>

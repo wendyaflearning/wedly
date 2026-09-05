@@ -3,8 +3,8 @@
 import { ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import Footer from '../_components/Footer'
 import OnboardingHeader from './OnboardingHeader'
 
 /**
@@ -14,7 +14,7 @@ import OnboardingHeader from './OnboardingHeader'
  */
 const LOGO_ON_CREME = 'https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_dark_bbyd6m.svg'
 import { canGoToPreviousMonth, isSelectableWeddingDate, selectableWeddingYears, setCalendarMonth, startOfDay } from './calendar'
-import { COUPLE_ONBOARDING_STEPS, canContinue, getContinueAction, previousScreen, type CoupleOnboardingContinueAction, type CoupleOnboardingScreen } from './navigation'
+import { COUPLE_ONBOARDING_STEPS, canContinue, getContinueAction, type CoupleOnboardingContinueAction, type CoupleOnboardingScreen } from './navigation'
 import {
   BUDGET_RANGES,
   COUPLE_ONBOARDING_STORAGE_KEY,
@@ -345,7 +345,6 @@ function emitOnboardingComplete(data: CoupleOnboardingData) {
 }
 
 export default function CoupleOnboarding({ onStageComplete = emitOnboardingComplete }: CoupleOnboardingProps) {
-  const router = useRouter()
   const [screen, setScreen] = useState<CoupleOnboardingScreen>(1)
   const [data, setData] = useState<CoupleOnboardingData>({})
   const [hydrated, setHydrated] = useState(false)
@@ -519,18 +518,6 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
     continueOnboarding(nextData)
   }
 
-  function goBack() {
-    // The brand header keeps the same shape on every screen (WED-125): « Retour »
-    // never disappears, so screen 1 — which has no previous step — leads out of
-    // the journey, the same destination as the logo.
-    if (screen === 1) {
-      router.push('/')
-      return
-    }
-
-    setScreen(previousScreen(screen, commitBudget()))
-  }
-
   /**
    * Reached only from a progress-bar dot, which the couple can only click on
    * an already-visited screen — so, unlike goBack, there is no skipped-screen
@@ -624,9 +611,11 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
         isDark={isDark}
         visitedSteps={visitedScreens}
         onStepClick={goToScreen}
-        onBack={goBack}
       />
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col px-6 py-8 sm:px-12 lg:px-20">
+      {/* -7rem plutôt que -4rem : le chrome fait maintenant deux rangées
+          (navbar + progression) depuis l'ajout de la vraie navbar au-dessus
+          du stepper, pas une seule. */}
+      <div className="mx-auto flex min-h-[calc(100vh-7rem)] w-full max-w-6xl flex-col px-6 py-8 sm:px-12 lg:px-20">
 
         {screen === 1 ? (
           <section className="m-auto w-full text-center">
@@ -737,6 +726,7 @@ export default function CoupleOnboarding({ onStageComplete = emitOnboardingCompl
         </footer>
         {screen === 3 && <button type="button" onClick={() => decideSensitiveData(false)} className={`mx-auto pb-6 text-sm underline underline-offset-4 ${isDark ? 'text-creme/70 hover:text-creme' : 'text-bordeaux hover:text-accent'}`}>Je préfère passer cette étape</button>}
       </div>
+      <Footer />
     </main>
   )
 }
