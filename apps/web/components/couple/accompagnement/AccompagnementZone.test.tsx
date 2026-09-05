@@ -31,6 +31,13 @@ describe('AccompagnementZone', () => {
     )
   })
 
+  it('utilise le vouvoiement dans le titre de la zone', () => {
+    const markup = html()
+
+    expect(markup).toContain('Votre accompagnement')
+    expect(markup).not.toContain('Ton accompagnement')
+  })
+
   it('ne contient aucun CTA actif (ni lien, ni bouton de paiement)', () => {
     const markup = html()
 
