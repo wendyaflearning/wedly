@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatPinnedAt, pinnedCountLabel, removePin, type CouplePin } from './couple-pins'
+import { formatPinnedAt, pinToPublicImage, pinnedCountLabel, removePin, type CouplePin } from './couple-pins'
 
 /** `Intl` fr-FR insère des espaces fines/insécables ; on les normalise pour des assertions stables. */
 const norm = (value: string): string => value.replace(/\s/g, ' ')
@@ -34,6 +34,8 @@ describe('removePin', () => {
     portfolioImageId,
     photoUrl: `https://cdn.example/${portfolioImageId}.jpg`,
     pinnedAt: '2026-08-12T09:00:00+00:00',
+    vendorId: 'vendor-1',
+    tagsByGroup: { Ambiance: ['Intimiste'] },
   })
 
   it('drops the photo that was unpinned and keeps the others in order', () => {
@@ -62,5 +64,25 @@ describe('removePin', () => {
     removePin(pins, 'a')
 
     expect(pins).toHaveLength(2)
+  })
+})
+
+describe('pinToPublicImage', () => {
+  it('maps a couple pin to the public portfolio image shape', () => {
+    const source: CouplePin = {
+      id: 'pin-1',
+      portfolioImageId: 'img-1',
+      photoUrl: 'https://cdn.example/photo.jpg',
+      pinnedAt: '2026-08-12T09:00:00+00:00',
+      vendorId: 'vendor-abc',
+      tagsByGroup: { Style: ['Bohème'] },
+    }
+
+    expect(pinToPublicImage(source)).toEqual({
+      id: 'img-1',
+      url: 'https://cdn.example/photo.jpg',
+      vendorId: 'vendor-abc',
+      tagsByGroup: { Style: ['Bohème'] },
+    })
   })
 })

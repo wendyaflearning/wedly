@@ -16,22 +16,24 @@ Un simple épingle ne crée pas de `ProviderLead` : seule une demande de mise en
 relation en produit un (PROVIDER-LEAD-001). L'écriture de l'épinglé vit dans
 WED-49 ; ce ticket ne couvre que la lecture.
 
-## COUPLE-PIN-002 — Le couple ne voit que l'image, jamais le prestataire
+## COUPLE-PIN-002 — Le couple voit l'image et les métadonnées Lightbox, jamais le prestataire
 
-Statut : `active`
+Statut : `active` (amendé WED-197)
 
-`GET /api/v1/couples/me/pins` projette chaque épinglé sur un DTO minimal :
+`GET /api/v1/couples/me/pins` projette chaque épinglé sur un DTO :
 
 - `id` — identifiant de l'épinglé ;
 - `portfolioImageId` — identifiant de la photo (déjà public dans la galerie
   Wedream, nécessaire au front pour marquer les photos déjà épinglées) ;
 - `photoUrl` — URL de la photo ;
-- `pinnedAt` — date d'épinglage.
+- `pinnedAt` — date d'épinglage ;
+- `vendorId` — UUID opaque de corrélation (même justification que
+  `PublicPortfolioImageResponseDto` / PROVIDER-LEAD-009) ;
+- `tagsByGroup` — tags de la photo, groupés par type.
 
-Le masquage tient dans la **forme du DTO** : `CouplePinResponseDto` n'a aucune
-propriété capable de porter le nom ou les coordonnées du prestataire. Le couple
-lu est toujours celui du JWT : aucun identifiant de couple ne transite par
-l'URL.
+Le masquage tient dans la **forme du DTO** : aucune propriété ne porte le nom,
+l'email, le téléphone ou le slug du prestataire. Le couple lu est toujours celui
+du JWT : aucun identifiant de couple ne transite par l'URL.
 
 Implémentation :
 
@@ -126,6 +128,10 @@ Règles :
 - le couple vient du JWT, la photo de l'URL : un compte ne dé-épingle que pour
   lui-même.
 
+En zone « Épinglés », un dé-épinglage réussi retire immédiatement la vignette de
+la grille (WED-197) — contrairement à la galerie WedDream où la photo reste
+affichée.
+
 **Why:** un coup de cœur est un geste léger et réversible, pas un engagement —
 un clic accidentel doit se corriger d'un second clic, sans support ni
 formulaire. La désactivation plutôt que la suppression garde l'historique du
@@ -151,11 +157,16 @@ qu'il s'est rétracté.
 
 ## COUPLE-PIN-006 — La grille des épinglés est une vitrine, jamais une porte
 
-Statut : `active`
+Statut : `superseded` (WED-197)
 
 Zone « Épinglés » de Mon espace Wedly (US-6.6 / WED-135).
 
-La grille affiche **toutes** les photos épinglées : l'épinglage est gratuit et
+Cette règle est remplacée par WED-197 : la zone ouvre désormais la même Lightbox
+que la galerie WedDream (tags, statut de contact réel, demande de mise en
+relation in-place). Le dé-épinglage confirmé sur vignette (WED-135) est
+conservé.
+
+Historique (WED-135) : la grille affiche **toutes** les photos épinglées :
 sans limite de nombre — aucun quota, aucune pagination, aucun CTA payant.
 
 Aucune vignette ne mène ailleurs : ni lien, ni ouverture de fiche. Le masquage

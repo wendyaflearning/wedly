@@ -1,17 +1,15 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import type { CoupleCtaStatuses } from '@/lib/couple-cta-status'
 import type { CouplePin } from '@/lib/couple-pins'
 import { PinnedPhotosZone } from './PinnedPhotosZone'
 
-/**
- * La zone porte désormais un état (la liste rétrécit quand on dé-épingle), mais
- * son rendu initial reste celui de ses props : `renderToStaticMarkup` suffit à
- * vérifier ce que le CA demande, sans DOM à monter. Le cycle clic →
- * confirmation → retrait, lui, n'est pas couvert ici — le repo n'a pas de
- * moteur d'interaction React.
- */
+const emptyCtaStatuses = (): CoupleCtaStatuses => ({ pins: {}, contacts: {} })
+
 const render = (pins: CouplePin[]): string =>
-  renderToStaticMarkup(<PinnedPhotosZone pins={pins} />)
+  renderToStaticMarkup(
+    <PinnedPhotosZone pins={pins} initialCtaStatuses={emptyCtaStatuses()} />
+  )
 
 const pin = (over: Partial<CouplePin> = {}): CouplePin => {
   const id = over.id ?? 'pin-1'
@@ -21,6 +19,8 @@ const pin = (over: Partial<CouplePin> = {}): CouplePin => {
     portfolioImageId: `img-${id}`,
     photoUrl: 'https://cdn.example/photo-1.jpg',
     pinnedAt: '2026-08-12T09:00:00+00:00',
+    vendorId: 'vendor-1',
+    tagsByGroup: {},
     ...over,
   }
 }
@@ -48,17 +48,14 @@ describe('PinnedPhotosZone', () => {
     expect(html).toContain('2 photos épinglées')
   })
 
-  it('n’expose qu’un seul geste par vignette : retirer son propre épinglé', () => {
+  it('expose deux gestes par vignette : ouvrir la photo et dé-épingler', () => {
     const html = render([pin({ id: 'a' }), pin({ id: 'b' })])
 
-    // Aucun lien : rien dans la grille ne mène ailleurs, et surtout pas vers une
-    // fiche prestataire (CA « aucun clic ne dévoile un profil prestataire »).
-    // Le `<link rel="preload">` que React 19 émet pour l'`<img>` n'est pas un
-    // geste, d'où la cible sur `<a ` et non sur `link`.
     expect(html).not.toContain('<a ')
 
-    // Un bouton par vignette, et un seul : le cœur de dé-épinglage.
-    expect(html.match(/<button/g)).toHaveLength(2)
+    // Un bouton ouvrir + un bouton cœur par vignette.
+    expect(html.match(/<button/g)).toHaveLength(4)
+    expect(html.match(/aria-label="Ouvrir la photo épinglée"/g)).toHaveLength(2)
     expect(html.match(/aria-label="Dé-épingler cette photo"/g)).toHaveLength(2)
   })
 

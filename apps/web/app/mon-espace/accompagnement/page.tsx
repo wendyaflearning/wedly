@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import CoupleZonePlaceholder from '@/components/couple/CoupleZonePlaceholder'
+import { AccompagnementZone } from '@/components/couple/accompagnement/AccompagnementZone'
 
 export const metadata: Metadata = {
   title: 'Accompagnement | Mon espace Wedly',
@@ -7,11 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function CoupleAccompagnementPage() {
-  return (
-    <CoupleZonePlaceholder
-      title="Accompagnement"
-      description="WedPlan, WedWallet et WedMatch arriveront ici en teaser — votre copilote de mariage, sans paiement actif pendant la phase pilote."
-      followUpTicket="US-6.7"
-    />
-  )
+  return <AccompagnementZone />
 }

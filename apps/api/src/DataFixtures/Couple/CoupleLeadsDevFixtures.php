@@ -43,6 +43,12 @@ class CoupleLeadsDevFixtures extends Fixture implements FixtureGroupInterface
 {
     public const COUPLE_EMAIL = 'couple@wedly.test';
     public const COUPLE_PASSWORD = 'couple1234';
+    /**
+     * Le téléphone est optionnel à l'inscription (WED-216), donc ce couple n'en
+     * avait aucun : la fiche d'une demande acceptée affichait « Non renseigné »
+     * sans qu'aucun jeu de données ne permette de voir le cas nominal (WED-52).
+     */
+    public const COUPLE_PHONE = '06 12 34 56 78';
 
     /**
      * L'ordre porte le sens : le premier vendor est celui dont la fiche est
@@ -116,6 +122,11 @@ class CoupleLeadsDevFixtures extends Fixture implements FixtureGroupInterface
             $existing = $this->coupleRepository->findOneBy(['user' => $user]);
 
             if ($existing !== null) {
+                // Le couple déjà en base est antérieur à ce numéro. `??` et pas une
+                // affectation sèche : un numéro saisi à la main pendant un test n'a
+                // pas à être écrasé au prochain chargement.
+                $existing->setPhone($existing->getPhone() ?? self::COUPLE_PHONE);
+
                 return $existing;
             }
         }
@@ -141,7 +152,8 @@ class CoupleLeadsDevFixtures extends Fixture implements FixtureGroupInterface
         $couple = (new Couple())
             ->setUser($user)
             ->setWedding($wedding)
-            ->setPlanningStage(PlanningStage::InProgress);
+            ->setPlanningStage(PlanningStage::InProgress)
+            ->setPhone(self::COUPLE_PHONE);
 
         $manager->persist($wedding);
         $manager->persist($couple);

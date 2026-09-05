@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PinnedPhotosError } from '@/components/couple/pins/PinnedPhotosError'
 import { PinnedPhotosZone } from '@/components/couple/pins/PinnedPhotosZone'
+import { fetchInitialCtaStatuses } from '@/lib/couple-cta-status'
 import { fetchCouplePins } from '@/lib/couple-pins.server'
 
 export const metadata: Metadata = {
@@ -9,9 +10,12 @@ export const metadata: Metadata = {
 }
 
 export default async function CoupleEpinglesPage() {
-  const result = await fetchCouplePins()
+  const [result, initialCtaStatuses] = await Promise.all([
+    fetchCouplePins(),
+    fetchInitialCtaStatuses(),
+  ])
 
   if (!result.ok) return <PinnedPhotosError />
 
-  return <PinnedPhotosZone pins={result.items} />
+  return <PinnedPhotosZone pins={result.items} initialCtaStatuses={initialCtaStatuses} />
 }

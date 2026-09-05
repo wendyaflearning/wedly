@@ -23,8 +23,11 @@ class CouplePinRepository extends ServiceEntityRepository
     /**
      * Pins of a couple, most recent first.
      *
-     * The portfolio image is joined because the assembler reads its URL for every
-     * pin — without this, a list of ten pins would trigger ten extra queries.
+     * The portfolio image, vendor, tags and tag types are fetch-joined because
+     * the assembler now reads `vendorId` and `tagsByGroup` for every pin
+     * (WED-197). There is no pagination here, so a to-many join is safe —
+     * unlike the public gallery, which hydrates tags in a second query to keep
+     * `setMaxResults` honest.
      *
      * Only Wedream-visible photos are returned (COUPLE-PIN-003): the exact same
      * clause as the public gallery and as the write path, through the single
@@ -44,9 +47,11 @@ class CouplePinRepository extends ServiceEntityRepository
     public function findByCouple(Couple $couple): array
     {
         $qb = $this->createQueryBuilder('pin')
-            ->addSelect('photo')
+            ->addSelect('photo', 'vendor', 'tag', 'tagType')
             ->join('pin.portfolioImage', 'photo')
             ->innerJoin('photo.vendor', 'vendor')
+            ->leftJoin('photo.tags', 'tag')
+            ->leftJoin('tag.tagType', 'tagType')
             ->where('pin.couple = :couple')
             ->andWhere('pin.isActive = true')
             ->setParameter('couple', $couple)

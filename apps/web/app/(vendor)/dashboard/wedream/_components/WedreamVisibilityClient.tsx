@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import type { PortfolioImage } from '@/app/onboarding/[token]/types'
 import { Toast } from '@/components/ui/Toast'
 import {
@@ -11,6 +12,8 @@ import {
 } from '@/components/wedream/WedreamJourneyPreview'
 import { useToast } from '@/hooks/useToast'
 import { apiFetch } from '@/lib/fetchClient'
+import type { VendorProviderLead } from '@/lib/vendor'
+import { formatWeddingDate, leadStatusLabel } from '@/lib/vendor-leads'
 import {
   GALLERY_CELL_COUNT,
   JOURNEY_PLACEHOLDER_BG,
@@ -26,6 +29,8 @@ interface WedreamVisibilityClientProps {
   wedreamEnabled: boolean
   vendorServices: string[]
   portfolioPhotos: PortfolioImage[]
+  /** Déjà triées par le backend, plus récente d'abord. */
+  leads: VendorProviderLead[]
 }
 
 /**
@@ -49,19 +54,6 @@ function DateIcon() {
       <rect x="4" y="6" width="20" height="18" rx="2" stroke="currentColor" strokeWidth="1.6" />
       <path d="M4 11h20" stroke="currentColor" strokeWidth="1.6" />
       <path d="M9 3v5M19 3v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function HeartIcon() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-      <path
-        d="M13 21.5s-9-5.6-9-12.2C4 5.9 6.4 4 9 4c1.8 0 3.3 1 4 2.4C13.7 5 15.2 4 17 4c2.6 0 5 1.9 5 5.3 0 6.6-9 12.2-9 12.2z"
-        stroke="var(--color-accent)"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
     </svg>
   )
 }
@@ -124,22 +116,114 @@ function RequestGrid() {
   )
 }
 
+/** Les deux anneaux de la maquette : l'un neutre, l'autre en highlight. */
+function RingsIcon() {
+  return (
+    <div className="relative w-16 h-10 mb-6" aria-hidden="true">
+      <span className="absolute left-0 top-0 w-[38px] h-[38px] rounded-full border-[1.5px] border-bordeaux/20" />
+      <span className="absolute right-0 top-0 w-[38px] h-[38px] rounded-full border-[1.5px] border-highlight" />
+    </div>
+  )
+}
+
+/** État « vide » : WedDream est activé, aucune demande n'est encore arrivée. */
 function EmptyRequestsState() {
   return (
-    <div className="flex flex-col items-center text-center max-w-[420px] mx-auto px-6 pt-9 pb-3">
-      <div className="w-16 h-16 rounded-full border border-bordeaux/[0.18] flex items-center justify-center mb-6">
-        <HeartIcon />
+    <section className="bg-white rounded-[13px] border border-bordeaux/10 px-6 py-14 md:px-12 md:py-20 flex flex-col items-center text-center">
+      <RingsIcon />
+
+      <p className="font-cormorant italic font-light text-[22px] leading-[1.5] text-texte max-w-[460px]">
+        Pas encore de demande — c&apos;est le calme avant les couples. Ça ne tarde jamais
+        longtemps.
+      </p>
+    </section>
+  )
+}
+
+const BADGE_BASE =
+  'inline-flex items-center px-[13px] py-[5px] rounded-full text-[10px] font-bold tracking-[0.1em] uppercase'
+
+function badgeClasses(label: string): string {
+  if (label === 'Nouveau') return `${BADGE_BASE} bg-accent text-creme`
+  if (label === 'Accepté') return `${BADGE_BASE} bg-white text-bordeaux border border-bordeaux`
+  return `${BADGE_BASE} bg-gris text-creme`
+}
+
+/**
+ * Une demande dans la liste. La catégorie et les tags ne sont pas sur la carte
+ * de la maquette, mais le ticket les demande à ce niveau : ils tiennent sur une
+ * ligne discrète sous la date, plutôt que d'obliger à ouvrir chaque fiche pour
+ * savoir de quoi la demande parle.
+ */
+function LeadCard({ lead }: { lead: VendorProviderLead }) {
+  const statusLabel = leadStatusLabel(lead.status)
+  const weddingDate = formatWeddingDate(lead.weddingDate)
+  const subtitle = [lead.category, ...lead.specialtyTags].filter(Boolean).join(' · ')
+
+  return (
+    <Link
+      href={`/dashboard/wedream/leads/${lead.id}`}
+      className="block no-underline bg-white border border-bordeaux/10 rounded-[13px] overflow-hidden transition-colors hover:bg-bordeaux/[0.05]"
+    >
+      <div className="relative h-[180px] bg-gris">
+        {lead.photoUrl ? (
+          <Image
+            src={lead.photoUrl}
+            alt=""
+            fill
+            sizes="(max-width: 900px) 100vw, 400px"
+            className="object-cover"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: JOURNEY_PLACEHOLDER_BG }}
+          >
+            <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-texte/40">
+              Coup de cœur
+            </span>
+          </div>
+        )}
+
+        <span className={`${badgeClasses(statusLabel)} absolute top-3 left-3 z-[2]`}>
+          {statusLabel}
+        </span>
       </div>
 
-      <p className="font-cormorant text-[25px] tracking-[-0.01em] text-texte mb-3">
-        Aucune demande pour l&apos;instant
-      </p>
+      <div className="bg-creme px-5 pt-[18px] pb-5">
+        <div className="font-cormorant font-medium text-[22px] tracking-[-0.005em] text-texte">
+          {lead.firstName}
+        </div>
 
-      <p className="text-[14.5px] leading-[1.65] text-texte/55">
-        Vous êtes visible dans WedDream. Les couples qui craquent pour votre univers
-        apparaîtront ici.
-      </p>
-    </div>
+        {weddingDate && (
+          <div className="flex items-center gap-[7px] mt-2 text-[12px] text-texte/55">
+            <DateIcon />
+            {weddingDate}
+          </div>
+        )}
+
+        {subtitle && (
+          <div className="mt-2 text-[11.5px] leading-[1.5] text-texte/45">{subtitle}</div>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+/** État « default » : au moins une demande. Aucun tri ni filtre — l'ordre vient du backend. */
+function LeadsList({ leads }: { leads: VendorProviderLead[] }) {
+  return (
+    <section>
+      <h2 className="font-cormorant font-medium text-[24px] tracking-[-0.01em] text-texte mb-7">
+        Vos demandes de mise en relation.
+      </h2>
+
+      <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(400px,100%),1fr))]">
+        {leads.map((lead) => (
+          <LeadCard key={lead.id} lead={lead} />
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -251,6 +335,7 @@ export function WedreamVisibilityClient({
   wedreamEnabled,
   vendorServices,
   portfolioPhotos,
+  leads,
 }: WedreamVisibilityClientProps) {
   const [enabled, setEnabled] = useState(wedreamEnabled)
   const [submitting, setSubmitting] = useState(false)
@@ -294,11 +379,11 @@ export function WedreamVisibilityClient({
     return phases
   }, [vendorServices, portfolioPhotos])
 
-  // TODO(WED-121) : cette condition ne masque pas encore le bloc aperçu quand le
-  // prestataire a de vraies demandes en cours — cette donnée n'existe pas côté client
-  // tant que les tickets 8-10 (réception/gestion des leads WedDream) ne sont pas livrés.
-  // Une fois livrés, ajouter un `hasRequests` (ou équivalent) à cette condition.
-  const showJourney = enabled && journeyPhases.length > 0
+  // L'aperçu « Comment un couple vous découvre » s'efface dès qu'il y a de vraies
+  // demandes à lire : c'est la condition que WED-121 avait laissée en TODO faute de
+  // cette donnée côté client, elle arrive avec la liste des leads (WED-52).
+  const hasLeads = leads.length > 0
+  const showJourney = enabled && journeyPhases.length > 0 && !hasLeads
 
   // TODO(WED-1XX) : ajouter une modal de confirmation ici, mais seulement si des demandes
   // de mise en relation sont en cours — dépend des tickets 8-10 (leads Wedream prestataire),
@@ -398,12 +483,13 @@ export function WedreamVisibilityClient({
             />
           )}
 
-          <CardPanel>
-            <PanelTitle>Vos demandes de mise en relation</PanelTitle>
+          {/* Trois états, un seul écran (maquette « Section Wedream - 3 states ») :
+              WedDream désactivé → aperçu flouté ; activé sans demande → état vide ;
+              activé avec des demandes → la liste. */}
+          {!enabled ? (
+            <CardPanel>
+              <PanelTitle>Vos demandes de mise en relation</PanelTitle>
 
-            {enabled ? (
-              <EmptyRequestsState />
-            ) : (
               <div className="relative mt-2">
                 <div className="absolute inset-0 z-[2] rounded-lg bg-creme/60 pointer-events-none" />
                 <div
@@ -413,8 +499,12 @@ export function WedreamVisibilityClient({
                   <RequestGrid />
                 </div>
               </div>
-            )}
-          </CardPanel>
+            </CardPanel>
+          ) : hasLeads ? (
+            <LeadsList leads={leads} />
+          ) : (
+            <EmptyRequestsState />
+          )}
         </div>
       </div>
     </div>

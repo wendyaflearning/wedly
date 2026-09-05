@@ -12,7 +12,13 @@ use App\Enum\ProviderLead\ProviderLeadStatus;
 use App\Repository\ProviderLead\ProviderLeadRepository;
 use App\Service\Vendor\ProviderLead\DecideVendorProviderLeadService;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Event\ProviderLeadAcceptedEvent;
+use App\Event\ProviderLeadRefusedEvent;
+use App\Entity\User\User;
+use App\Service\ProviderLead\ProviderLeadCategoryResolver;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV7;
 
@@ -21,10 +27,12 @@ final class DecideVendorProviderLeadServiceTest extends TestCase
     private const LEAD_ID = '0198f0a1-0000-7000-8000-000000000001';
 
     private EntityManagerInterface&MockObject $em;
+    private EventDispatcherInterface $eventDispatcher;
 
     protected function setUp(): void
     {
-        $this->em = $this->createMock(EntityManagerInterface::class);
+        $this->em              = $this->createMock(EntityManagerInterface::class);
+        $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
     }
 
     public function testAcceptingPutsTheLeadInAccepted(): void
@@ -100,7 +108,13 @@ final class DecideVendorProviderLeadServiceTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionCode(404);
 
-        (new DecideVendorProviderLeadService($this->em, $repository))
+        (new DecideVendorProviderLeadService(
+            $this->em,
+            $repository,
+            $this->eventDispatcher,
+            new ProviderLeadCategoryResolver(),
+            new NullLogger(),
+        ))
             ->decide(new Vendor(), 'pas-un-uuid', ProviderLeadDecision::Accept);
     }
 
@@ -146,6 +160,89 @@ final class DecideVendorProviderLeadServiceTest extends TestCase
     }
 
     /**
+     * L'acceptation dévoile le prestataire : c'est le seul des deux events qui
+     * porte son nom.
+     */
+    public function testAcceptingNotifiesTheCoupleAndNamesTheVendor(): void
+    {
+        $vendor = (new Vendor())->setBrandName('Studio Lumière');
+        $lead   = $this->pendingLead($vendor);
+        $this->em->expects($this->once())->method('flush');
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $dispatcher;
+        $dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (object $event): bool {
+                self::assertInstanceOf(ProviderLeadAcceptedEvent::class, $event);
+                self::assertSame('camille@example.test', $event->coupleEmail);
+                self::assertSame('Camille', $event->coupleFirstName);
+                self::assertSame('Studio Lumière', $event->vendorBrandName);
+
+                return true;
+            }));
+
+        $this->serviceFinding($lead)->decide($vendor, self::LEAD_ID, ProviderLeadDecision::Accept);
+    }
+
+    /**
+     * Le cœur de la règle : un refus laisse la fiche masquée côté couple, donc
+     * l'event qui l'annonce n'a aucune propriété où l'identité du prestataire
+     * pourrait voyager. Aucune régression ne peut l'y faire apparaître.
+     */
+    public function testRefusingNotifiesTheCoupleWithoutNamingTheVendor(): void
+    {
+        $vendor = (new Vendor())->setBrandName('Studio Lumière');
+        $lead   = $this->pendingLead($vendor);
+        $this->em->expects($this->once())->method('flush');
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $dispatcher;
+        $dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (object $event): bool {
+                self::assertInstanceOf(ProviderLeadRefusedEvent::class, $event);
+
+                $values = array_map(strval(...), array_filter(
+                    get_object_vars($event),
+                    static fn(mixed $value) => is_scalar($value),
+                ));
+
+                foreach ($values as $property => $value) {
+                    self::assertStringNotContainsStringIgnoringCase('Studio Lumière', $value, sprintf(
+                        'La propriété « %s » ne doit pas porter le nom du prestataire.',
+                        $property,
+                    ));
+                }
+
+                self::assertArrayNotHasKey('vendorBrandName', get_object_vars($event));
+
+                return true;
+            }));
+
+        $this->serviceFinding($lead)->decide($vendor, self::LEAD_ID, ProviderLeadDecision::Refuse);
+    }
+
+    /**
+     * Une demande déjà tranchée n'est pas re-notifiée : le couple ne doit pas
+     * recevoir deux fois le même mail parce qu'un onglet a été rechargé.
+     */
+    public function testARefusedDecisionNotifiesNobody(): void
+    {
+        $vendor = new Vendor();
+        $lead   = $this->pendingLead($vendor)->setStatus(ProviderLeadStatus::Accepted);
+        $this->em->expects($this->never())->method('flush');
+
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $dispatcher;
+        $dispatcher->expects($this->never())->method('dispatch');
+
+        $this->expectException(\DomainException::class);
+
+        $this->serviceFinding($lead)->decide($vendor, self::LEAD_ID, ProviderLeadDecision::Refuse);
+    }
+
+    /**
      * Le repository est un stub : ce qu'on teste ici est la décision du service,
      * pas la façon dont il interroge Doctrine.
      */
@@ -154,12 +251,22 @@ final class DecideVendorProviderLeadServiceTest extends TestCase
         $repository = $this->createStub(ProviderLeadRepository::class);
         $repository->method('find')->willReturn($lead);
 
-        return new DecideVendorProviderLeadService($this->em, $repository);
+        return new DecideVendorProviderLeadService(
+            $this->em,
+            $repository,
+            $this->eventDispatcher,
+            new ProviderLeadCategoryResolver(),
+            new NullLogger(),
+        );
     }
 
     private function pendingLead(Vendor $vendor): ProviderLead
     {
-        $lead = new ProviderLead(new Couple(), $vendor, 2_350_000);
+        $couple = (new Couple())->setUser(
+            (new User())->setFirstName('Camille')->setEmail('camille@example.test'),
+        );
+
+        $lead = new ProviderLead($couple, $vendor, 2_350_000);
 
         (new \ReflectionClass($lead))
             ->getProperty('id')

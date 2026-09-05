@@ -8,8 +8,13 @@ use App\Entity\ProviderLead\ProviderLead;
 use App\Entity\Vendor\Vendor;
 use App\Enum\ProviderLead\ProviderLeadDecision;
 use App\Enum\ProviderLead\ProviderLeadStatus;
+use App\Event\ProviderLeadAcceptedEvent;
+use App\Event\ProviderLeadRefusedEvent;
 use App\Repository\ProviderLead\ProviderLeadRepository;
+use App\Service\ProviderLead\ProviderLeadCategoryResolver;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -29,6 +34,9 @@ final readonly class DecideVendorProviderLeadService
     public function __construct(
         private EntityManagerInterface $em,
         private ProviderLeadRepository $providerLeadRepository,
+        private EventDispatcherInterface $eventDispatcher,
+        private ProviderLeadCategoryResolver $categoryResolver,
+        private LoggerInterface $logger,
     ) {}
 
     /**
@@ -52,7 +60,51 @@ final readonly class DecideVendorProviderLeadService
 
         $this->em->flush();
 
+        $this->notifyCouple($lead, $decision);
+
         return $lead;
+    }
+
+    /**
+     * Prévient le couple de la décision (WED-53 / WED-54).
+     *
+     * Après le flush, et jamais dans la transaction : la décision est prise, elle
+     * ne peut pas être annulée parce qu'un listener a échoué. Le prestataire lit
+     * un 200, le couple retrouve le bon état sur son écran même sans l'email.
+     *
+     * Deux events distincts plutôt qu'un seul portant la décision : celui du
+     * refus ne porte pas le nom du prestataire, donc le mail de refus ne peut pas
+     * le révéler — la garantie est dans la forme, pas dans un `if` en aval.
+     */
+    private function notifyCouple(ProviderLead $lead, ProviderLeadDecision $decision): void
+    {
+        try {
+            $couple     = $lead->getCouple();
+            $coupleUser = $couple->getUser();
+
+            $event = match ($decision) {
+                ProviderLeadDecision::Accept => new ProviderLeadAcceptedEvent(
+                    leadId:          $lead->getId()->toRfc4122(),
+                    coupleEmail:     $coupleUser->getEmail(),
+                    coupleFirstName: $coupleUser->getFirstName(),
+                    vendorBrandName: $lead->getVendor()->getBrandName(),
+                ),
+                ProviderLeadDecision::Refuse => new ProviderLeadRefusedEvent(
+                    leadId:          $lead->getId()->toRfc4122(),
+                    coupleEmail:     $coupleUser->getEmail(),
+                    coupleFirstName: $coupleUser->getFirstName(),
+                    category:        $this->categoryResolver->resolve($lead)?->getName(),
+                ),
+            };
+
+            $this->eventDispatcher->dispatch($event);
+        } catch (\Throwable $exception) {
+            $this->logger->error('Échec d\'un listener sur la décision d\'une demande', [
+                'leadId'    => $lead->getId()->toRfc4122(),
+                'decision'  => $decision->value,
+                'exception' => $exception,
+            ]);
+        }
     }
 
     /**

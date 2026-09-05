@@ -6,6 +6,7 @@ import {
   type PlanningStage,
   weddingBudgetCents,
 } from './couple-onboarding-store'
+import { cleanPhoneInput, isValidFrenchPhone } from './phone'
 
 /**
  * The same floor as `PostResetPasswordAction`: the couple sets its password on
@@ -18,6 +19,8 @@ export interface CoupleCredentials {
   email: string
   password: string
   passwordConfirmation: string
+  /** Optionnel — l'écran 7 le propose sans jamais l'exiger (COUPLE-ONBOARDING-010). */
+  phone: string
 }
 
 /**
@@ -39,6 +42,7 @@ export interface CoupleRegistrationPayload {
   location: string
   budgetCents: number
   guestCount: number
+  phone: string | null
   sensitiveDataConsent: boolean
   confessionSlugs: string[]
   cultureSlugs: string[]
@@ -60,6 +64,11 @@ export function credentialsError(credentials: CoupleCredentials): string | null 
   }
   if (credentials.password !== credentials.passwordConfirmation) {
     return 'Les mots de passe ne correspondent pas.'
+  }
+  // Un numéro vide passe : le champ est facultatif, et une absence de réponse
+  // n'est pas une erreur de saisie.
+  if (!isValidFrenchPhone(credentials.phone)) {
+    return 'Ce numéro de téléphone n’est pas valide (ex : 06 12 34 56 78).'
   }
 
   return null
@@ -87,6 +96,9 @@ export function buildRegistrationPayload(
     location: data.location?.trim() ?? '',
     budgetCents: clampBudgetCents(weddingBudgetCents(data)),
     guestCount: clampGuestCount(data.guestCount),
+    // Nettoyé des séparateurs de saisie, jamais normalisé en `+33` : cette
+    // conversion appartient à `CoupleRegistrationService` (COUPLE-ONBOARDING-010).
+    phone: cleanPhoneInput(credentials.phone) || null,
     sensitiveDataConsent: consentGranted,
     confessionSlugs: consentGranted ? data.confessionSlugs ?? [] : [],
     cultureSlugs: consentGranted ? data.cultureSlugs ?? [] : [],

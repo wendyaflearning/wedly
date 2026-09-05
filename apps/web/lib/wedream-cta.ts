@@ -95,6 +95,14 @@ export const UNPIN_SESSION_LOST =
   'Votre session a expiré. Reconnectez-vous pour retirer ce coup de cœur.'
 
 /**
+ * Same session-lost case for a contact request from Mon espace (WED-197).
+ * A dedicated sentence: UNPIN_SESSION_LOST talks about unpinning and would
+ * mislead the couple who just asked to be put in touch.
+ */
+export const CONTACT_SESSION_LOST =
+  'Votre session a expiré. Reconnectez-vous pour envoyer cette demande.'
+
+/**
  * Retire un épinglé déjà enregistré côté backend (WED-183).
  *
  * L'identifiant de la photo est dans le chemin et non dans un corps : le DELETE

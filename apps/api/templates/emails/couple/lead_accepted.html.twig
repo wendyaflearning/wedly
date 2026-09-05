@@ -1,0 +1,46 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}{{ vendorBrandName }} a accepté votre demande{% endblock %}
+
+{% block extra_styles %}
+    .cta-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; background-color: #9D4F1E; color: #FFF6ED !important; font-size: 13px; font-weight: bold; text-decoration: none; border-radius: 13px; padding: 15px 32px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .eyebrow { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 0.22em; text-transform: uppercase; color: #9D4F1E; margin: 0 0 14px 0; }
+    .expire-note { font-family: Arial, Helvetica, sans-serif; font-size: 12.5px; color: rgba(157,79,30,0.6); text-align: center; margin: 0 0 32px 0; line-height: 1.6; }
+{% endblock %}
+
+{% block body %}
+              <p class="eyebrow">Mise en relation confirmée</p>
+
+              <p class="greeting">
+                {{ vendorBrandName }} se réjouit déjà de cet <span class="greeting-italic">échange.</span>
+              </p>
+
+              <hr class="separator">
+
+              <p class="text">Bonjour <strong style="color: #4E1A32;">{{ firstName }}</strong>,</p>
+
+              <p class="text">
+                Bonne nouvelle : <strong style="color: #4E1A32;">{{ vendorBrandName }}</strong> a accepté
+                votre demande de mise en relation.
+              </p>
+
+              <p class="text">Ses coordonnées sont désormais disponibles dans votre espace.</p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 20px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="{{ leadUrl }}" class="cta-btn">Voir ses coordonnées &rarr;</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p class="expire-note">Une question ? On est là : <a href="mailto:contact@wedly-apps.com" style="color: rgba(157,79,30,0.7);">contact@wedly-apps.com</a></p>
+
+              <hr class="divider">
+
+              <p class="signature-label">À très vite,</p>
+              <p class="signature-name">Jennifer &amp; Wendy</p>
+              <p class="signature-team">Wedly &middot; Chaque mariage mérite les meilleurs.</p>
+{% endblock %}
+
+{% block footer_text %}Vous recevez cet email suite à une action sur votre compte Wedly.{% endblock %}
