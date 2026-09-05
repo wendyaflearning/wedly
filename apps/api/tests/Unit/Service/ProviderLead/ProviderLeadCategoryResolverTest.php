@@ -13,6 +13,7 @@ use App\Entity\Vendor\TagValue;
 use App\Entity\Vendor\Vendor;
 use App\Enum\Vendor\VendorType;
 use App\Service\ProviderLead\ProviderLeadCategoryResolver;
+use App\Service\Vendor\Portfolio\PortfolioImageCategoryResolver;
 use PHPUnit\Framework\TestCase;
 
 final class ProviderLeadCategoryResolverTest extends TestCase
@@ -21,7 +22,7 @@ final class ProviderLeadCategoryResolverTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->resolver = new ProviderLeadCategoryResolver();
+        $this->resolver = new ProviderLeadCategoryResolver(new PortfolioImageCategoryResolver());
     }
 
     public function testItReadsTheCategoryFromThePrimaryTagOfTheCrushPhoto(): void

@@ -16,6 +16,7 @@ use App\Event\ProviderLeadAcceptedEvent;
 use App\Event\ProviderLeadRefusedEvent;
 use App\Entity\User\User;
 use App\Service\ProviderLead\ProviderLeadCategoryResolver;
+use App\Service\Vendor\Portfolio\PortfolioImageCategoryResolver;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -112,7 +113,7 @@ final class DecideVendorProviderLeadServiceTest extends TestCase
             $this->em,
             $repository,
             $this->eventDispatcher,
-            new ProviderLeadCategoryResolver(),
+            new ProviderLeadCategoryResolver(new PortfolioImageCategoryResolver()),
             new NullLogger(),
         ))
             ->decide(new Vendor(), 'pas-un-uuid', ProviderLeadDecision::Accept);
@@ -255,7 +256,7 @@ final class DecideVendorProviderLeadServiceTest extends TestCase
             $this->em,
             $repository,
             $this->eventDispatcher,
-            new ProviderLeadCategoryResolver(),
+            new ProviderLeadCategoryResolver(new PortfolioImageCategoryResolver()),
             new NullLogger(),
         );
     }

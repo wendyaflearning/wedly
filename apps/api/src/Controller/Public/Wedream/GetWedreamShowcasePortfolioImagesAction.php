@@ -7,6 +7,7 @@ namespace App\Controller\Public\Wedream;
 use App\DTO\Public\PortfolioImage\PublicPortfolioImageResponseDto;
 use App\Entity\Vendor\PortfolioImage;
 use App\Repository\Vendor\PortfolioImageRepository;
+use App\Service\Vendor\Portfolio\PortfolioImageCategoryResolver;
 use App\ValueObject\CursorPagination;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,7 @@ final readonly class GetWedreamShowcasePortfolioImagesAction
 {
     public function __construct(
         private PortfolioImageRepository $portfolioImageRepository,
+        private PortfolioImageCategoryResolver $categoryResolver,
     ) {}
 
     #[Route(
@@ -33,7 +35,10 @@ final readonly class GetWedreamShowcasePortfolioImagesAction
 
         return new JsonResponse([
             'items' => array_map(
-                static fn(PortfolioImage $image) => new PublicPortfolioImageResponseDto($image),
+                fn(PortfolioImage $image) => new PublicPortfolioImageResponseDto(
+                    $image,
+                    $this->categoryResolver->resolve($image)?->getName(),
+                ),
                 $images,
             ),
         ]);
