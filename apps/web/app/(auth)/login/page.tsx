@@ -1,3 +1,4 @@
+import Navbar from '../../_components/Navbar';
 import LoginForm from './LoginForm';
 
 type LoginPageProps = {
@@ -16,14 +17,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const shouldFlushPendingActions = params?.flush === 'pending-actions';
 
   return (
-    <div className="min-h-screen relative flex flex-col md:flex-row bg-bordeaux md:bg-creme md:[background-image:none]">
+    <>
+      <Navbar />
+      <div className="min-h-screen relative flex flex-col lg:flex-row bg-bordeaux lg:bg-creme lg:[background-image:none]">
       {/* Mobile background: image + overlay covers the full page */}
       <div
-        className="absolute inset-0 md:hidden bg-bordeaux bg-cover bg-center"
+        className="absolute inset-0 lg:hidden bg-bordeaux bg-cover bg-center"
         style={{ backgroundImage: "url('/wedly-silk-plum2.png')" }}
       />
       <div
-        className="absolute inset-0 md:hidden pointer-events-none"
+        className="absolute inset-0 lg:hidden pointer-events-none"
         style={{
           background:
             'linear-gradient(rgba(34,12,22,0.5) 0%, rgba(34,12,22,0.18) 35%, rgba(20,7,14,0.38) 70%, rgba(15,6,11,0.7) 100%)',
@@ -31,7 +34,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       />
 
       {/* ── Mobile header: logo centré + tagline ─────────────────────── */}
-      <div className="relative z-10 md:hidden flex flex-col items-center text-center gap-7 px-[22px] pt-[72px] pb-[32px]">
+      <div className="relative z-10 lg:hidden flex flex-col items-center text-center gap-7 px-[22px] pt-[72px] pb-[32px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://res.cloudinary.com/dadvrspox/image/upload/v1781796191/logo_light_kcub6h.svg"
@@ -53,7 +56,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
       {/* ── Desktop panneau gauche ────────────────────────────────────── */}
       <div
-        className="hidden md:flex w-[52%] relative flex-col items-center justify-center overflow-hidden bg-bordeaux bg-cover bg-center"
+        className="hidden lg:flex w-[52%] relative flex-col items-center justify-center overflow-hidden bg-bordeaux bg-cover bg-center"
       >
         {/* Overlay */}
         <div
@@ -91,11 +94,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       </div>
 
       {/* ── Panneau formulaire ────────────────────────────────────────── */}
-      <div className="relative z-10 flex-1 flex flex-col justify-end md:justify-center md:items-center md:bg-creme px-[22px] pb-[36px] md:p-0">
-        <div className="w-full md:max-w-[400px] md:w-[400px] rounded-[26px] border border-[rgba(255,246,237,0.16)] bg-[rgba(46,18,32,0.52)] [backdrop-filter:blur(30px)_saturate(1.1)] shadow-[0px_28px_70px_rgba(15,6,11,0.5),inset_0px_1px_0px_rgba(255,246,237,0.14)] p-[28px_24px] md:rounded-none md:border-0 md:bg-transparent md:[backdrop-filter:none] md:shadow-none md:p-0">
+      <div className="relative z-10 flex-1 flex flex-col justify-end lg:justify-center lg:items-center lg:bg-creme px-[22px] pb-[36px] lg:p-0">
+        <div className="w-full max-w-[420px] mx-auto lg:max-w-[400px] lg:w-[400px] rounded-[26px] border border-[rgba(255,246,237,0.16)] bg-[rgba(46,18,32,0.52)] [backdrop-filter:blur(30px)_saturate(1.1)] shadow-[0px_28px_70px_rgba(15,6,11,0.5),inset_0px_1px_0px_rgba(255,246,237,0.14)] p-[28px_24px] lg:rounded-none lg:border-0 lg:bg-transparent lg:[backdrop-filter:none] lg:shadow-none lg:p-0">
           <LoginForm redirectTo={redirectTo} shouldFlushPendingActions={shouldFlushPendingActions} />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

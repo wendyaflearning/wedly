@@ -43,3 +43,23 @@ export async function fetchTagValuePortfolioImages(
 
   return response.json() as Promise<PortfolioImagesPage>
 }
+
+/**
+ * Échantillon de la vitrine Wedream affichée sur la home publique — mêmes
+ * photos publiques que la galerie, toutes catégories confondues, sans
+ * pagination (jeu fixe pour un teaser).
+ */
+export async function fetchWedreamShowcaseImages(limit: number): Promise<PublicPortfolioImage[]> {
+  if (!API_URL) return []
+
+  const response = await fetch(
+    `${API_URL}/api/v1/wedream/portfolio-images/showcase?limit=${limit}`,
+    { cache: 'no-store' }
+  ).catch(() => null)
+
+  if (!response?.ok) return []
+
+  const body: { items?: PublicPortfolioImage[] } | null = await response.json().catch(() => null)
+
+  return body?.items ?? []
+}

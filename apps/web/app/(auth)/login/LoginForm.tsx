@@ -59,7 +59,7 @@ export default function LoginForm({
       {/* Header */}
       <div className="flex flex-col gap-[9px]">
         <span className="font-manrope text-[10.5px] font-bold tracking-[0.18em] uppercase text-[rgb(240,168,117)] md:text-highlight">
-          {isCoupleLogin ? 'Espace couple' : 'Espace prestataire'}
+          {isCoupleLogin ? 'Espace couple' : 'Votre espace'}
         </span>
         <h1 className="font-cormorant font-medium text-[30px] leading-[1.1] text-creme tracking-[0.005em] md:hidden">
           Connexion
