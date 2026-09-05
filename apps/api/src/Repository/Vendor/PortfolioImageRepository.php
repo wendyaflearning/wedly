@@ -98,15 +98,24 @@ class PortfolioImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Échantillon de la vitrine Wedream affichée sur la home publique : les
-     * photos les plus récentes visibles dans Wedream, toutes catégories
-     * confondues (pas de filtre par service/style, contrairement à
-     * `findPublicByTagValue`).
+     * Taille du bassin dans lequel `findWedreamShowcase` pioche, avant de le
+     * réduire à un id par prestataire puis de le mélanger. Large devant les
+     * `$limit` habituels (une dizaine) pour qu'un prestataire qui vient de
+     * publier plusieurs photos d'un coup ne rafle pas toute la vitrine, sans
+     * pour autant charger toute la table à chaque requête.
+     */
+    private const SHOWCASE_POOL_SIZE = 300;
+
+    /**
+     * Échantillon de la vitrine Wedream affichée sur la home publique : un
+     * prestataire n'y apparaît jamais deux fois, et l'ordre change à chaque
+     * appel — recharger la page fait tourner qui est montré (WED-220).
      *
-     * Même définition de « visible » (WedreamVisibilityCriteria), même tri
-     * chronologique par id (UUIDv7). Pas de garantie de diversité entre
-     * prestataires ou catégories : un tri simple suffit pour un teaser de
-     * lancement, ce n'est pas une curation éditoriale.
+     * Même définition de « visible » (WedreamVisibilityCriteria). Le tri par
+     * id (UUIDv7) sert à choisir la photo la plus récente de chaque
+     * prestataire dans le bassin, pas à ordonner le résultat final : au-delà
+     * de la diversité inter-prestataires, il n'y a pas de garantie de
+     * diversité inter-catégories, un tirage aléatoire suffit pour un teaser.
      *
      * @return PortfolioImage[]
      */
@@ -115,12 +124,23 @@ class PortfolioImageRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('p')
             ->innerJoin('p.vendor', 'v')
             ->orderBy('p.id', 'DESC')
-            ->setMaxResults($limit);
+            ->setMaxResults(self::SHOWCASE_POOL_SIZE);
 
         WedreamVisibilityCriteria::apply($qb, 'p', 'v');
 
-        /** @var PortfolioImage[] $images */
-        $images = $qb->getQuery()->getResult();
+        /** @var PortfolioImage[] $pool */
+        $pool = $qb->getQuery()->getResult();
+
+        $oneByVendor = [];
+        foreach ($pool as $image) {
+            // Le bassin est trié du plus récent au plus ancien : la première
+            // photo rencontrée pour un prestataire est donc la sienne à garder.
+            $oneByVendor[$image->getVendor()->getId()->toRfc4122()] ??= $image;
+        }
+
+        $diverse = array_values($oneByVendor);
+        shuffle($diverse);
+        $images = array_slice($diverse, 0, $limit);
 
         $this->hydrateTags($images);
 

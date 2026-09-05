@@ -10,6 +10,7 @@ const PAGE: PortfolioImagesPage = {
       url: 'https://res.cloudinary.com/demo/image/upload/1.jpg',
       tagsByGroup: { 'Type de lieu': ['Domaine'], Ambiance: ['Intimiste'] },
       vendorId: '0198a1c0-0000-7000-8000-0000000000bb',
+      category: 'Lieu de réception',
     },
   ],
   nextCursor: '0198a1c0-0000-7000-8000-000000000001',

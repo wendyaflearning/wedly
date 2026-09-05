@@ -75,5 +75,8 @@ export function pinToPublicImage(pin: CouplePin): PublicPortfolioImage {
     url: pin.photoUrl,
     tagsByGroup: pin.tagsByGroup,
     vendorId: pin.vendorId,
+    // L'endpoint des épinglés n'expose pas le métier (CouplePinResponseDto) :
+    // le badge catégorie de la Lightbox reste alors simplement absent (WED-220).
+    category: null,
   }
 }

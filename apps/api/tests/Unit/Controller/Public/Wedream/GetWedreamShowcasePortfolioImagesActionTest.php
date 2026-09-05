@@ -10,6 +10,7 @@ use App\Entity\Vendor\TagType;
 use App\Entity\Vendor\TagValue;
 use App\Entity\Vendor\Vendor;
 use App\Repository\Vendor\PortfolioImageRepository;
+use App\Service\Vendor\Portfolio\PortfolioImageCategoryResolver;
 use App\ValueObject\CursorPagination;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -43,14 +44,14 @@ final class GetWedreamShowcasePortfolioImagesActionTest extends TestCase
         $response = $this->action($imageRepository)(new CursorPagination(6));
         $item = $this->payload($response)['items'][0];
 
-        $this->assertSame(['id', 'url', 'tagsByGroup', 'vendorId'], array_keys($item));
+        $this->assertSame(['id', 'url', 'tagsByGroup', 'vendorId', 'category'], array_keys($item));
         $this->assertSame(self::VENDOR_ID, $item['vendorId']);
         $this->assertStringNotContainsString('Studio Lumiere', (string) $response->getContent());
     }
 
     private function action(PortfolioImageRepository $imageRepository): GetWedreamShowcasePortfolioImagesAction
     {
-        return new GetWedreamShowcasePortfolioImagesAction($imageRepository);
+        return new GetWedreamShowcasePortfolioImagesAction($imageRepository, new PortfolioImageCategoryResolver());
     }
 
     private function image(string $id, string $url): PortfolioImage

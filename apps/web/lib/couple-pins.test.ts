@@ -83,6 +83,7 @@ describe('pinToPublicImage', () => {
       url: 'https://cdn.example/photo.jpg',
       vendorId: 'vendor-abc',
       tagsByGroup: { Style: ['Bohème'] },
+      category: null,
     })
   })
 })

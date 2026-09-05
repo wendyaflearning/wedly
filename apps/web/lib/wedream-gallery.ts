@@ -13,6 +13,12 @@ export type PublicPortfolioImage = {
    * une demande de mise en relation déjà partie depuis une autre photo.
    */
   vendorId: string
+  /**
+   * Métier du prestataire (ex. « Photographe »), déduit côté API du tag
+   * primaire de la photo (WED-220). `null` quand aucun tag primaire ne le
+   * détermine.
+   */
+  category: string | null
 }
 
 export type PortfolioImagesPage = {

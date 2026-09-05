@@ -43,21 +43,35 @@ final class PublicPortfolioImageResponseDtoTest extends TestCase
     }
 
     /**
-     * Le contrat public s'ouvre à `vendorId` (PROVIDER-LEAD-009) et à rien
-     * d'autre : la liste de clés est exhaustive, donc tout champ ajouté au DTO
-     * casse ce test avant d'atteindre la galerie publique. C'est le garde-fou —
-     * l'identifiant est un choix, une marque ou une bio qui suivrait ne le
-     * serait pas.
+     * Le contrat public s'ouvre à `vendorId` (PROVIDER-LEAD-009) et à
+     * `category` (le métier, WED-220) et à rien d'autre : la liste de clés est
+     * exhaustive, donc tout champ ajouté au DTO casse ce test avant d'atteindre
+     * la galerie publique. C'est le garde-fou — l'identifiant est un choix, une
+     * marque ou une bio qui suivrait ne le serait pas.
      */
-    public function test_it_exposes_only_id_url_tags_and_the_vendor_correlation_id(): void
+    public function test_it_exposes_only_id_url_tags_the_vendor_correlation_id_and_the_category(): void
     {
         $dto = new PublicPortfolioImageResponseDto($this->image([]));
 
         $encoded = json_decode(json_encode($dto, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
 
-        $this->assertSame(['id', 'url', 'tagsByGroup', 'vendorId'], array_keys($encoded));
+        $this->assertSame(['id', 'url', 'tagsByGroup', 'vendorId', 'category'], array_keys($encoded));
         $this->assertSame(self::VENDOR_ID, $encoded['vendorId']);
         $this->assertStringNotContainsString('Studio Lumiere', json_encode($dto, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_it_exposes_the_resolved_category_when_given_one(): void
+    {
+        $dto = new PublicPortfolioImageResponseDto($this->image([]), 'Traiteur');
+
+        $this->assertSame('Traiteur', $dto->category);
+    }
+
+    public function test_the_category_is_null_when_none_was_resolved(): void
+    {
+        $dto = new PublicPortfolioImageResponseDto($this->image([]));
+
+        $this->assertNull($dto->category);
     }
 
     /** @param TagValue[] $tags */
