@@ -14,15 +14,10 @@ vi.mock('posthog-js', () => ({
 import posthog from 'posthog-js'
 import { ANALYTICS_EVENTS, trackEvent } from './events'
 
-type PostHogTestStub = {
-  __loaded: boolean
-  capture: typeof capture
-}
-
 describe('analytics events', () => {
   beforeEach(() => {
     capture.mockClear()
-    ;(posthog as PostHogTestStub).__loaded = false
+    posthog.__loaded = false
   })
 
   it('exports exactly five closed analytics event names', () => {
@@ -45,7 +40,7 @@ describe('analytics events', () => {
   })
 
   it('captures events when PostHog is initialized', () => {
-    ;(posthog as PostHogTestStub).__loaded = true
+    posthog.__loaded = true
 
     trackEvent('signup_started')
     expect(capture).toHaveBeenCalledWith('signup_started')
