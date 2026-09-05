@@ -41,7 +41,7 @@ export const COPILOT_TEASERS: readonly CopilotTeaser[] = [
 
 export const ACCOMPAGNEMENT_EYEBROW = 'Votre accompagnement'
 
-export const ACCOMPAGNEMENT_TITLE_LEAD = 'Ton accompagnement'
+export const ACCOMPAGNEMENT_TITLE_LEAD = 'Votre accompagnement'
 
 export const ACCOMPAGNEMENT_TITLE_EMPHASIS = 'Wedding Planning'
 
