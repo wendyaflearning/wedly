@@ -10,7 +10,9 @@ export default function MobileMenu({ open, onClose, links }: MobileMenuProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end md:hidden">
+    // z-[80] : même palier que AccountCreationModal, au-dessus du badge de
+    // gestes en attente (z-50) qui reste sinon visible par-dessus le menu.
+    <div className="fixed inset-0 z-[80] flex flex-col justify-end md:hidden">
       {/* Backdrop */}
       <div
         className="absolute inset-0"
