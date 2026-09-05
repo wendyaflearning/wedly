@@ -13,6 +13,7 @@ use App\ArgumentResolver\CursorPaginationValueResolver;
 use App\ArgumentResolver\PublicActiveTagValueResolver;
 use App\Repository\Vendor\PortfolioImageRepository;
 use App\Repository\Vendor\TagValueRepository;
+use App\Service\Vendor\Portfolio\PortfolioImageCategoryResolver;
 use App\ValueObject\CursorPagination;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -112,7 +113,7 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
         // L'intention du test n'a pas changé : un identifiant opaque, oui ; un
         // nom, jamais. C'est l'assertion sur la marque qui la porte, pas la
         // liste de clés (PROVIDER-LEAD-009).
-        $this->assertSame(['id', 'url', 'tagsByGroup', 'vendorId'], array_keys($item));
+        $this->assertSame(['id', 'url', 'tagsByGroup', 'vendorId', 'category'], array_keys($item));
         $this->assertSame(self::VENDOR_ID, $item['vendorId']);
         $this->assertStringNotContainsString('Studio Lumiere', (string) $response->getContent());
     }
@@ -175,7 +176,7 @@ final class GetTagValuePortfolioImagesActionTest extends TestCase
 
     private function action(PortfolioImageRepository $imageRepository): GetTagValuePortfolioImagesAction
     {
-        return new GetTagValuePortfolioImagesAction($imageRepository);
+        return new GetTagValuePortfolioImagesAction($imageRepository, new PortfolioImageCategoryResolver());
     }
 
     private function activeTagValue(): TagValue

@@ -20,6 +20,7 @@ use App\Enum\ProviderLead\ProviderLeadStatus;
 use App\Enum\Vendor\PriceType;
 use App\Enum\Vendor\VendorType;
 use App\Service\ProviderLead\ProviderLeadCategoryResolver;
+use App\Service\Vendor\Portfolio\PortfolioImageCategoryResolver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV7;
 
@@ -29,7 +30,7 @@ final class CoupleProviderLeadResponseDtoAssemblerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->assembler = new CoupleProviderLeadResponseDtoAssembler(new ProviderLeadCategoryResolver());
+        $this->assembler = new CoupleProviderLeadResponseDtoAssembler(new ProviderLeadCategoryResolver(new PortfolioImageCategoryResolver()));
     }
 
     /**

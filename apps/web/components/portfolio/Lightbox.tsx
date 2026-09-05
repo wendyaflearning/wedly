@@ -216,6 +216,16 @@ export function Lightbox({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-[22px] py-5 lg:gap-[22px] lg:px-7 lg:py-[22px]">
+          {/* Le métier n'est plus donné par le fil de navigation quand la photo
+              vient de la vitrine de la home (pas de bulle de catégorie cliquée
+              avant d'arriver ici) : sans lui, une photo de château et une photo
+              de bouquet se lisaient à égalité (WED-220). */}
+          {photo.category && (
+            <p className="text-accent m-0 text-[11px] font-semibold uppercase tracking-[0.18em]">
+              {photo.category}
+            </p>
+          )}
+
           {tagGroups.map(([group, values]) => (
             <div key={group} className="flex flex-col gap-2.5">
               <p className="text-gris m-0 text-[10px] font-semibold uppercase tracking-[0.2em]">
