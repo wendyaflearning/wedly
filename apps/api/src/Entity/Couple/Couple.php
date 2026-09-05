@@ -41,6 +41,12 @@ class Couple
     #[ORM\Column(name: 'planning_stage', type: 'string', length: 20, enumType: PlanningStage::class)]
     private PlanningStage $planningStage;
 
+    // Optionnel : renseigné à l'écran 7 du parcours d'inscription (WED-216),
+    // jamais exigé. Longueur alignée sur `Vendor::$phone`, l'autre téléphone du
+    // projet.
+    #[ORM\Column(name: 'phone', length: 20, nullable: true)]
+    private ?string $phone = null;
+
     public function getId(): UuidV7
     {
         return $this->id;
@@ -78,6 +84,23 @@ class Couple
     public function setStatus(CoupleStatus $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * TODO WED-216 : le téléphone est aujourd'hui écrit sans être relu — aucun
+     * endpoint ne l'expose. Dette assumée à l'ouverture du salon : à exposer via
+     * `GET /couple/me` quand l'espace couple existera.
+     */
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(?string $phone): static
+    {
+        $this->phone = $phone;
 
         return $this;
     }

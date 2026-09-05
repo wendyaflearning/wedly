@@ -404,3 +404,59 @@ Implémentation :
 À auditer : toute route publique nouvelle qui accepterait un `vendorId` en
 entrée, ou tout endpoint qui traduirait un `vendorId` en nom sans contrôle de
 rôle — c'est là, et seulement là, que l'assouplissement cesserait de tenir.
+
+## PROVIDER-LEAD-010 — La décision du prestataire est ce qui dévoile les coordonnées du couple
+
+Statut : `active`
+
+Symétrique de `PROVIDER-LEAD-005`, côté prestataire cette fois (WED-51). Tant
+qu'une demande est `pending`, le prestataire lit le projet — prénom, date,
+nombre d'invités, budget, catégorie, tags Univers/Spécialité — mais **jamais** le
+nom de famille, l'email ni le téléphone du couple. Ces trois lignes n'apparaissent
+qu'après une acceptation explicite.
+
+Ce qui déclenche le déblocage est une **décision**, jamais un paiement : le
+modèle est gratuit (arbitrage pricing du 03/09/2026, WED-113). Et jamais non plus
+une simple réception : recevoir la demande ne donne aucun droit sur les
+coordonnées.
+
+Le masquage tient dans la **forme des DTO**, pas dans une condition posée à la
+lecture — la forme masquée n'a aucune propriété où une coordonnée pourrait
+passer. Ajouter un champ y est donc un choix visible en revue, jamais un oubli.
+
+La liste blanche des statuts qui valent acceptation est **partagée** avec le côté
+couple (`CoupleLeadStatus`) : deux `match` indépendants divergeraient, et la même
+ligne en base finirait par se lire débloquée chez le couple et masquée chez le
+prestataire.
+
+Un refus est définitif (`PROVIDER-LEAD-008`) : re-décider une demande déjà
+tranchée est refusé (409), jamais accepté en silence.
+
+Corollaire : le prestataire est prévenu **une seule fois**, à la naissance de la
+demande. Recontacter depuis une autre photo est un no-op qui n'envoie aucun
+second email — le prestataire l'a déjà reçu, et le couple n'a rien fait de
+nouveau.
+
+## PROVIDER-LEAD-011 — Culture et confession ne franchissent jamais la frontière prestataire
+
+Statut : `active`
+
+Contrainte RGPD (Article 9) : la culture et la confession d'un mariage sont des
+données sensibles, collectées sous consentement explicite
+(`RGPD-CONSENT-*`) et **réservées à Wedmatch**. Elles ne sont transmises à aucun
+prestataire, à aucun moment du flow de mise en relation — ni dans l'email de
+notification, ni dans la lecture des demandes, ni après acceptation. Une décision
+favorable ne les débloque pas : elles ne sont pas verrouillées, elles sont
+absentes.
+
+Cette exclusion n'est **pas un masquage conditionnel**, et c'est ce qui la rend
+tenable : l'event de notification ne porte que des scalaires, jamais l'entité
+`ProviderLead` — un listener qui reçoit l'entité peut remonter jusqu'aux cultures
+du mariage, et la garantie redevient alors « personne n'écrit cette ligne ». De
+même, aucun des deux DTO prestataire n'a de propriété où ces données pourraient
+transiter.
+
+À auditer : tout nouvel event, DTO ou contexte de template qui recevrait un
+`ProviderLead`, un `Couple` ou un `Wedding` entier plutôt que les champs dont il
+a besoin — c'est là, et seulement là, que l'exclusion cesserait d'être
+structurelle.

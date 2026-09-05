@@ -1,0 +1,57 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Un couple souhaite vous rencontrer{% endblock %}
+
+{% block extra_styles %}
+    .cta-btn { font-family: Arial, Helvetica, sans-serif; display: inline-block; background-color: #4E1A32; color: #FFF6ED !important; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 12px; padding: 16px 36px; letter-spacing: 0.01em; }
+    .lead-label { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; color: #4E1A32; margin: 0 0 14px 0; }
+    .lead-box { border-left: 3px solid #4E1A32; padding: 16px 20px; background-color: rgba(78,26,50,0.04); margin: 0 0 28px 0; }
+    .lead-item { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #9D4F1E; line-height: 1.65; margin: 0 0 8px 0; }
+    .lead-item:last-child { margin-bottom: 0; }
+    .expire-note { font-family: Arial, Helvetica, sans-serif; font-size: 12.5px; color: rgba(157,79,30,0.6); text-align: center; margin: 0 0 32px 0; line-height: 1.6; }
+{% endblock %}
+
+{% block body %}
+              <p class="greeting">Bonjour <span class="greeting-italic">{{ firstName }},</span></p>
+
+              <p class="text">
+                <strong style="color: #4E1A32;">{{ coupleFirstName }}</strong> souhaite vous contacter pour son mariage. Voici ce qu'on peut déjà vous en dire.
+              </p>
+
+              <hr class="separator">
+
+              <p class="lead-label">Le projet en bref</p>
+              <div class="lead-box">
+                <p class="lead-item">- Date du mariage : {{ weddingDate }}</p>
+                <p class="lead-item">- Nombre d'invités : {{ guestCount }}</p>
+                <p class="lead-item">- Budget global du mariage : {{ budget }}</p>
+                {% if category %}
+                  <p class="lead-item">- Catégorie : {{ category }}</p>
+                {% endif %}
+                {% if specialtyTags is not empty %}
+                  <p class="lead-item">- Univers &amp; spécialités : {{ specialtyTags|join(', ') }}</p>
+                {% endif %}
+              </div>
+
+              <p class="text">
+                À vous de voir : si le projet vous parle, acceptez la demande depuis votre espace et vous recevrez les coordonnées complètes du couple pour le recontacter.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="{{ dashboardUrl }}" class="cta-btn">Voir la demande</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p class="expire-note">Une question ? On est là : <a href="mailto:contact@wedly-apps.com" style="color: rgba(157,79,30,0.7);">contact@wedly-apps.com</a></p>
+
+              <hr class="divider">
+
+              <p class="signature-label">À très vite,</p>
+              <p class="signature-name">Jennifer &amp; Wendy</p>
+              <p class="signature-team">L'équipe Wedly</p>
+{% endblock %}
+
+{% block footer_text %}Vous recevez cet email parce qu'un couple a demandé à être mis en relation avec vous sur Wedly.{% endblock %}

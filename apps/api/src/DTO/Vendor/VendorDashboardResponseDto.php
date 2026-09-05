@@ -23,6 +23,12 @@ final readonly class VendorDashboardResponseDto
     public array $vendorServices;
     public bool $wedream_enabled;
     public bool $is_published;
+    /**
+     * Le badge « demandes en attente » du dashboard (WED-51). Rafraîchi à la
+     * lecture du dashboard, pas en temps réel : le prestataire le découvre en se
+     * connectant, l'email l'ayant déjà prévenu.
+     */
+    public int $pendingLeadsCount;
 
     public function __construct(
         string $id,
@@ -42,6 +48,7 @@ final readonly class VendorDashboardResponseDto
         array $vendorServices,
         bool $wedreamEnabled,
         bool $isPublished,
+        int $pendingLeadsCount,
     ) {
         $this->id                          = $id;
         $this->firstName                   = $firstName;
@@ -60,5 +67,6 @@ final readonly class VendorDashboardResponseDto
         $this->vendorServices              = $vendorServices;
         $this->wedream_enabled             = $wedreamEnabled;
         $this->is_published                = $isPublished;
+        $this->pendingLeadsCount           = $pendingLeadsCount;
     }
 }
