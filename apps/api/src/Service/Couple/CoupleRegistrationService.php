@@ -83,7 +83,8 @@ final readonly class CoupleRegistrationService
         $couple = (new Couple())
             ->setUser($user)
             ->setWedding($wedding)
-            ->setPlanningStage($dto->planningStage);
+            ->setPlanningStage($dto->planningStage)
+            ->setPhone($this->normalizePhone($dto->phone));
 
         // Entrée append-only : le consentement est tracé qu'il soit accordé ou
         // refusé, un refus n'est pas une absence de décision.
@@ -133,6 +134,29 @@ final readonly class CoupleRegistrationService
         }
 
         return $user;
+    }
+
+    /**
+     * `0612345678` et `+33612345678` désignent le même numéro : les deux sont
+     * acceptés à la saisie, un seul est stocké (WED-216). Sans ça, deux couples
+     * joignables au même endroit seraient illisibles comme tels en base, et le
+     * jour où un lien `tel:` ou un envoi SMS s'en sert, la forme nationale
+     * demanderait une conversion à chaque lecture.
+     *
+     * Ne normalise que ce qui est écrit ici : les numéros prestataires déjà en
+     * base restent dans leur forme d'origine, leur reprise est un sujet de
+     * migration de données à part.
+     *
+     * Le format est déjà garanti par `FrenchPhoneNumber` au moment où on passe
+     * ici — cette méthode convertit, elle ne valide pas.
+     */
+    private function normalizePhone(?string $phone): ?string
+    {
+        if ($phone === null || $phone === '') {
+            return null;
+        }
+
+        return str_starts_with($phone, '0') ? '+33' . substr($phone, 1) : $phone;
     }
 
     /**

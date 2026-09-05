@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { LegalInfoData, OnboardingStep } from '../../types'
 import StepBreadcrumb from '../../StepBreadcrumb'
 import { patchOnboardingStep } from '../../lib/patchOnboardingStep'
+import { cleanPhoneInput, isValidFrenchPhone } from '@/lib/phone'
 
 function Field({
   label, value, onChange, type = 'text', placeholder, hint,
@@ -91,8 +92,8 @@ export default function LegalInfoStep({
   )
 
   const siretClean   = siret.replace(/\s/g, '')
-  const phoneClean   = phone.replace(/[\s.\-()]/g, '')
-  const isPhoneValid = phone === '' || /^(\+33|0)[1-9]\d{8}$/.test(phoneClean)
+  const phoneClean   = cleanPhoneInput(phone)
+  const isPhoneValid = isValidFrenchPhone(phone)
   const isValid      = brandName.trim() !== '' && firstName.trim() !== '' && lastName.trim() !== '' && /^\d{14}$/.test(siretClean) && isPhoneValid
 
   async function handleConfirm() {

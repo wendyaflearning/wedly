@@ -12,6 +12,7 @@ const credentials = {
   email: 'camille@exemple.fr',
   password: 'secret-password',
   passwordConfirmation: 'secret-password',
+  phone: '',
 }
 
 const onboarding = {
@@ -42,10 +43,40 @@ describe('account credentials', () => {
   })
 })
 
+describe('phone number', () => {
+  it('lets the couple through without one — the field is offered, never required', () => {
+    expect(credentialsError({ ...credentials, phone: '' })).toBeNull()
+    expect(buildRegistrationPayload(onboarding, { ...credentials, phone: '' }).phone).toBeNull()
+  })
+
+  it('accepts the way a French number is actually written', () => {
+    for (const typed of ['0612345678', '06 12 34 56 78', '06.12.34.56.78', '+33612345678']) {
+      expect(credentialsError({ ...credentials, phone: typed })).toBeNull()
+    }
+  })
+
+  /** Le backend ne connaît pas les séparateurs : « 06 12 34 56 78 » sortirait en 422. */
+  it('strips the separators before sending, without normalising to +33', () => {
+    expect(buildRegistrationPayload(onboarding, { ...credentials, phone: '06 12 34 56 78' }).phone).toBe(
+      '0612345678',
+    )
+    expect(buildRegistrationPayload(onboarding, { ...credentials, phone: '+33 6 12 34 56 78' }).phone).toBe(
+      '+33612345678',
+    )
+  })
+
+  it('names the phone rather than the whole form when the number is wrong', () => {
+    for (const typed of ['0012345678', '061234567', '06123456789', 'pas-un-numero']) {
+      expect(credentialsError({ ...credentials, phone: typed })).toContain('téléphone')
+    }
+  })
+})
+
 describe('registration payload', () => {
   it('carries everything collected since screen 1 in a single submission', () => {
     expect(buildRegistrationPayload(onboarding, credentials)).toEqual({
       email: 'camille@exemple.fr',
+      phone: null,
       password: 'secret-password',
       passwordConfirmation: 'secret-password',
       firstName: 'Camille',

@@ -6,6 +6,7 @@ namespace App\DTO\Couple;
 
 use App\Entity\ProviderLead\ProviderLead;
 use App\Enum\Couple\PlanningStage;
+use App\Validator\Constraints\FrenchPhoneNumber;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -91,6 +92,12 @@ final readonly class RegisterCoupleRequestDto
         // s'en déduit côté serveur, comme pour les demandes de contact.
         #[Assert\All([new Assert\Uuid()])]
         public array $pins = [],
+
+        // Optionnel : l'écran 7 le propose sans l'exiger. Même format que côté
+        // prestataire (WED-216) — un numéro invalide sort en 422, un numéro
+        // absent passe.
+        #[FrenchPhoneNumber]
+        public ?string $phone = null,
 
         /**
          * @deprecated WED-152 — shim de compatibilité descendante le temps que le
