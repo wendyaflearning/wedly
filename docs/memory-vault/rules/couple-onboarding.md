@@ -279,3 +279,47 @@ le critère « aucun compte créé » ne se vérifie vraiment qu'au niveau HTTP)
 concurrence réelle n'étant pas rejouable au niveau fonctionnel)
 - `apps/api/tests/Unit/DTO/Couple/RegisterCoupleRequestDtoTest.php` (mot de passe
 trop court, confirmation différente)
+
+## COUPLE-ONBOARDING-010 — Le téléphone est optionnel à la saisie, normalisé en `+33` à l'écriture
+
+Statut : `active`
+
+L'écran 7 propose un numéro de téléphone sans jamais l'exiger : `couple.phone`
+est `nullable`, et une inscription sans téléphone reste une inscription valide.
+
+Le format accepté est le format français, national (`0612345678`) ou
+international (`+33612345678`). La contrainte est portée par
+`App\Validator\Constraints\FrenchPhoneNumber`, partagée avec le parcours
+prestataire (`VENDOR-ONBOARDING`, `LegalInfoStepRequestDto`) : les deux parcours
+ne peuvent plus diverger sur ce qu'ils acceptent.
+
+Les deux écritures désignent le même numéro, mais **une seule est persistée** :
+`CoupleRegistrationService::register()` normalise en `+33` avant d'écrire.
+
+Raison :
+
+- deux couples joignables au même endroit seraient illisibles comme tels en
+base, et tout usage ultérieur (dédoublonnage, lien `tel:`, envoi SMS)
+demanderait une conversion à chaque lecture.
+
+Interdit :
+
+- rendre le téléphone obligatoire à l'inscription
+- normaliser dans le validateur : il valide un format, il ne transforme rien —
+la conversion appartient au service qui écrit
+- reprendre les numéros prestataires déjà en base au passage : c'est une
+migration de données à part entière, pas un effet de bord d'une écriture couple
+
+Dette connue : le téléphone est aujourd'hui **écrit sans être relu** — aucun
+endpoint ne l'expose (`TODO WED-216` sur `Couple::getPhone()`). À exposer via
+`GET /couple/me` quand l'espace couple existera.
+
+Couverture attendue :
+
+- `apps/api/tests/Unit/DTO/Vendor/LegalInfoStepRequestDtoTest.php` (test de
+caractérisation du format, écrit avant l'extraction et resté identique après —
+c'est lui qui prouve que la contrainte partagée est iso-comportement)
+- `apps/api/tests/Unit/DTO/Couple/RegisterCoupleRequestDtoTest.php` (optionnel,
+formats acceptés, message de rejet)
+- `apps/api/tests/Unit/Service/Couple/CoupleRegistrationServiceTest.php`
+(normalisation `+33`, absence laissée à `null`)

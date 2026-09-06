@@ -8,6 +8,9 @@ import { defineConfig } from 'vitest/config'
  * composant, si (WED-161).
  */
 export default defineConfig({
+  test: {
+    exclude: ['**/node_modules/**', '**/e2e/**'],
+  },
   resolve: {
     alias: { '@': fileURLToPath(new URL('.', import.meta.url)) },
   },
