@@ -110,7 +110,7 @@ Couverture attendue :
 
 ## ADMIN-VENDOR-004 — Rejet admin d'un prestataire
 
-Statut : `active`
+Statut : `at-risk`
 
 Rejeter un prestataire doit :
 
@@ -143,3 +143,12 @@ l'état d'invitation et le verrouillage d'édition restent cohérents après usa
 du lien
 - parcours admin review : valider puis rejeter un profil et vérifier les statuts
 visibles côté admin
+
+Écart WED-47 à garder visible :
+
+- le flux cible validé côté produit pour le cycle refus/resoumission prévoit un
+  état de correction avec vue prestataire dédiée et un vendor décrit comme
+  `suspended`
+- l'implémentation actuelle place encore le vendor en `rejected` et ne porte
+  pas la vue de correction
+- voir `rules/vendor-lifecycle-flow.md`

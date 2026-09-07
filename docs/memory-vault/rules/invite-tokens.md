@@ -19,7 +19,7 @@ Tests existants à maintenir ou compléter :
 
 ## INVITE-TOKEN-001 — Résolution d'un token valide
 
-Statut : `active`
+Statut : `at-risk`
 
 Un token ne peut être résolu que s'il existe, que son statut est `Pending` et
 que sa date d'expiration est dans le futur.
@@ -52,6 +52,14 @@ Risque de régression :
 
 - changer les codes d'erreur peut casser le parcours onboarding côté frontend
 - oublier le statut `Pending` permettrait de réutiliser un lien consommé
+
+Écart WED-47 à garder visible :
+
+- le flux cible validé côté produit prévoit une expiration à 30 jours
+  uniquement si le prestataire n'a jamais commencé l'onboarding
+- l'implémentation actuelle ne consulte pas `vendor.onboarding_step` et expire
+  tout token `pending` dépassé
+- voir `rules/vendor-lifecycle-flow.md`
 
 ## INVITE-TOKEN-002 — Expiration persistée
 
